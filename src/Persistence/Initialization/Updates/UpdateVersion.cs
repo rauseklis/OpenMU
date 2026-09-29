@@ -604,4 +604,9 @@ public enum UpdateVersion
     /// The version of the <see cref="AddSelupanFallSkillUpdatePlugIn"/>.
     /// </summary>
     AddSelupanFallSkill = 120,
+
+    /// <summary>
+    /// The version of the <see cref="AddLostMapsToLumenStorePlugIn"/>.
+    /// </summary>
+    AddLostMapsToLumenStore = 121,
 }

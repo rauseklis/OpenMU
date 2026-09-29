@@ -464,6 +464,14 @@ internal partial class NpcInitialization
             this.ItemHelper.CreateItem(62, 49, 13, 1, 5), // Old Scroll
             this.ItemHelper.CreatePotion(64, 9, 1, 0), // Ale
             this.ItemHelper.CreateItem(65, 29, 13, 1, 0), // Armor of Guardsman
+
+            this.ItemHelper.CreateItem(72, 28, 14, 1, 1), // Lost Map + 1
+            this.ItemHelper.CreateItem(73, 28, 14, 1, 2), // Lost Map + 2
+            this.ItemHelper.CreateItem(74, 28, 14, 1, 3), // Lost Map + 3
+            this.ItemHelper.CreateItem(75, 28, 14, 1, 4), // Lost Map + 4
+            this.ItemHelper.CreateItem(76, 28, 14, 1, 5), // Lost Map + 5
+            this.ItemHelper.CreateItem(77, 28, 14, 1, 6), // Lost Map + 6
+            this.ItemHelper.CreateItem(78, 28, 14, 1, 7), // Lost Map + 7
         };
 
         var storage = this.CreateMerchantStore(itemList);
