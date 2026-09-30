@@ -36,6 +36,7 @@ public class GateNpc : NonPlayerCharacter, ISummonable
         this._logger = summonedBy.GameContext.LoggerFactory.CreateLogger<GateNpc>();
         this._cts = new CancellationTokenSource(lifespan);
         this._warpTask = Task.Run(this.RunTaskAsync);
+        _ = this.DisposeAfterWarpTaskAsync();
     }
 
     /// <inheritdoc />
@@ -58,8 +59,6 @@ public class GateNpc : NonPlayerCharacter, ISummonable
     protected override async ValueTask DisposeAsyncCore()
     {
         await this._cts.CancelAsync().ConfigureAwait(false);
-        this._cts.Dispose();
-
         await this._warpTask.ConfigureAwait(false);
         await base.DisposeAsyncCore().ConfigureAwait(false);
     }
@@ -117,9 +116,18 @@ public class GateNpc : NonPlayerCharacter, ISummonable
         {
             this._logger.LogError(ex, "Error in GateNpc task.");
         }
-        finally
+    }
+
+    private async Task DisposeAfterWarpTaskAsync()
+    {
+        try
         {
+            await this._warpTask.ConfigureAwait(false);
             await this.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, "Error while disposing GateNpc after its warp task ended.");
         }
     }
 
