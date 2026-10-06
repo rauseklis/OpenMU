@@ -33,6 +33,11 @@ public enum AuctionClaimOutcome
     /// The collection was already claimed.
     /// </summary>
     AlreadyClaimed,
+
+    /// <summary>
+    /// Crediting the Zen would exceed the inventory money limit, so nothing was claimed.
+    /// </summary>
+    MoneyLimit,
 }
 
 /// <summary>
@@ -49,7 +54,8 @@ public readonly record struct AuctionClaimResult(AuctionClaimOutcome Outcome, by
 /// </summary>
 /// <param name="OperationId">The client-generated operation identifier.</param>
 /// <param name="AccountId">The claiming account.</param>
+/// <param name="CharacterId">The claiming character, whose inventory receives Zen.</param>
 /// <param name="CollectionId">The collection to claim.</param>
 /// <param name="ExpectedVersion">The collection version the client last saw.</param>
 /// <param name="Now">The time of the claim, in UTC.</param>
-public readonly record struct ClaimDraft(Guid OperationId, Guid AccountId, Guid CollectionId, int ExpectedVersion, DateTimeOffset Now);
+public readonly record struct ClaimDraft(Guid OperationId, Guid AccountId, Guid CharacterId, Guid CollectionId, int ExpectedVersion, DateTimeOffset Now);

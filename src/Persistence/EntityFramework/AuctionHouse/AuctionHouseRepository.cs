@@ -80,6 +80,11 @@ public sealed class AuctionHouseRepository
     private const byte ClaimKind = 4;
 
     /// <summary>
+    /// The inventory money limit. This is a placeholder until the server's configured limit is wired in.
+    /// </summary>
+    private const int MoneyLimit = 2_000_000_000;
+
+    /// <summary>
     /// Creates a listing together with its operation record. A repeated operation returns the stored outcome.
     /// </summary>
     /// <param name="context">The context to write with.</param>
@@ -274,7 +279,24 @@ public sealed class AuctionHouseRepository
         return rows == 1;
     }
 
-    private static AuctionCurrencyMovement Movement(Guid accountId, Guid operationId, Guid listingId, Guid? bidId, long amount, byte kind, DateTimeOffset now)
+    /// <summary>
+    /// Credits Zen to the character's inventory storage, only while the result stays within the inventory money limit.
+    /// </summary>
+    private static async Task<bool> CreditZenAsync(EntityDataContext context, Guid characterId, long amount, CancellationToken cancellationToken)
+    {
+        if (amount <= 0)
+        {
+            return true;
+        }
+
+        var money = (int)amount;
+        var rows = await context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE data.\"ItemStorage\" s SET \"Money\" = s.\"Money\" + {money} FROM data.\"Character\" c WHERE c.\"Id\" = {characterId} AND s.\"Id\" = c.\"InventoryId\" AND s.\"Money\" + {money} <= {MoneyLimit}",
+            cancellationToken);
+        return rows == 1;
+    }
+
+    private static AuctionCurrencyMovement Movement(Guid accountId, Guid operationId, Guid? listingId, Guid? bidId, long amount, byte kind, DateTimeOffset now)
     {
         return new AuctionCurrencyMovement
         {
@@ -641,6 +663,20 @@ public sealed class AuctionHouseRepository
         }
 
         var collection = await context.Set<AuctionCollection>().AsNoTracking().SingleAsync(c => c.Id == draft.CollectionId, cancellationToken);
+        if (collection.Currency == 0 && collection.Kind is 2 or 3 && (collection.RemainingScalar ?? 0) > 0)
+        {
+            var amount = collection.RemainingScalar ?? 0;
+            if (!await CreditZenAsync(context, draft.CharacterId, amount, cancellationToken))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return new AuctionClaimResult(AuctionClaimOutcome.MoneyLimit, 0, null, 0);
+            }
+
+            var credit = Movement(draft.AccountId, draft.OperationId, null, null, amount, 6, draft.Now);
+            credit.CollectionId = collection.Id;
+            context.Set<AuctionCurrencyMovement>().Add(credit);
+        }
+
         context.Set<AuctionOperation>().Add(new AuctionOperation
         {
             Id = Guid.NewGuid(),

@@ -19,6 +19,7 @@ using MUnique.OpenMU.Persistence.EntityFramework.Model;
 public class AuctionClaimTests
 {
     private const long RefundAmount = 1000;
+    private Guid _characterId;
     private Guid _accountId;
     private Guid _otherAccountId;
     private Guid _itemId;
@@ -39,6 +40,13 @@ public class AuctionClaimTests
     [SetUp]
     public async Task Arrange()
     {
+        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 0);
+        if (funded is null)
+        {
+            Assert.Ignore("The database has no characters to credit; use the populated copy.");
+        }
+
+        this._characterId = funded.Value;
         this._accountId = Guid.NewGuid();
         this._otherAccountId = Guid.NewGuid();
         this._itemId = Guid.NewGuid();
@@ -185,6 +193,7 @@ public class AuctionClaimTests
         return new AuctionHouseRepository().ClaimAsync(new EntityDataContext(), new ClaimDraft(
             OperationId: operationId,
             AccountId: account,
+            CharacterId: this._characterId,
             CollectionId: collectionId,
             ExpectedVersion: expectedVersion,
             Now: DateTimeOffset.UtcNow));
