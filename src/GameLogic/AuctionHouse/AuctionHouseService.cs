@@ -4,7 +4,10 @@
 
 namespace MUnique.OpenMU.GameLogic.AuctionHouse;
 
+using System.Diagnostics;
 using System.Threading;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.Persistence.AuctionHouse;
 
@@ -17,6 +20,7 @@ public sealed class AuctionHouseService
     private readonly IAuctionHouseRepository _repository;
     private readonly AuctionHouseOptions _options;
     private readonly Func<DateTimeOffset> _clock;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuctionHouseService"/> class.
@@ -24,11 +28,13 @@ public sealed class AuctionHouseService
     /// <param name="repository">The repository which runs the queries.</param>
     /// <param name="options">The configured options.</param>
     /// <param name="clock">The clock. The current UTC time is used when this is not given.</param>
-    public AuctionHouseService(IAuctionHouseRepository repository, AuctionHouseOptions options, Func<DateTimeOffset>? clock = null)
+    /// <param name="logger">The logger for operation results; a null logger when not given.</param>
+    public AuctionHouseService(IAuctionHouseRepository repository, AuctionHouseOptions options, Func<DateTimeOffset>? clock = null, ILogger? logger = null)
     {
         this._repository = repository;
         this._options = options;
         this._clock = clock ?? (() => DateTimeOffset.UtcNow);
+        this._logger = logger ?? NullLogger.Instance;
     }
 
     /// <summary>
@@ -88,6 +94,7 @@ public sealed class AuctionHouseService
     /// <returns>The listing result.</returns>
     public async Task<AuctionListItemResult> ListItemAsync(AuctionListItemRequest request, CancellationToken cancellationToken = default)
     {
+        var started = Stopwatch.GetTimestamp();
         var now = this._clock();
         if (!this._options.Enabled)
         {
@@ -143,6 +150,7 @@ public sealed class AuctionHouseService
             request.Note);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
         AuctionHouseMetrics.RecordOperation("create", result.Outcome.ToString());
+        LogOperation("create", result.Outcome.ToString(), request.AccountId, result.ListingId, started);
         if (result.Outcome == AuctionItemListingOutcome.Created)
         {
             AuctionHouseMetrics.RecordListingFee(currency, draft.ListingFee, feeFruits);
@@ -186,6 +194,7 @@ public sealed class AuctionHouseService
     /// <returns>The bid result.</returns>
     public async Task<AuctionMutationResult> BidAsync(AuctionBidRequest request, CancellationToken cancellationToken = default)
     {
+        var started = Stopwatch.GetTimestamp();
         var now = this._clock();
         if (!this._options.Enabled)
         {
@@ -217,6 +226,7 @@ public sealed class AuctionHouseService
                 AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now));
             var fruitResult = await this._repository.PlaceFruitBidAsync(fruitDraft, cancellationToken).ConfigureAwait(false);
             AuctionHouseMetrics.RecordOperation("bid", fruitResult.Outcome.ToString());
+            LogOperation("bid", fruitResult.Outcome.ToString(), request.AccountId, request.ListingId, started);
             return new AuctionMutationResult(MapBidOutcome(fruitResult.Outcome), now);
         }
 
@@ -233,6 +243,7 @@ public sealed class AuctionHouseService
             AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now));
         var result = await this._repository.PlaceScalarBidAsync(draft, cancellationToken);
         AuctionHouseMetrics.RecordOperation("bid", result.Outcome.ToString());
+        LogOperation("bid", result.Outcome.ToString(), request.AccountId, request.ListingId, started);
         return new AuctionMutationResult(MapBidOutcome(result.Outcome), now);
     }
 
@@ -244,6 +255,7 @@ public sealed class AuctionHouseService
     /// <returns>The buyout result.</returns>
     public async Task<AuctionMutationResult> BuyoutAsync(AuctionBuyoutRequest request, CancellationToken cancellationToken = default)
     {
+        var started = Stopwatch.GetTimestamp();
         var now = this._clock();
         if (!this._options.Enabled)
         {
@@ -261,6 +273,7 @@ public sealed class AuctionHouseService
             var fruitBuyout = new FruitBuyoutDraft(request.OperationId, request.AccountId, request.CharacterId, request.ListingId, request.ExpectedVersion, request.BuyerIp, now, this._options.SuccessFeeBasisPoints);
             var fruitResult = await this._repository.PlaceFruitBuyoutAsync(fruitBuyout, cancellationToken).ConfigureAwait(false);
             AuctionHouseMetrics.RecordOperation("buyout", fruitResult.Outcome.ToString());
+            LogOperation("buyout", fruitResult.Outcome.ToString(), request.AccountId, request.ListingId, started);
             return new AuctionMutationResult(MapBuyoutOutcome(fruitResult.Outcome), now);
         }
 
@@ -280,7 +293,20 @@ public sealed class AuctionHouseService
             now);
         var result = await this._repository.BuyoutAsync(draft, cancellationToken);
         AuctionHouseMetrics.RecordOperation("buyout", result.Outcome.ToString());
+        LogOperation("buyout", result.Outcome.ToString(), request.AccountId, request.ListingId, started);
         return new AuctionMutationResult(MapBuyoutOutcome(result.Outcome), now);
+    }
+
+    private void LogOperation(string operation, string outcome, Guid accountId, Guid? listingId, long started)
+    {
+        var elapsed = Stopwatch.GetElapsedTime(started);
+        this._logger.LogInformation(
+            "Auction {Operation} {Outcome} account {AccountId} listing {ListingId} in {ElapsedMilliseconds} ms",
+            operation,
+            outcome,
+            accountId,
+            listingId,
+            elapsed.TotalMilliseconds);
     }
 
     private static AuctionResultCode MapBidOutcome(AuctionBidOutcome outcome)
@@ -321,6 +347,7 @@ public sealed class AuctionHouseService
     /// <returns>The cancellation result.</returns>
     public async Task<AuctionMutationResult> CancelAsync(AuctionCancelRequest request, CancellationToken cancellationToken = default)
     {
+        var started = Stopwatch.GetTimestamp();
         var now = this._clock();
         if (!this._options.Enabled)
         {
@@ -330,6 +357,7 @@ public sealed class AuctionHouseService
         var draft = new CancelDraft(request.OperationId, request.AccountId, request.ListingId, request.ExpectedVersion, now);
         var result = await this._repository.CancelAsync(draft, cancellationToken);
         AuctionHouseMetrics.RecordOperation("cancel", result.Outcome.ToString());
+        LogOperation("cancel", result.Outcome.ToString(), request.AccountId, request.ListingId, started);
         return new AuctionMutationResult(MapCancelOutcome(result.Outcome), now);
     }
 
@@ -341,6 +369,7 @@ public sealed class AuctionHouseService
     /// <returns>The collection result.</returns>
     public async Task<AuctionCollectResult> CollectAsync(AuctionCollectRequest request, CancellationToken cancellationToken = default)
     {
+        var started = Stopwatch.GetTimestamp();
         var now = this._clock();
         if (!this._options.Enabled)
         {
@@ -358,6 +387,7 @@ public sealed class AuctionHouseService
             request.RequestedFruits);
         var result = await this._repository.ClaimAsync(draft, cancellationToken);
         AuctionHouseMetrics.RecordOperation("collect", result.Outcome.ToString());
+        LogOperation("collect", result.Outcome.ToString(), request.AccountId, null, started);
         return new AuctionCollectResult(MapClaimOutcome(result.Outcome), result.Kind, result.ItemId, result.Amount, now);
     }
 
