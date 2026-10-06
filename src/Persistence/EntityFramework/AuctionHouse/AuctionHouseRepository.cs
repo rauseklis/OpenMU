@@ -70,6 +70,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.PlaceFruitBidAsync(context, draft, cancellationToken));
 
     /// <inheritdoc />
+    public Task<AuctionBuyoutResult> PlaceFruitBuyoutAsync(FruitBuyoutDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.PlaceFruitBuyoutAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
     public Task<AuctionBuyoutResult> BuyoutAsync(BuyoutDraft draft, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.BuyoutAsync(context, draft, cancellationToken));
 
@@ -587,6 +591,218 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBidResult(AuctionBidOutcome.StaleListing);
         }
     }
+
+    /// <summary>
+    /// Buys a fruit-basket listing out. The buyer pays the buyout basket less the fruits they already escrowed as the high bidder,
+    /// the previous high bid is refunded, and the seller receives the proceeds after the fee on each component.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="draft">The buyout.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    public async Task<AuctionBuyoutResult> PlaceFruitBuyoutAsync(EntityDataContext context, FruitBuyoutDraft draft, CancellationToken cancellationToken = default)
+    {
+        if (await context.Set<AuctionOperation>().AsNoTracking()
+                .AnyAsync(o => o.AccountId == draft.BuyerAccountId && o.OperationId == draft.OperationId && o.Kind == BuyoutKind, cancellationToken))
+        {
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.Replayed);
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var locked = await context.Set<AuctionListing>()
+            .Where(l => l.Id == draft.ListingId && l.Version == draft.ExpectedVersion)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.Version, l => l.Version + 1), cancellationToken);
+        if (locked == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            var exists = await context.Set<AuctionListing>().AsNoTracking().AnyAsync(l => l.Id == draft.ListingId, cancellationToken);
+            return new AuctionBuyoutResult(exists ? AuctionBuyoutOutcome.StaleListing : AuctionBuyoutOutcome.ListingNotFound);
+        }
+
+        var listing = await context.Set<AuctionListing>().SingleAsync(l => l.Id == draft.ListingId, cancellationToken);
+        if (listing.Currency != FruitsCurrency)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.UnsupportedCurrency);
+        }
+
+        if (listing.Status != 0 || listing.EndsAt <= draft.Now)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.NotActive);
+        }
+
+        if (listing.SellerAccountId == draft.BuyerAccountId)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.SelfBuy);
+        }
+
+        if (listing.BuyoutStrength is null)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.BuyoutUnavailable);
+        }
+
+        var buyout = new FruitBasket(listing.BuyoutStrength ?? 0, listing.BuyoutAgility ?? 0, listing.BuyoutVitality ?? 0, listing.BuyoutEnergy ?? 0, listing.BuyoutCommand ?? 0);
+        var escrow = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
+        var escrowedByBuyer = escrow is not null && escrow.BidderAccountId == draft.BuyerAccountId
+            ? new FruitBasket(escrow.StrengthAmount ?? 0, escrow.AgilityAmount ?? 0, escrow.VitalityAmount ?? 0, escrow.EnergyAmount ?? 0, escrow.CommandAmount ?? 0)
+            : default;
+        var debit = new FruitBasket(buyout.Strength - escrowedByBuyer.Strength, buyout.Agility - escrowedByBuyer.Agility, buyout.Vitality - escrowedByBuyer.Vitality, buyout.Energy - escrowedByBuyer.Energy, buyout.Command - escrowedByBuyer.Command);
+        if (debit.Strength < 0 || debit.Agility < 0 || debit.Vitality < 0 || debit.Energy < 0 || debit.Command < 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.BuyoutUnavailable);
+        }
+
+        if (!await OwnsCharacterAsync(context, draft.BuyerAccountId, draft.BuyerCharacterId, cancellationToken))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.CharacterNotOwned);
+        }
+
+        if (!await this.TenderFruitsAsync(context, draft.BuyerAccountId, draft.BuyerCharacterId, draft.OperationId, listing.Id, debit, TenderInKind, null, draft.Now, cancellationToken))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.InsufficientCurrency);
+        }
+
+        foreach (var component in Enum.GetValues<FruitComponent>())
+        {
+            var amount = debit.Get(component);
+            if (amount <= 0)
+            {
+                continue;
+            }
+
+            var movement = Movement(draft.BuyerAccountId, draft.OperationId, listing.Id, null, amount, 2, draft.Now);
+            movement.Currency = FruitsCurrency;
+            movement.FruitComponent = (byte)component;
+            context.Set<AuctionCurrencyMovement>().Add(movement);
+        }
+
+        if (escrow is not null && escrow.BidderAccountId == draft.BuyerAccountId)
+        {
+            escrow.Status = 2;
+            escrow.ClosedAt = draft.Now;
+        }
+        else
+        {
+            if (escrow is not null)
+            {
+                escrow.Status = 1;
+                escrow.ClosedAt = draft.Now;
+                context.Set<AuctionCollection>().Add(FruitCollection(escrow.BidderAccountId, listing.Id, 3, escrowedByBuyerOf(escrow), draft.Now));
+                context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, OutbidNotificationKind, FruitsCurrency, null, draft.Now));
+            }
+
+            context.Set<AuctionBid>().Add(new AuctionBid
+            {
+                Id = Guid.NewGuid(),
+                ListingId = listing.Id,
+                BidderAccountId = draft.BuyerAccountId,
+                BidderCharacterId = draft.BuyerCharacterId,
+                Currency = FruitsCurrency,
+                StrengthAmount = buyout.Strength,
+                AgilityAmount = buyout.Agility,
+                VitalityAmount = buyout.Vitality,
+                EnergyAmount = buyout.Energy,
+                CommandAmount = buyout.Command,
+                BidderIp = draft.BuyerIp,
+                Status = 2,
+                CreatedAt = draft.Now,
+                ClosedAt = draft.Now,
+            });
+        }
+
+        listing.Status = 1;
+        listing.CurrentBid = null;
+        listing.CurrentBidStrength = buyout.Strength;
+        listing.CurrentBidAgility = buyout.Agility;
+        listing.CurrentBidVitality = buyout.Vitality;
+        listing.CurrentBidEnergy = buyout.Energy;
+        listing.CurrentBidCommand = buyout.Command;
+        listing.CurrentBidderAccountId = draft.BuyerAccountId;
+        listing.CurrentBidderCharacterId = draft.BuyerCharacterId;
+        listing.FinalizedAt = draft.Now;
+        context.Set<AuctionCollection>().Add(new AuctionCollection
+        {
+            Id = Guid.NewGuid(),
+            AccountId = draft.BuyerAccountId,
+            ListingId = listing.Id,
+            Kind = 0,
+            Currency = FruitsCurrency,
+            ItemId = listing.ItemId,
+            Status = 0,
+            CreatedAt = draft.Now,
+            UpdatedAt = draft.Now,
+            Version = 0,
+        });
+        var fee = new FruitBasket(
+            AuctionRules.CalculateFee(buyout.Strength, draft.SuccessFeeBasisPoints),
+            AuctionRules.CalculateFee(buyout.Agility, draft.SuccessFeeBasisPoints),
+            AuctionRules.CalculateFee(buyout.Vitality, draft.SuccessFeeBasisPoints),
+            AuctionRules.CalculateFee(buyout.Energy, draft.SuccessFeeBasisPoints),
+            AuctionRules.CalculateFee(buyout.Command, draft.SuccessFeeBasisPoints));
+        var proceeds = new FruitBasket(buyout.Strength - fee.Strength, buyout.Agility - fee.Agility, buyout.Vitality - fee.Vitality, buyout.Energy - fee.Energy, buyout.Command - fee.Command);
+        context.Set<AuctionCollection>().Add(FruitCollection(listing.SellerAccountId, listing.Id, 2, proceeds, draft.Now));
+        context.Set<AuctionNotification>().Add(Notify(draft.BuyerAccountId, listing.Id, BoughtNotificationKind, FruitsCurrency, null, draft.Now));
+        context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, FruitsCurrency, null, draft.Now));
+        context.Set<AuctionOperation>().Add(new AuctionOperation
+        {
+            Id = Guid.NewGuid(),
+            AccountId = draft.BuyerAccountId,
+            OperationId = draft.OperationId,
+            Kind = BuyoutKind,
+            Outcome = CreatedOutcome,
+            ListingId = listing.Id,
+            CreatedAt = draft.Now,
+        });
+
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.Bought);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.StaleListing);
+        }
+
+        static FruitBasket escrowedByBuyerOf(AuctionBid bid)
+            => new(bid.StrengthAmount ?? 0, bid.AgilityAmount ?? 0, bid.VitalityAmount ?? 0, bid.EnergyAmount ?? 0, bid.CommandAmount ?? 0);
+    }
+
+    /// <summary>
+    /// Creates a fruit collection with one balance per component.
+    /// </summary>
+    private static AuctionCollection FruitCollection(Guid accountId, Guid listingId, byte kind, FruitBasket amount, DateTimeOffset now)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            AccountId = accountId,
+            ListingId = listingId,
+            Kind = kind,
+            Currency = FruitsCurrency,
+            OriginalStrength = amount.Strength,
+            RemainingStrength = amount.Strength,
+            OriginalAgility = amount.Agility,
+            RemainingAgility = amount.Agility,
+            OriginalVitality = amount.Vitality,
+            RemainingVitality = amount.Vitality,
+            OriginalEnergy = amount.Energy,
+            RemainingEnergy = amount.Energy,
+            OriginalCommand = amount.Command,
+            RemainingCommand = amount.Command,
+            Status = 0,
+            CreatedAt = now,
+            UpdatedAt = now,
+            Version = 0,
+        };
 
     /// <summary>
     /// Places a scalar bid. The listing row is locked and its version advanced by one conditional update, so two bids
@@ -1946,6 +2162,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             StartingVitality = draft.StartingFruits?.Vitality ?? 0,
             StartingEnergy = draft.StartingFruits?.Energy ?? 0,
             StartingCommand = draft.StartingFruits?.Command ?? 0,
+            BuyoutStrength = draft.BuyoutFruits?.Strength,
+            BuyoutAgility = draft.BuyoutFruits?.Agility,
+            BuyoutVitality = draft.BuyoutFruits?.Vitality,
+            BuyoutEnergy = draft.BuyoutFruits?.Energy,
+            BuyoutCommand = draft.BuyoutFruits?.Command,
             BuyoutPrice = draft.BuyoutPrice,
             CreatedAt = draft.CreatedAt,
             OriginalEndsAt = draft.EndsAt,

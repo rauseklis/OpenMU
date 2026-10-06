@@ -114,7 +114,8 @@ public sealed class AuctionHouseService
         }
 
         var isFruits = currency == AuctionCurrencyMode.Fruits;
-        if (isFruits && (request.StartingFruits is not { } basket || !FruitRules.IsValidStartingBasket(basket) || request.BuyoutPrice is not null))
+        if (isFruits && (request.StartingFruits is not { } basket || !FruitRules.IsValidStartingBasket(basket) || request.BuyoutPrice is not null
+            || request.BuyoutFruits is { } buyoutBasket && !FruitRules.IsValidBuyout(basket, buyoutBasket)))
         {
             return new AuctionListItemResult(AuctionResultCode.InvalidFruitBasket, Guid.Empty, 0, now);
         }
@@ -137,7 +138,8 @@ public sealed class AuctionHouseService
             this._options.MaximumActiveListingsPerAccount,
             this._options.MaximumActiveListingsPerCharacter,
             request.StartingFruits,
-            feeFruits);
+            feeFruits,
+            isFruits ? request.BuyoutFruits : null);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
         return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now);
     }
@@ -242,6 +244,13 @@ public sealed class AuctionHouseService
         if (listing is null)
         {
             return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
+        }
+
+        if (listing.Currency == (byte)AuctionCurrencyMode.Fruits)
+        {
+            var fruitBuyout = new FruitBuyoutDraft(request.OperationId, request.AccountId, request.CharacterId, request.ListingId, request.ExpectedVersion, request.BuyerIp, now, this._options.SuccessFeeBasisPoints);
+            var fruitResult = await this._repository.PlaceFruitBuyoutAsync(fruitBuyout, cancellationToken).ConfigureAwait(false);
+            return new AuctionMutationResult(MapBuyoutOutcome(fruitResult.Outcome), now);
         }
 
         if (listing.BuyoutPrice is not { } buyoutPrice)

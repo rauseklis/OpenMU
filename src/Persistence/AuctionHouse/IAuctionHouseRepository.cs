@@ -46,6 +46,14 @@ public interface IAuctionHouseRepository
     Task<AuctionBuyoutResult> BuyoutAsync(BuyoutDraft draft, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Buys a fruit-basket listing out at its buyout basket.
+    /// </summary>
+    /// <param name="draft">The buyout.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    Task<AuctionBuyoutResult> PlaceFruitBuyoutAsync(FruitBuyoutDraft draft, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Cancels a listing which has no bid.
     /// </summary>
     /// <param name="draft">The cancellation.</param>

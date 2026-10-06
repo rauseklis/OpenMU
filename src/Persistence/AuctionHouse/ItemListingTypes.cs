@@ -100,4 +100,5 @@ public readonly record struct ItemListingDraft(
     int ListingLimitPerAccount,
     int ListingLimitPerCharacter,
     FruitBasket? StartingFruits = null,
-    FruitBasket? FeeFruits = null);
+    FruitBasket? FeeFruits = null,
+    FruitBasket? BuyoutFruits = null);
