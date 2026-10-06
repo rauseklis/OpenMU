@@ -22,6 +22,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     private const byte BuyoutKind = 2;
     private const byte CancelKind = 3;
     private const byte ClaimKind = 4;
+    private const byte FeeRemovedKind = 5;
 
     /// <summary>
     /// The default inventory money limit, used when no configured limit is given.
@@ -83,6 +84,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     /// <inheritdoc />
     public Task<int> CountPendingCollectionsAsync(Guid accountId, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.CountPendingCollectionsAsync(context, accountId, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionItemListingResult> ListItemAsync(ItemListingDraft draft, Func<ItemListingFacts, bool> isEligible, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ListItemAsync(context, draft, isEligible, cancellationToken));
 
     private async Task<T> WithContextAsync<T>(Func<EntityDataContext, Task<T>> operation)
     {
@@ -933,10 +938,130 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         return new AuctionListingPage(rows, total);
     }
 
-    private async Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, AuctionListingDraft draft, CancellationToken cancellationToken)
+    /// <summary>
+    /// Lists an inventory item in one transaction. The item is located by its slot and checked inside the transaction, the
+    /// listing fee is charged in Zen, the item leaves the inventory, and the listing, operation, and fee movement are written.
+    /// A repeated operation returns its stored listing without charging again.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="draft">The listing values.</param>
+    /// <param name="isEligible">Decides whether the item may be listed, from its facts as read inside the transaction.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    public async Task<AuctionItemListingResult> ListItemAsync(EntityDataContext context, ItemListingDraft draft, Func<ItemListingFacts, bool> isEligible, CancellationToken cancellationToken = default)
+    {
+        var replay = await this.FindReplayAsync(context, draft.AccountId, draft.OperationId, cancellationToken);
+        if (replay is { } stored)
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.Replayed, stored.ListingId, stored.ListingNumber);
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var inventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == draft.CharacterId)
+            .Select(c => c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        var item = inventoryId is null
+            ? null
+            : await context.Set<Item>().Include(i => i.RawDefinition)
+                .SingleOrDefaultAsync(i => i.ItemStorageId == inventoryId && i.ItemSlot == draft.InventorySlot, cancellationToken);
+        if (item is null)
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.ItemNotFound, Guid.Empty, 0);
+        }
+
+        var referenced = await context.Set<AuctionListing>().AnyAsync(l => l.ItemId == item.Id && l.Status == 0, cancellationToken)
+            || await context.Set<AuctionCollection>().AnyAsync(c => c.ItemId == item.Id && c.Status != 2, cancellationToken);
+        var definition = item.RawDefinition;
+        var facts = new ItemListingFacts(
+            item.Id,
+            definition?.IsTradable ?? false,
+            definition?.IsPersonalStoreSellable ?? false,
+            definition?.IsBoundToCharacter ?? true,
+            definition?.IsQuestItem ?? true,
+            (int)Math.Ceiling(item.Durability),
+            item.ItemSlot,
+            referenced);
+        if (!isEligible(facts))
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.NotEligible, Guid.Empty, 0);
+        }
+
+        var accountListings = await context.Set<AuctionListing>().CountAsync(l => l.SellerAccountId == draft.AccountId && l.Status == 0, cancellationToken);
+        var characterListings = await context.Set<AuctionListing>().CountAsync(l => l.SellerCharacterId == draft.CharacterId && l.Status == 0, cancellationToken);
+        if (accountListings >= draft.ListingLimitPerAccount || characterListings >= draft.ListingLimitPerCharacter)
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.ListingLimitReached, Guid.Empty, 0);
+        }
+
+        if (!await DebitZenAsync(context, draft.CharacterId, draft.ListingFee, cancellationToken))
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
+        }
+
+        var listingId = Guid.NewGuid();
+        context.Set<AuctionListing>().Add(new AuctionListing
+        {
+            Id = listingId,
+            ItemId = item.Id,
+            SellerAccountId = draft.AccountId,
+            SellerCharacterId = draft.CharacterId,
+            SellerName = draft.SellerName,
+            SellerIp = draft.SellerIp,
+            Status = 0,
+            Currency = draft.Currency,
+            Category = draft.Category,
+            StartingPrice = draft.StartingPrice,
+            BuyoutPrice = draft.BuyoutPrice,
+            CreatedAt = draft.CreatedAt,
+            OriginalEndsAt = draft.EndsAt,
+            EndsAt = draft.EndsAt,
+            NormalizedName = string.Empty,
+        });
+        context.Set<AuctionOperation>().Add(new AuctionOperation
+        {
+            Id = Guid.NewGuid(),
+            AccountId = draft.AccountId,
+            OperationId = draft.OperationId,
+            Kind = CreateKind,
+            Outcome = CreatedOutcome,
+            ListingId = listingId,
+            CreatedAt = draft.CreatedAt,
+        });
+        context.Set<AuctionCurrencyMovement>().Add(Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt));
+        item.ItemStorageId = null;
+
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+
+            // A concurrent replay of the same operation wins the race; otherwise the item is already listed.
+            replay = await this.FindReplayAsync(context, draft.AccountId, draft.OperationId, cancellationToken);
+            return replay is { } raced
+                ? new AuctionItemListingResult(AuctionItemListingOutcome.Replayed, raced.ListingId, raced.ListingNumber)
+                : new AuctionItemListingResult(AuctionItemListingOutcome.ItemAlreadyListed, Guid.Empty, 0);
+        }
+
+        var listingNumber = await context.Set<AuctionListing>().AsNoTracking()
+            .Where(l => l.Id == listingId)
+            .Select(l => l.ListingNumber)
+            .SingleAsync(cancellationToken);
+        return new AuctionItemListingResult(AuctionItemListingOutcome.Created, listingId, listingNumber);
+    }
+
+    private Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, AuctionListingDraft draft, CancellationToken cancellationToken)
+        => this.FindReplayAsync(context, draft.AccountId, draft.OperationId, cancellationToken);
+
+    private async Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, Guid accountId, Guid operationId, CancellationToken cancellationToken)
     {
         var operation = await context.Set<AuctionOperation>().AsNoTracking()
-            .FirstOrDefaultAsync(o => o.AccountId == draft.AccountId && o.OperationId == draft.OperationId, cancellationToken);
+            .FirstOrDefaultAsync(o => o.AccountId == accountId && o.OperationId == operationId, cancellationToken);
         if (operation is null || operation.ListingId is not { } listingId)
         {
             return null;

@@ -18,4 +18,19 @@ public sealed record AuctionHouseOptions
     /// Gets the number of listings per browse page.
     /// </summary>
     public int PageSize { get; init; } = 8;
+
+    /// <summary>
+    /// Gets the listing fee in basis points of the starting price. The approved fee is 1%, rounded up with a minimum of one unit.
+    /// </summary>
+    public int ListingFeeBasisPoints { get; init; } = 100;
+
+    /// <summary>
+    /// Gets the maximum number of active listings per account.
+    /// </summary>
+    public int MaximumActiveListingsPerAccount { get; init; } = 10;
+
+    /// <summary>
+    /// Gets the maximum number of active listings per character.
+    /// </summary>
+    public int MaximumActiveListingsPerCharacter { get; init; } = 5;
 }

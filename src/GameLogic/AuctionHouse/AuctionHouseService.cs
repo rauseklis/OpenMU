@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameLogic.AuctionHouse;
 
 using System.Threading;
+using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.Persistence.AuctionHouse;
 
 /// <summary>
@@ -77,6 +78,82 @@ public sealed class AuctionHouseService
             return new AuctionBrowseResult(AuctionResultCode.InvalidRequest, default, now);
         }
     }
+
+    /// <summary>
+    /// Lists one inventory item of the character for sale. The item and its eligibility are checked inside the transaction,
+    /// so the same check decides both a first request and a retry.
+    /// </summary>
+    /// <param name="request">The listing request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The listing result.</returns>
+    public async Task<AuctionListItemResult> ListItemAsync(AuctionListItemRequest request, CancellationToken cancellationToken = default)
+    {
+        var now = this._clock();
+        if (!this._options.Enabled)
+        {
+            return new AuctionListItemResult(AuctionResultCode.Disabled, Guid.Empty, 0, now);
+        }
+
+        // Only Zen is supported as a listing currency until jewel tender is implemented.
+        if (request.Currency != (byte)AuctionCurrencyMode.Zen)
+        {
+            return new AuctionListItemResult(AuctionResultCode.UnsupportedCurrency, Guid.Empty, 0, now);
+        }
+
+        if (!AuctionRules.IsValidDuration(request.DurationHours))
+        {
+            return new AuctionListItemResult(AuctionResultCode.InvalidDuration, Guid.Empty, 0, now);
+        }
+
+        if (!AuctionRules.IsPriceInRange(AuctionCurrencyMode.Zen, request.StartingPrice)
+            || request.BuyoutPrice is { } buyout && (buyout < request.StartingPrice || !AuctionRules.IsPriceInRange(AuctionCurrencyMode.Zen, buyout)))
+        {
+            return new AuctionListItemResult(AuctionResultCode.InvalidPrice, Guid.Empty, 0, now);
+        }
+
+        var draft = new ItemListingDraft(
+            request.OperationId,
+            request.AccountId,
+            request.CharacterId,
+            request.SellerName,
+            request.SellerIp,
+            request.InventorySlot,
+            request.Currency,
+            request.Category,
+            request.StartingPrice,
+            request.BuyoutPrice,
+            now,
+            now.AddHours(request.DurationHours),
+            AuctionRules.CalculateFee(request.StartingPrice, this._options.ListingFeeBasisPoints),
+            this._options.MaximumActiveListingsPerAccount,
+            this._options.MaximumActiveListingsPerCharacter);
+        var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
+        return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now);
+    }
+
+    private static bool IsEligible(ItemListingFacts facts)
+    {
+        var candidate = new ListingCandidate(
+            facts.IsTradable,
+            facts.IsPersonalStoreSellable,
+            facts.IsBoundToCharacter,
+            facts.IsQuestItem,
+            facts.Durability,
+            facts.InventorySlot >= InventoryConstants.EquippableSlotsCount ? ItemLocation.MainInventory : ItemLocation.Equipped,
+            facts.IsAlreadyReferenced);
+        return ListingEligibility.Evaluate(candidate) == ListingEligibilityResult.Eligible;
+    }
+
+    private static AuctionResultCode MapListingOutcome(AuctionItemListingOutcome outcome)
+        => outcome switch
+        {
+            AuctionItemListingOutcome.Created or AuctionItemListingOutcome.Replayed => AuctionResultCode.Success,
+            AuctionItemListingOutcome.ItemNotFound => AuctionResultCode.ItemNotFound,
+            AuctionItemListingOutcome.NotEligible or AuctionItemListingOutcome.ItemAlreadyListed => AuctionResultCode.ItemNotEligible,
+            AuctionItemListingOutcome.ListingLimitReached => AuctionResultCode.ListingLimitReached,
+            AuctionItemListingOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
+            _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
+        };
 
     /// <summary>
     /// Reads one listing, including its note.

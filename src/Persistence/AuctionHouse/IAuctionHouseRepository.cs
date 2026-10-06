@@ -93,4 +93,14 @@ public interface IAuctionHouseRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The number of pending collections.</returns>
     Task<int> CountPendingCollectionsAsync(Guid accountId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists an inventory item. Inside the transaction the item is located by its slot, the eligibility callback decides
+    /// whether it may be listed, the fee is charged, and the item leaves the inventory.
+    /// </summary>
+    /// <param name="draft">The listing values.</param>
+    /// <param name="isEligible">Decides whether the item may be listed, from its facts as read inside the transaction.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    Task<AuctionItemListingResult> ListItemAsync(ItemListingDraft draft, Func<ItemListingFacts, bool> isEligible, CancellationToken cancellationToken = default);
 }
