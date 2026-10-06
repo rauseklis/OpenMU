@@ -46,12 +46,51 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
         {
             var service = new AuctionHouseService(repository, configuration.ToOptions());
             await service.FinalizeDueListingsAsync(configuration.ExpiryBatchSize).ConfigureAwait(false);
+            if (configuration.NotificationsEnabled)
+            {
+                await DeliverNotificationsAsync(gameContext, service, configuration).ConfigureAwait(false);
+            }
         }
         catch (Exception exception)
         {
             gameContext.LoggerFactory.CreateLogger<AuctionExpiryPlugIn>().LogError(exception, "Auction House expiry batch failed; it is retried on the next run.");
         }
     }
+
+    private static async Task DeliverNotificationsAsync(GameContext gameContext, AuctionHouseService service, AuctionHouseConfiguration configuration)
+    {
+        var online = new Dictionary<Guid, Player>();
+        await gameContext.ForEachPlayerAsync(player =>
+        {
+            if (player.Account is MUnique.OpenMU.Persistence.IIdentifiable account)
+            {
+                online[account.Id] = player;
+            }
+
+            return Task.CompletedTask;
+        }).ConfigureAwait(false);
+
+        await service.DeliverNotificationsAsync(configuration.NotificationBatchSize, async notification =>
+        {
+            if (!online.TryGetValue(notification.AccountId, out var player))
+            {
+                return AuctionNotificationDeliveryOutcome.NotOnline;
+            }
+
+            await player.ShowLocalizedBlueMessageAsync(MessageKeyOf(notification.Kind)).AsTask().ConfigureAwait(false);
+            return AuctionNotificationDeliveryOutcome.Delivered;
+        }).ConfigureAwait(false);
+    }
+
+    private static string MessageKeyOf(byte kind)
+        => kind switch
+        {
+            0 => "AuctionNotificationOutbid",
+            1 => "AuctionNotificationSold",
+            2 => "AuctionNotificationBought",
+            3 => "AuctionNotificationExpired",
+            _ => "AuctionNotificationReturned",
+        };
 
     /// <inheritdoc />
     public void ForceStart()

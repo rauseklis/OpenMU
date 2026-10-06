@@ -51,6 +51,17 @@ public class AuctionHouseConfiguration
     public int ExpiryIntervalSeconds { get; set; } = 15;
 
     /// <summary>
+    /// Gets or sets a value indicating whether the worker shows notifications to online players. Keep it off until the
+    /// notification messages exist in every supported language; the Mailbox is shown either way.
+    /// </summary>
+    public bool NotificationsEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of notifications the worker claims in one batch.
+    /// </summary>
+    public int NotificationBatchSize { get; set; } = 50;
+
+    /// <summary>
     /// Creates the service options from this configuration.
     /// </summary>
     /// <returns>The options.</returns>

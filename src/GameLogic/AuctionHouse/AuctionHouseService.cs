@@ -451,6 +451,49 @@ public sealed class AuctionHouseService
         => this._repository.ReconcileAsync(cancellationToken);
 
     /// <summary>
+    /// Claims one batch of undelivered notifications and gives each to the delivery callback. The claim marks them delivered,
+    /// so a notification whose player is offline is not retried: the Mailbox still shows the outcome. A notification whose
+    /// delivery throws is counted and does not stop the batch.
+    /// </summary>
+    /// <param name="batchSize">The maximum number of notifications to claim.</param>
+    /// <param name="deliver">Shows one notification to its account, or reports that the account is offline.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The totals of the batch.</returns>
+    public async Task<AuctionNotificationDeliveryResult> DeliverNotificationsAsync(int batchSize, Func<AuctionNotificationRow, Task<AuctionNotificationDeliveryOutcome>> deliver, CancellationToken cancellationToken = default)
+    {
+        if (!this._options.Enabled)
+        {
+            return default;
+        }
+
+        var claimed = await this._repository.ClaimUndeliveredNotificationsAsync(batchSize, this._clock(), cancellationToken).ConfigureAwait(false);
+        var delivered = 0;
+        var notOnline = 0;
+        var failed = 0;
+        foreach (var notification in claimed)
+        {
+            try
+            {
+                var outcome = await deliver(notification).ConfigureAwait(false);
+                if (outcome == AuctionNotificationDeliveryOutcome.Delivered)
+                {
+                    delivered++;
+                }
+                else
+                {
+                    notOnline++;
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                failed++;
+            }
+        }
+
+        return new AuctionNotificationDeliveryResult(delivered, notOnline, failed);
+    }
+
+    /// <summary>
     /// Loads the items of listings, so the browse rows can carry them.
     /// </summary>
     /// <param name="itemIds">The items.</param>
