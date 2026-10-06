@@ -76,6 +76,7 @@ public sealed class AuctionHouseRepository
     private const int CreatedOutcome = 0;
     private const byte BidKind = 1;
     private const byte BuyoutKind = 2;
+    private const byte CancelKind = 3;
 
     /// <summary>
     /// Creates a listing together with its operation record. A repeated operation returns the stored outcome.
@@ -393,6 +394,139 @@ public sealed class AuctionHouseRepository
             Currency = listing.Currency,
             OriginalScalar = amount,
             RemainingScalar = amount,
+            Status = 0,
+            CreatedAt = now,
+            UpdatedAt = now,
+            Version = 0,
+        };
+    }
+
+    /// <summary>
+    /// Cancels a listing that has no bids and returns its item to the seller through a collection.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="draft">The cancellation request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    public async Task<AuctionCancelResult> CancelAsync(EntityDataContext context, CancelDraft draft, CancellationToken cancellationToken = default)
+    {
+        if (await context.Set<AuctionOperation>().AsNoTracking()
+                .AnyAsync(o => o.AccountId == draft.AccountId && o.OperationId == draft.OperationId && o.Kind == CancelKind, cancellationToken))
+        {
+            return new AuctionCancelResult(AuctionCancelOutcome.Replayed);
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var locked = await context.Set<AuctionListing>()
+            .Where(l => l.Id == draft.ListingId && l.Version == draft.ExpectedVersion)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.Version, l => l.Version + 1), cancellationToken);
+        if (locked == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            var exists = await context.Set<AuctionListing>().AsNoTracking().AnyAsync(l => l.Id == draft.ListingId, cancellationToken);
+            return new AuctionCancelResult(exists ? AuctionCancelOutcome.StaleListing : AuctionCancelOutcome.ListingNotFound);
+        }
+
+        var listing = await context.Set<AuctionListing>().SingleAsync(l => l.Id == draft.ListingId, cancellationToken);
+        if (listing.Status != 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionCancelResult(AuctionCancelOutcome.NotActive);
+        }
+
+        if (listing.SellerAccountId != draft.AccountId)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionCancelResult(AuctionCancelOutcome.NotSeller);
+        }
+
+        if (listing.BidCount > 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionCancelResult(AuctionCancelOutcome.CannotCancelWithBid);
+        }
+
+        listing.Status = 3;
+        listing.FinalizedAt = draft.Now;
+        context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, draft.Now));
+        context.Set<AuctionOperation>().Add(new AuctionOperation
+        {
+            Id = Guid.NewGuid(),
+            AccountId = draft.AccountId,
+            OperationId = draft.OperationId,
+            Kind = CancelKind,
+            Outcome = CreatedOutcome,
+            ListingId = listing.Id,
+            CreatedAt = draft.Now,
+        });
+
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return new AuctionCancelResult(AuctionCancelOutcome.Cancelled);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+            return new AuctionCancelResult(AuctionCancelOutcome.StaleListing);
+        }
+    }
+
+    /// <summary>
+    /// Finalizes a listing whose expiry has passed. A listing with a bid sells to its high bidder; one without a bid returns
+    /// its item to the seller. The check is a conditional update, so a listing is finalized at most once.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="draft">The expiry check.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the check.</returns>
+    public async Task<AuctionExpireResult> ExpireAsync(EntityDataContext context, ExpireDraft draft, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var due = await context.Set<AuctionListing>()
+            .Where(l => l.Id == draft.ListingId && l.Status == 0 && l.EndsAt <= draft.Now)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.Version, l => l.Version + 1), cancellationToken);
+        if (due == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            var exists = await context.Set<AuctionListing>().AsNoTracking().AnyAsync(l => l.Id == draft.ListingId, cancellationToken);
+            return new AuctionExpireResult(exists ? AuctionExpireOutcome.NotDue : AuctionExpireOutcome.ListingNotFound);
+        }
+
+        var listing = await context.Set<AuctionListing>().SingleAsync(l => l.Id == draft.ListingId, cancellationToken);
+        listing.FinalizedAt = draft.Now;
+        var escrow = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
+        if (escrow is not null)
+        {
+            escrow.Status = 2;
+            escrow.ClosedAt = draft.Now;
+            listing.Status = 1;
+            context.Set<AuctionCollection>().Add(ItemCollection(escrow.BidderAccountId, listing, 0, draft.Now));
+            context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, (escrow.ScalarAmount ?? 0) - draft.SuccessFee, draft.Now));
+        }
+        else
+        {
+            listing.Status = 2;
+            context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, draft.Now));
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return new AuctionExpireResult(AuctionExpireOutcome.Finalized);
+    }
+
+    private static AuctionCollection ItemCollection(Guid accountId, AuctionListing listing, byte kind, DateTimeOffset now)
+    {
+        return new AuctionCollection
+        {
+            Id = Guid.NewGuid(),
+            AccountId = accountId,
+            ListingId = listing.Id,
+            Kind = kind,
+            Currency = listing.Currency,
+            ItemId = listing.ItemId,
             Status = 0,
             CreatedAt = now,
             UpdatedAt = now,

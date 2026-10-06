@@ -77,7 +77,8 @@ public class AuctionListingPersistenceTests
 
     private static AuctionListing NewListing(Guid itemId)
     {
-        var now = DateTimeOffset.UtcNow;
+        // PostgreSQL stores timestamps to the microsecond, so the test truncates to the same precision.
+        var now = new DateTimeOffset(DateTimeOffset.UtcNow.Ticks / 10 * 10, TimeSpan.Zero);
         return new AuctionListing
         {
             Id = Guid.NewGuid(),
