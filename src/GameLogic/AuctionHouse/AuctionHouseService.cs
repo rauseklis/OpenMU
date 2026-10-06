@@ -325,6 +325,7 @@ public sealed class AuctionHouseService
             AuctionClaimOutcome.AlreadyClaimed => AuctionResultCode.AlreadyProcessed,
             AuctionClaimOutcome.MoneyLimit => AuctionResultCode.MoneyLimit,
             AuctionClaimOutcome.InvalidClaimQuantity => AuctionResultCode.InvalidClaimQuantity,
+            AuctionClaimOutcome.InventoryFull => AuctionResultCode.InventoryFull,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
         };
 

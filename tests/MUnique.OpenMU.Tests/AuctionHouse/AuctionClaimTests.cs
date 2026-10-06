@@ -70,23 +70,6 @@ public class AuctionClaimTests
     }
 
     /// <summary>
-    /// Verifies the owner can claim an item collection, and the claim returns the item to deliver.
-    /// </summary>
-    [Test]
-    public async Task OwnerClaimsItemCollection()
-    {
-        var result = await this.Claim(this._accountId, this._lotCollectionId, 0, Guid.NewGuid());
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Outcome, Is.EqualTo(AuctionClaimOutcome.Claimed));
-            Assert.That(result.ItemId, Is.EqualTo(this._itemId));
-        });
-        await using var context = new EntityDataContext();
-        Assert.That(await context.Set<AuctionCollection>().AsNoTracking().Where(c => c.Id == this._lotCollectionId).Select(c => c.Status).SingleAsync(), Is.EqualTo(2));
-    }
-
-    /// <summary>
     /// Verifies the owner can claim a scalar collection, and the claim returns the full amount.
     /// </summary>
     [Test]

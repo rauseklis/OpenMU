@@ -43,6 +43,11 @@ public enum AuctionClaimOutcome
     /// The requested quantity is zero, exceeds what remains, or a Zen collection was requested in part.
     /// </summary>
     InvalidClaimQuantity,
+
+    /// <summary>
+    /// The character has no free main-inventory slot for the returned item.
+    /// </summary>
+    InventoryFull,
 }
 
 /// <summary>

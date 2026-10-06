@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
+using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
 using Npgsql;
@@ -767,6 +768,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionClaimResult(AuctionClaimOutcome.AlreadyClaimed, 0, null, 0);
         }
 
+        if (collection.ItemId is { } lotItemId)
+        {
+            return await this.ClaimLotAsync(context, draft, collection, lotItemId, cancellationToken);
+        }
+
         if (Plan(collection, draft) is not { } plan)
         {
             return new AuctionClaimResult(AuctionClaimOutcome.InvalidClaimQuantity, 0, null, 0);
@@ -869,6 +875,82 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     /// <param name="ClaimedScalar">The scalar amount claimed now.</param>
     /// <param name="ClaimedFruits">The fruit quantities claimed now, for fruit-basket collections.</param>
     private readonly record struct ClaimPlan(byte Status, long? Scalar, FruitQuantities? RemainingFruits, long ClaimedScalar, FruitQuantities? ClaimedFruits);
+
+    /// <summary>
+    /// Returns an auctioned item to the claimant's main inventory. The character must belong to the claiming account, the
+    /// item must still be outside every inventory, and the collection is marked claimed in the same transaction.
+    /// </summary>
+    private async Task<AuctionClaimResult> ClaimLotAsync(EntityDataContext context, ClaimDraft draft, AuctionCollection collection, Guid itemId, CancellationToken cancellationToken)
+    {
+        if (draft.RequestedScalar is not null || draft.RequestedFruits is not null)
+        {
+            return new AuctionClaimResult(AuctionClaimOutcome.InvalidClaimQuantity, 0, null, 0);
+        }
+
+        var owned = await context.Database.SqlQuery<int>(
+            $"SELECT COUNT(*)::int AS \"Value\" FROM data.\"Character\" WHERE \"Id\" = {draft.CharacterId} AND \"AccountId\" = {draft.AccountId}")
+            .SingleAsync(cancellationToken);
+        if (owned == 0)
+        {
+            return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
+        }
+
+        var now = draft.Now;
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var freeSlot = await context.Database.SqlQuery<int?>(
+            $"SELECT MIN(s.n) AS \"Value\" FROM generate_series({InventoryConstants.EquippableSlotsCount}, {InventoryConstants.EquippableSlotsCount + 63}) AS s(n) WHERE s.n NOT IN (SELECT i.\"ItemSlot\" FROM data.\"Item\" i JOIN data.\"Character\" c ON i.\"ItemStorageId\" = c.\"InventoryId\" WHERE c.\"Id\" = {draft.CharacterId})")
+            .SingleAsync(cancellationToken);
+        if (freeSlot is not { } slot)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionClaimResult(AuctionClaimOutcome.InventoryFull, 0, null, 0);
+        }
+
+        var placed = await context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE data.\"Item\" i SET \"ItemStorageId\" = c.\"InventoryId\", \"ItemSlot\" = {(short)slot} FROM data.\"Character\" c WHERE c.\"Id\" = {draft.CharacterId} AND c.\"AccountId\" = {draft.AccountId} AND i.\"Id\" = {itemId} AND i.\"ItemStorageId\" IS NULL",
+            cancellationToken);
+        if (placed != 1)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionClaimResult(AuctionClaimOutcome.Stale, 0, null, 0);
+        }
+
+        var claimed = await context.Set<AuctionCollection>()
+            .Where(c => c.Id == collection.Id && c.AccountId == draft.AccountId && c.Version == draft.ExpectedVersion && c.Status != 2)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(c => c.Status, (byte)2)
+                .SetProperty(c => c.UpdatedAt, now)
+                .SetProperty(c => c.Version, c => c.Version + 1), cancellationToken);
+        if (claimed == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionClaimResult(AuctionClaimOutcome.Stale, 0, null, 0);
+        }
+
+        context.Set<AuctionOperation>().Add(new AuctionOperation
+        {
+            Id = Guid.NewGuid(),
+            AccountId = draft.AccountId,
+            OperationId = draft.OperationId,
+            Kind = ClaimKind,
+            Outcome = CreatedOutcome,
+            CollectionId = collection.Id,
+            CreatedAt = now,
+        });
+
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return new AuctionClaimResult(AuctionClaimOutcome.Claimed, collection.Kind, itemId, 0);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+            return new AuctionClaimResult(AuctionClaimOutcome.Replayed, 0, null, 0);
+        }
+    }
 
     private static ClaimPlan? Plan(AuctionCollection collection, ClaimDraft draft)
     {
