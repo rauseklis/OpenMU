@@ -83,6 +83,14 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.GetListingAsync(context, listingId, cancellationToken));
 
     /// <inheritdoc />
+    public Task<AuctionListingPage> ListSellerListingsAsync(Guid accountId, int page, int pageSize, byte? status, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ListSellerListingsAsync(context, accountId, page, pageSize, status, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionCollectionPage> ListCollectionsAsync(Guid accountId, int page, int pageSize, byte? kind, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ListCollectionsAsync(context, accountId, page, pageSize, kind, cancellationToken));
+
+    /// <inheritdoc />
     public Task<IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>> GetItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.GetItemsAsync(context, itemIds, cancellationToken));
 
@@ -101,6 +109,114 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     /// <inheritdoc />
     public Task<AuctionItemListingResult> ListItemAsync(ItemListingDraft draft, Func<ItemListingFacts, bool> isEligible, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.ListItemAsync(context, draft, isEligible, cancellationToken));
+
+    /// <summary>
+    /// Lists the listings of one seller, newest first. Read-only.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="accountId">The seller's account.</param>
+    /// <param name="page">The page, starting at 1.</param>
+    /// <param name="pageSize">The number of listings per page.</param>
+    /// <param name="status">The status to filter by, or <c>null</c>.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>One page of listings.</returns>
+    public async Task<AuctionListingPage> ListSellerListingsAsync(EntityDataContext context, Guid accountId, int page, int pageSize, byte? status, CancellationToken cancellationToken = default)
+    {
+        var size = Math.Clamp(pageSize, 1, 50);
+        var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.SellerAccountId == accountId);
+        if (status is { } wanted)
+        {
+            query = query.Where(l => l.Status == wanted);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        var rows = await query
+            .OrderByDescending(l => l.CreatedAt)
+            .Skip((Math.Max(1, page) - 1) * size)
+            .Take(size)
+            .Select(l => new AuctionListingRow(
+                l.Id,
+                l.ListingNumber,
+                l.Currency,
+                l.Category,
+                l.StartingPrice,
+                l.CurrentBid,
+                l.BuyoutPrice,
+                l.EndsAt,
+                l.BidCount,
+                l.SellerAccountId,
+                l.SellerName,
+                l.ItemGroup,
+                l.ItemNumber,
+                l.ItemLevel,
+                l.ItemId,
+                l.Version,
+                l.Status))
+            .ToListAsync(cancellationToken);
+        return new AuctionListingPage(rows, total);
+    }
+
+    /// <summary>
+    /// Lists the collections of one account, newest first. Read-only.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="accountId">The account.</param>
+    /// <param name="page">The page, starting at 1.</param>
+    /// <param name="pageSize">The number of entries per page.</param>
+    /// <param name="kind">The kind to filter by, or <c>null</c>.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>One page of mailbox entries.</returns>
+    public async Task<AuctionCollectionPage> ListCollectionsAsync(EntityDataContext context, Guid accountId, int page, int pageSize, byte? kind, CancellationToken cancellationToken = default)
+    {
+        var size = Math.Clamp(pageSize, 1, 50);
+        var query = context.Set<AuctionCollection>().AsNoTracking().Where(c => c.AccountId == accountId);
+        if (kind is { } wanted)
+        {
+            query = query.Where(c => c.Kind == wanted);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        var stored = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .Skip((Math.Max(1, page) - 1) * size)
+            .Take(size)
+            .Select(c => new
+            {
+                c.CollectionNumber,
+                c.Kind,
+                c.Status,
+                c.Currency,
+                c.OriginalScalar,
+                c.RemainingScalar,
+                c.OriginalStrength,
+                c.OriginalAgility,
+                c.OriginalVitality,
+                c.OriginalEnergy,
+                c.OriginalCommand,
+                c.RemainingStrength,
+                c.RemainingAgility,
+                c.RemainingVitality,
+                c.RemainingEnergy,
+                c.RemainingCommand,
+                SourceListingNumber = context.Set<AuctionListing>().Where(l => l.Id == c.ListingId).Select(l => l.ListingNumber).FirstOrDefault(),
+                c.ItemId,
+                c.Version,
+            })
+            .ToListAsync(cancellationToken);
+        var rows = stored.Select(c => new AuctionCollectionRow(
+            c.CollectionNumber,
+            c.Kind,
+            c.Status,
+            c.Currency,
+            c.OriginalScalar,
+            c.RemainingScalar,
+            c.OriginalStrength is null ? null : new FruitQuantities(c.OriginalStrength ?? 0, c.OriginalAgility ?? 0, c.OriginalVitality ?? 0, c.OriginalEnergy ?? 0, c.OriginalCommand ?? 0),
+            c.RemainingStrength is null ? null : new FruitQuantities(c.RemainingStrength ?? 0, c.RemainingAgility ?? 0, c.RemainingVitality ?? 0, c.RemainingEnergy ?? 0, c.RemainingCommand ?? 0),
+            c.SourceListingNumber,
+            c.ItemId,
+            c.Version)).ToList();
+        return new AuctionCollectionPage(rows, total);
+    }
 
     /// <summary>
     /// Loads listed items with their definition and options, so they can be serialized for the client. Read-only.
@@ -1106,7 +1222,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.ItemNumber,
                 l.ItemLevel,
                 l.ItemId,
-                l.Version))
+                l.Version,
+                l.Status))
             .ToListAsync(cancellationToken);
         return new AuctionListingPage(rows, total);
     }

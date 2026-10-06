@@ -26,6 +26,8 @@ public class AuctionHouseHandlerRegistrationTests
             ["AuctionOpenHandlerPlugIn"] = 0x00,
             ["AuctionBrowseHandlerPlugIn"] = 0x01,
             ["AuctionDetailHandlerPlugIn"] = 0x02,
+            ["AuctionMyListingsHandlerPlugIn"] = 0x07,
+            ["AuctionMailboxHandlerPlugIn"] = 0x08,
             ["AuctionCreateHandlerPlugIn"] = 0x03,
             ["AuctionBidHandlerPlugIn"] = 0x04,
             ["AuctionBuyoutHandlerPlugIn"] = 0x05,
@@ -45,7 +47,7 @@ public class AuctionHouseHandlerRegistrationTests
     public void SubHandlersBelongToTheAuctionGroupAndExpectEncryption()
     {
         var groupKey = (byte)this.ResolveType("AuctionHouseGroupHandlerPlugIn").GetField("GroupKey", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
-        var subHandlers = new[] { "AuctionOpenHandlerPlugIn", "AuctionBrowseHandlerPlugIn", "AuctionDetailHandlerPlugIn", "AuctionCreateHandlerPlugIn", "AuctionBidHandlerPlugIn", "AuctionBuyoutHandlerPlugIn", "AuctionCancelHandlerPlugIn", "AuctionCollectHandlerPlugIn" };
+        var subHandlers = new[] { "AuctionOpenHandlerPlugIn", "AuctionBrowseHandlerPlugIn", "AuctionDetailHandlerPlugIn", "AuctionMyListingsHandlerPlugIn", "AuctionMailboxHandlerPlugIn", "AuctionCreateHandlerPlugIn", "AuctionBidHandlerPlugIn", "AuctionBuyoutHandlerPlugIn", "AuctionCancelHandlerPlugIn", "AuctionCollectHandlerPlugIn" };
 
         Assert.Multiple(() =>
         {

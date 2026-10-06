@@ -350,6 +350,56 @@ public sealed class AuctionHouseService
     }
 
     /// <summary>
+    /// Lists the listings of the account, newest first.
+    /// </summary>
+    /// <param name="accountId">The seller's account.</param>
+    /// <param name="page">The page, starting at 1.</param>
+    /// <param name="status">The status to filter by, or <c>null</c> for every status.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The page of listings.</returns>
+    public async Task<AuctionBrowseResult> MyListingsAsync(Guid accountId, int page, byte? status, CancellationToken cancellationToken = default)
+    {
+        var now = this._clock();
+        if (!this._options.Enabled)
+        {
+            return new AuctionBrowseResult(AuctionResultCode.Disabled, default, now);
+        }
+
+        if (page < 1)
+        {
+            return new AuctionBrowseResult(AuctionResultCode.InvalidRequest, default, now);
+        }
+
+        var listings = await this._repository.ListSellerListingsAsync(accountId, page, this._options.PageSize, status, cancellationToken);
+        return new AuctionBrowseResult(AuctionResultCode.Success, listings, now);
+    }
+
+    /// <summary>
+    /// Lists the mailbox entries of the account, newest first.
+    /// </summary>
+    /// <param name="accountId">The account.</param>
+    /// <param name="page">The page, starting at 1.</param>
+    /// <param name="kind">The kind to filter by, or <c>null</c> for every kind.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The mailbox result.</returns>
+    public async Task<AuctionMailboxResult> MailboxAsync(Guid accountId, int page, byte? kind, CancellationToken cancellationToken = default)
+    {
+        var now = this._clock();
+        if (!this._options.Enabled)
+        {
+            return new AuctionMailboxResult(AuctionResultCode.Disabled, default, now);
+        }
+
+        if (page < 1)
+        {
+            return new AuctionMailboxResult(AuctionResultCode.InvalidRequest, default, now);
+        }
+
+        var entries = await this._repository.ListCollectionsAsync(accountId, page, this._options.PageSize, kind, cancellationToken);
+        return new AuctionMailboxResult(AuctionResultCode.Success, entries, now);
+    }
+
+    /// <summary>
     /// Loads the items of listings, so the browse rows can carry them.
     /// </summary>
     /// <param name="itemIds">The items.</param>

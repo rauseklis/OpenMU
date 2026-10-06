@@ -96,6 +96,28 @@ public interface IAuctionHouseRepository
     Task<int> CountPendingCollectionsAsync(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Lists the listings of one seller, newest first.
+    /// </summary>
+    /// <param name="accountId">The seller's account.</param>
+    /// <param name="page">The page, starting at 1.</param>
+    /// <param name="pageSize">The number of listings per page.</param>
+    /// <param name="status">The status to filter by, or <c>null</c> for every status.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>One page of listings.</returns>
+    Task<AuctionListingPage> ListSellerListingsAsync(Guid accountId, int page, int pageSize, byte? status, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists the collections of one account, newest first.
+    /// </summary>
+    /// <param name="accountId">The account.</param>
+    /// <param name="page">The page, starting at 1.</param>
+    /// <param name="pageSize">The number of entries per page.</param>
+    /// <param name="kind">The kind to filter by, or <c>null</c> for every kind.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>One page of mailbox entries.</returns>
+    Task<AuctionCollectionPage> ListCollectionsAsync(Guid accountId, int page, int pageSize, byte? kind, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads listed items with their definition and options, read-only.
     /// </summary>
     /// <param name="itemIds">The items.</param>

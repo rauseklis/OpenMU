@@ -319,3 +319,11 @@ public readonly record struct AuctionCollectRequest(
 /// <param name="ServerTime">The server time, in UTC.</param>
 public readonly record struct AuctionCollectResult(AuctionResultCode Result, byte Kind, Guid? ItemId, long Amount, DateTimeOffset ServerTime);
 
+/// <summary>
+/// The result of a mailbox request.
+/// </summary>
+/// <param name="Result">The outcome.</param>
+/// <param name="Page">The entries on the page; empty when the request failed.</param>
+/// <param name="ServerTime">The server time, in UTC.</param>
+public readonly record struct AuctionMailboxResult(AuctionResultCode Result, AuctionCollectionPage Page, DateTimeOffset ServerTime);
+

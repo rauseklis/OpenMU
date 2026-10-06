@@ -193,4 +193,25 @@ public class AuctionHouseServiceTests
         Assert.That(items.ContainsKey(itemId), Is.True);
         Assert.That(items[itemId].Definition, Is.Not.Null);
     }
+
+    /// <summary>
+    /// Verifies my listings returns the seller's own listings with their status, and nobody else's.
+    /// </summary>
+    [Test]
+    public async Task MyListingsReturnsOnlyTheSellersListings()
+    {
+        var listingId = await this.List(startingPrice: 1000);
+        var service = this.CreateService();
+
+        var mine = await service.MyListingsAsync(this._sellerAccountId, 1, status: null);
+        var others = await service.MyListingsAsync(Guid.NewGuid(), 1, status: null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(mine.Result, Is.EqualTo(AuctionResultCode.Success));
+            Assert.That(mine.Page.Rows.Single().ListingId, Is.EqualTo(listingId));
+            Assert.That(mine.Page.Rows.Single().Status, Is.EqualTo(0));
+            Assert.That(others.Page.Rows, Is.Empty);
+        });
+    }
 }
