@@ -2,9 +2,10 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
-namespace MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
+namespace MUnique.OpenMU.GameLogic.AuctionHouse;
 
 using System.Threading;
+using MUnique.OpenMU.Persistence.AuctionHouse;
 
 /// <summary>
 /// The Auction House operations which only read: opening the window, browsing, and viewing one listing. They never lock
@@ -12,8 +13,7 @@ using System.Threading;
 /// </summary>
 public sealed class AuctionHouseService
 {
-    private readonly AuctionHouseRepository _repository;
-    private readonly Func<EntityDataContext> _contextFactory;
+    private readonly IAuctionHouseRepository _repository;
     private readonly AuctionHouseOptions _options;
     private readonly Func<DateTimeOffset> _clock;
 
@@ -21,19 +21,17 @@ public sealed class AuctionHouseService
     /// Initializes a new instance of the <see cref="AuctionHouseService"/> class.
     /// </summary>
     /// <param name="repository">The repository which runs the queries.</param>
-    /// <param name="contextFactory">Creates a context for each request.</param>
     /// <param name="options">The configured options.</param>
-    /// <param name="clock">The clock; the database time is used when this is not given.</param>
-    public AuctionHouseService(AuctionHouseRepository repository, Func<EntityDataContext> contextFactory, AuctionHouseOptions options, Func<DateTimeOffset>? clock = null)
+    /// <param name="clock">The clock. The current UTC time is used when this is not given.</param>
+    public AuctionHouseService(IAuctionHouseRepository repository, AuctionHouseOptions options, Func<DateTimeOffset>? clock = null)
     {
         this._repository = repository;
-        this._contextFactory = contextFactory;
         this._options = options;
         this._clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
     /// <summary>
-    /// Opens the window: reports whether the feature is enabled, the server time, and the account's pending Mailbox count.
+    /// Opens the window: reports the server time, the page size, and the account's pending Mailbox count.
     /// </summary>
     /// <param name="accountId">The account which opens the window.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -46,8 +44,7 @@ public sealed class AuctionHouseService
             return new AuctionOpenResult(AuctionResultCode.Disabled, 0, now, this._options.PageSize);
         }
 
-        await using var context = this._contextFactory();
-        var pending = await this._repository.CountPendingCollectionsAsync(context, accountId, cancellationToken);
+        var pending = await this._repository.CountPendingCollectionsAsync(accountId, cancellationToken);
         return new AuctionOpenResult(AuctionResultCode.Success, pending, now, this._options.PageSize);
     }
 
@@ -72,8 +69,7 @@ public sealed class AuctionHouseService
 
         try
         {
-            await using var context = this._contextFactory();
-            var page = await this._repository.SearchListingsAsync(context, search with { PageSize = this._options.PageSize }, cancellationToken);
+            var page = await this._repository.SearchListingsAsync(search with { PageSize = this._options.PageSize }, cancellationToken);
             return new AuctionBrowseResult(AuctionResultCode.Success, page, now);
         }
         catch (ArgumentException)
@@ -83,7 +79,7 @@ public sealed class AuctionHouseService
     }
 
     /// <summary>
-    /// Reads one listing, including its note and item snapshot.
+    /// Reads one listing, including its note.
     /// </summary>
     /// <param name="listingId">The listing to read.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -96,8 +92,7 @@ public sealed class AuctionHouseService
             return new AuctionDetailResult(AuctionResultCode.Disabled, null, now);
         }
 
-        await using var context = this._contextFactory();
-        var listing = await this._repository.GetListingAsync(context, listingId, cancellationToken);
+        var listing = await this._repository.GetListingAsync(listingId, cancellationToken);
         return listing is null
             ? new AuctionDetailResult(AuctionResultCode.ListingNotFound, null, now)
             : new AuctionDetailResult(AuctionResultCode.Success, listing, now);

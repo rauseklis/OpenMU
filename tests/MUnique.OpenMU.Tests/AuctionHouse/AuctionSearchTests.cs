@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.Tests.AuctionHouse;
 
 using MUnique.OpenMU.Persistence.EntityFramework;
 using MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
+using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
 using Microsoft.EntityFrameworkCore;
 

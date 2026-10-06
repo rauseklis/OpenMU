@@ -6,71 +6,15 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
+using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
 using Npgsql;
-
-/// <summary>
-/// The outcome of a listing creation.
-/// </summary>
-public enum AuctionCreateOutcome
-{
-    /// <summary>
-    /// The listing was created.
-    /// </summary>
-    Created,
-
-    /// <summary>
-    /// The operation was already processed; the stored outcome is returned and nothing was created.
-    /// </summary>
-    Replayed,
-
-    /// <summary>
-    /// The item already has an active listing.
-    /// </summary>
-    ItemAlreadyListed,
-}
-
-/// <summary>
-/// The result of a listing creation.
-/// </summary>
-/// <param name="Outcome">The outcome.</param>
-/// <param name="ListingId">The listing identifier, or an empty identifier when the listing was refused.</param>
-/// <param name="ListingNumber">The 64-bit listing number used on the wire, or zero when the listing was refused.</param>
-public readonly record struct AuctionCreateResult(AuctionCreateOutcome Outcome, Guid ListingId, long ListingNumber);
-
-/// <summary>
-/// The values for a new listing, along with the operation which requested it.
-/// </summary>
-/// <param name="OperationId">The client-generated operation identifier.</param>
-/// <param name="AccountId">The seller's account.</param>
-/// <param name="ItemId">The item to list.</param>
-/// <param name="SellerCharacterId">The seller's character.</param>
-/// <param name="SellerName">The seller's character name.</param>
-/// <param name="SellerIp">The seller's IP address.</param>
-/// <param name="Currency">The currency mode as its wire value.</param>
-/// <param name="Category">The category as its wire value.</param>
-/// <param name="StartingPrice">The scalar starting price.</param>
-/// <param name="CreatedAt">The creation time, in UTC.</param>
-/// <param name="EndsAt">The expiry, in UTC.</param>
-public readonly record struct AuctionListingDraft(
-    Guid OperationId,
-    Guid AccountId,
-    Guid ItemId,
-    Guid SellerCharacterId,
-    string SellerName,
-    string? SellerIp,
-    byte Currency,
-    byte Category,
-    long StartingPrice,
-    DateTimeOffset CreatedAt,
-    DateTimeOffset EndsAt,
-    long? BuyoutPrice = null);
 
 /// <summary>
 /// Persists Auction House operations. Each operation runs in one database transaction, and its operation record is
 /// written with it, so an operation either fully happens or not at all.
 /// </summary>
-public sealed class AuctionHouseRepository
+public sealed class AuctionHouseRepository : IAuctionHouseRepository
 {
     private const byte CreateKind = 0;
     private const int CreatedOutcome = 0;
@@ -87,14 +31,63 @@ public sealed class AuctionHouseRepository
     private const string ExpirySavepoint = "expiry_listing";
 
     private readonly int _moneyLimit;
+    private readonly Func<EntityDataContext> _contextFactory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuctionHouseRepository"/> class.
     /// </summary>
+    /// <param name="contextFactory">Creates a context for each operation of the interface. The default creates a new context.</param>
     /// <param name="moneyLimit">The maximum Zen an inventory may hold; the server's configured limit.</param>
-    public AuctionHouseRepository(int moneyLimit = DefaultMoneyLimit)
+    public AuctionHouseRepository(Func<EntityDataContext>? contextFactory = null, int moneyLimit = DefaultMoneyLimit)
     {
+        this._contextFactory = contextFactory ?? (() => new EntityDataContext());
         this._moneyLimit = moneyLimit;
+    }
+
+    /// <inheritdoc />
+    public Task<AuctionCreateResult> CreateListingAsync(AuctionListingDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.CreateListingAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionBidResult> PlaceScalarBidAsync(ScalarBidDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.PlaceScalarBidAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionBuyoutResult> BuyoutAsync(BuyoutDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.BuyoutAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionCancelResult> CancelAsync(CancelDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.CancelAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionExpireResult> ExpireAsync(ExpireDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ExpireAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<int> ExpireBatchAsync(DateTimeOffset now, int batchSize, Func<long, long> successFee, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ExpireBatchAsync(context, now, batchSize, successFee, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionClaimResult> ClaimAsync(ClaimDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ClaimAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionListingPage> SearchListingsAsync(AuctionListingSearch search, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.SearchListingsAsync(context, search, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<AuctionListingDetail?> GetListingAsync(Guid listingId, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.GetListingAsync(context, listingId, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<int> CountPendingCollectionsAsync(Guid accountId, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.CountPendingCollectionsAsync(context, accountId, cancellationToken));
+
+    private async Task<T> WithContextAsync<T>(Func<EntityDataContext, Task<T>> operation)
+    {
+        await using var context = this._contextFactory();
+        return await operation(context);
     }
 
     /// <summary>

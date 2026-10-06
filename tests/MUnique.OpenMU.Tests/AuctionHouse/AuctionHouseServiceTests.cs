@@ -7,6 +7,8 @@ namespace MUnique.OpenMU.Tests.AuctionHouse;
 using Microsoft.EntityFrameworkCore;
 using MUnique.OpenMU.Persistence.EntityFramework;
 using MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
+using MUnique.OpenMU.Persistence.AuctionHouse;
+using MUnique.OpenMU.GameLogic.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
 
 /// <summary>
@@ -148,7 +150,7 @@ public class AuctionHouseServiceTests
 
     private AuctionHouseService CreateService(bool enabled = true, int pageSize = 8)
     {
-        return new AuctionHouseService(new AuctionHouseRepository(), () => new EntityDataContext(), new AuctionHouseOptions
+        return new AuctionHouseService(new AuctionHouseRepository(), new AuctionHouseOptions
         {
             Enabled = enabled,
             PageSize = pageSize,
