@@ -77,6 +77,7 @@ public sealed class AuctionHouseRepository
     private const byte BidKind = 1;
     private const byte BuyoutKind = 2;
     private const byte CancelKind = 3;
+    private const byte ClaimKind = 4;
 
     /// <summary>
     /// Creates a listing together with its operation record. A repeated operation returns the stored outcome.
@@ -532,6 +533,70 @@ public sealed class AuctionHouseRepository
             UpdatedAt = now,
             Version = 0,
         };
+    }
+
+    /// <summary>
+    /// Claims a collection for its owning account. The collection is marked claimed by one conditional update, so it can
+    /// be claimed once for a given version, and a racing or repeated claim changes nothing.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="draft">The claim request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome, with the item or amount to deliver.</returns>
+    public async Task<AuctionClaimResult> ClaimAsync(EntityDataContext context, ClaimDraft draft, CancellationToken cancellationToken = default)
+    {
+        if (await context.Set<AuctionOperation>().AsNoTracking()
+                .AnyAsync(o => o.AccountId == draft.AccountId && o.OperationId == draft.OperationId && o.Kind == ClaimKind, cancellationToken))
+        {
+            return new AuctionClaimResult(AuctionClaimOutcome.Replayed, 0, null, 0);
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var claimed = await context.Set<AuctionCollection>()
+            .Where(c => c.Id == draft.CollectionId && c.AccountId == draft.AccountId && c.Version == draft.ExpectedVersion && c.Status != 2)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(c => c.Status, (byte)2)
+                .SetProperty(c => c.UpdatedAt, draft.Now)
+                .SetProperty(c => c.Version, c => c.Version + 1), cancellationToken);
+        if (claimed == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            var current = await context.Set<AuctionCollection>().AsNoTracking()
+                .Where(c => c.Id == draft.CollectionId && c.AccountId == draft.AccountId)
+                .Select(c => new { c.Version })
+                .SingleOrDefaultAsync(cancellationToken);
+            if (current is null)
+            {
+                return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
+            }
+
+            return new AuctionClaimResult(current.Version == draft.ExpectedVersion ? AuctionClaimOutcome.AlreadyClaimed : AuctionClaimOutcome.Stale, 0, null, 0);
+        }
+
+        var collection = await context.Set<AuctionCollection>().AsNoTracking().SingleAsync(c => c.Id == draft.CollectionId, cancellationToken);
+        context.Set<AuctionOperation>().Add(new AuctionOperation
+        {
+            Id = Guid.NewGuid(),
+            AccountId = draft.AccountId,
+            OperationId = draft.OperationId,
+            Kind = ClaimKind,
+            Outcome = CreatedOutcome,
+            CollectionId = collection.Id,
+            CreatedAt = draft.Now,
+        });
+
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return new AuctionClaimResult(AuctionClaimOutcome.Claimed, collection.Kind, collection.ItemId, collection.RemainingScalar ?? 0);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+            return new AuctionClaimResult(AuctionClaimOutcome.Replayed, 0, null, 0);
+        }
     }
 
     private async Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, AuctionListingDraft draft, CancellationToken cancellationToken)
