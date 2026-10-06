@@ -152,6 +152,7 @@ public sealed class AuctionHouseService
             AuctionItemListingOutcome.NotEligible or AuctionItemListingOutcome.ItemAlreadyListed => AuctionResultCode.ItemNotEligible,
             AuctionItemListingOutcome.ListingLimitReached => AuctionResultCode.ListingLimitReached,
             AuctionItemListingOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
+            AuctionItemListingOutcome.CharacterNotOwned => AuctionResultCode.InvalidRequest,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
         };
 
@@ -240,6 +241,7 @@ public sealed class AuctionHouseService
             AuctionBidOutcome.BidTooLow => AuctionResultCode.BidTooLow,
             AuctionBidOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
             AuctionBidOutcome.UnsupportedCurrency => AuctionResultCode.UnsupportedCurrency,
+            AuctionBidOutcome.CharacterNotOwned => AuctionResultCode.InvalidRequest,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
         };
 
@@ -254,6 +256,7 @@ public sealed class AuctionHouseService
             AuctionBuyoutOutcome.BuyoutUnavailable => AuctionResultCode.BuyoutUnavailable,
             AuctionBuyoutOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
             AuctionBuyoutOutcome.UnsupportedCurrency => AuctionResultCode.UnsupportedCurrency,
+            AuctionBuyoutOutcome.CharacterNotOwned => AuctionResultCode.InvalidRequest,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
         };
 

@@ -45,14 +45,14 @@ public class AuctionListItemTests
     [SetUp]
     public async Task Arrange()
     {
-        this._accountId = Guid.NewGuid();
-        var funded = await AuctionTestCharacters.FundAsync(this._connectionString, 10_000_000);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(this._connectionString, 10_000_000, 1);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no character to list from; use the populated copy.");
         }
 
-        this._characterId = funded.Value;
+        this._accountId = owners[0].AccountId;
+        this._characterId = owners[0].CharacterId;
         await using var context = new EntityDataContext();
         var inventoryId = await context.Set<Character>().Where(c => c.Id == this._characterId).Select(c => c.InventoryId).SingleAsync();
         this._inventoryId = inventoryId!.Value;
@@ -137,7 +137,7 @@ public class AuctionListItemTests
     [Test]
     public async Task InsufficientZenRefusesAndKeepsTheItem()
     {
-        await AuctionTestCharacters.FundAsync(this._connectionString, 5);
+        await this.SetMoneyAsync(5);
 
         var result = await this.CreateService().ListItemAsync(this.Request(startingPrice: 1000));
 
@@ -269,6 +269,16 @@ public class AuctionListItemTests
     {
         var used = await context.Set<Item>().AsNoTracking().Where(i => i.ItemStorageId == this._inventoryId).Select(i => i.ItemSlot).ToListAsync();
         return (byte)Enumerable.Range(InventoryConstants.EquippableSlotsCount, 64).First(slot => !used.Contains((byte)slot));
+    }
+
+    private async Task SetMoneyAsync(int money)
+    {
+        await using var connection = new NpgsqlConnection(this._connectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand("UPDATE data.\"ItemStorage\" SET \"Money\" = @money WHERE \"Id\" = @id", connection);
+        command.Parameters.AddWithValue("money", money);
+        command.Parameters.AddWithValue("id", this._inventoryId);
+        await command.ExecuteNonQueryAsync();
     }
 
     private async Task<int> GetMoneyAsync()

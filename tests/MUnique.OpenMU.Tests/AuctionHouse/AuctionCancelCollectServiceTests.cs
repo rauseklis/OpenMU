@@ -39,7 +39,6 @@ public class AuctionCancelCollectServiceTests
     public async Task Arrange()
     {
         this._sellerAccountId = Guid.NewGuid();
-        this._bidderAccountId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         var created = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
             OperationId: Guid.NewGuid(),
@@ -84,16 +83,17 @@ public class AuctionCancelCollectServiceTests
     [Test]
     public async Task ListingWithBidCannotBeCancelled()
     {
-        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000, 1);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no character to bid with; use the populated copy.");
         }
 
-        await new AuctionHouseRepository().PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
+        this._bidderAccountId = owners[0].AccountId;
+        var bid = await new AuctionHouseRepository().PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
             OperationId: Guid.NewGuid(),
             BidderAccountId: this._bidderAccountId,
-            BidderCharacterId: funded.Value,
+            BidderCharacterId: owners[0].CharacterId,
             ListingId: this._listingId,
             ExpectedVersion: 0,
             BidAmount: 1000,
@@ -101,6 +101,7 @@ public class AuctionCancelCollectServiceTests
             BidderIp: "127.0.0.1",
             Now: DateTimeOffset.UtcNow,
             NewEndsAt: DateTimeOffset.UtcNow.AddHours(24)));
+        Assert.That(bid.Outcome, Is.EqualTo(AuctionBidOutcome.Placed));
 
         var result = await this.CreateService().CancelAsync(this.Cancel(this._sellerAccountId, expectedVersion: 1));
 

@@ -25,6 +25,7 @@ public class AuctionBuyoutTests
     private Guid _buyerAccountId;
     private Guid _otherAccountId;
     private Guid _characterId;
+    private Guid _otherCharacterId;
     private Guid _listingId;
     private Guid _itemId;
     private int _version;
@@ -43,16 +44,17 @@ public class AuctionBuyoutTests
     [SetUp]
     public async Task Arrange()
     {
-        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000, 2);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no characters to bid with; use the populated copy.");
         }
 
-        this._characterId = funded.Value;
+        this._characterId = owners[0].CharacterId;
+        this._buyerAccountId = owners[0].AccountId;
+        this._otherCharacterId = owners[1].CharacterId;
         this._sellerAccountId = Guid.NewGuid();
-        this._buyerAccountId = Guid.NewGuid();
-        this._otherAccountId = Guid.NewGuid();
+        this._otherAccountId = owners[1].AccountId;
         this._itemId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         var created = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
@@ -221,13 +223,15 @@ public class AuctionBuyoutTests
         });
     }
 
+    private Guid CharacterOf(Guid account) => account == this._otherAccountId ? this._otherCharacterId : this._characterId;
+
     private Task<AuctionBuyoutResult> Buy(Guid buyer, int expectedVersion, Guid operationId)
     {
         var now = DateTimeOffset.UtcNow;
         return new AuctionHouseRepository().BuyoutAsync(new EntityDataContext(), new BuyoutDraft(
             OperationId: operationId,
             BuyerAccountId: buyer,
-            BuyerCharacterId: this._characterId,
+            BuyerCharacterId: CharacterOf(buyer),
             ListingId: this._listingId,
             ExpectedVersion: expectedVersion,
             SuccessFee: SuccessFee,
@@ -241,7 +245,7 @@ public class AuctionBuyoutTests
         return new AuctionHouseRepository().PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
             OperationId: operationId,
             BidderAccountId: bidder,
-            BidderCharacterId: this._characterId,
+            BidderCharacterId: CharacterOf(bidder),
             ListingId: this._listingId,
             ExpectedVersion: expectedVersion,
             BidAmount: amount,

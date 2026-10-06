@@ -42,16 +42,16 @@ public class AuctionCancelAndExpiryTests
     [SetUp]
     public async Task Arrange()
     {
-        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000, 1);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no characters to bid with; use the populated copy.");
         }
 
-        this._characterId = funded.Value;
+        this._characterId = owners[0].CharacterId;
+        this._bidderAccountId = owners[0].AccountId;
         this._sellerAccountId = Guid.NewGuid();
-        this._bidderAccountId = Guid.NewGuid();
-        this._itemId = Guid.NewGuid();
+                this._itemId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         var created = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
             OperationId: Guid.NewGuid(),
@@ -104,7 +104,7 @@ public class AuctionCancelAndExpiryTests
     [Test]
     public async Task ListingWithBidCannotBeCancelled()
     {
-        await this.Bid(Guid.NewGuid(), StartingPrice, this._version, Guid.NewGuid());
+        await this.Bid(this._bidderAccountId, StartingPrice, this._version, Guid.NewGuid());
         this._version++;
 
         var result = await this.Cancel(this._sellerAccountId, this._version, Guid.NewGuid());

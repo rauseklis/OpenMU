@@ -52,10 +52,10 @@ public class AuctionZenDebitTests
         await using var connection = new NpgsqlConnection(this._connectionString);
         await connection.OpenAsync();
         await using (var command = new NpgsqlCommand(
-            "SELECT c.\"InventoryId\", s.\"Money\", c2.\"InventoryId\", s2.\"Money\" FROM data.\"Character\" c " +
+            "SELECT c.\"InventoryId\", s.\"Money\", c2.\"InventoryId\", s2.\"Money\", c.\"AccountId\", c2.\"AccountId\" FROM data.\"Character\" c " +
             "JOIN data.\"ItemStorage\" s ON s.\"Id\" = c.\"InventoryId\" " +
             "JOIN data.\"Character\" c2 ON c2.\"Id\" <> c.\"Id\" JOIN data.\"ItemStorage\" s2 ON s2.\"Id\" = c2.\"InventoryId\" " +
-            "WHERE c.\"InventoryId\" IS NOT NULL AND c2.\"InventoryId\" IS NOT NULL LIMIT 1", connection))
+            "WHERE c.\"InventoryId\" IS NOT NULL AND c2.\"InventoryId\" IS NOT NULL AND c.\"AccountId\" IS NOT NULL AND c2.\"AccountId\" IS NOT NULL LIMIT 1", connection))
         await using (var reader = await command.ExecuteReaderAsync())
         {
             await reader.ReadAsync();
@@ -63,14 +63,14 @@ public class AuctionZenDebitTests
             this._originalMoneyA = reader.GetInt32(1);
             this._storageB = reader.GetGuid(2);
             this._originalMoneyB = reader.GetInt32(3);
+            this._accountA = reader.GetGuid(4);
+            this._accountB = reader.GetGuid(5);
         }
 
         await this.SetMoney(this._storageA, 5000);
         await this.SetMoney(this._storageB, 5000);
 
         this._sellerAccountId = Guid.NewGuid();
-        this._accountA = Guid.NewGuid();
-        this._accountB = Guid.NewGuid();
         this._version = 0;
         var now = DateTimeOffset.UtcNow;
         var created = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(

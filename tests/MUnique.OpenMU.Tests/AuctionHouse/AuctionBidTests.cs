@@ -23,6 +23,7 @@ public class AuctionBidTests
     private Guid _bidderOne;
     private Guid _bidderTwo;
     private Guid _characterId;
+    private Guid _characterTwo;
     private Guid _listingId;
     private int _version;
 
@@ -40,16 +41,17 @@ public class AuctionBidTests
     [SetUp]
     public async Task Arrange()
     {
-        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000, 2);
+        if (owners.Count == 0)
         {
-            Assert.Ignore("The database has no characters to bid with; use the populated copy.");
+            Assert.Ignore("The database has too few linked characters to bid with; use the populated copy.");
         }
 
-        this._characterId = funded.Value;
         this._sellerAccountId = Guid.NewGuid();
-        this._bidderOne = Guid.NewGuid();
-        this._bidderTwo = Guid.NewGuid();
+        this._bidderOne = owners[0].AccountId;
+        this._characterId = owners[0].CharacterId;
+        this._bidderTwo = owners[1].AccountId;
+        this._characterTwo = owners[1].CharacterId;
         var now = DateTimeOffset.UtcNow;
         var created = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
             OperationId: Guid.NewGuid(),
@@ -189,7 +191,7 @@ public class AuctionBidTests
         return repository.PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
             OperationId: operationId,
             BidderAccountId: bidder,
-            BidderCharacterId: this._characterId,
+            BidderCharacterId: bidder == this._bidderTwo ? this._characterTwo : this._characterId,
             ListingId: this._listingId,
             ExpectedVersion: expectedVersion,
             BidAmount: amount,
@@ -197,5 +199,26 @@ public class AuctionBidTests
             BidderIp: "127.0.0.1",
             Now: now,
             NewEndsAt: now.AddHours(24)));
+    }
+
+    /// <summary>
+    /// Verifies a bid paid from a character which belongs to another account is refused and nothing is escrowed.
+    /// </summary>
+    [Test]
+    public async Task BidFromAnotherAccountsCharacterIsRefused()
+    {
+        var result = await new AuctionHouseRepository().PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
+            OperationId: Guid.NewGuid(),
+            BidderAccountId: this._bidderOne,
+            BidderCharacterId: this._characterTwo,
+            ListingId: this._listingId,
+            ExpectedVersion: this._version,
+            BidAmount: 1000,
+            MinimumBid: 1000,
+            BidderIp: "127.0.0.1",
+            Now: DateTimeOffset.UtcNow,
+            NewEndsAt: DateTimeOffset.UtcNow.AddHours(24)));
+
+        Assert.That(result.Outcome, Is.EqualTo(AuctionBidOutcome.CharacterNotOwned));
     }
 }

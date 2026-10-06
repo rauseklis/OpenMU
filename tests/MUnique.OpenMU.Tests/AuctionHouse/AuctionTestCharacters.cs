@@ -45,4 +45,43 @@ public static class AuctionTestCharacters
         await update.ExecuteNonQueryAsync();
         return character;
     }
+
+    /// <summary>
+    /// Finds characters of distinct accounts which own an inventory, and sets each one's Zen to the given amount. The
+    /// characters belong to their accounts, so the Auction House ownership checks accept them.
+    /// </summary>
+    /// <param name="connectionString">The disposable database connection string.</param>
+    /// <param name="money">The Zen to set on each inventory.</param>
+    /// <param name="count">The number of owners to return.</param>
+    /// <returns>The owners, or an empty list when the database has fewer linked accounts.</returns>
+    public static async Task<IReadOnlyList<(Guid AccountId, Guid CharacterId)>> FundOwnedAsync(string connectionString, int money, int count)
+    {
+        var owners = new List<(Guid AccountId, Guid CharacterId)>();
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        await using (var select = new NpgsqlCommand(
+                         "SELECT DISTINCT ON (c.\"AccountId\") c.\"AccountId\", c.\"Id\", c.\"InventoryId\" FROM data.\"Character\" c " +
+                         "WHERE c.\"AccountId\" IS NOT NULL AND c.\"InventoryId\" IS NOT NULL ORDER BY c.\"AccountId\", c.\"Id\" LIMIT @count", connection))
+        {
+            select.Parameters.AddWithValue("count", count);
+            await using var reader = await select.ExecuteReaderAsync();
+            var storages = new List<Guid>();
+            while (await reader.ReadAsync())
+            {
+                owners.Add((reader.GetGuid(0), reader.GetGuid(1)));
+                storages.Add(reader.GetGuid(2));
+            }
+
+            await reader.CloseAsync();
+            foreach (var storage in storages)
+            {
+                await using var update = new NpgsqlCommand("UPDATE data.\"ItemStorage\" SET \"Money\" = @money WHERE \"Id\" = @id", connection);
+                update.Parameters.AddWithValue("money", money);
+                update.Parameters.AddWithValue("id", storage);
+                await update.ExecuteNonQueryAsync();
+            }
+        }
+
+        return owners.Count == count ? owners : Array.Empty<(Guid, Guid)>();
+    }
 }

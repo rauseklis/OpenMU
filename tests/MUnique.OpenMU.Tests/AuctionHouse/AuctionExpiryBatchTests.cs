@@ -124,8 +124,8 @@ public class AuctionExpiryBatchTests
     [Test]
     public async Task PoisonedListingIsRolledBackAloneAndStaysDue()
     {
-        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000, 1);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no characters to bid with; use the populated copy.");
         }
@@ -147,8 +147,8 @@ public class AuctionExpiryBatchTests
             EndsAt: endsAt));
         await repository.PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
             OperationId: Guid.NewGuid(),
-            BidderAccountId: Guid.NewGuid(),
-            BidderCharacterId: funded.Value,
+            BidderAccountId: owners[0].AccountId,
+            BidderCharacterId: owners[0].CharacterId,
             ListingId: poisoned.ListingId,
             ExpectedVersion: 0,
             BidAmount: 1500,

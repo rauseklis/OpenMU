@@ -41,15 +41,15 @@ public class AuctionClaimTests
     [SetUp]
     public async Task Arrange()
     {
-        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 0);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(AuctionPostgresTestEnvironment.ConnectionString!, 0, 1);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no characters to credit; use the populated copy.");
         }
 
-        this._characterId = funded.Value;
-        this._accountId = Guid.NewGuid();
-        this._otherAccountId = Guid.NewGuid();
+        this._characterId = owners[0].CharacterId;
+        this._accountId = owners[0].AccountId;
+                this._otherAccountId = Guid.NewGuid();
         this._itemId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         await using var context = new EntityDataContext();

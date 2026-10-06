@@ -45,14 +45,14 @@ public class AuctionBidBuyoutServiceTests
     public async Task Arrange()
     {
         this._sellerAccountId = Guid.NewGuid();
-        this._bidderAccountId = Guid.NewGuid();
-        var funded = await AuctionTestCharacters.FundAsync(this._connectionString, 10_000_000);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(this._connectionString, 10_000_000, 1);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no character to bid with; use the populated copy.");
         }
 
-        this._bidderCharacterId = funded.Value;
+        this._bidderAccountId = owners[0].AccountId;
+        this._bidderCharacterId = owners[0].CharacterId;
         this._listingId = await this.ListAsync(buyoutPrice: BuyoutPrice);
     }
 

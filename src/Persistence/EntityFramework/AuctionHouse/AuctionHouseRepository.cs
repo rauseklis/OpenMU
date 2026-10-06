@@ -237,6 +237,12 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBidResult(AuctionBidOutcome.UnsupportedCurrency);
         }
 
+        if (!await OwnsCharacterAsync(context, draft.BidderAccountId, draft.BidderCharacterId, cancellationToken))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBidResult(AuctionBidOutcome.CharacterNotOwned);
+        }
+
         if (!await DebitZenAsync(context, draft.BidderCharacterId, draft.BidAmount, cancellationToken))
         {
             await transaction.RollbackAsync(cancellationToken);
@@ -315,6 +321,18 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     /// Debits Zen from the character's inventory storage. The debit happens only when the balance covers it, in one
     /// conditional statement inside the caller's transaction.
     /// </summary>
+    /// <summary>
+    /// Checks that the character belongs to the account. Every Zen movement checks this, so a character can never be
+    /// debited or credited on behalf of another account.
+    /// </summary>
+    private static async Task<bool> OwnsCharacterAsync(EntityDataContext context, Guid accountId, Guid characterId, CancellationToken cancellationToken)
+    {
+        var owned = await context.Database.SqlQuery<int>(
+            $"SELECT COUNT(*)::int AS \"Value\" FROM data.\"Character\" WHERE \"Id\" = {characterId} AND \"AccountId\" = {accountId}")
+            .SingleAsync(cancellationToken);
+        return owned == 1;
+    }
+
     private static async Task<bool> DebitZenAsync(EntityDataContext context, Guid characterId, long amount, CancellationToken cancellationToken)
     {
         if (amount <= 0)
@@ -439,6 +457,12 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         var escrow = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
         var escrowedByBuyer = escrow is not null && escrow.BidderAccountId == draft.BuyerAccountId ? escrow.ScalarAmount ?? 0 : 0;
         var debit = price - escrowedByBuyer;
+        if (!await OwnsCharacterAsync(context, draft.BuyerAccountId, draft.BuyerCharacterId, cancellationToken))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBuyoutResult(AuctionBuyoutOutcome.CharacterNotOwned);
+        }
+
         if (!await DebitZenAsync(context, draft.BuyerCharacterId, debit, cancellationToken))
         {
             await transaction.RollbackAsync(cancellationToken);
@@ -808,6 +832,12 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
 
         if (collection.Currency == 0 && plan.ClaimedScalar > 0)
         {
+            if (!await OwnsCharacterAsync(context, draft.AccountId, draft.CharacterId, cancellationToken))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
+            }
+
             if (!await this.CreditZenAsync(context, draft.CharacterId, plan.ClaimedScalar, cancellationToken))
             {
                 await transaction.RollbackAsync(cancellationToken);
@@ -1112,6 +1142,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         if (accountListings >= draft.ListingLimitPerAccount || characterListings >= draft.ListingLimitPerCharacter)
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.ListingLimitReached, Guid.Empty, 0);
+        }
+
+        if (!await OwnsCharacterAsync(context, draft.AccountId, draft.CharacterId, cancellationToken))
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.CharacterNotOwned, Guid.Empty, 0);
         }
 
         if (!await DebitZenAsync(context, draft.CharacterId, draft.ListingFee, cancellationToken))

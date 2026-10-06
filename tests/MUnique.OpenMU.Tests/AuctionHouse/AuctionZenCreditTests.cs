@@ -45,13 +45,14 @@ public class AuctionZenCreditTests
     [SetUp]
     public async Task Arrange()
     {
-        var funded = await AuctionTestCharacters.FundAsync(this._connectionString, 0);
-        if (funded is null)
+        var owners = await AuctionTestCharacters.FundOwnedAsync(this._connectionString, 0, 1);
+        if (owners.Count == 0)
         {
             Assert.Ignore("The database has no characters to credit; use the populated copy.");
         }
 
-        this._characterId = funded.Value;
+        this._characterId = owners[0].CharacterId;
+        this._accountId = owners[0].AccountId;
         await using (var connection = new NpgsqlConnection(this._connectionString))
         {
             await connection.OpenAsync();
@@ -63,8 +64,7 @@ public class AuctionZenCreditTests
             this._originalMoney = reader.GetInt32(1);
         }
 
-        this._accountId = Guid.NewGuid();
-        var now = DateTimeOffset.UtcNow;
+                var now = DateTimeOffset.UtcNow;
         await using var context = new EntityDataContext();
         var refund = new AuctionCollection
         {

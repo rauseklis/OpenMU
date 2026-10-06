@@ -29,6 +29,9 @@ public enum AuctionItemListingOutcome
 
     /// <summary>The item already has an active listing or a pending collection.</summary>
     ItemAlreadyListed,
+
+    /// <summary>The character does not belong to the requesting account.</summary>
+    CharacterNotOwned,
 }
 
 /// <summary>

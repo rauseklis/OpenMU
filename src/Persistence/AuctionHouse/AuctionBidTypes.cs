@@ -53,6 +53,11 @@ public enum AuctionBidOutcome
     /// The listing's currency cannot yet be debited (jewel tender is not implemented).
     /// </summary>
     UnsupportedCurrency,
+
+    /// <summary>
+    /// The character does not belong to the requesting account.
+    /// </summary>
+    CharacterNotOwned,
 }
 
 /// <summary>
