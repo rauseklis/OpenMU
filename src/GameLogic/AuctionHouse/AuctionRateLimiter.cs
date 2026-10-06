@@ -56,6 +56,7 @@ public sealed class AuctionRateLimiter
             bucket.Updated = now;
             if (bucket.Tokens < 1)
             {
+                AuctionHouseMetrics.RecordRateLimited(cost);
                 return false;
             }
 

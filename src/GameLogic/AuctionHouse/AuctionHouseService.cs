@@ -141,6 +141,12 @@ public sealed class AuctionHouseService
             feeFruits,
             isFruits ? request.BuyoutFruits : null);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
+        AuctionHouseMetrics.RecordOperation("create", result.Outcome.ToString());
+        if (result.Outcome == AuctionItemListingOutcome.Created)
+        {
+            AuctionHouseMetrics.RecordListingFee(currency, draft.ListingFee, feeFruits);
+        }
+
         return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now);
     }
 
@@ -208,6 +214,7 @@ public sealed class AuctionHouseService
                 now,
                 AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now));
             var fruitResult = await this._repository.PlaceFruitBidAsync(fruitDraft, cancellationToken).ConfigureAwait(false);
+            AuctionHouseMetrics.RecordOperation("bid", fruitResult.Outcome.ToString());
             return new AuctionMutationResult(MapBidOutcome(fruitResult.Outcome), now);
         }
 
@@ -223,6 +230,7 @@ public sealed class AuctionHouseService
             now,
             AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now));
         var result = await this._repository.PlaceScalarBidAsync(draft, cancellationToken);
+        AuctionHouseMetrics.RecordOperation("bid", result.Outcome.ToString());
         return new AuctionMutationResult(MapBidOutcome(result.Outcome), now);
     }
 
@@ -250,6 +258,7 @@ public sealed class AuctionHouseService
         {
             var fruitBuyout = new FruitBuyoutDraft(request.OperationId, request.AccountId, request.CharacterId, request.ListingId, request.ExpectedVersion, request.BuyerIp, now, this._options.SuccessFeeBasisPoints);
             var fruitResult = await this._repository.PlaceFruitBuyoutAsync(fruitBuyout, cancellationToken).ConfigureAwait(false);
+            AuctionHouseMetrics.RecordOperation("buyout", fruitResult.Outcome.ToString());
             return new AuctionMutationResult(MapBuyoutOutcome(fruitResult.Outcome), now);
         }
 
@@ -268,6 +277,7 @@ public sealed class AuctionHouseService
             request.BuyerIp,
             now);
         var result = await this._repository.BuyoutAsync(draft, cancellationToken);
+        AuctionHouseMetrics.RecordOperation("buyout", result.Outcome.ToString());
         return new AuctionMutationResult(MapBuyoutOutcome(result.Outcome), now);
     }
 
@@ -317,6 +327,7 @@ public sealed class AuctionHouseService
 
         var draft = new CancelDraft(request.OperationId, request.AccountId, request.ListingId, request.ExpectedVersion, now);
         var result = await this._repository.CancelAsync(draft, cancellationToken);
+        AuctionHouseMetrics.RecordOperation("cancel", result.Outcome.ToString());
         return new AuctionMutationResult(MapCancelOutcome(result.Outcome), now);
     }
 
@@ -344,6 +355,7 @@ public sealed class AuctionHouseService
             request.RequestedScalar,
             request.RequestedFruits);
         var result = await this._repository.ClaimAsync(draft, cancellationToken);
+        AuctionHouseMetrics.RecordOperation("collect", result.Outcome.ToString());
         return new AuctionCollectResult(MapClaimOutcome(result.Outcome), result.Kind, result.ItemId, result.Amount, now);
     }
 
@@ -381,14 +393,16 @@ public sealed class AuctionHouseService
     /// <param name="batchSize">The maximum number of listings in this batch.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The number of listings finalized.</returns>
-    public Task<int> FinalizeDueListingsAsync(int batchSize, CancellationToken cancellationToken = default)
+    public async Task<int> FinalizeDueListingsAsync(int batchSize, CancellationToken cancellationToken = default)
     {
         if (!this._options.Enabled)
         {
-            return Task.FromResult(0);
+            return 0;
         }
 
-        return this._repository.ExpireBatchAsync(this._clock(), batchSize, price => AuctionRules.CalculateFee(price, this._options.SuccessFeeBasisPoints), cancellationToken);
+        var finalized = await this._repository.ExpireBatchAsync(this._clock(), batchSize, price => AuctionRules.CalculateFee(price, this._options.SuccessFeeBasisPoints), cancellationToken);
+        AuctionHouseMetrics.RecordExpiries(finalized);
+        return finalized;
     }
 
     /// <summary>
@@ -447,8 +461,12 @@ public sealed class AuctionHouseService
     /// </summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The broken invariants.</returns>
-    public Task<IReadOnlyList<AuctionReconciliationFinding>> ReconcileAsync(CancellationToken cancellationToken = default)
-        => this._repository.ReconcileAsync(cancellationToken);
+    public async Task<IReadOnlyList<AuctionReconciliationFinding>> ReconcileAsync(CancellationToken cancellationToken = default)
+    {
+        var findings = await this._repository.ReconcileAsync(cancellationToken);
+        AuctionHouseMetrics.RecordReconciliationFindings(findings);
+        return findings;
+    }
 
     /// <summary>
     /// Claims one batch of undelivered notifications and gives each to the delivery callback. The claim marks them delivered,
@@ -490,6 +508,7 @@ public sealed class AuctionHouseService
             }
         }
 
+        AuctionHouseMetrics.RecordNotifications(delivered, notOnline, failed);
         return new AuctionNotificationDeliveryResult(delivered, notOnline, failed);
     }
 
