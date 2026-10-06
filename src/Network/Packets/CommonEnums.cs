@@ -350,3 +350,452 @@ using static System.Buffers.Binary.BinaryPrimitives;    /// <summary>
             Doppelganger = 6,
     }
 
+    /// <summary>
+    /// Auction House result codes.
+    /// </summary>
+    public enum AuctionResult
+    {
+        /// <summary>
+        /// Success.
+        /// </summary>
+            Success = 0,
+
+        /// <summary>
+        /// Disabled.
+        /// </summary>
+            Disabled = 1,
+
+        /// <summary>
+        /// NotAuthenticated.
+        /// </summary>
+            NotAuthenticated = 2,
+
+        /// <summary>
+        /// StateRestricted.
+        /// </summary>
+            StateRestricted = 3,
+
+        /// <summary>
+        /// LevelTooLow.
+        /// </summary>
+            LevelTooLow = 4,
+
+        /// <summary>
+        /// AccountTooNew.
+        /// </summary>
+            AccountTooNew = 5,
+
+        /// <summary>
+        /// AccountRestricted.
+        /// </summary>
+            AccountRestricted = 6,
+
+        /// <summary>
+        /// RateLimited.
+        /// </summary>
+            RateLimited = 7,
+
+        /// <summary>
+        /// InvalidRequest.
+        /// </summary>
+            InvalidRequest = 8,
+
+        /// <summary>
+        /// UnsupportedCurrency.
+        /// </summary>
+            UnsupportedCurrency = 9,
+
+        /// <summary>
+        /// CurrencyConfigurationInvalid.
+        /// </summary>
+            CurrencyConfigurationInvalid = 10,
+
+        /// <summary>
+        /// InvalidDuration.
+        /// </summary>
+            InvalidDuration = 11,
+
+        /// <summary>
+        /// InvalidPrice.
+        /// </summary>
+            InvalidPrice = 12,
+
+        /// <summary>
+        /// InvalidFruitBasket.
+        /// </summary>
+            InvalidFruitBasket = 13,
+
+        /// <summary>
+        /// ItemNotFound.
+        /// </summary>
+            ItemNotFound = 14,
+
+        /// <summary>
+        /// ItemNotEligible.
+        /// </summary>
+            ItemNotEligible = 15,
+
+        /// <summary>
+        /// ListingLimitReached.
+        /// </summary>
+            ListingLimitReached = 16,
+
+        /// <summary>
+        /// InsufficientCurrency.
+        /// </summary>
+            InsufficientCurrency = 17,
+
+        /// <summary>
+        /// ListingNotFound.
+        /// </summary>
+            ListingNotFound = 18,
+
+        /// <summary>
+        /// ListingNotActive.
+        /// </summary>
+            ListingNotActive = 19,
+
+        /// <summary>
+        /// ListingExpired.
+        /// </summary>
+            ListingExpired = 20,
+
+        /// <summary>
+        /// StaleListing.
+        /// </summary>
+            StaleListing = 21,
+
+        /// <summary>
+        /// SelfTrade.
+        /// </summary>
+            SelfTrade = 22,
+
+        /// <summary>
+        /// AlreadyHighestBidder.
+        /// </summary>
+            AlreadyHighestBidder = 23,
+
+        /// <summary>
+        /// BidTooLow.
+        /// </summary>
+            BidTooLow = 24,
+
+        /// <summary>
+        /// BuyoutUnavailable.
+        /// </summary>
+            BuyoutUnavailable = 25,
+
+        /// <summary>
+        /// CannotCancelWithBid.
+        /// </summary>
+            CannotCancelWithBid = 26,
+
+        /// <summary>
+        /// CollectionNotFound.
+        /// </summary>
+            CollectionNotFound = 27,
+
+        /// <summary>
+        /// InvalidClaimQuantity.
+        /// </summary>
+            InvalidClaimQuantity = 28,
+
+        /// <summary>
+        /// InventoryFull.
+        /// </summary>
+            InventoryFull = 29,
+
+        /// <summary>
+        /// MoneyLimit.
+        /// </summary>
+            MoneyLimit = 30,
+
+        /// <summary>
+        /// AlreadyProcessed.
+        /// </summary>
+            AlreadyProcessed = 31,
+
+        /// <summary>
+        /// ServiceUnavailable.
+        /// </summary>
+            ServiceUnavailable = 32,
+    }
+
+    /// <summary>
+    /// Auction House currency modes.
+    /// </summary>
+    public enum AuctionCurrencyMode
+    {
+        /// <summary>
+        /// Zen.
+        /// </summary>
+            Zen = 0,
+
+        /// <summary>
+        /// Chaos.
+        /// </summary>
+            Chaos = 1,
+
+        /// <summary>
+        /// Bless.
+        /// </summary>
+            Bless = 2,
+
+        /// <summary>
+        /// Soul.
+        /// </summary>
+            Soul = 3,
+
+        /// <summary>
+        /// Life.
+        /// </summary>
+            Life = 4,
+
+        /// <summary>
+        /// Creation.
+        /// </summary>
+            Creation = 5,
+
+        /// <summary>
+        /// Guardian.
+        /// </summary>
+            Guardian = 6,
+
+        /// <summary>
+        /// Harmony.
+        /// </summary>
+            Harmony = 7,
+
+        /// <summary>
+        /// Fruits.
+        /// </summary>
+            Fruits = 8,
+    }
+
+    /// <summary>
+    /// Auction House categories.
+    /// </summary>
+    public enum AuctionCategory
+    {
+        /// <summary>
+        /// Weapon.
+        /// </summary>
+            Weapon = 0,
+
+        /// <summary>
+        /// Armor.
+        /// </summary>
+            Armor = 1,
+
+        /// <summary>
+        /// Wing.
+        /// </summary>
+            Wing = 2,
+
+        /// <summary>
+        /// PetHelper.
+        /// </summary>
+            PetHelper = 3,
+
+        /// <summary>
+        /// JewelMaterial.
+        /// </summary>
+            JewelMaterial = 4,
+
+        /// <summary>
+        /// Consumable.
+        /// </summary>
+            Consumable = 5,
+
+        /// <summary>
+        /// Miscellaneous.
+        /// </summary>
+            Miscellaneous = 6,
+    }
+
+    /// <summary>
+    /// Auction House sort orders.
+    /// </summary>
+    public enum AuctionSort
+    {
+        /// <summary>
+        /// PriceAscending.
+        /// </summary>
+            PriceAscending = 0,
+
+        /// <summary>
+        /// PriceDescending.
+        /// </summary>
+            PriceDescending = 1,
+
+        /// <summary>
+        /// EndingSoonest.
+        /// </summary>
+            EndingSoonest = 2,
+
+        /// <summary>
+        /// Newest.
+        /// </summary>
+            Newest = 3,
+    }
+
+    /// <summary>
+    /// Auction House listing states.
+    /// </summary>
+    public enum AuctionListingStatus
+    {
+        /// <summary>
+        /// Active.
+        /// </summary>
+            Active = 0,
+
+        /// <summary>
+        /// Sold.
+        /// </summary>
+            Sold = 1,
+
+        /// <summary>
+        /// Expired.
+        /// </summary>
+            Expired = 2,
+
+        /// <summary>
+        /// Cancelled.
+        /// </summary>
+            Cancelled = 3,
+
+        /// <summary>
+        /// AdminRemoved.
+        /// </summary>
+            AdminRemoved = 4,
+    }
+
+    /// <summary>
+    /// Auction House collection kinds.
+    /// </summary>
+    public enum AuctionCollectionKind
+    {
+        /// <summary>
+        /// PurchasedItem.
+        /// </summary>
+            PurchasedItem = 0,
+
+        /// <summary>
+        /// ReturnedItem.
+        /// </summary>
+            ReturnedItem = 1,
+
+        /// <summary>
+        /// SaleProceeds.
+        /// </summary>
+            SaleProceeds = 2,
+
+        /// <summary>
+        /// OutbidRefund.
+        /// </summary>
+            OutbidRefund = 3,
+
+        /// <summary>
+        /// TenderChange.
+        /// </summary>
+            TenderChange = 4,
+
+        /// <summary>
+        /// AdminRefund.
+        /// </summary>
+            AdminRefund = 5,
+    }
+
+    /// <summary>
+    /// Auction House collection states.
+    /// </summary>
+    public enum AuctionCollectionStatus
+    {
+        /// <summary>
+        /// Pending.
+        /// </summary>
+            Pending = 0,
+
+        /// <summary>
+        /// PartiallyClaimed.
+        /// </summary>
+            PartiallyClaimed = 1,
+
+        /// <summary>
+        /// Claimed.
+        /// </summary>
+            Claimed = 2,
+    }
+
+    /// <summary>
+    /// Auction House mutation kinds.
+    /// </summary>
+    public enum AuctionOperationType
+    {
+        /// <summary>
+        /// Create.
+        /// </summary>
+            Create = 0,
+
+        /// <summary>
+        /// Bid.
+        /// </summary>
+            Bid = 1,
+
+        /// <summary>
+        /// Buyout.
+        /// </summary>
+            Buyout = 2,
+
+        /// <summary>
+        /// Cancel.
+        /// </summary>
+            Cancel = 3,
+
+        /// <summary>
+        /// Collect.
+        /// </summary>
+            Collect = 4,
+    }
+
+    /// <summary>
+    /// Auction House notification kinds.
+    /// </summary>
+    public enum AuctionNotificationKind
+    {
+        /// <summary>
+        /// Outbid.
+        /// </summary>
+            Outbid = 0,
+
+        /// <summary>
+        /// Sold.
+        /// </summary>
+            Sold = 1,
+
+        /// <summary>
+        /// Bought.
+        /// </summary>
+            Bought = 2,
+
+        /// <summary>
+        /// Expired.
+        /// </summary>
+            Expired = 3,
+
+        /// <summary>
+        /// Returned.
+        /// </summary>
+            Returned = 4,
+
+        /// <summary>
+        /// Collected.
+        /// </summary>
+            Collected = 5,
+
+        /// <summary>
+        /// AdminAdjusted.
+        /// </summary>
+            AdminAdjusted = 6,
+    }
+

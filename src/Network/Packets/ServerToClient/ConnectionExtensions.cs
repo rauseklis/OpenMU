@@ -7982,4 +7982,224 @@ public static class ConnectionExtensions
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionDetailResponse" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="result">The result.</param>
+    /// <param name="serverTime">The server time.</param>
+    /// <param name="listingId">The listing id.</param>
+    /// <param name="version">The version.</param>
+    /// <param name="status">The status.</param>
+    /// <param name="currencyMode">The currency mode.</param>
+    /// <param name="category">The category.</param>
+    /// <param name="currentPriceScalar">The current price scalar.</param>
+    /// <param name="currentPriceStrength">The current price strength.</param>
+    /// <param name="currentPriceAgility">The current price agility.</param>
+    /// <param name="currentPriceVitality">The current price vitality.</param>
+    /// <param name="currentPriceEnergy">The current price energy.</param>
+    /// <param name="currentPriceCommand">The current price command.</param>
+    /// <param name="buyoutPriceScalar">The buyout price scalar.</param>
+    /// <param name="buyoutPriceStrength">The buyout price strength.</param>
+    /// <param name="buyoutPriceAgility">The buyout price agility.</param>
+    /// <param name="buyoutPriceVitality">The buyout price vitality.</param>
+    /// <param name="buyoutPriceEnergy">The buyout price energy.</param>
+    /// <param name="buyoutPriceCommand">The buyout price command.</param>
+    /// <param name="bidCount">The bid count.</param>
+    /// <param name="originalEndsAt">The original ends at.</param>
+    /// <param name="endsAt">The ends at.</param>
+    /// <param name="sellerName">The seller name.</param>
+    /// <param name="currentBidderName">The current bidder name.</param>
+    /// <param name="noteLength">The note length.</param>
+    /// <param name="note">The note.</param>
+    /// <param name="itemDataLength">The item data length.</param>
+    /// <param name="itemData">The item data.</param>
+    /// <remarks>
+    /// Is sent by the server when: Listing detail.
+    /// Causes reaction on client side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionDetailResponseAsync(this IConnection? connection, uint @requestId, AuctionResult @result, uint @serverTime, ulong @listingId, uint @version, AuctionListingStatus @status, AuctionCurrencyMode @currencyMode, AuctionCategory @category, uint @currentPriceScalar, uint @currentPriceStrength, uint @currentPriceAgility, uint @currentPriceVitality, uint @currentPriceEnergy, uint @currentPriceCommand, uint @buyoutPriceScalar, uint @buyoutPriceStrength, uint @buyoutPriceAgility, uint @buyoutPriceVitality, uint @buyoutPriceEnergy, uint @buyoutPriceCommand, ushort @bidCount, uint @originalEndsAt, uint @endsAt, Memory<byte> @sellerName, Memory<byte> @currentBidderName, byte @noteLength, Memory<byte> @note, byte @itemDataLength, Memory<byte> @itemData)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionDetailResponseRef.Length;
+            var packet = new AuctionDetailResponseRef(connection.Output.GetSpan(length)[..length]);
+            packet.RequestId = @requestId;
+            packet.Result = @result;
+            packet.ServerTime = @serverTime;
+            packet.ListingId = @listingId;
+            packet.Version = @version;
+            packet.Status = @status;
+            packet.CurrencyMode = @currencyMode;
+            packet.Category = @category;
+            packet.CurrentPriceScalar = @currentPriceScalar;
+            packet.CurrentPriceStrength = @currentPriceStrength;
+            packet.CurrentPriceAgility = @currentPriceAgility;
+            packet.CurrentPriceVitality = @currentPriceVitality;
+            packet.CurrentPriceEnergy = @currentPriceEnergy;
+            packet.CurrentPriceCommand = @currentPriceCommand;
+            packet.BuyoutPriceScalar = @buyoutPriceScalar;
+            packet.BuyoutPriceStrength = @buyoutPriceStrength;
+            packet.BuyoutPriceAgility = @buyoutPriceAgility;
+            packet.BuyoutPriceVitality = @buyoutPriceVitality;
+            packet.BuyoutPriceEnergy = @buyoutPriceEnergy;
+            packet.BuyoutPriceCommand = @buyoutPriceCommand;
+            packet.BidCount = @bidCount;
+            packet.OriginalEndsAt = @originalEndsAt;
+            packet.EndsAt = @endsAt;
+            @sellerName.Span.CopyTo(packet.SellerName);
+            @currentBidderName.Span.CopyTo(packet.CurrentBidderName);
+            packet.NoteLength = @noteLength;
+            @note.Span.CopyTo(packet.Note);
+            packet.ItemDataLength = @itemDataLength;
+            @itemData.Span.CopyTo(packet.ItemData);
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionOperationResponse" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="operationType">The operation type.</param>
+    /// <param name="result">The result.</param>
+    /// <param name="listingId">The listing id.</param>
+    /// <param name="collectionId">The collection id.</param>
+    /// <param name="listingVersion">The listing version.</param>
+    /// <param name="currencyMode">The currency mode.</param>
+    /// <param name="feeScalar">The fee scalar.</param>
+    /// <param name="feeStrength">The fee strength.</param>
+    /// <param name="feeAgility">The fee agility.</param>
+    /// <param name="feeVitality">The fee vitality.</param>
+    /// <param name="feeEnergy">The fee energy.</param>
+    /// <param name="feeCommand">The fee command.</param>
+    /// <param name="spendableScalar">The spendable scalar.</param>
+    /// <param name="spendableStrength">The spendable strength.</param>
+    /// <param name="spendableAgility">The spendable agility.</param>
+    /// <param name="spendableVitality">The spendable vitality.</param>
+    /// <param name="spendableEnergy">The spendable energy.</param>
+    /// <param name="spendableCommand">The spendable command.</param>
+    /// <param name="claimedScalar">The claimed scalar.</param>
+    /// <param name="claimedStrength">The claimed strength.</param>
+    /// <param name="claimedAgility">The claimed agility.</param>
+    /// <param name="claimedVitality">The claimed vitality.</param>
+    /// <param name="claimedEnergy">The claimed energy.</param>
+    /// <param name="claimedCommand">The claimed command.</param>
+    /// <param name="remainingScalar">The remaining scalar.</param>
+    /// <param name="remainingStrength">The remaining strength.</param>
+    /// <param name="remainingAgility">The remaining agility.</param>
+    /// <param name="remainingVitality">The remaining vitality.</param>
+    /// <param name="remainingEnergy">The remaining energy.</param>
+    /// <param name="remainingCommand">The remaining command.</param>
+    /// <param name="serverTime">The server time.</param>
+    /// <remarks>
+    /// Is sent by the server when: Result of a mutation.
+    /// Causes reaction on client side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionOperationResponseAsync(this IConnection? connection, Memory<byte> @operationId, AuctionOperationType @operationType, AuctionResult @result, ulong @listingId, ulong @collectionId, uint @listingVersion, AuctionCurrencyMode @currencyMode, uint @feeScalar, uint @feeStrength, uint @feeAgility, uint @feeVitality, uint @feeEnergy, uint @feeCommand, uint @spendableScalar, uint @spendableStrength, uint @spendableAgility, uint @spendableVitality, uint @spendableEnergy, uint @spendableCommand, uint @claimedScalar, uint @claimedStrength, uint @claimedAgility, uint @claimedVitality, uint @claimedEnergy, uint @claimedCommand, uint @remainingScalar, uint @remainingStrength, uint @remainingAgility, uint @remainingVitality, uint @remainingEnergy, uint @remainingCommand, uint @serverTime)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionOperationResponseRef.Length;
+            var packet = new AuctionOperationResponseRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.OperationType = @operationType;
+            packet.Result = @result;
+            packet.ListingId = @listingId;
+            packet.CollectionId = @collectionId;
+            packet.ListingVersion = @listingVersion;
+            packet.CurrencyMode = @currencyMode;
+            packet.FeeScalar = @feeScalar;
+            packet.FeeStrength = @feeStrength;
+            packet.FeeAgility = @feeAgility;
+            packet.FeeVitality = @feeVitality;
+            packet.FeeEnergy = @feeEnergy;
+            packet.FeeCommand = @feeCommand;
+            packet.SpendableScalar = @spendableScalar;
+            packet.SpendableStrength = @spendableStrength;
+            packet.SpendableAgility = @spendableAgility;
+            packet.SpendableVitality = @spendableVitality;
+            packet.SpendableEnergy = @spendableEnergy;
+            packet.SpendableCommand = @spendableCommand;
+            packet.ClaimedScalar = @claimedScalar;
+            packet.ClaimedStrength = @claimedStrength;
+            packet.ClaimedAgility = @claimedAgility;
+            packet.ClaimedVitality = @claimedVitality;
+            packet.ClaimedEnergy = @claimedEnergy;
+            packet.ClaimedCommand = @claimedCommand;
+            packet.RemainingScalar = @remainingScalar;
+            packet.RemainingStrength = @remainingStrength;
+            packet.RemainingAgility = @remainingAgility;
+            packet.RemainingVitality = @remainingVitality;
+            packet.RemainingEnergy = @remainingEnergy;
+            packet.RemainingCommand = @remainingCommand;
+            packet.ServerTime = @serverTime;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionNotification" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="notificationKind">The notification kind.</param>
+    /// <param name="listingId">The listing id.</param>
+    /// <param name="currencyMode">The currency mode.</param>
+    /// <param name="amountScalar">The amount scalar.</param>
+    /// <param name="amountStrength">The amount strength.</param>
+    /// <param name="amountAgility">The amount agility.</param>
+    /// <param name="amountVitality">The amount vitality.</param>
+    /// <param name="amountEnergy">The amount energy.</param>
+    /// <param name="amountCommand">The amount command.</param>
+    /// <param name="pendingMailboxCount">The pending mailbox count.</param>
+    /// <remarks>
+    /// Is sent by the server when: Real-time Auction House notification.
+    /// Causes reaction on client side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionNotificationAsync(this IConnection? connection, AuctionNotificationKind @notificationKind, ulong @listingId, AuctionCurrencyMode @currencyMode, uint @amountScalar, uint @amountStrength, uint @amountAgility, uint @amountVitality, uint @amountEnergy, uint @amountCommand, ushort @pendingMailboxCount)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionNotificationRef.Length;
+            var packet = new AuctionNotificationRef(connection.Output.GetSpan(length)[..length]);
+            packet.NotificationKind = @notificationKind;
+            packet.ListingId = @listingId;
+            packet.CurrencyMode = @currencyMode;
+            packet.AmountScalar = @amountScalar;
+            packet.AmountStrength = @amountStrength;
+            packet.AmountAgility = @amountAgility;
+            packet.AmountVitality = @amountVitality;
+            packet.AmountEnergy = @amountEnergy;
+            packet.AmountCommand = @amountCommand;
+            packet.PendingMailboxCount = @pendingMailboxCount;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }}

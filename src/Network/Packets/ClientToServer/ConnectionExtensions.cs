@@ -5572,4 +5572,414 @@ public static class ConnectionExtensions
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionOpenRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="requestId">The request id.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionOpenRequest (sub 00).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionOpenRequestAsync(this IConnection? connection, uint @requestId)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionOpenRequestRef.Length;
+            var packet = new AuctionOpenRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.RequestId = @requestId;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionBrowseRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="page">The page.</param>
+    /// <param name="category">The category.</param>
+    /// <param name="currencyMode">The currency mode.</param>
+    /// <param name="sort">The sort.</param>
+    /// <param name="classMask">The class mask.</param>
+    /// <param name="levelMinimum">The level minimum.</param>
+    /// <param name="levelMaximum">The level maximum.</param>
+    /// <param name="optionFlags">The option flags.</param>
+    /// <param name="minimumScalar">The minimum scalar.</param>
+    /// <param name="minimumStrength">The minimum strength.</param>
+    /// <param name="minimumAgility">The minimum agility.</param>
+    /// <param name="minimumVitality">The minimum vitality.</param>
+    /// <param name="minimumEnergy">The minimum energy.</param>
+    /// <param name="minimumCommand">The minimum command.</param>
+    /// <param name="maximumScalar">The maximum scalar.</param>
+    /// <param name="maximumStrength">The maximum strength.</param>
+    /// <param name="maximumAgility">The maximum agility.</param>
+    /// <param name="maximumVitality">The maximum vitality.</param>
+    /// <param name="maximumEnergy">The maximum energy.</param>
+    /// <param name="maximumCommand">The maximum command.</param>
+    /// <param name="maxRemainingHours">The max remaining hours.</param>
+    /// <param name="nameLength">The name length.</param>
+    /// <param name="name">The name.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionBrowseRequest (sub 01).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionBrowseRequestAsync(this IConnection? connection, uint @requestId, ushort @page, byte @category, AuctionCurrencyMode @currencyMode, AuctionSort @sort, uint @classMask, byte @levelMinimum, byte @levelMaximum, ushort @optionFlags, uint @minimumScalar, uint @minimumStrength, uint @minimumAgility, uint @minimumVitality, uint @minimumEnergy, uint @minimumCommand, uint @maximumScalar, uint @maximumStrength, uint @maximumAgility, uint @maximumVitality, uint @maximumEnergy, uint @maximumCommand, ushort @maxRemainingHours, byte @nameLength, Memory<byte> @name)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionBrowseRequestRef.Length;
+            var packet = new AuctionBrowseRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.RequestId = @requestId;
+            packet.Page = @page;
+            packet.Category = @category;
+            packet.CurrencyMode = @currencyMode;
+            packet.Sort = @sort;
+            packet.ClassMask = @classMask;
+            packet.LevelMinimum = @levelMinimum;
+            packet.LevelMaximum = @levelMaximum;
+            packet.OptionFlags = @optionFlags;
+            packet.MinimumScalar = @minimumScalar;
+            packet.MinimumStrength = @minimumStrength;
+            packet.MinimumAgility = @minimumAgility;
+            packet.MinimumVitality = @minimumVitality;
+            packet.MinimumEnergy = @minimumEnergy;
+            packet.MinimumCommand = @minimumCommand;
+            packet.MaximumScalar = @maximumScalar;
+            packet.MaximumStrength = @maximumStrength;
+            packet.MaximumAgility = @maximumAgility;
+            packet.MaximumVitality = @maximumVitality;
+            packet.MaximumEnergy = @maximumEnergy;
+            packet.MaximumCommand = @maximumCommand;
+            packet.MaxRemainingHours = @maxRemainingHours;
+            packet.NameLength = @nameLength;
+            @name.Span.CopyTo(packet.Name);
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionDetailRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="listingId">The listing id.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionDetailRequest (sub 02).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionDetailRequestAsync(this IConnection? connection, uint @requestId, ulong @listingId)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionDetailRequestRef.Length;
+            var packet = new AuctionDetailRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.RequestId = @requestId;
+            packet.ListingId = @listingId;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionCreateRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="inventorySlot">The inventory slot.</param>
+    /// <param name="currencyMode">The currency mode.</param>
+    /// <param name="startingScalar">The starting scalar.</param>
+    /// <param name="startingStrength">The starting strength.</param>
+    /// <param name="startingAgility">The starting agility.</param>
+    /// <param name="startingVitality">The starting vitality.</param>
+    /// <param name="startingEnergy">The starting energy.</param>
+    /// <param name="startingCommand">The starting command.</param>
+    /// <param name="buyoutScalar">The buyout scalar.</param>
+    /// <param name="buyoutStrength">The buyout strength.</param>
+    /// <param name="buyoutAgility">The buyout agility.</param>
+    /// <param name="buyoutVitality">The buyout vitality.</param>
+    /// <param name="buyoutEnergy">The buyout energy.</param>
+    /// <param name="buyoutCommand">The buyout command.</param>
+    /// <param name="durationHours">The duration hours.</param>
+    /// <param name="noteLength">The note length.</param>
+    /// <param name="note">The note.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionCreateRequest (sub 03).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionCreateRequestAsync(this IConnection? connection, Memory<byte> @operationId, byte @inventorySlot, AuctionCurrencyMode @currencyMode, uint @startingScalar, uint @startingStrength, uint @startingAgility, uint @startingVitality, uint @startingEnergy, uint @startingCommand, uint @buyoutScalar, uint @buyoutStrength, uint @buyoutAgility, uint @buyoutVitality, uint @buyoutEnergy, uint @buyoutCommand, byte @durationHours, byte @noteLength, Memory<byte> @note)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionCreateRequestRef.Length;
+            var packet = new AuctionCreateRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.InventorySlot = @inventorySlot;
+            packet.CurrencyMode = @currencyMode;
+            packet.StartingScalar = @startingScalar;
+            packet.StartingStrength = @startingStrength;
+            packet.StartingAgility = @startingAgility;
+            packet.StartingVitality = @startingVitality;
+            packet.StartingEnergy = @startingEnergy;
+            packet.StartingCommand = @startingCommand;
+            packet.BuyoutScalar = @buyoutScalar;
+            packet.BuyoutStrength = @buyoutStrength;
+            packet.BuyoutAgility = @buyoutAgility;
+            packet.BuyoutVitality = @buyoutVitality;
+            packet.BuyoutEnergy = @buyoutEnergy;
+            packet.BuyoutCommand = @buyoutCommand;
+            packet.DurationHours = @durationHours;
+            packet.NoteLength = @noteLength;
+            @note.Span.CopyTo(packet.Note);
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionBidRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="listingId">The listing id.</param>
+    /// <param name="expectedVersion">The expected version.</param>
+    /// <param name="bidScalar">The bid scalar.</param>
+    /// <param name="bidStrength">The bid strength.</param>
+    /// <param name="bidAgility">The bid agility.</param>
+    /// <param name="bidVitality">The bid vitality.</param>
+    /// <param name="bidEnergy">The bid energy.</param>
+    /// <param name="bidCommand">The bid command.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionBidRequest (sub 04).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionBidRequestAsync(this IConnection? connection, Memory<byte> @operationId, ulong @listingId, uint @expectedVersion, uint @bidScalar, uint @bidStrength, uint @bidAgility, uint @bidVitality, uint @bidEnergy, uint @bidCommand)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionBidRequestRef.Length;
+            var packet = new AuctionBidRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.ListingId = @listingId;
+            packet.ExpectedVersion = @expectedVersion;
+            packet.BidScalar = @bidScalar;
+            packet.BidStrength = @bidStrength;
+            packet.BidAgility = @bidAgility;
+            packet.BidVitality = @bidVitality;
+            packet.BidEnergy = @bidEnergy;
+            packet.BidCommand = @bidCommand;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionBuyoutRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="listingId">The listing id.</param>
+    /// <param name="expectedVersion">The expected version.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionBuyoutRequest (sub 05).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionBuyoutRequestAsync(this IConnection? connection, Memory<byte> @operationId, ulong @listingId, uint @expectedVersion)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionBuyoutRequestRef.Length;
+            var packet = new AuctionBuyoutRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.ListingId = @listingId;
+            packet.ExpectedVersion = @expectedVersion;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionCancelRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="listingId">The listing id.</param>
+    /// <param name="expectedVersion">The expected version.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionCancelRequest (sub 06).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionCancelRequestAsync(this IConnection? connection, Memory<byte> @operationId, ulong @listingId, uint @expectedVersion)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionCancelRequestRef.Length;
+            var packet = new AuctionCancelRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.ListingId = @listingId;
+            packet.ExpectedVersion = @expectedVersion;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionMyListingsRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="page">The page.</param>
+    /// <param name="statusFilter">The status filter.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionMyListingsRequest (sub 07).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionMyListingsRequestAsync(this IConnection? connection, uint @requestId, ushort @page, byte @statusFilter)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionMyListingsRequestRef.Length;
+            var packet = new AuctionMyListingsRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.RequestId = @requestId;
+            packet.Page = @page;
+            packet.StatusFilter = @statusFilter;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionMailboxRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="requestId">The request id.</param>
+    /// <param name="page">The page.</param>
+    /// <param name="kindFilter">The kind filter.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionMailboxRequest (sub 08).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionMailboxRequestAsync(this IConnection? connection, uint @requestId, ushort @page, byte @kindFilter)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionMailboxRequestRef.Length;
+            var packet = new AuctionMailboxRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.RequestId = @requestId;
+            packet.Page = @page;
+            packet.KindFilter = @kindFilter;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="AuctionCollectRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="collectionId">The collection id.</param>
+    /// <param name="expectedVersion">The expected version.</param>
+    /// <param name="requestedScalar">The requested scalar.</param>
+    /// <param name="requestedStrength">The requested strength.</param>
+    /// <param name="requestedAgility">The requested agility.</param>
+    /// <param name="requestedVitality">The requested vitality.</param>
+    /// <param name="requestedEnergy">The requested energy.</param>
+    /// <param name="requestedCommand">The requested command.</param>
+    /// <remarks>
+    /// Is sent by the client when: Auction House request AuctionCollectRequest (sub 09).
+    /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+    /// </remarks>
+    public static async ValueTask SendAuctionCollectRequestAsync(this IConnection? connection, Memory<byte> @operationId, ulong @collectionId, uint @expectedVersion, uint @requestedScalar, uint @requestedStrength, uint @requestedAgility, uint @requestedVitality, uint @requestedEnergy, uint @requestedCommand)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = AuctionCollectRequestRef.Length;
+            var packet = new AuctionCollectRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.CollectionId = @collectionId;
+            packet.ExpectedVersion = @expectedVersion;
+            packet.RequestedScalar = @requestedScalar;
+            packet.RequestedStrength = @requestedStrength;
+            packet.RequestedAgility = @requestedAgility;
+            packet.RequestedVitality = @requestedVitality;
+            packet.RequestedEnergy = @requestedEnergy;
+            packet.RequestedCommand = @requestedCommand;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }}

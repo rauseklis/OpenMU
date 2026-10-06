@@ -26,6 +26,11 @@ public enum PacketType : byte
     Walk = 0xD4,
 
     /// <summary>
+    /// The Auction House packet head. The sub-code selects the request or response.
+    /// </summary>
+    AuctionHouse = 0xD5,
+
+    /// <summary>
     /// A teleport packet.
     /// </summary>
     /// <remarks>ENG protocol specific.</remarks>

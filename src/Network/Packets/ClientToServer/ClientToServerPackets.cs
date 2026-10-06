@@ -17590,6 +17590,1444 @@ public readonly struct ChatCommandListRequest
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Memory<byte>(ChatCommandListRequest packet) => packet._data; 
 }
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionOpenRequest (sub 00).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionOpenRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionOpenRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionOpenRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionOpenRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionOpenRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x00;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 8;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the request id.
+    /// </summary>
+    public uint RequestId
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[4..]);
+        set => WriteUInt32LittleEndian(this._data.Span[4..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionOpenRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionOpenRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionOpenRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionOpenRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionBrowseRequest (sub 01).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionBrowseRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionBrowseRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionBrowseRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionBrowseRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionBrowseRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x01;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 104;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the request id.
+    /// </summary>
+    public uint RequestId
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[4..]);
+        set => WriteUInt32LittleEndian(this._data.Span[4..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the page.
+    /// </summary>
+    public ushort Page
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[8..]);
+        set => WriteUInt16LittleEndian(this._data.Span[8..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the category.
+    /// </summary>
+    public byte Category
+    {
+        get => this._data.Span[10];
+        set => this._data.Span[10] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the currency mode.
+    /// </summary>
+    public AuctionCurrencyMode CurrencyMode
+    {
+        get => (AuctionCurrencyMode)this._data.Span[11];
+        set => this._data.Span[11] = (byte)value;
+    }
+
+    /// <summary>
+    /// Gets or sets the sort.
+    /// </summary>
+    public AuctionSort Sort
+    {
+        get => (AuctionSort)this._data.Span[12];
+        set => this._data.Span[12] = (byte)value;
+    }
+
+    /// <summary>
+    /// Gets or sets the class mask.
+    /// </summary>
+    public uint ClassMask
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[13..]);
+        set => WriteUInt32LittleEndian(this._data.Span[13..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the level minimum.
+    /// </summary>
+    public byte LevelMinimum
+    {
+        get => this._data.Span[17];
+        set => this._data.Span[17] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the level maximum.
+    /// </summary>
+    public byte LevelMaximum
+    {
+        get => this._data.Span[18];
+        set => this._data.Span[18] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the option flags.
+    /// </summary>
+    public ushort OptionFlags
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[19..]);
+        set => WriteUInt16LittleEndian(this._data.Span[19..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the minimum scalar.
+    /// </summary>
+    public uint MinimumScalar
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[21..]);
+        set => WriteUInt32LittleEndian(this._data.Span[21..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the minimum strength.
+    /// </summary>
+    public uint MinimumStrength
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[25..]);
+        set => WriteUInt32LittleEndian(this._data.Span[25..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the minimum agility.
+    /// </summary>
+    public uint MinimumAgility
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[29..]);
+        set => WriteUInt32LittleEndian(this._data.Span[29..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the minimum vitality.
+    /// </summary>
+    public uint MinimumVitality
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[33..]);
+        set => WriteUInt32LittleEndian(this._data.Span[33..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the minimum energy.
+    /// </summary>
+    public uint MinimumEnergy
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[37..]);
+        set => WriteUInt32LittleEndian(this._data.Span[37..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the minimum command.
+    /// </summary>
+    public uint MinimumCommand
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[41..]);
+        set => WriteUInt32LittleEndian(this._data.Span[41..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum scalar.
+    /// </summary>
+    public uint MaximumScalar
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[45..]);
+        set => WriteUInt32LittleEndian(this._data.Span[45..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum strength.
+    /// </summary>
+    public uint MaximumStrength
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[49..]);
+        set => WriteUInt32LittleEndian(this._data.Span[49..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum agility.
+    /// </summary>
+    public uint MaximumAgility
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[53..]);
+        set => WriteUInt32LittleEndian(this._data.Span[53..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum vitality.
+    /// </summary>
+    public uint MaximumVitality
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[57..]);
+        set => WriteUInt32LittleEndian(this._data.Span[57..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum energy.
+    /// </summary>
+    public uint MaximumEnergy
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[61..]);
+        set => WriteUInt32LittleEndian(this._data.Span[61..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum command.
+    /// </summary>
+    public uint MaximumCommand
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[65..]);
+        set => WriteUInt32LittleEndian(this._data.Span[65..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the max remaining hours.
+    /// </summary>
+    public ushort MaxRemainingHours
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[69..]);
+        set => WriteUInt16LittleEndian(this._data.Span[69..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the name length.
+    /// </summary>
+    public byte NameLength
+    {
+        get => this._data.Span[71];
+        set => this._data.Span[71] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the name.
+    /// </summary>
+    public Span<byte> Name
+    {
+        get => this._data.Slice(72, 32).Span;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionBrowseRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionBrowseRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionBrowseRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionBrowseRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionDetailRequest (sub 02).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionDetailRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionDetailRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionDetailRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionDetailRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionDetailRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x02;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 16;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the request id.
+    /// </summary>
+    public uint RequestId
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[4..]);
+        set => WriteUInt32LittleEndian(this._data.Span[4..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the listing id.
+    /// </summary>
+    public ulong ListingId
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[8..]);
+        set => WriteUInt64LittleEndian(this._data.Span[8..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionDetailRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionDetailRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionDetailRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionDetailRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionCreateRequest (sub 03).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionCreateRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionCreateRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionCreateRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionCreateRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionCreateRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x03;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 152;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory slot.
+    /// </summary>
+    public byte InventorySlot
+    {
+        get => this._data.Span[20];
+        set => this._data.Span[20] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the currency mode.
+    /// </summary>
+    public AuctionCurrencyMode CurrencyMode
+    {
+        get => (AuctionCurrencyMode)this._data.Span[21];
+        set => this._data.Span[21] = (byte)value;
+    }
+
+    /// <summary>
+    /// Gets or sets the starting scalar.
+    /// </summary>
+    public uint StartingScalar
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[22..]);
+        set => WriteUInt32LittleEndian(this._data.Span[22..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the starting strength.
+    /// </summary>
+    public uint StartingStrength
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[26..]);
+        set => WriteUInt32LittleEndian(this._data.Span[26..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the starting agility.
+    /// </summary>
+    public uint StartingAgility
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[30..]);
+        set => WriteUInt32LittleEndian(this._data.Span[30..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the starting vitality.
+    /// </summary>
+    public uint StartingVitality
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[34..]);
+        set => WriteUInt32LittleEndian(this._data.Span[34..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the starting energy.
+    /// </summary>
+    public uint StartingEnergy
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[38..]);
+        set => WriteUInt32LittleEndian(this._data.Span[38..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the starting command.
+    /// </summary>
+    public uint StartingCommand
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[42..]);
+        set => WriteUInt32LittleEndian(this._data.Span[42..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout scalar.
+    /// </summary>
+    public uint BuyoutScalar
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[46..]);
+        set => WriteUInt32LittleEndian(this._data.Span[46..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout strength.
+    /// </summary>
+    public uint BuyoutStrength
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[50..]);
+        set => WriteUInt32LittleEndian(this._data.Span[50..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout agility.
+    /// </summary>
+    public uint BuyoutAgility
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[54..]);
+        set => WriteUInt32LittleEndian(this._data.Span[54..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout vitality.
+    /// </summary>
+    public uint BuyoutVitality
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[58..]);
+        set => WriteUInt32LittleEndian(this._data.Span[58..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout energy.
+    /// </summary>
+    public uint BuyoutEnergy
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[62..]);
+        set => WriteUInt32LittleEndian(this._data.Span[62..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout command.
+    /// </summary>
+    public uint BuyoutCommand
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[66..]);
+        set => WriteUInt32LittleEndian(this._data.Span[66..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the duration hours.
+    /// </summary>
+    public byte DurationHours
+    {
+        get => this._data.Span[70];
+        set => this._data.Span[70] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the note length.
+    /// </summary>
+    public byte NoteLength
+    {
+        get => this._data.Span[71];
+        set => this._data.Span[71] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the note.
+    /// </summary>
+    public Span<byte> Note
+    {
+        get => this._data.Slice(72, 80).Span;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionCreateRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionCreateRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionCreateRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionCreateRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionBidRequest (sub 04).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionBidRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionBidRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionBidRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionBidRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionBidRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x04;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 56;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the listing id.
+    /// </summary>
+    public ulong ListingId
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[20..]);
+        set => WriteUInt64LittleEndian(this._data.Span[20..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the expected version.
+    /// </summary>
+    public uint ExpectedVersion
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[28..]);
+        set => WriteUInt32LittleEndian(this._data.Span[28..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bid scalar.
+    /// </summary>
+    public uint BidScalar
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[32..]);
+        set => WriteUInt32LittleEndian(this._data.Span[32..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bid strength.
+    /// </summary>
+    public uint BidStrength
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[36..]);
+        set => WriteUInt32LittleEndian(this._data.Span[36..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bid agility.
+    /// </summary>
+    public uint BidAgility
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[40..]);
+        set => WriteUInt32LittleEndian(this._data.Span[40..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bid vitality.
+    /// </summary>
+    public uint BidVitality
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[44..]);
+        set => WriteUInt32LittleEndian(this._data.Span[44..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bid energy.
+    /// </summary>
+    public uint BidEnergy
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[48..]);
+        set => WriteUInt32LittleEndian(this._data.Span[48..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bid command.
+    /// </summary>
+    public uint BidCommand
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[52..]);
+        set => WriteUInt32LittleEndian(this._data.Span[52..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionBidRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionBidRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionBidRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionBidRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionBuyoutRequest (sub 05).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionBuyoutRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionBuyoutRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionBuyoutRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionBuyoutRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionBuyoutRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x05;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 32;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the listing id.
+    /// </summary>
+    public ulong ListingId
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[20..]);
+        set => WriteUInt64LittleEndian(this._data.Span[20..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the expected version.
+    /// </summary>
+    public uint ExpectedVersion
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[28..]);
+        set => WriteUInt32LittleEndian(this._data.Span[28..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionBuyoutRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionBuyoutRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionBuyoutRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionBuyoutRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionCancelRequest (sub 06).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionCancelRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionCancelRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionCancelRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionCancelRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionCancelRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x06;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 32;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the listing id.
+    /// </summary>
+    public ulong ListingId
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[20..]);
+        set => WriteUInt64LittleEndian(this._data.Span[20..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the expected version.
+    /// </summary>
+    public uint ExpectedVersion
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[28..]);
+        set => WriteUInt32LittleEndian(this._data.Span[28..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionCancelRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionCancelRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionCancelRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionCancelRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionMyListingsRequest (sub 07).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionMyListingsRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionMyListingsRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionMyListingsRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionMyListingsRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionMyListingsRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x07;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 11;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the request id.
+    /// </summary>
+    public uint RequestId
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[4..]);
+        set => WriteUInt32LittleEndian(this._data.Span[4..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the page.
+    /// </summary>
+    public ushort Page
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[8..]);
+        set => WriteUInt16LittleEndian(this._data.Span[8..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the status filter.
+    /// </summary>
+    public byte StatusFilter
+    {
+        get => this._data.Span[10];
+        set => this._data.Span[10] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionMyListingsRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionMyListingsRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionMyListingsRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionMyListingsRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionMailboxRequest (sub 08).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionMailboxRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionMailboxRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionMailboxRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionMailboxRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionMailboxRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x08;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 11;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the request id.
+    /// </summary>
+    public uint RequestId
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[4..]);
+        set => WriteUInt32LittleEndian(this._data.Span[4..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the page.
+    /// </summary>
+    public ushort Page
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[8..]);
+        set => WriteUInt16LittleEndian(this._data.Span[8..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the kind filter.
+    /// </summary>
+    public byte KindFilter
+    {
+        get => this._data.Span[10];
+        set => this._data.Span[10] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionMailboxRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionMailboxRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionMailboxRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionMailboxRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: Auction House request AuctionCollectRequest (sub 09).
+/// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
+/// </summary>
+public readonly struct AuctionCollectRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionCollectRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public AuctionCollectRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuctionCollectRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private AuctionCollectRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD5;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x09;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 56;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the collection id.
+    /// </summary>
+    public ulong CollectionId
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[20..]);
+        set => WriteUInt64LittleEndian(this._data.Span[20..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the expected version.
+    /// </summary>
+    public uint ExpectedVersion
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[28..]);
+        set => WriteUInt32LittleEndian(this._data.Span[28..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the requested scalar.
+    /// </summary>
+    public uint RequestedScalar
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[32..]);
+        set => WriteUInt32LittleEndian(this._data.Span[32..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the requested strength.
+    /// </summary>
+    public uint RequestedStrength
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[36..]);
+        set => WriteUInt32LittleEndian(this._data.Span[36..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the requested agility.
+    /// </summary>
+    public uint RequestedAgility
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[40..]);
+        set => WriteUInt32LittleEndian(this._data.Span[40..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the requested vitality.
+    /// </summary>
+    public uint RequestedVitality
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[44..]);
+        set => WriteUInt32LittleEndian(this._data.Span[44..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the requested energy.
+    /// </summary>
+    public uint RequestedEnergy
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[48..]);
+        set => WriteUInt32LittleEndian(this._data.Span[48..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the requested command.
+    /// </summary>
+    public uint RequestedCommand
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[52..]);
+        set => WriteUInt32LittleEndian(this._data.Span[52..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="AuctionCollectRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator AuctionCollectRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="AuctionCollectRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(AuctionCollectRequest packet) => packet._data; 
+}
     /// <summary>
     /// The state of the trade button.
     /// </summary>
