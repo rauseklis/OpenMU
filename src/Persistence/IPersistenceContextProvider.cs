@@ -4,6 +4,8 @@
 
 namespace MUnique.OpenMU.Persistence;
 
+using MUnique.OpenMU.Persistence.AuctionHouse;
+
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.Interfaces;
@@ -47,6 +49,12 @@ public interface IPersistenceContextProvider
     /// </summary>
     /// <returns>The newly created context.</returns>
     IContext CreateNewTradeContext();
+
+    /// <summary>
+    /// Creates the Auction House repository, or <c>null</c> when the provider has no database to run it against.
+    /// </summary>
+    /// <returns>The repository, or <c>null</c>.</returns>
+    IAuctionHouseRepository? CreateAuctionHouseRepository() => null;
 
     /// <summary>
     /// Creates a new context which is used for accounts.

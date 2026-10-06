@@ -329,6 +329,23 @@ public sealed class AuctionHouseService
         };
 
     /// <summary>
+    /// Finalizes one batch of listings whose expiry has passed. Listings another worker holds are skipped, and each listing
+    /// is finalized at most once.
+    /// </summary>
+    /// <param name="batchSize">The maximum number of listings in this batch.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of listings finalized.</returns>
+    public Task<int> FinalizeDueListingsAsync(int batchSize, CancellationToken cancellationToken = default)
+    {
+        if (!this._options.Enabled)
+        {
+            return Task.FromResult(0);
+        }
+
+        return this._repository.ExpireBatchAsync(this._clock(), batchSize, price => AuctionRules.CalculateFee(price, this._options.SuccessFeeBasisPoints), cancellationToken);
+    }
+
+    /// <summary>
     /// Reads one listing, including its note.
     /// </summary>
     /// <param name="listingId">The listing to read.</param>

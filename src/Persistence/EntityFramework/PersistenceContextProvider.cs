@@ -4,6 +4,9 @@
 
 namespace MUnique.OpenMU.Persistence.EntityFramework;
 
+using MUnique.OpenMU.Persistence.AuctionHouse;
+using MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
+
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
@@ -232,6 +235,9 @@ public class PersistenceContextProvider : IMigratableDatabaseContextProvider
     }
 
     /// <inheritdoc />
+    /// <inheritdoc />
+    public IAuctionHouseRepository CreateAuctionHouseRepository() => new AuctionHouseRepository();
+
     public IContext CreateNewTradeContext()
     {
         return new CachingEntityFrameworkContext(new TradeContext(), this.RepositoryProvider, null, this._loggerFactory.CreateLogger<CachingEntityFrameworkContext>());

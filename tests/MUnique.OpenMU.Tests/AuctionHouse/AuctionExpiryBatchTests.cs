@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.Tests.AuctionHouse;
 
 using Microsoft.EntityFrameworkCore;
 using MUnique.OpenMU.Persistence.EntityFramework;
+using MUnique.OpenMU.GameLogic.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
@@ -166,5 +167,33 @@ public class AuctionExpiryBatchTests
             Assert.That(poisonedStatus, Is.EqualTo(0));
             Assert.That(otherStatuses.All(status => status != 0), Is.True);
         });
+    }
+
+    /// <summary>
+    /// Verifies the service finalizes the due listings when the feature is enabled.
+    /// </summary>
+    [Test]
+    public async Task ServiceFinalizesDueListingsWhenEnabled()
+    {
+        var service = new AuctionHouseService(new AuctionHouseRepository(), new AuctionHouseOptions { Enabled = true });
+
+        var finalized = await service.FinalizeDueListingsAsync(50);
+
+        Assert.That(finalized, Is.GreaterThanOrEqualTo(this._listings.Count));
+    }
+
+    /// <summary>
+    /// Verifies the service leaves the listings alone while the feature is disabled.
+    /// </summary>
+    [Test]
+    public async Task ServiceDoesNothingWhenDisabled()
+    {
+        var service = new AuctionHouseService(new AuctionHouseRepository(), new AuctionHouseOptions { Enabled = false });
+
+        var finalized = await service.FinalizeDueListingsAsync(50);
+
+        Assert.That(finalized, Is.EqualTo(0));
+        await using var context = new EntityDataContext();
+        Assert.That(await context.Set<AuctionListing>().AsNoTracking().Where(l => this._listings.Contains(l.Id)).AllAsync(l => l.Status == 0), Is.True);
     }
 }
