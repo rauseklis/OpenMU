@@ -118,6 +118,16 @@ public interface IAuctionHouseRepository
     Task<AuctionCollectionPage> ListCollectionsAsync(Guid accountId, int page, int pageSize, byte? kind, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Claims undelivered notifications for delivery and marks them delivered. Claimed rows are locked with
+    /// <c>SKIP LOCKED</c>, so two workers never claim the same notification.
+    /// </summary>
+    /// <param name="batchSize">The maximum number of notifications to claim.</param>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The claimed notifications, oldest first.</returns>
+    Task<IReadOnlyList<AuctionNotificationRow>> ClaimUndeliveredNotificationsAsync(int batchSize, DateTimeOffset now, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads listed items with their definition and options, read-only.
     /// </summary>
     /// <param name="itemIds">The items.</param>

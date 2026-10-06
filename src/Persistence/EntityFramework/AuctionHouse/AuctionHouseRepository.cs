@@ -96,6 +96,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.ListCollectionsAsync(context, accountId, page, pageSize, kind, cancellationToken));
 
     /// <inheritdoc />
+    public Task<IReadOnlyList<AuctionNotificationRow>> ClaimUndeliveredNotificationsAsync(int batchSize, DateTimeOffset now, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ClaimUndeliveredNotificationsAsync(context, batchSize, now, cancellationToken));
+
+    /// <inheritdoc />
     public Task<IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>> GetItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.GetItemsAsync(context, itemIds, cancellationToken));
 
@@ -114,6 +118,35 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     /// <inheritdoc />
     public Task<AuctionItemListingResult> ListItemAsync(ItemListingDraft draft, Func<ItemListingFacts, bool> isEligible, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.ListItemAsync(context, draft, isEligible, cancellationToken));
+
+    /// <summary>
+    /// Claims undelivered notifications and marks them delivered in one transaction. The rows are locked with
+    /// <c>FOR UPDATE SKIP LOCKED</c>, so concurrent workers claim disjoint batches.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="batchSize">The maximum number of notifications to claim.</param>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The claimed notifications, oldest first.</returns>
+    public async Task<IReadOnlyList<AuctionNotificationRow>> ClaimUndeliveredNotificationsAsync(EntityDataContext context, int batchSize, DateTimeOffset now, CancellationToken cancellationToken = default)
+    {
+        var size = Math.Clamp(batchSize, 1, 500);
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var claimed = await context.Set<AuctionNotification>()
+            .FromSqlInterpolated($"SELECT * FROM data.\"AuctionNotification\" WHERE \"DeliveredAt\" IS NULL ORDER BY \"CreatedAt\" LIMIT {size} FOR UPDATE SKIP LOCKED")
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        if (claimed.Count > 0)
+        {
+            var ids = claimed.Select(n => n.Id).ToList();
+            await context.Set<AuctionNotification>()
+                .Where(n => ids.Contains(n.Id))
+                .ExecuteUpdateAsync(setters => setters.SetProperty(n => n.DeliveredAt, now), cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return claimed.Select(n => new AuctionNotificationRow(n.Id, n.AccountId, n.ListingId, n.Kind, n.Currency, n.Amount, n.CreatedAt)).ToList();
+    }
 
     /// <summary>
     /// Lists the listings of one seller, newest first. Read-only.
