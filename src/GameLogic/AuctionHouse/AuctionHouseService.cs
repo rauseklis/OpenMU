@@ -400,6 +400,15 @@ public sealed class AuctionHouseService
     }
 
     /// <summary>
+    /// Checks the stored data against the Auction House invariants. Reporting only; it runs even while the feature is disabled,
+    /// so operators can always inspect the data.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The broken invariants.</returns>
+    public Task<IReadOnlyList<AuctionReconciliationFinding>> ReconcileAsync(CancellationToken cancellationToken = default)
+        => this._repository.ReconcileAsync(cancellationToken);
+
+    /// <summary>
     /// Loads the items of listings, so the browse rows can carry them.
     /// </summary>
     /// <param name="itemIds">The items.</param>

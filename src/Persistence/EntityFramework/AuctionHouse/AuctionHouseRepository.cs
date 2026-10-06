@@ -100,6 +100,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.ClaimUndeliveredNotificationsAsync(context, batchSize, now, cancellationToken));
 
     /// <inheritdoc />
+    public Task<IReadOnlyList<AuctionReconciliationFinding>> ReconcileAsync(CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ReconcileAsync(context, cancellationToken));
+
+    /// <inheritdoc />
     public Task<IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>> GetItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.GetItemsAsync(context, itemIds, cancellationToken));
 
@@ -146,6 +150,43 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
 
         await transaction.CommitAsync(cancellationToken);
         return claimed.Select(n => new AuctionNotificationRow(n.Id, n.AccountId, n.ListingId, n.Kind, n.Currency, n.Amount, n.CreatedAt)).ToList();
+    }
+
+    /// <summary>
+    /// Checks the invariants of the stored data. Each query returns the subjects which break one invariant.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The broken invariants.</returns>
+    public async Task<IReadOnlyList<AuctionReconciliationFinding>> ReconcileAsync(EntityDataContext context, CancellationToken cancellationToken = default)
+    {
+        var checks = new (string Invariant, string Sql)[]
+        {
+            ("ActiveListingItemStillInInventory",
+                "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l JOIN data.\"Item\" i ON i.\"Id\" = l.\"ItemId\" WHERE l.\"Status\" = 0 AND i.\"ItemStorageId\" IS NOT NULL"),
+            ("ActiveListingBidEscrowMismatch",
+                "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" = 0 AND (SELECT COUNT(*) FROM data.\"AuctionBid\" b WHERE b.\"ListingId\" = l.\"Id\" AND b.\"Status\" = 0) <> (CASE WHEN l.\"CurrentBid\" IS NULL THEN 0 ELSE 1 END)"),
+            ("SoldListingCollectionsMismatch",
+                "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" = 1 AND ((SELECT COUNT(*) FROM data.\"AuctionCollection\" c WHERE c.\"ListingId\" = l.\"Id\" AND c.\"Kind\" = 0) <> 1 OR (SELECT COUNT(*) FROM data.\"AuctionCollection\" c WHERE c.\"ListingId\" = l.\"Id\" AND c.\"Kind\" = 2) <> 1)"),
+            ("UnsoldListingReturnCollectionMismatch",
+                "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" IN (2, 3, 4) AND (SELECT COUNT(*) FROM data.\"AuctionCollection\" c WHERE c.\"ListingId\" = l.\"Id\" AND c.\"Kind\" = 1) <> 1"),
+            ("ItemOwnedByMoreThanOneListingOrCollection",
+                "SELECT x.\"ItemId\" AS \"Value\" FROM (SELECT \"ItemId\" FROM data.\"AuctionListing\" WHERE \"Status\" = 0 UNION ALL SELECT \"ItemId\" FROM data.\"AuctionCollection\" WHERE \"ItemId\" IS NOT NULL AND \"Status\" <> 2) x GROUP BY x.\"ItemId\" HAVING COUNT(*) > 1"),
+            ("ClaimedCollectionStillOwesAmount",
+                "SELECT c.\"Id\" AS \"Value\" FROM data.\"AuctionCollection\" c WHERE c.\"Status\" = 2 AND (COALESCE(c.\"RemainingScalar\", 0) > 0 OR COALESCE(c.\"RemainingStrength\", 0) > 0 OR COALESCE(c.\"RemainingAgility\", 0) > 0 OR COALESCE(c.\"RemainingVitality\", 0) > 0 OR COALESCE(c.\"RemainingEnergy\", 0) > 0 OR COALESCE(c.\"RemainingCommand\", 0) > 0)"),
+        };
+
+        var findings = new List<AuctionReconciliationFinding>();
+        foreach (var (invariant, sql) in checks)
+        {
+            var subjects = await context.Database.SqlQueryRaw<Guid>(sql).ToListAsync(cancellationToken);
+            findings.AddRange(subjects.Select(subject => new AuctionReconciliationFinding(invariant, subject.ToString())));
+        }
+
+        var escrowSql = "SELECT l.\"Currency\" AS \"Value\" FROM data.\"AuctionListing\" l LEFT JOIN data.\"AuctionBid\" b ON b.\"ListingId\" = l.\"Id\" AND b.\"Status\" = 0 WHERE l.\"Status\" = 0 GROUP BY l.\"Currency\" HAVING SUM(COALESCE(l.\"CurrentBid\", 0)) <> SUM(COALESCE(b.\"ScalarAmount\", 0))";
+        var currencies = await context.Database.SqlQueryRaw<int>(escrowSql).ToListAsync(cancellationToken);
+        findings.AddRange(currencies.Select(currency => new AuctionReconciliationFinding("EscrowTotalsDifferFromBidObligations", $"currency {currency}")));
+        return findings;
     }
 
     /// <summary>

@@ -128,6 +128,13 @@ public interface IAuctionHouseRepository
     Task<IReadOnlyList<AuctionNotificationRow>> ClaimUndeliveredNotificationsAsync(int batchSize, DateTimeOffset now, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Checks the stored Auction House data against its invariants. Read-only: it reports, and never repairs.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The broken invariants; empty when the data is consistent.</returns>
+    Task<IReadOnlyList<AuctionReconciliationFinding>> ReconcileAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads listed items with their definition and options, read-only.
     /// </summary>
     /// <param name="itemIds">The items.</param>
