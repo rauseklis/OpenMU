@@ -145,6 +145,26 @@ public class AuctionZenCreditTests
         Assert.That(await this.GetMoney(), Is.EqualTo(this._originalMoney + RefundAmount));
     }
 
+    /// <summary>
+    /// Verifies the money limit comes from the repository's configuration, not only the default.
+    /// </summary>
+    [Test]
+    public async Task ClaimHonoursTheConfiguredMoneyLimit()
+    {
+        await this.SetMoney(0);
+
+        var result = await new AuctionHouseRepository(moneyLimit: 999).ClaimAsync(new EntityDataContext(), new ClaimDraft(
+            OperationId: Guid.NewGuid(),
+            AccountId: this._accountId,
+            CharacterId: this._characterId,
+            CollectionId: this._collectionId,
+            ExpectedVersion: 0,
+            Now: DateTimeOffset.UtcNow));
+
+        Assert.That(result.Outcome, Is.EqualTo(AuctionClaimOutcome.MoneyLimit));
+        Assert.That(await this.GetMoney(), Is.EqualTo(0));
+    }
+
     private Task<AuctionClaimResult> Claim(int expectedVersion, Guid operationId)
     {
         return new AuctionHouseRepository().ClaimAsync(new EntityDataContext(), new ClaimDraft(
