@@ -7,6 +7,7 @@ namespace MUnique.OpenMU.GameServer.MessageHandler.AuctionHouse;
 using System.Runtime.InteropServices;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.AuctionHouse;
+using Packets = MUnique.OpenMU.Network.Packets;
 using Wire = MUnique.OpenMU.Network.Packets.ClientToServer;
 using MUnique.OpenMU.Network.Packets;
 using MUnique.OpenMU.PlugIns;
@@ -64,7 +65,13 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
                 Category: 0,
                 StartingPrice: request.StartingScalar,
                 BuyoutPrice: request.BuyoutScalar == 0 ? null : (long?)request.BuyoutScalar,
-                DurationHours: request.DurationHours)).ConfigureAwait(false);
+                DurationHours: request.DurationHours,
+                StartingFruits: request.CurrencyMode == Packets.AuctionCurrencyMode.Fruits
+                    ? new FruitBasket(request.StartingStrength, request.StartingAgility, request.StartingVitality, request.StartingEnergy, request.StartingCommand)
+                    : null,
+                BuyoutFruits: request.CurrencyMode == Packets.AuctionCurrencyMode.Fruits && (long)request.BuyoutStrength + request.BuyoutAgility + request.BuyoutVitality + request.BuyoutEnergy + request.BuyoutCommand > 0
+                    ? new FruitBasket(request.BuyoutStrength, request.BuyoutAgility, request.BuyoutVitality, request.BuyoutEnergy, request.BuyoutCommand)
+                    : null)).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
         await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Create, result.Result, (ulong)result.ListingNumber, 0, 0, result.ServerTime).ConfigureAwait(false);

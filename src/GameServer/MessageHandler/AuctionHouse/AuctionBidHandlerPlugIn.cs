@@ -67,7 +67,8 @@ internal sealed class AuctionBidHandlerPlugIn : ISubPacketHandlerPlugIn
                 ListingId: listing,
                 ExpectedVersion: (int)request.ExpectedVersion,
                 BidAmount: request.BidScalar,
-                BidderIp: who.Ip)).ConfigureAwait(false);
+                BidderIp: who.Ip,
+                BidFruits: new FruitBasket(request.BidStrength, request.BidAgility, request.BidVitality, request.BidEnergy, request.BidCommand))).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
         await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Bid, result.Result, request.ListingId, 0, 0, result.ServerTime).ConfigureAwait(false);
