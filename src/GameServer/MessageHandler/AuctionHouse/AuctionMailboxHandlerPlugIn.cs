@@ -58,6 +58,10 @@ internal sealed class AuctionMailboxHandlerPlugIn : ISubPacketHandlerPlugIn
         {
             mailbox = new AuctionMailboxResult(AuctionResultCode.ServiceUnavailable, default, now);
         }
+        else if (!AuctionHouseMutations.RateLimiter.TryAcquire(identity.Value.AccountId, AuctionRequestCost.Query))
+        {
+            mailbox = new AuctionMailboxResult(AuctionResultCode.RateLimited, default, now);
+        }
         else
         {
             mailbox = await service.MailboxAsync(identity.Value.AccountId, page, kind).ConfigureAwait(false);

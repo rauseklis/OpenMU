@@ -57,6 +57,10 @@ internal sealed class AuctionDetailHandlerPlugIn : ISubPacketHandlerPlugIn
         {
             detail = new AuctionDetailResult(AuctionResultCode.ListingNotFound, null, DateTimeOffset.UtcNow);
         }
+        else if (!AuctionHouseMutations.RateLimiter.TryAcquire(identity.Value.AccountId, AuctionRequestCost.Query))
+        {
+            detail = new AuctionDetailResult(AuctionResultCode.RateLimited, null, DateTimeOffset.UtcNow);
+        }
         else
         {
             detail = await service.DetailAsync(listing).ConfigureAwait(false);

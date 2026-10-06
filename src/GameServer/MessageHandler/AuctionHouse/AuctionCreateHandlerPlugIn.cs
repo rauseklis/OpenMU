@@ -38,6 +38,12 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
         var operationId = request.OperationId.ToArray();
         var service = AuctionHouseMutations.CreateService(player);
         var identity = AuctionHouseMutations.GetIdentity(player);
+        if (identity is { } limited && !AuctionHouseMutations.RateLimiter.TryAcquire(limited.AccountId, AuctionRequestCost.Create))
+        {
+            await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Create, AuctionResultCode.RateLimited, 0, 0, 0, DateTimeOffset.UtcNow).ConfigureAwait(false);
+            return;
+        }
+
         if (service is null || identity is not { } who)
         {
             await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Create, AuctionResultCode.ServiceUnavailable, 0, 0, 0, DateTimeOffset.UtcNow).ConfigureAwait(false);

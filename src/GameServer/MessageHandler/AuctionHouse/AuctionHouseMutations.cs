@@ -28,6 +28,11 @@ internal static class AuctionHouseMutations
     public static AuctionHouseOptions Options => AuctionHouseConfigurationSource.Current.ToOptions();
 
     /// <summary>
+    /// Gets the per-account request budgets. Every Auction House request takes a token before it reaches the service.
+    /// </summary>
+    public static AuctionRateLimiter RateLimiter { get; } = new(() => DateTimeOffset.UtcNow);
+
+    /// <summary>
     /// Creates the service, or returns <c>null</c> when the game context has no Auction House database.
     /// </summary>
     /// <param name="player">The requesting player.</param>

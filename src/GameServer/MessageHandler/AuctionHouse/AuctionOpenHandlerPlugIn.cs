@@ -48,7 +48,9 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
             ? new AuctionOpenResult(AuctionResultCode.NotAuthenticated, 0, now, options.PageSize)
             : service is null
                 ? new AuctionOpenResult(AuctionResultCode.ServiceUnavailable, 0, now, options.PageSize)
-                : await service.OpenAsync(who.AccountId).ConfigureAwait(false);
+                : !AuctionHouseMutations.RateLimiter.TryAcquire(who.AccountId, AuctionRequestCost.Query)
+                    ? new AuctionOpenResult(AuctionResultCode.RateLimited, 0, now, options.PageSize)
+                    : await service.OpenAsync(who.AccountId).ConfigureAwait(false);
         var money = (uint)Math.Max(0, player.SelectedCharacter?.Inventory?.Money ?? 0);
 
         int WritePacket()

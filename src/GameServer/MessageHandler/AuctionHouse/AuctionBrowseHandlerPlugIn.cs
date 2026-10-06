@@ -62,6 +62,10 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
         {
             browse = new AuctionBrowseResult(AuctionResultCode.ServiceUnavailable, default, now);
         }
+        else if (!AuctionHouseMutations.RateLimiter.TryAcquire(identity.Value.AccountId, AuctionRequestCost.Query))
+        {
+            browse = new AuctionBrowseResult(AuctionResultCode.RateLimited, default, now);
+        }
         else
         {
             browse = await service.BrowseAsync(search).ConfigureAwait(false);
