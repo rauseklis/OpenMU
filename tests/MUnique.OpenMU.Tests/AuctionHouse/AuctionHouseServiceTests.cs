@@ -174,4 +174,23 @@ public class AuctionHouseServiceTests
             EndsAt: now.AddHours(24)));
         return created.ListingId;
     }
+
+    /// <summary>
+    /// Verifies the item loader returns a stored item with its definition, so browse rows can serialize it.
+    /// </summary>
+    [Test]
+    public async Task LoadItemsReturnsTheStoredItem()
+    {
+        await using var context = new EntityDataContext();
+        var itemId = await context.Set<Item>().Where(i => i.DefinitionId != null).Select(i => i.Id).FirstOrDefaultAsync();
+        if (itemId == Guid.Empty)
+        {
+            Assert.Ignore("The database has no item; use the populated copy.");
+        }
+
+        var items = await new AuctionHouseRepository().GetItemsAsync(new[] { itemId });
+
+        Assert.That(items.ContainsKey(itemId), Is.True);
+        Assert.That(items[itemId].Definition, Is.Not.Null);
+    }
 }

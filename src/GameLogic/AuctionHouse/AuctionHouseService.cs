@@ -350,6 +350,19 @@ public sealed class AuctionHouseService
     }
 
     /// <summary>
+    /// Loads the items of listings, so the browse rows can carry them.
+    /// </summary>
+    /// <param name="itemIds">The items.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The items by identifier; empty when the feature is disabled.</returns>
+    public async Task<IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>> LoadItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default)
+    {
+        return this._options.Enabled
+            ? await this._repository.GetItemsAsync(itemIds, cancellationToken)
+            : new Dictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>();
+    }
+
+    /// <summary>
     /// Resolves a listing number from the wire to the listing identifier.
     /// </summary>
     /// <param name="listingNumber">The listing number.</param>

@@ -83,6 +83,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.GetListingAsync(context, listingId, cancellationToken));
 
     /// <inheritdoc />
+    public Task<IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>> GetItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.GetItemsAsync(context, itemIds, cancellationToken));
+
+    /// <inheritdoc />
     public Task<Guid?> FindListingIdAsync(long listingNumber, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.FindListingIdAsync(context, listingNumber, cancellationToken));
 
@@ -97,6 +101,23 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     /// <inheritdoc />
     public Task<AuctionItemListingResult> ListItemAsync(ItemListingDraft draft, Func<ItemListingFacts, bool> isEligible, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.ListItemAsync(context, draft, isEligible, cancellationToken));
+
+    /// <summary>
+    /// Loads listed items with their definition and options, so they can be serialized for the client. Read-only.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="itemIds">The items.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The items by identifier.</returns>
+    public async Task<IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>> GetItemsAsync(EntityDataContext context, IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default)
+    {
+        var items = await context.Set<Item>().AsNoTracking()
+            .Include(i => i.RawDefinition)
+            .Include(i => i.RawItemOptions).ThenInclude(o => o.RawItemOption)
+            .Where(i => itemIds.Contains(i.Id))
+            .ToListAsync(cancellationToken);
+        return items.ToDictionary(i => i.Id, i => (MUnique.OpenMU.DataModel.Entities.Item)i);
+    }
 
     /// <summary>
     /// Finds the identifier of a listing from its wire number.
@@ -1083,7 +1104,9 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.SellerName,
                 l.ItemGroup,
                 l.ItemNumber,
-                l.ItemLevel))
+                l.ItemLevel,
+                l.ItemId,
+                l.Version))
             .ToListAsync(cancellationToken);
         return new AuctionListingPage(rows, total);
     }

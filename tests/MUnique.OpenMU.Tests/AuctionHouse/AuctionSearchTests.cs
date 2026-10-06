@@ -132,7 +132,7 @@ public class AuctionSearchTests
         var expensive = await this.List(currency: 0, category: 0, startingPrice: 3000);
         var cheap = await this.List(currency: 0, category: 0, startingPrice: 1000);
 
-        var page = await this.Search(new AuctionListingSearch(Currency: 0, Category: 0, Sort: AuctionSearchSort.PriceAscending));
+        var page = await this.Search(new AuctionListingSearch(Currency: 0, Category: 0, Sort: AuctionSearchSort.PriceAscending, PageSize: 1000));
 
         var rows = page.Rows.Where(r => r.ListingId == expensive || r.ListingId == cheap).Select(r => r.ListingId).ToList();
         Assert.That(rows, Is.EqualTo(new[] { cheap, expensive }));

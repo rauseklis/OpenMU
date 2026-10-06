@@ -62,7 +62,9 @@ public readonly record struct AuctionListingRow(
     string SellerName,
     int ItemGroup,
     int ItemNumber,
-    int ItemLevel);
+    int ItemLevel,
+    Guid ItemId,
+    int Version);
 
 /// <summary>
 /// One page of browse results, with the total number of matches.

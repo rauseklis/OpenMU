@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.Persistence.AuctionHouse;
 
 using System.Threading;
+using MUnique.OpenMU.DataModel.Entities;
 
 /// <summary>
 /// The transactional Auction House operations. Each operation runs in one database transaction and writes its operation
@@ -93,6 +94,14 @@ public interface IAuctionHouseRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The number of pending collections.</returns>
     Task<int> CountPendingCollectionsAsync(Guid accountId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads listed items with their definition and options, read-only.
+    /// </summary>
+    /// <param name="itemIds">The items.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The items by identifier.</returns>
+    Task<IReadOnlyDictionary<Guid, Item>> GetItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Finds the identifier of a listing from its wire number.
