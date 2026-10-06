@@ -309,6 +309,158 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.ToTable("AttributeRequirement", "config");
                 });
 
+            modelBuilder.Entity("MUnique.OpenMU.Persistence.EntityFramework.Model.AuctionListing", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("BidCount")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("BuyoutAgility")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BuyoutCommand")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BuyoutEnergy")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BuyoutPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BuyoutStrength")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("BuyoutVitality")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte>("Category")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte>("Currency")
+                        .HasColumnType("smallint");
+
+                    b.Property<long?>("CurrentBid")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CurrentBidAgility")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CurrentBidCommand")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CurrentBidEnergy")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CurrentBidStrength")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CurrentBidVitality")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid?>("CurrentBidderAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CurrentBidderCharacterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ItemGroup")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ItemLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ItemNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("LastBidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("ListingNumber")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ListingNumber"));
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("OriginalEndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SellerAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SellerCharacterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SellerIp")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SellerName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("StartingAgility")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("StartingCommand")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("StartingEnergy")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("StartingPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("StartingStrength")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("StartingVitality")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0");
+
+                    b.HasIndex("ListingNumber")
+                        .IsUnique();
+
+                    b.HasIndex("CurrentBidderAccountId", "Status");
+
+                    b.HasIndex("SellerAccountId", "Status");
+
+                    b.HasIndex("Status", "Currency", "Category", "EndsAt", "ListingNumber");
+
+                    b.ToTable("AuctionListing", "data");
+                });
+
             modelBuilder.Entity("MUnique.OpenMU.Persistence.EntityFramework.Model.BattleZoneDefinition", b =>
                 {
                     b.Property<Guid>("Id")

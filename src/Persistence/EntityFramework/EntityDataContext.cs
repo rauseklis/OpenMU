@@ -40,6 +40,7 @@ public class EntityDataContext : ExtendedTypeContext
     /// Gets pending Castle Siege participant rewards.
     /// </summary>
     internal DbSet<CastleSiegePendingReward> CastleSiegePendingRewards => this.Set<CastleSiegePendingReward>();
+    internal DbSet<AuctionListing> AuctionListings => this.Set<AuctionListing>();
 
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -83,6 +84,7 @@ public class EntityDataContext : ExtendedTypeContext
         modelBuilder.Entity<CastleSiegeGuild>().Apply();
         modelBuilder.Entity<CastleSiegeGuildRegistration>().Apply();
         modelBuilder.Entity<CastleSiegePendingReward>().Apply();
+        modelBuilder.Entity<AuctionListing>().Apply();
         modelBuilder.Entity<CastleSiegeNpcDefinition>().Apply();
         modelBuilder.Entity<CastleSiegeNpcState>().Apply();
         modelBuilder.Entity<DropItemGroup>().Apply();
