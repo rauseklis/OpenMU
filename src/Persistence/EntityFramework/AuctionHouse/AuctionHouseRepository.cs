@@ -625,13 +625,15 @@ public sealed class AuctionHouseRepository
     }
 
     /// <summary>
-    /// Claims a collection for its owning account. The collection is marked claimed by one conditional update, so it can
-    /// be claimed once for a given version, and a racing or repeated claim changes nothing.
+    /// Claims part or all of a collection for its owning account. The collection's version is advanced by one conditional
+    /// update, so a claim on an outdated version, or a racing claim, changes nothing. A Zen collection is claimed in full and
+    /// credited to the character; a jewel collection is claimed in the requested quantity; a fruit-basket collection is claimed
+    /// component by component.
     /// </summary>
     /// <param name="context">The context to write with.</param>
     /// <param name="draft">The claim request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The outcome, with the item or amount to deliver.</returns>
+    /// <returns>The outcome, with what the game server must deliver.</returns>
     public async Task<AuctionClaimResult> ClaimAsync(EntityDataContext context, ClaimDraft draft, CancellationToken cancellationToken = default)
     {
         if (await context.Set<AuctionOperation>().AsNoTracking()
@@ -640,41 +642,89 @@ public sealed class AuctionHouseRepository
             return new AuctionClaimResult(AuctionClaimOutcome.Replayed, 0, null, 0);
         }
 
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        var claimed = await context.Set<AuctionCollection>()
-            .Where(c => c.Id == draft.CollectionId && c.AccountId == draft.AccountId && c.Version == draft.ExpectedVersion && c.Status != 2)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(c => c.Status, (byte)2)
-                .SetProperty(c => c.UpdatedAt, draft.Now)
-                .SetProperty(c => c.Version, c => c.Version + 1), cancellationToken);
-        if (claimed == 0)
+        var collection = await context.Set<AuctionCollection>().AsNoTracking()
+            .SingleOrDefaultAsync(c => c.Id == draft.CollectionId && c.AccountId == draft.AccountId, cancellationToken);
+        if (collection is null)
         {
-            await transaction.RollbackAsync(cancellationToken);
-            var current = await context.Set<AuctionCollection>().AsNoTracking()
-                .Where(c => c.Id == draft.CollectionId && c.AccountId == draft.AccountId)
-                .Select(c => new { c.Version })
-                .SingleOrDefaultAsync(cancellationToken);
-            if (current is null)
-            {
-                return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
-            }
-
-            return new AuctionClaimResult(current.Version == draft.ExpectedVersion ? AuctionClaimOutcome.AlreadyClaimed : AuctionClaimOutcome.Stale, 0, null, 0);
+            return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
         }
 
-        var collection = await context.Set<AuctionCollection>().AsNoTracking().SingleAsync(c => c.Id == draft.CollectionId, cancellationToken);
-        if (collection.Currency == 0 && collection.Kind is 2 or 3 && (collection.RemainingScalar ?? 0) > 0)
+        if (collection.Version != draft.ExpectedVersion)
         {
-            var amount = collection.RemainingScalar ?? 0;
-            if (!await CreditZenAsync(context, draft.CharacterId, amount, cancellationToken))
+            return new AuctionClaimResult(AuctionClaimOutcome.Stale, 0, null, 0);
+        }
+
+        if (collection.Status == 2)
+        {
+            return new AuctionClaimResult(AuctionClaimOutcome.AlreadyClaimed, 0, null, 0);
+        }
+
+        if (Plan(collection, draft) is not { } plan)
+        {
+            return new AuctionClaimResult(AuctionClaimOutcome.InvalidClaimQuantity, 0, null, 0);
+        }
+
+        var status = plan.Status;
+        var scalar = plan.Scalar;
+        var strength = plan.RemainingFruits?.Strength;
+        var agility = plan.RemainingFruits?.Agility;
+        var vitality = plan.RemainingFruits?.Vitality;
+        var energy = plan.RemainingFruits?.Energy;
+        var command = plan.RemainingFruits?.Command;
+        var now = draft.Now;
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var updated = await context.Set<AuctionCollection>()
+            .Where(c => c.Id == draft.CollectionId && c.AccountId == draft.AccountId && c.Version == draft.ExpectedVersion && c.Status != 2)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(c => c.Status, status)
+                .SetProperty(c => c.UpdatedAt, now)
+                .SetProperty(c => c.Version, c => c.Version + 1)
+                .SetProperty(c => c.RemainingScalar, scalar)
+                .SetProperty(c => c.RemainingStrength, strength)
+                .SetProperty(c => c.RemainingAgility, agility)
+                .SetProperty(c => c.RemainingVitality, vitality)
+                .SetProperty(c => c.RemainingEnergy, energy)
+                .SetProperty(c => c.RemainingCommand, command), cancellationToken);
+        if (updated == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionClaimResult(AuctionClaimOutcome.Stale, 0, null, 0);
+        }
+
+        if (collection.Currency == 0 && plan.ClaimedScalar > 0)
+        {
+            if (!await CreditZenAsync(context, draft.CharacterId, plan.ClaimedScalar, cancellationToken))
             {
                 await transaction.RollbackAsync(cancellationToken);
                 return new AuctionClaimResult(AuctionClaimOutcome.MoneyLimit, 0, null, 0);
             }
+        }
 
-            var credit = Movement(draft.AccountId, draft.OperationId, null, null, amount, 6, draft.Now);
-            credit.CollectionId = collection.Id;
-            context.Set<AuctionCurrencyMovement>().Add(credit);
+        if (plan.ClaimedScalar > 0)
+        {
+            var movement = Movement(draft.AccountId, draft.OperationId, null, null, plan.ClaimedScalar, 6, now);
+            movement.CollectionId = collection.Id;
+            movement.Currency = collection.Currency;
+            context.Set<AuctionCurrencyMovement>().Add(movement);
+        }
+
+        if (plan.ClaimedFruits is { } fruits)
+        {
+            var components = new[] { fruits.Strength, fruits.Agility, fruits.Vitality, fruits.Energy, fruits.Command };
+            for (byte index = 0; index < components.Length; index++)
+            {
+                if (components[index] <= 0)
+                {
+                    continue;
+                }
+
+                var movement = Movement(draft.AccountId, draft.OperationId, null, null, components[index], 6, now);
+                movement.CollectionId = collection.Id;
+                movement.Currency = collection.Currency;
+                movement.FruitComponent = index;
+                context.Set<AuctionCurrencyMovement>().Add(movement);
+            }
         }
 
         context.Set<AuctionOperation>().Add(new AuctionOperation
@@ -685,14 +735,14 @@ public sealed class AuctionHouseRepository
             Kind = ClaimKind,
             Outcome = CreatedOutcome,
             CollectionId = collection.Id,
-            CreatedAt = draft.Now,
+            CreatedAt = now,
         });
 
         try
         {
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return new AuctionClaimResult(AuctionClaimOutcome.Claimed, collection.Kind, collection.ItemId, collection.RemainingScalar ?? 0);
+            return new AuctionClaimResult(AuctionClaimOutcome.Claimed, collection.Kind, collection.ItemId, plan.ClaimedScalar);
         }
         catch (DbUpdateException exception) when (IsUniqueViolation(exception))
         {
@@ -700,6 +750,67 @@ public sealed class AuctionHouseRepository
             context.ChangeTracker.Clear();
             return new AuctionClaimResult(AuctionClaimOutcome.Replayed, 0, null, 0);
         }
+    }
+
+    /// <summary>
+    /// The validated effect of a claim on a collection.
+    /// </summary>
+    /// <param name="Status">The collection status after the claim, as its wire value.</param>
+    /// <param name="Scalar">The remaining scalar amount after the claim, for scalar collections.</param>
+    /// <param name="RemainingFruits">The remaining fruit quantities after the claim, for fruit-basket collections.</param>
+    /// <param name="ClaimedScalar">The scalar amount claimed now.</param>
+    /// <param name="ClaimedFruits">The fruit quantities claimed now, for fruit-basket collections.</param>
+    private readonly record struct ClaimPlan(byte Status, long? Scalar, FruitQuantities? RemainingFruits, long ClaimedScalar, FruitQuantities? ClaimedFruits);
+
+    private static ClaimPlan? Plan(AuctionCollection collection, ClaimDraft draft)
+    {
+        if (collection.RemainingScalar is { } remaining)
+        {
+            var requested = draft.RequestedScalar ?? remaining;
+            if (requested <= 0 || requested > remaining)
+            {
+                return null;
+            }
+
+            if (collection.Currency == 0 && requested != remaining)
+            {
+                return null;
+            }
+
+            var left = remaining - requested;
+            return new ClaimPlan(left == 0 ? (byte)2 : (byte)1, left, null, requested, null);
+        }
+
+        if (collection.RemainingStrength is not null)
+        {
+            var available = new FruitQuantities(
+                collection.RemainingStrength ?? 0,
+                collection.RemainingAgility ?? 0,
+                collection.RemainingVitality ?? 0,
+                collection.RemainingEnergy ?? 0,
+                collection.RemainingCommand ?? 0);
+            var requested = draft.RequestedFruits ?? available;
+            if (requested.Strength < 0 || requested.Strength > available.Strength
+                || requested.Agility < 0 || requested.Agility > available.Agility
+                || requested.Vitality < 0 || requested.Vitality > available.Vitality
+                || requested.Energy < 0 || requested.Energy > available.Energy
+                || requested.Command < 0 || requested.Command > available.Command
+                || (requested.Strength + requested.Agility + requested.Vitality + requested.Energy + requested.Command) == 0)
+            {
+                return null;
+            }
+
+            var left = new FruitQuantities(
+                available.Strength - requested.Strength,
+                available.Agility - requested.Agility,
+                available.Vitality - requested.Vitality,
+                available.Energy - requested.Energy,
+                available.Command - requested.Command);
+            var empty = left.Strength + left.Agility + left.Vitality + left.Energy + left.Command == 0;
+            return new ClaimPlan(empty ? (byte)2 : (byte)1, null, left, 0, requested);
+        }
+
+        return new ClaimPlan(2, null, null, 0, null);
     }
 
     private async Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, AuctionListingDraft draft, CancellationToken cancellationToken)

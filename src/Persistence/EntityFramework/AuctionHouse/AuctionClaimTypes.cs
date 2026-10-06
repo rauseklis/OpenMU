@@ -38,7 +38,22 @@ public enum AuctionClaimOutcome
     /// Crediting the Zen would exceed the inventory money limit, so nothing was claimed.
     /// </summary>
     MoneyLimit,
+
+    /// <summary>
+    /// The requested quantity is zero, exceeds what remains, or a Zen collection was requested in part.
+    /// </summary>
+    InvalidClaimQuantity,
 }
+
+/// <summary>
+/// A quantity of each stat fruit, used for fruit-basket claims.
+/// </summary>
+/// <param name="Strength">The Strength Fruit quantity.</param>
+/// <param name="Agility">The Agility Fruit quantity.</param>
+/// <param name="Vitality">The Vitality Fruit quantity.</param>
+/// <param name="Energy">The Energy Fruit quantity.</param>
+/// <param name="Command">The Command Fruit quantity.</param>
+public readonly record struct FruitQuantities(long Strength, long Agility, long Vitality, long Energy, long Command);
 
 /// <summary>
 /// The result of a collection claim, with what the game server must deliver.
@@ -58,4 +73,14 @@ public readonly record struct AuctionClaimResult(AuctionClaimOutcome Outcome, by
 /// <param name="CollectionId">The collection to claim.</param>
 /// <param name="ExpectedVersion">The collection version the client last saw.</param>
 /// <param name="Now">The time of the claim, in UTC.</param>
-public readonly record struct ClaimDraft(Guid OperationId, Guid AccountId, Guid CharacterId, Guid CollectionId, int ExpectedVersion, DateTimeOffset Now);
+/// <param name="RequestedScalar">The scalar quantity to claim, for jewel collections; null claims everything that remains.</param>
+/// <param name="RequestedFruits">The fruit quantities to claim, for fruit-basket collections; null claims everything that remains.</param>
+public readonly record struct ClaimDraft(
+    Guid OperationId,
+    Guid AccountId,
+    Guid CharacterId,
+    Guid CollectionId,
+    int ExpectedVersion,
+    DateTimeOffset Now,
+    long? RequestedScalar = null,
+    FruitQuantities? RequestedFruits = null);
