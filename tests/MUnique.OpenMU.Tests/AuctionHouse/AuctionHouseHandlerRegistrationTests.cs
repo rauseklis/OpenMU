@@ -23,6 +23,7 @@ public class AuctionHouseHandlerRegistrationTests
     {
         var expected = new Dictionary<string, byte>
         {
+            ["AuctionOpenHandlerPlugIn"] = 0x00,
             ["AuctionCreateHandlerPlugIn"] = 0x03,
             ["AuctionBidHandlerPlugIn"] = 0x04,
             ["AuctionBuyoutHandlerPlugIn"] = 0x05,
@@ -42,7 +43,7 @@ public class AuctionHouseHandlerRegistrationTests
     public void SubHandlersBelongToTheAuctionGroupAndExpectEncryption()
     {
         var groupKey = (byte)this.ResolveType("AuctionHouseGroupHandlerPlugIn").GetField("GroupKey", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
-        var subHandlers = new[] { "AuctionCreateHandlerPlugIn", "AuctionBidHandlerPlugIn", "AuctionBuyoutHandlerPlugIn", "AuctionCancelHandlerPlugIn", "AuctionCollectHandlerPlugIn" };
+        var subHandlers = new[] { "AuctionOpenHandlerPlugIn", "AuctionCreateHandlerPlugIn", "AuctionBidHandlerPlugIn", "AuctionBuyoutHandlerPlugIn", "AuctionCancelHandlerPlugIn", "AuctionCollectHandlerPlugIn" };
 
         Assert.Multiple(() =>
         {
