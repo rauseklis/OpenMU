@@ -126,6 +126,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.IsAccountRestrictedAsync(context, accountId, now, cancellationToken));
 
     /// <inheritdoc />
+    public Task<int> PurgeFinishedOperationsAsync(DateTimeOffset cutoff, int batchSize, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.PurgeFinishedOperationsAsync(context, cutoff, batchSize, cancellationToken));
+
+    /// <inheritdoc />
     public Task<Guid?> FindListingIdAsync(long listingNumber, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.FindListingIdAsync(context, listingNumber, cancellationToken));
 
@@ -382,6 +386,22 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     {
         return context.Set<AuctionAccountRestriction>().AsNoTracking()
             .AnyAsync(r => r.AccountId == accountId && (r.ExpiresAt == null || r.ExpiresAt > now), cancellationToken);
+    }
+
+    /// <summary>
+    /// Deletes a batch of finished operation records. See <see cref="IAuctionHouseRepository.PurgeFinishedOperationsAsync"/>.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="cutoff">Records created before this time are candidates, in UTC.</param>
+    /// <param name="batchSize">The maximum number of records to delete in one batch.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of records deleted.</returns>
+    public Task<int> PurgeFinishedOperationsAsync(EntityDataContext context, DateTimeOffset cutoff, int batchSize, CancellationToken cancellationToken = default)
+    {
+        var size = Math.Clamp(batchSize, 1, 5000);
+        return context.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM data.\"AuctionOperation\" WHERE \"Id\" IN ( SELECT o.\"Id\" FROM data.\"AuctionOperation\" o  WHERE o.\"CreatedAt\" < {cutoff}  AND (o.\"ListingId\" IS NULL OR EXISTS (SELECT 1 FROM data.\"AuctionListing\" l WHERE l.\"Id\" = o.\"ListingId\" AND l.\"Status\" <> 0))  AND (o.\"CollectionId\" IS NULL OR EXISTS (SELECT 1 FROM data.\"AuctionCollection\" c WHERE c.\"Id\" = o.\"CollectionId\" AND c.\"Status\" = 2))  LIMIT {size})",
+            cancellationToken);
     }
 
     /// <summary>

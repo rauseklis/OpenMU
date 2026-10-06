@@ -525,6 +525,23 @@ public sealed class AuctionHouseService
         => this._repository.IsAccountRestrictedAsync(accountId, now, cancellationToken);
 
     /// <summary>
+    /// Deletes one batch of operation records that are older than the retention and can no longer be replayed to any effect.
+    /// </summary>
+    /// <param name="retention">How long a record is kept.</param>
+    /// <param name="batchSize">The maximum number of records to delete.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of records deleted; zero when the feature is disabled.</returns>
+    public Task<int> PurgeOperationsAsync(TimeSpan retention, int batchSize, CancellationToken cancellationToken = default)
+    {
+        if (!this._options.Enabled)
+        {
+            return Task.FromResult(0);
+        }
+
+        return this._repository.PurgeFinishedOperationsAsync(this._clock() - retention, batchSize, cancellationToken);
+    }
+
+    /// <summary>
     /// Loads the items of listings, so the browse rows can carry them.
     /// </summary>
     /// <param name="itemIds">The items.</param>

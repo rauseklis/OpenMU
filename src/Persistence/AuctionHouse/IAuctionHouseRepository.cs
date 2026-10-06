@@ -160,6 +160,16 @@ public interface IAuctionHouseRepository
     Task<IReadOnlyList<AuctionReconciliationFinding>> ReconcileAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Deletes old operation records whose replay can no longer matter: the listing has ended, or the collection is claimed.
+    /// A record of a still-active listing or a pending collection is kept, however old it is.
+    /// </summary>
+    /// <param name="cutoff">Records created before this time are candidates, in UTC.</param>
+    /// <param name="batchSize">The maximum number of records to delete in one batch.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of records deleted.</returns>
+    Task<int> PurgeFinishedOperationsAsync(DateTimeOffset cutoff, int batchSize, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads listed items with their definition and options, read-only.
     /// </summary>
     /// <param name="itemIds">The items.</param>

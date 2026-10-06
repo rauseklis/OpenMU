@@ -51,6 +51,16 @@ public class AuctionHouseConfiguration
     public int MaximumActiveListingsPerCharacter { get; set; } = 5;
 
     /// <summary>
+    /// Gets or sets the number of days an operation record is kept before it may be purged.
+    /// </summary>
+    public int OperationRetentionDays { get; set; } = 7;
+
+    /// <summary>
+    /// Gets or sets the number of operation records the worker purges in one batch.
+    /// </summary>
+    public int PurgeBatchSize { get; set; } = 500;
+
+    /// <summary>
     /// Gets or sets the number of listings the expiry worker finalizes in one batch.
     /// </summary>
     public int ExpiryBatchSize { get; set; } = 50;

@@ -50,6 +50,8 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
             {
                 await DeliverNotificationsAsync(gameContext, service, configuration).ConfigureAwait(false);
             }
+
+            await service.PurgeOperationsAsync(TimeSpan.FromDays(configuration.OperationRetentionDays), configuration.PurgeBatchSize).ConfigureAwait(false);
         }
         catch (Exception exception)
         {
