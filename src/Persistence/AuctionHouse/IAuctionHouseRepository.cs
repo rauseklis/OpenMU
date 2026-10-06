@@ -95,6 +95,22 @@ public interface IAuctionHouseRepository
     Task<int> CountPendingCollectionsAsync(Guid accountId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds the identifier of a listing from its wire number.
+    /// </summary>
+    /// <param name="listingNumber">The listing number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The listing identifier, or <c>null</c> when no listing has the number.</returns>
+    Task<Guid?> FindListingIdAsync(long listingNumber, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds the identifier of a collection from its wire number.
+    /// </summary>
+    /// <param name="collectionNumber">The collection number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The collection identifier, or <c>null</c> when no collection has the number.</returns>
+    Task<Guid?> FindCollectionIdAsync(long collectionNumber, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Lists an inventory item. Inside the transaction the item is located by its slot, the eligibility callback decides
     /// whether it may be listed, the fee is charged, and the item leaves the inventory.
     /// </summary>

@@ -346,6 +346,28 @@ public sealed class AuctionHouseService
     }
 
     /// <summary>
+    /// Resolves a listing number from the wire to the listing identifier.
+    /// </summary>
+    /// <param name="listingNumber">The listing number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The listing identifier, or <c>null</c> when the feature is disabled or the number is unknown.</returns>
+    public async Task<Guid?> ResolveListingIdAsync(long listingNumber, CancellationToken cancellationToken = default)
+    {
+        return this._options.Enabled ? await this._repository.FindListingIdAsync(listingNumber, cancellationToken) : null;
+    }
+
+    /// <summary>
+    /// Resolves a collection number from the wire to the collection identifier.
+    /// </summary>
+    /// <param name="collectionNumber">The collection number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The collection identifier, or <c>null</c> when the feature is disabled or the number is unknown.</returns>
+    public async Task<Guid?> ResolveCollectionIdAsync(long collectionNumber, CancellationToken cancellationToken = default)
+    {
+        return this._options.Enabled ? await this._repository.FindCollectionIdAsync(collectionNumber, cancellationToken) : null;
+    }
+
+    /// <summary>
     /// Reads one listing, including its note.
     /// </summary>
     /// <param name="listingId">The listing to read.</param>

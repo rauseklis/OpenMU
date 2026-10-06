@@ -82,12 +82,50 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.GetListingAsync(context, listingId, cancellationToken));
 
     /// <inheritdoc />
+    public Task<Guid?> FindListingIdAsync(long listingNumber, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.FindListingIdAsync(context, listingNumber, cancellationToken));
+
+    /// <inheritdoc />
+    public Task<Guid?> FindCollectionIdAsync(long collectionNumber, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.FindCollectionIdAsync(context, collectionNumber, cancellationToken));
+
+    /// <inheritdoc />
     public Task<int> CountPendingCollectionsAsync(Guid accountId, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.CountPendingCollectionsAsync(context, accountId, cancellationToken));
 
     /// <inheritdoc />
     public Task<AuctionItemListingResult> ListItemAsync(ItemListingDraft draft, Func<ItemListingFacts, bool> isEligible, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.ListItemAsync(context, draft, isEligible, cancellationToken));
+
+    /// <summary>
+    /// Finds the identifier of a listing from its wire number.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="listingNumber">The listing number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The listing identifier, or <c>null</c>.</returns>
+    public Task<Guid?> FindListingIdAsync(EntityDataContext context, long listingNumber, CancellationToken cancellationToken = default)
+    {
+        return context.Set<AuctionListing>().AsNoTracking()
+            .Where(l => l.ListingNumber == listingNumber)
+            .Select(l => (Guid?)l.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Finds the identifier of a collection from its wire number.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="collectionNumber">The collection number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The collection identifier, or <c>null</c>.</returns>
+    public Task<Guid?> FindCollectionIdAsync(EntityDataContext context, long collectionNumber, CancellationToken cancellationToken = default)
+    {
+        return context.Set<AuctionCollection>().AsNoTracking()
+            .Where(c => c.CollectionNumber == collectionNumber)
+            .Select(c => (Guid?)c.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 
     private async Task<T> WithContextAsync<T>(Func<EntityDataContext, Task<T>> operation)
     {
