@@ -4,6 +4,8 @@
 
 namespace MUnique.OpenMU.Persistence.AuctionHouse;
 
+using MUnique.OpenMU.GameLogic.AuctionHouse;
+
 /// <summary>
 /// The outcome of listing an inventory item.
 /// </summary>
@@ -96,4 +98,6 @@ public readonly record struct ItemListingDraft(
     DateTimeOffset EndsAt,
     long ListingFee,
     int ListingLimitPerAccount,
-    int ListingLimitPerCharacter);
+    int ListingLimitPerCharacter,
+    FruitBasket? StartingFruits = null,
+    FruitBasket? FeeFruits = null);

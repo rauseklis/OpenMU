@@ -1304,6 +1304,65 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     }
 
     /// <summary>
+    /// Pays a fruit basket from the character's main inventory: for every nonzero component, the exact number of clean fruits at
+    /// the component's level is consumed, lowest slots first. Either every component is paid or none is.
+    /// </summary>
+    private async Task<bool> TenderFruitsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, FruitBasket amount, byte kind, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var fruit = await context.Database.SqlQuery<Guid?>(
+            $"SELECT d.\"Id\" AS \"Value\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" = 13 AND d.\"Number\" = 15")
+            .SingleOrDefaultAsync(cancellationToken);
+        var inventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == characterId)
+            .Select(c => c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (fruit is null || inventoryId is null)
+        {
+            return false;
+        }
+
+        var stored = await context.Set<Item>().AsNoTracking()
+            .Include(i => i.RawItemOptions)
+            .Where(i => i.ItemStorageId == inventoryId && i.DefinitionId == fruit)
+            .ToListAsync(cancellationToken);
+        var chosen = new List<(Guid Id, FruitComponent Component, int Count)>();
+        foreach (var component in Enum.GetValues<FruitComponent>())
+        {
+            var count = amount.Get(component);
+            if (count <= 0)
+            {
+                continue;
+            }
+
+            var level = FruitRules.GetItemLevel(component);
+            var candidates = stored
+                .Where(i => i.Id != excludedItemId && i.Level == level && i.ItemSlot >= InventoryConstants.EquippableSlotsCount && i.Durability > 0 && i.SocketCount == 0 && i.RawItemOptions.Count == 0)
+                .Where(i => !chosen.Any(c => c.Id == i.Id))
+                .OrderBy(i => i.ItemSlot)
+                .Take((int)count)
+                .ToList();
+            if (candidates.Count < count)
+            {
+                return false;
+            }
+
+            chosen.AddRange(candidates.Select(c => (c.Id, component, (int)count)));
+        }
+
+        var consumedIds = chosen.Select(c => c.Id).ToList();
+        await context.Set<Item>().Where(i => consumedIds.Contains(i.Id)).ExecuteDeleteAsync(cancellationToken);
+        foreach (var (_, component, count) in chosen)
+        {
+            var movement = Movement(accountId, operationId, listingId, null, count, kind, now);
+            movement.Currency = FruitsCurrency;
+            movement.FruitComponent = (byte)component;
+            context.Set<AuctionCurrencyMovement>().Add(movement);
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Pays a jewel amount from the character's main inventory. The jewels are chosen by the payment planner; the chosen
     /// items are consumed, the consumed units are recorded, and any change is issued as a collection in the same transaction.
     /// </summary>
@@ -1621,6 +1680,13 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
             }
         }
+        else if (draft.Currency == FruitsCurrency)
+        {
+            if (draft.FeeFruits is not { } feeFruits || !await this.TenderFruitsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, feeFruits, FeeRemovedKind, item.Id, draft.CreatedAt, cancellationToken))
+            {
+                return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
+            }
+        }
         else if (await this.TenderJewelsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, draft.Currency, draft.ListingFee, item.Id, draft.CreatedAt, cancellationToken) != JewelTender.Paid)
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
@@ -1638,6 +1704,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             Currency = draft.Currency,
             Category = draft.Category,
             StartingPrice = draft.StartingPrice,
+            StartingStrength = draft.StartingFruits?.Strength ?? 0,
+            StartingAgility = draft.StartingFruits?.Agility ?? 0,
+            StartingVitality = draft.StartingFruits?.Vitality ?? 0,
+            StartingEnergy = draft.StartingFruits?.Energy ?? 0,
+            StartingCommand = draft.StartingFruits?.Command ?? 0,
             BuyoutPrice = draft.BuyoutPrice,
             CreatedAt = draft.CreatedAt,
             OriginalEndsAt = draft.EndsAt,
@@ -1654,9 +1725,12 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listingId,
             CreatedAt = draft.CreatedAt,
         });
-        var feeMovement = Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt);
-        feeMovement.Currency = draft.Currency;
-        context.Set<AuctionCurrencyMovement>().Add(feeMovement);
+        if (draft.Currency != FruitsCurrency)
+        {
+            var feeMovement = Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt);
+            feeMovement.Currency = draft.Currency;
+            context.Set<AuctionCurrencyMovement>().Add(feeMovement);
+        }
         item.ItemStorageId = null;
 
         try

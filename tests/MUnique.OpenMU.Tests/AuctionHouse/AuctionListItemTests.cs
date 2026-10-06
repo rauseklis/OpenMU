@@ -229,7 +229,7 @@ public class AuctionListItemTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(fruits.Result, Is.EqualTo(AuctionResultCode.UnsupportedCurrency));
+            Assert.That(fruits.Result, Is.EqualTo(AuctionResultCode.InvalidFruitBasket));
             Assert.That(zeroPrice.Result, Is.EqualTo(AuctionResultCode.InvalidPrice));
             Assert.That(badDuration.Result, Is.EqualTo(AuctionResultCode.InvalidDuration));
             Assert.That(disabled.Result, Is.EqualTo(AuctionResultCode.Disabled));

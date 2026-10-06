@@ -227,7 +227,8 @@ public readonly record struct AuctionListItemRequest(
     byte Category,
     long StartingPrice,
     long? BuyoutPrice,
-    int DurationHours);
+    int DurationHours,
+    FruitBasket? StartingFruits = null);
 
 /// <summary>
 /// The result of listing an inventory item.

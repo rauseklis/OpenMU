@@ -94,10 +94,10 @@ public sealed class AuctionHouseService
             return new AuctionListItemResult(AuctionResultCode.Disabled, Guid.Empty, 0, now);
         }
 
-        // Zen and the seven jewel modes can list; Fruits needs its basket rules and is not supported yet.
+        // Zen, the seven jewel modes and the fruit basket can list.
         var currency = (AuctionCurrencyMode)request.Currency;
         if (currency is not (AuctionCurrencyMode.Zen or AuctionCurrencyMode.Chaos or AuctionCurrencyMode.Bless or AuctionCurrencyMode.Soul
-            or AuctionCurrencyMode.Life or AuctionCurrencyMode.Creation or AuctionCurrencyMode.Guardian or AuctionCurrencyMode.Harmony))
+            or AuctionCurrencyMode.Life or AuctionCurrencyMode.Creation or AuctionCurrencyMode.Guardian or AuctionCurrencyMode.Harmony or AuctionCurrencyMode.Fruits))
         {
             return new AuctionListItemResult(AuctionResultCode.UnsupportedCurrency, Guid.Empty, 0, now);
         }
@@ -107,12 +107,19 @@ public sealed class AuctionHouseService
             return new AuctionListItemResult(AuctionResultCode.InvalidDuration, Guid.Empty, 0, now);
         }
 
-        if (!AuctionRules.IsPriceInRange(currency, request.StartingPrice)
-            || request.BuyoutPrice is { } buyout && (buyout < request.StartingPrice || !AuctionRules.IsPriceInRange(currency, buyout)))
+        if (currency != AuctionCurrencyMode.Fruits && (!AuctionRules.IsPriceInRange(currency, request.StartingPrice)
+            || request.BuyoutPrice is { } buyout && (buyout < request.StartingPrice || !AuctionRules.IsPriceInRange(currency, buyout))))
         {
             return new AuctionListItemResult(AuctionResultCode.InvalidPrice, Guid.Empty, 0, now);
         }
 
+        var isFruits = currency == AuctionCurrencyMode.Fruits;
+        if (isFruits && (request.StartingFruits is not { } basket || !FruitRules.IsValidStartingBasket(basket) || request.BuyoutPrice is not null))
+        {
+            return new AuctionListItemResult(AuctionResultCode.InvalidFruitBasket, Guid.Empty, 0, now);
+        }
+
+        var feeFruits = isFruits ? FruitRules.CalculateFees(request.StartingFruits!.Value, this._options.ListingFeeBasisPoints) : (FruitBasket?)null;
         var draft = new ItemListingDraft(
             request.OperationId,
             request.AccountId,
@@ -122,13 +129,15 @@ public sealed class AuctionHouseService
             request.InventorySlot,
             request.Currency,
             request.Category,
-            request.StartingPrice,
+            isFruits ? 0 : request.StartingPrice,
             request.BuyoutPrice,
             now,
             now.AddHours(request.DurationHours),
-            AuctionRules.CalculateFee(request.StartingPrice, this._options.ListingFeeBasisPoints),
+            isFruits ? 0 : AuctionRules.CalculateFee(request.StartingPrice, this._options.ListingFeeBasisPoints),
             this._options.MaximumActiveListingsPerAccount,
-            this._options.MaximumActiveListingsPerCharacter);
+            this._options.MaximumActiveListingsPerCharacter,
+            request.StartingFruits,
+            feeFruits);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
         return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now);
     }
