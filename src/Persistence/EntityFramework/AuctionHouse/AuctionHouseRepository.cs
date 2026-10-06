@@ -84,6 +84,8 @@ public sealed class AuctionHouseRepository
     /// </summary>
     private const int MoneyLimit = 2_000_000_000;
 
+    private const string ExpirySavepoint = "expiry_listing";
+
     /// <summary>
     /// Creates a listing together with its operation record. A repeated operation returns the stored outcome.
     /// </summary>
@@ -607,9 +609,21 @@ public sealed class AuctionHouseRepository
         var finalized = 0;
         foreach (var listing in due)
         {
-            if (await this.FinalizeIfDueAsync(context, listing.Id, now, successFee, cancellationToken) == AuctionExpireOutcome.Finalized)
+            await transaction.CreateSavepointAsync(ExpirySavepoint, cancellationToken);
+            try
             {
-                finalized++;
+                if (await this.FinalizeIfDueAsync(context, listing.Id, now, successFee, cancellationToken) == AuctionExpireOutcome.Finalized)
+                {
+                    finalized++;
+                }
+
+                await transaction.ReleaseSavepointAsync(ExpirySavepoint, cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                await transaction.RollbackToSavepointAsync(ExpirySavepoint, cancellationToken);
+                await transaction.ReleaseSavepointAsync(ExpirySavepoint, cancellationToken);
+                context.ChangeTracker.Clear();
             }
         }
 
