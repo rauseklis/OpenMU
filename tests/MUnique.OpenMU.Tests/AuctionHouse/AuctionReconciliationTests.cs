@@ -93,4 +93,46 @@ public class AuctionReconciliationTests
         await using var check = new EntityDataContext();
         Assert.That(await check.Set<Item>().AsNoTracking().Where(i => i.Id == this._itemId).Select(i => i.ItemStorageId).SingleAsync(), Is.EqualTo(this._inventoryId));
     }
+
+    /// <summary>
+    /// Verifies a fruit listing whose recorded current bid does not match its escrowed fruits is reported per component.
+    /// </summary>
+    [Test]
+    public async Task FruitEscrowMismatchIsReportedPerComponent()
+    {
+        var listing = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        await using (var context = new EntityDataContext())
+        {
+            context.Set<AuctionListing>().Add(new AuctionListing
+            {
+                Id = listing,
+                ItemId = Guid.NewGuid(),
+                SellerAccountId = Guid.NewGuid(),
+                SellerCharacterId = Guid.NewGuid(),
+                SellerName = "Seller",
+                Status = 0,
+                Currency = 8,
+                CreatedAt = now,
+                OriginalEndsAt = now.AddHours(24),
+                EndsAt = now.AddHours(24),
+                NormalizedName = string.Empty,
+                CurrentBidStrength = 7,
+                BidCount = 1,
+            });
+            await context.SaveChangesAsync();
+        }
+
+        try
+        {
+            var findings = await new AuctionHouseRepository().ReconcileAsync();
+
+            Assert.That(findings.Any(f => f.Invariant == "FruitEscrowTotalsDifferFromBidObligations" && f.Subject == "Strength"), Is.True);
+        }
+        finally
+        {
+            await using var cleanup = new EntityDataContext();
+            await cleanup.Set<AuctionListing>().Where(l => l.Id == listing).ExecuteDeleteAsync();
+        }
+    }
 }

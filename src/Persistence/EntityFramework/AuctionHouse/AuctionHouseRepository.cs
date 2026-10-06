@@ -197,6 +197,29 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             findings.AddRange(subjects.Select(subject => new AuctionReconciliationFinding(invariant, subject.ToString())));
         }
 
+        // Fruit escrow per component: the escrowed amounts of active bids must equal the active listings' current fruit bids.
+        var fruitComponents = new (string Name, string BidColumn, string ListingColumn)[]
+        {
+            ("Strength", "StrengthAmount", "CurrentBidStrength"),
+            ("Agility", "AgilityAmount", "CurrentBidAgility"),
+            ("Vitality", "VitalityAmount", "CurrentBidVitality"),
+            ("Energy", "EnergyAmount", "CurrentBidEnergy"),
+            ("Command", "CommandAmount", "CurrentBidCommand"),
+        };
+        foreach (var (name, bidColumn, listingColumn) in fruitComponents)
+        {
+            var obligations = await context.Database.SqlQueryRaw<long>(
+                $"SELECT COALESCE(SUM(l.\"{listingColumn}\"), 0) AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" = 0")
+                .SingleAsync(cancellationToken);
+            var escrowed = await context.Database.SqlQueryRaw<long>(
+                $"SELECT COALESCE(SUM(b.\"{bidColumn}\"), 0) AS \"Value\" FROM data.\"AuctionBid\" b JOIN data.\"AuctionListing\" l ON l.\"Id\" = b.\"ListingId\" WHERE b.\"Status\" = 0 AND l.\"Status\" = 0")
+                .SingleAsync(cancellationToken);
+            if (obligations != escrowed)
+            {
+                findings.Add(new AuctionReconciliationFinding("FruitEscrowTotalsDifferFromBidObligations", name));
+            }
+        }
+
         var escrowSql = "SELECT l.\"Currency\" AS \"Value\" FROM data.\"AuctionListing\" l LEFT JOIN data.\"AuctionBid\" b ON b.\"ListingId\" = l.\"Id\" AND b.\"Status\" = 0 WHERE l.\"Status\" = 0 GROUP BY l.\"Currency\" HAVING SUM(COALESCE(l.\"CurrentBid\", 0)) <> SUM(COALESCE(b.\"ScalarAmount\", 0))";
         var currencies = await context.Database.SqlQueryRaw<int>(escrowSql).ToListAsync(cancellationToken);
         findings.AddRange(currencies.Select(currency => new AuctionReconciliationFinding("EscrowTotalsDifferFromBidObligations", $"currency {currency}")));
