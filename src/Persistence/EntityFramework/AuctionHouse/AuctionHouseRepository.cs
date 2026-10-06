@@ -575,36 +575,83 @@ public sealed class AuctionHouseRepository
     public async Task<AuctionExpireResult> ExpireAsync(EntityDataContext context, ExpireDraft draft, CancellationToken cancellationToken = default)
     {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var outcome = await this.FinalizeIfDueAsync(context, draft.ListingId, draft.Now, _ => draft.SuccessFee, cancellationToken);
+        if (outcome != AuctionExpireOutcome.Finalized)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionExpireResult(outcome);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return new AuctionExpireResult(AuctionExpireOutcome.Finalized);
+    }
+
+    /// <summary>
+    /// Finalizes a batch of due listings for the expiry worker. The due listings are locked with
+    /// <c>FOR UPDATE SKIP LOCKED</c>, so two workers never finalize the same listing, and a listing another worker holds is
+    /// skipped rather than waited for.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="batchSize">The maximum number of listings to finalize in this batch.</param>
+    /// <param name="successFee">The success fee for a sale price, from the domain rules.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of listings finalized.</returns>
+    public async Task<int> ExpireBatchAsync(EntityDataContext context, DateTimeOffset now, int batchSize, Func<long, long> successFee, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         var due = await context.Set<AuctionListing>()
-            .Where(l => l.Id == draft.ListingId && l.Status == 0 && l.EndsAt <= draft.Now)
+            .FromSqlInterpolated($"SELECT * FROM data.\"AuctionListing\" WHERE \"Status\" = 0 AND \"EndsAt\" <= {now} ORDER BY \"EndsAt\" LIMIT {batchSize} FOR UPDATE SKIP LOCKED")
+            .AsNoTracking().ToListAsync(cancellationToken);
+
+        var finalized = 0;
+        foreach (var listing in due)
+        {
+            if (await this.FinalizeIfDueAsync(context, listing.Id, now, successFee, cancellationToken) == AuctionExpireOutcome.Finalized)
+            {
+                finalized++;
+            }
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return finalized;
+    }
+
+    /// <summary>
+    /// Finalizes one listing if it is due, inside the caller's transaction. The conditional update makes the finalization
+    /// happen at most once even if the listing is seen twice.
+    /// </summary>
+    private async Task<AuctionExpireOutcome> FinalizeIfDueAsync(EntityDataContext context, Guid listingId, DateTimeOffset now, Func<long, long> successFee, CancellationToken cancellationToken)
+    {
+        var due = await context.Set<AuctionListing>()
+            .Where(l => l.Id == listingId && l.Status == 0 && l.EndsAt <= now)
             .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.Version, l => l.Version + 1), cancellationToken);
         if (due == 0)
         {
-            await transaction.RollbackAsync(cancellationToken);
-            var exists = await context.Set<AuctionListing>().AsNoTracking().AnyAsync(l => l.Id == draft.ListingId, cancellationToken);
-            return new AuctionExpireResult(exists ? AuctionExpireOutcome.NotDue : AuctionExpireOutcome.ListingNotFound);
+            var exists = await context.Set<AuctionListing>().AsNoTracking().AnyAsync(l => l.Id == listingId, cancellationToken);
+            return exists ? AuctionExpireOutcome.NotDue : AuctionExpireOutcome.ListingNotFound;
         }
 
-        var listing = await context.Set<AuctionListing>().SingleAsync(l => l.Id == draft.ListingId, cancellationToken);
-        listing.FinalizedAt = draft.Now;
+        var listing = await context.Set<AuctionListing>().SingleAsync(l => l.Id == listingId, cancellationToken);
+        listing.FinalizedAt = now;
         var escrow = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
         if (escrow is not null)
         {
+            var price = escrow.ScalarAmount ?? 0;
             escrow.Status = 2;
-            escrow.ClosedAt = draft.Now;
+            escrow.ClosedAt = now;
             listing.Status = 1;
-            context.Set<AuctionCollection>().Add(ItemCollection(escrow.BidderAccountId, listing, 0, draft.Now));
-            context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, (escrow.ScalarAmount ?? 0) - draft.SuccessFee, draft.Now));
+            context.Set<AuctionCollection>().Add(ItemCollection(escrow.BidderAccountId, listing, 0, now));
+            context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, price - successFee(price), now));
         }
         else
         {
             listing.Status = 2;
-            context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, draft.Now));
+            context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, now));
         }
 
         await context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return new AuctionExpireResult(AuctionExpireOutcome.Finalized);
+        return AuctionExpireOutcome.Finalized;
     }
 
     private static AuctionCollection ItemCollection(Guid accountId, AuctionListing listing, byte kind, DateTimeOffset now)
