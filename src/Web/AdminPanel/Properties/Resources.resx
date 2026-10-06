@@ -1542,4 +1542,46 @@
   <data name="MonsterDropChanceOverviewDescription" xml:space="preserve">
     <value>The drop chances of each monster which is spawned on a map, considering the monster level restrictions of the map drop groups and the monster specific drop groups. The chances apply to each drop roll, a monster rolls up to its maximum item drops. Quest item drops are not included. If the total chance exceeds 100 %, the chances are scaled down proportionally and there is no chance for no drop.</value>
   </data>
+  <data name="AuctionHouse" xml:space="preserve">
+    <value>Auction House</value>
+  </data>
+  <data name="AuctionHouseNotAvailable" xml:space="preserve">
+    <value>The Auction House database is not available in this process.</value>
+  </data>
+  <data name="AuctionHouseReconcile" xml:space="preserve">
+    <value>Check invariants</value>
+  </data>
+  <data name="AuctionHouseNoFindings" xml:space="preserve">
+    <value>No broken invariants were found.</value>
+  </data>
+  <data name="AuctionHouseRepair" xml:space="preserve">
+    <value>Repair missing return collections</value>
+  </data>
+  <data name="AuctionHouseRepairResult" xml:space="preserve">
+    <value>Repaired {0} listing(s); {1} left for manual review.</value>
+  </data>
+  <data name="AuctionHouseBrowse" xml:space="preserve">
+    <value>Active listings</value>
+  </data>
+  <data name="AuctionHouseCurrency" xml:space="preserve">
+    <value>Currency</value>
+  </data>
+  <data name="AuctionHouseRemove" xml:space="preserve">
+    <value>Remove listing</value>
+  </data>
+  <data name="AuctionHouseRemoveHint" xml:space="preserve">
+    <value>Removes an active listing: the item returns to the seller and any bid is refunded. The action is audited with your name and the reason.</value>
+  </data>
+  <data name="AuctionHouseListingId" xml:space="preserve">
+    <value>Listing ID</value>
+  </data>
+  <data name="AuctionHouseReason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="AuctionHouseRemoveInvalid" xml:space="preserve">
+    <value>Enter a listing ID and a reason.</value>
+  </data>
+  <data name="AuctionHouseRemoveOutcome" xml:space="preserve">
+    <value>Result: {0}.</value>
+  </data>
 </root>

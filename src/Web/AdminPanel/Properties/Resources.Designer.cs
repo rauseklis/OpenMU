@@ -3619,6 +3619,132 @@ namespace MUnique.OpenMU.Web.AdminPanel.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Auction House.
+        /// </summary>
+        public static string AuctionHouse {
+            get {
+                return ResourceManager.GetString("AuctionHouse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The Auction House database is not available in this process..
+        /// </summary>
+        public static string AuctionHouseNotAvailable {
+            get {
+                return ResourceManager.GetString("AuctionHouseNotAvailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Check invariants.
+        /// </summary>
+        public static string AuctionHouseReconcile {
+            get {
+                return ResourceManager.GetString("AuctionHouseReconcile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No broken invariants were found..
+        /// </summary>
+        public static string AuctionHouseNoFindings {
+            get {
+                return ResourceManager.GetString("AuctionHouseNoFindings", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Repair missing return collections.
+        /// </summary>
+        public static string AuctionHouseRepair {
+            get {
+                return ResourceManager.GetString("AuctionHouseRepair", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Repaired {0} listing(s); {1} left for manual review..
+        /// </summary>
+        public static string AuctionHouseRepairResult {
+            get {
+                return ResourceManager.GetString("AuctionHouseRepairResult", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Active listings.
+        /// </summary>
+        public static string AuctionHouseBrowse {
+            get {
+                return ResourceManager.GetString("AuctionHouseBrowse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Currency.
+        /// </summary>
+        public static string AuctionHouseCurrency {
+            get {
+                return ResourceManager.GetString("AuctionHouseCurrency", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remove listing.
+        /// </summary>
+        public static string AuctionHouseRemove {
+            get {
+                return ResourceManager.GetString("AuctionHouseRemove", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Removes an active listing: the item returns to the seller and any bid is refunded. The action is audited with your name and the reason..
+        /// </summary>
+        public static string AuctionHouseRemoveHint {
+            get {
+                return ResourceManager.GetString("AuctionHouseRemoveHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Listing ID.
+        /// </summary>
+        public static string AuctionHouseListingId {
+            get {
+                return ResourceManager.GetString("AuctionHouseListingId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reason.
+        /// </summary>
+        public static string AuctionHouseReason {
+            get {
+                return ResourceManager.GetString("AuctionHouseReason", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a listing ID and a reason..
+        /// </summary>
+        public static string AuctionHouseRemoveInvalid {
+            get {
+                return ResourceManager.GetString("AuctionHouseRemoveInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Result: {0}..
+        /// </summary>
+        public static string AuctionHouseRemoveOutcome {
+            get {
+                return ResourceManager.GetString("AuctionHouseRemoveOutcome", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Castle Siege.
         /// </summary>
         public static string CastleSiege {

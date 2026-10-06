@@ -1,0 +1,91 @@
+@page "/auction-house"
+
+@attribute [Authorize(Policy = AdminPolicies.Administrator)]
+
+@using Microsoft.AspNetCore.Authorization
+@using MUnique.OpenMU.Persistence.AuctionHouse
+@using MUnique.OpenMU.Web.AdminPanel.Auth
+@using MUnique.OpenMU.Web.AdminPanel.Components
+@using MUnique.OpenMU.Web.AdminPanel.Properties
+
+<PageTitle>OpenMU: @Resources.AuctionHouse</PageTitle>
+<Breadcrumb IsFirstFromRoot="true" Caption="@Resources.AuctionHouse" />
+<h1 class="mb-3">@Resources.AuctionHouse</h1>
+
+@if (!this._available)
+{
+    <div class="alert alert-warning" role="alert">@Resources.AuctionHouseNotAvailable</div>
+}
+else
+{
+    @if (this._message is not null)
+    {
+        <div class="alert alert-info" role="alert">@this._message</div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <button type="button" class="btn btn-outline-secondary me-2" @onclick="this.ReconcileAsync" disabled="@this._busy">@Resources.AuctionHouseReconcile</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="this.RepairAsync" disabled="@this._busy">@Resources.AuctionHouseRepair</button>
+            @if (this._findings is { Count: > 0 } findings)
+            {
+                <table class="table table-sm mt-3">
+                    <thead><tr><th>Invariant</th><th>Subject</th></tr></thead>
+                    <tbody>
+                        @foreach (var finding in findings)
+                        {
+                            <tr><td>@finding.Invariant</td><td>@finding.Subject</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else if (this._findingsChecked)
+            {
+                <p class="text-muted mt-3 mb-0">@Resources.AuctionHouseNoFindings</p>
+            }
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <label for="auction-currency" class="form-label">@Resources.AuctionHouseCurrency</label>
+            <select id="auction-currency" class="form-select mb-2" @onchange="this.OnCurrencyChanged">
+                @foreach (var option in this.CurrencyOptions)
+                {
+                    <option value="@option.Value" selected="@(option.Value == this._currency)">@option.Text</option>
+                }
+            </select>
+            <button type="button" class="btn btn-outline-secondary mb-3" @onclick="this.BrowseAsync" disabled="@this._busy">@Resources.AuctionHouseBrowse</button>
+            @if (this._rows is { Count: > 0 } rows)
+            {
+                <table class="table table-sm">
+                    <thead><tr><th>Listing</th><th>Starting</th><th>Current bid</th><th>Ends (UTC)</th><th>Seller</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in rows)
+                        {
+                            <tr>
+                                <td><code>@row.ListingId</code></td>
+                                <td>@row.StartingPrice</td>
+                                <td>@(row.CurrentBid?.ToString() ?? "-")</td>
+                                <td>@row.EndsAt.UtcDateTime.ToString("u")</td>
+                                <td>@row.SellerName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5">@Resources.AuctionHouseRemove</h2>
+            <p class="text-muted">@Resources.AuctionHouseRemoveHint</p>
+            <label for="auction-listing" class="form-label">@Resources.AuctionHouseListingId</label>
+            <input id="auction-listing" class="form-control mb-2" @bind="this._listingId" />
+            <label for="auction-reason" class="form-label">@Resources.AuctionHouseReason</label>
+            <input id="auction-reason" class="form-control mb-2" @bind="this._reason" />
+            <button type="button" class="btn btn-danger" @onclick="this.RemoveAsync" disabled="@this._busy">@Resources.AuctionHouseRemove</button>
+        </div>
+    </div>
+}
