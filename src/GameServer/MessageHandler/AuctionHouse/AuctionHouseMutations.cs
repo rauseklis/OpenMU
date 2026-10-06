@@ -97,7 +97,7 @@ internal static class AuctionHouseMutations
     /// <param name="claimedScalar">The amount collected, or zero.</param>
     /// <param name="serverTime">The server time, in UTC.</param>
     /// <returns>A task which completes when the response is sent.</returns>
-    public static async ValueTask SendOperationAsync(Player player, byte[] operationId, AuctionOperationType operationType, AuctionResultCode result, ulong listingNumber, ulong collectionNumber, long claimedScalar, DateTimeOffset serverTime)
+    public static async ValueTask SendOperationAsync(Player player, byte[] operationId, AuctionOperationType operationType, AuctionResultCode result, ulong listingNumber, ulong collectionNumber, long claimedScalar, DateTimeOffset serverTime, long feeScalar = 0, FruitBasket? feeFruits = null, byte currency = 0)
     {
         if (player is not RemotePlayer { Connection: { } connection })
         {
@@ -111,8 +111,8 @@ internal static class AuctionHouseMutations
             listingNumber,
             collectionNumber,
             0,
-            MUnique.OpenMU.Network.Packets.AuctionCurrencyMode.Zen,
-            0, 0, 0, 0, 0, 0,
+            (MUnique.OpenMU.Network.Packets.AuctionCurrencyMode)currency,
+            (uint)feeScalar, (uint)(feeFruits?.Strength ?? 0), (uint)(feeFruits?.Agility ?? 0), (uint)(feeFruits?.Vitality ?? 0), (uint)(feeFruits?.Energy ?? 0), (uint)(feeFruits?.Command ?? 0),
             0, 0, 0, 0, 0, 0,
             (uint)claimedScalar, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0,

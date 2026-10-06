@@ -2210,7 +2210,16 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             definition?.IsQuestItem ?? true,
             (int)Math.Ceiling(item.Durability),
             item.ItemSlot,
-            referenced);
+            referenced,
+            definition?.Group ?? 0,
+            definition?.Number ?? 0);
+        var note = AuctionNote.Normalize(draft.Note);
+        if (!note.IsValid)
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.InvalidNote, Guid.Empty, 0);
+        }
+
+        var category = AuctionCategoryClassifier.Classify(facts.ItemGroup, facts.ItemNumber);
         if (!isEligible(facts))
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.NotEligible, Guid.Empty, 0);
@@ -2258,13 +2267,14 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             SellerIp = draft.SellerIp,
             Status = 0,
             Currency = draft.Currency,
-            Category = draft.Category,
+            Category = (byte)category,
             StartingPrice = draft.StartingPrice,
             StartingStrength = draft.StartingFruits?.Strength ?? 0,
             StartingAgility = draft.StartingFruits?.Agility ?? 0,
             StartingVitality = draft.StartingFruits?.Vitality ?? 0,
             StartingEnergy = draft.StartingFruits?.Energy ?? 0,
             StartingCommand = draft.StartingFruits?.Command ?? 0,
+            Note = note.Value,
             BuyoutStrength = draft.BuyoutFruits?.Strength,
             BuyoutAgility = draft.BuyoutFruits?.Agility,
             BuyoutVitality = draft.BuyoutFruits?.Vitality,

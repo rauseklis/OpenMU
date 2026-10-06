@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameServer.MessageHandler.AuctionHouse;
 
 using System.Runtime.InteropServices;
+using System.Text;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.AuctionHouse;
 using Packets = MUnique.OpenMU.Network.Packets;
@@ -72,6 +73,7 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
                 StartingPrice: request.StartingScalar,
                 BuyoutPrice: request.BuyoutScalar == 0 ? null : (long?)request.BuyoutScalar,
                 DurationHours: request.DurationHours,
+                Note: DecodeNote(request),
                 StartingFruits: request.CurrencyMode == Packets.AuctionCurrencyMode.Fruits
                     ? new FruitBasket(request.StartingStrength, request.StartingAgility, request.StartingVitality, request.StartingEnergy, request.StartingCommand)
                     : null,
@@ -80,10 +82,26 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
                     : null)).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
-        await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Create, result.Result, (ulong)result.ListingNumber, 0, 0, result.ServerTime).ConfigureAwait(false);
+        await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Create, result.Result, (ulong)result.ListingNumber, 0, 0, result.ServerTime, result.FeeScalar, result.FeeFruits, (byte)request.CurrencyMode).ConfigureAwait(false);
         if (result.Result == AuctionResultCode.Success)
         {
             await AuctionHouseMutations.ReloadAfterChangeAsync(player).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Decodes the note as strict UTF-8. Bytes which are not valid UTF-8 become a control character, which the note rules refuse.
+    /// </summary>
+    private static string? DecodeNote(Wire.AuctionCreateRequest request)
+    {
+        var length = Math.Min((int)request.NoteLength, request.Note.Length);
+        try
+        {
+            return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true).GetString(request.Note[..length]);
+        }
+        catch (DecoderFallbackException)
+        {
+            return "\u0001";
         }
     }
 }

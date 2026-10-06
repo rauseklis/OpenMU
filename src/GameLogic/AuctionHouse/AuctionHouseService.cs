@@ -139,7 +139,8 @@ public sealed class AuctionHouseService
             this._options.MaximumActiveListingsPerCharacter,
             request.StartingFruits,
             feeFruits,
-            isFruits ? request.BuyoutFruits : null);
+            isFruits ? request.BuyoutFruits : null,
+            request.Note);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
         AuctionHouseMetrics.RecordOperation("create", result.Outcome.ToString());
         if (result.Outcome == AuctionItemListingOutcome.Created)
@@ -147,7 +148,7 @@ public sealed class AuctionHouseService
             AuctionHouseMetrics.RecordListingFee(currency, draft.ListingFee, feeFruits);
         }
 
-        return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now);
+        return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now, draft.ListingFee, feeFruits);
     }
 
     private static bool IsEligible(ItemListingFacts facts)
@@ -172,6 +173,7 @@ public sealed class AuctionHouseService
             AuctionItemListingOutcome.ListingLimitReached => AuctionResultCode.ListingLimitReached,
             AuctionItemListingOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
             AuctionItemListingOutcome.CharacterNotOwned => AuctionResultCode.InvalidRequest,
+            AuctionItemListingOutcome.InvalidNote => AuctionResultCode.InvalidRequest,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
         };
 

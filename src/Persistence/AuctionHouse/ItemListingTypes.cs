@@ -32,6 +32,9 @@ public enum AuctionItemListingOutcome
     /// <summary>The item already has an active listing or a pending collection.</summary>
     ItemAlreadyListed,
 
+    /// <summary>The note is not valid UTF-8 text within its byte limit.</summary>
+    InvalidNote,
+
     /// <summary>The character does not belong to the requesting account.</summary>
     CharacterNotOwned,
 }
@@ -63,7 +66,9 @@ public readonly record struct ItemListingFacts(
     bool IsQuestItem,
     int Durability,
     byte InventorySlot,
-    bool IsAlreadyReferenced);
+    bool IsAlreadyReferenced,
+    int ItemGroup,
+    int ItemNumber);
 
 /// <summary>
 /// The values for listing an inventory item. The item itself is selected by its slot inside the transaction.
@@ -101,4 +106,5 @@ public readonly record struct ItemListingDraft(
     int ListingLimitPerCharacter,
     FruitBasket? StartingFruits = null,
     FruitBasket? FeeFruits = null,
-    FruitBasket? BuyoutFruits = null);
+    FruitBasket? BuyoutFruits = null,
+    string? Note = null);

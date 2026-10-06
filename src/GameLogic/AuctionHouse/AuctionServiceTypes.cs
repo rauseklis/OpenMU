@@ -229,7 +229,8 @@ public readonly record struct AuctionListItemRequest(
     long? BuyoutPrice,
     int DurationHours,
     FruitBasket? StartingFruits = null,
-    FruitBasket? BuyoutFruits = null);
+    FruitBasket? BuyoutFruits = null,
+    string? Note = null);
 
 /// <summary>
 /// The result of listing an inventory item.
@@ -238,7 +239,7 @@ public readonly record struct AuctionListItemRequest(
 /// <param name="ListingId">The listing; an empty identifier when the listing was refused.</param>
 /// <param name="ListingNumber">The listing number; zero when the listing was refused.</param>
 /// <param name="ServerTime">The server time, in UTC.</param>
-public readonly record struct AuctionListItemResult(AuctionResultCode Result, Guid ListingId, long ListingNumber, DateTimeOffset ServerTime);
+public readonly record struct AuctionListItemResult(AuctionResultCode Result, Guid ListingId, long ListingNumber, DateTimeOffset ServerTime, long FeeScalar = 0, FruitBasket? FeeFruits = null);
 
 /// <summary>
 /// A request to place a bid on a listing.
