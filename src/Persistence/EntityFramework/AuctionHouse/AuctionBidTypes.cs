@@ -43,6 +43,16 @@ public enum AuctionBidOutcome
     /// The bid is below the minimum acceptable bid.
     /// </summary>
     BidTooLow,
+
+    /// <summary>
+    /// The bidder does not have enough Zen.
+    /// </summary>
+    InsufficientCurrency,
+
+    /// <summary>
+    /// The listing's currency cannot yet be debited (jewel tender is not implemented).
+    /// </summary>
+    UnsupportedCurrency,
 }
 
 /// <summary>

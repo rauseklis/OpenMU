@@ -43,6 +43,16 @@ public enum AuctionBuyoutOutcome
     /// The listing has no buyout price.
     /// </summary>
     BuyoutUnavailable,
+
+    /// <summary>
+    /// The buyer does not have enough Zen for the amount still to pay.
+    /// </summary>
+    InsufficientCurrency,
+
+    /// <summary>
+    /// The listing's currency cannot yet be debited (jewel tender is not implemented).
+    /// </summary>
+    UnsupportedCurrency,
 }
 
 /// <summary>

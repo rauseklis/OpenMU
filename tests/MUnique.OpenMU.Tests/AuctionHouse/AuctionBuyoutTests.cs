@@ -23,6 +23,7 @@ public class AuctionBuyoutTests
     private Guid _sellerAccountId;
     private Guid _buyerAccountId;
     private Guid _otherAccountId;
+    private Guid _characterId;
     private Guid _listingId;
     private Guid _itemId;
     private int _version;
@@ -41,6 +42,13 @@ public class AuctionBuyoutTests
     [SetUp]
     public async Task Arrange()
     {
+        var funded = await AuctionTestCharacters.FundAsync(AuctionPostgresTestEnvironment.ConnectionString!, 10_000_000);
+        if (funded is null)
+        {
+            Assert.Ignore("The database has no characters to bid with; use the populated copy.");
+        }
+
+        this._characterId = funded.Value;
         this._sellerAccountId = Guid.NewGuid();
         this._buyerAccountId = Guid.NewGuid();
         this._otherAccountId = Guid.NewGuid();
@@ -218,7 +226,7 @@ public class AuctionBuyoutTests
         return new AuctionHouseRepository().BuyoutAsync(new EntityDataContext(), new BuyoutDraft(
             OperationId: operationId,
             BuyerAccountId: buyer,
-            BuyerCharacterId: Guid.NewGuid(),
+            BuyerCharacterId: this._characterId,
             ListingId: this._listingId,
             ExpectedVersion: expectedVersion,
             SuccessFee: SuccessFee,
@@ -232,7 +240,7 @@ public class AuctionBuyoutTests
         return new AuctionHouseRepository().PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
             OperationId: operationId,
             BidderAccountId: bidder,
-            BidderCharacterId: Guid.NewGuid(),
+            BidderCharacterId: this._characterId,
             ListingId: this._listingId,
             ExpectedVersion: expectedVersion,
             BidAmount: amount,
