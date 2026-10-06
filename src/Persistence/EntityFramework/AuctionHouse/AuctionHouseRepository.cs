@@ -73,6 +73,7 @@ public sealed class AuctionHouseRepository
 {
     private const byte CreateKind = 0;
     private const int CreatedOutcome = 0;
+    private const byte BidKind = 1;
 
     /// <summary>
     /// Creates a listing together with its operation record. A repeated operation returns the stored outcome.
@@ -134,6 +135,127 @@ public sealed class AuctionHouseRepository
             replay = await this.FindReplayAsync(context, draft, cancellationToken);
             return replay ?? new AuctionCreateResult(AuctionCreateOutcome.ItemAlreadyListed, Guid.Empty, 0);
         }
+    }
+
+    /// <summary>
+    /// Places a scalar bid. The listing row is locked and its version advanced by one conditional update, so two bids
+    /// racing on the same version cannot both win. The displaced bid is released into a refund collection in the same
+    /// transaction.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="draft">The bid.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    public async Task<AuctionBidResult> PlaceScalarBidAsync(EntityDataContext context, ScalarBidDraft draft, CancellationToken cancellationToken = default)
+    {
+        if (await this.HasBidOperationAsync(context, draft, cancellationToken))
+        {
+            return new AuctionBidResult(AuctionBidOutcome.Replayed);
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var locked = await context.Set<AuctionListing>()
+            .Where(l => l.Id == draft.ListingId && l.Version == draft.ExpectedVersion)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.Version, l => l.Version + 1), cancellationToken);
+        if (locked == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            var exists = await context.Set<AuctionListing>().AsNoTracking().AnyAsync(l => l.Id == draft.ListingId, cancellationToken);
+            return new AuctionBidResult(exists ? AuctionBidOutcome.StaleListing : AuctionBidOutcome.ListingNotFound);
+        }
+
+        var listing = await context.Set<AuctionListing>().SingleAsync(l => l.Id == draft.ListingId, cancellationToken);
+        if (Refusal(listing, draft) is { } refusal)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new AuctionBidResult(refusal);
+        }
+
+        var previous = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
+        if (previous is not null)
+        {
+            previous.Status = 1;
+            previous.ClosedAt = draft.Now;
+            context.Set<AuctionCollection>().Add(new AuctionCollection
+            {
+                Id = Guid.NewGuid(),
+                AccountId = previous.BidderAccountId,
+                ListingId = listing.Id,
+                Kind = 3,
+                Currency = listing.Currency,
+                OriginalScalar = previous.ScalarAmount,
+                RemainingScalar = previous.ScalarAmount,
+                Status = 0,
+                CreatedAt = draft.Now,
+                UpdatedAt = draft.Now,
+                Version = 0,
+            });
+        }
+
+        context.Set<AuctionBid>().Add(new AuctionBid
+        {
+            Id = Guid.NewGuid(),
+            ListingId = listing.Id,
+            BidderAccountId = draft.BidderAccountId,
+            BidderCharacterId = draft.BidderCharacterId,
+            Currency = listing.Currency,
+            ScalarAmount = draft.BidAmount,
+            BidderIp = draft.BidderIp,
+            Status = 0,
+            CreatedAt = draft.Now,
+        });
+        listing.CurrentBid = draft.BidAmount;
+        listing.CurrentBidderAccountId = draft.BidderAccountId;
+        listing.CurrentBidderCharacterId = draft.BidderCharacterId;
+        listing.BidCount++;
+        listing.LastBidAt = draft.Now;
+        listing.EndsAt = draft.NewEndsAt;
+        context.Set<AuctionOperation>().Add(new AuctionOperation
+        {
+            Id = Guid.NewGuid(),
+            AccountId = draft.BidderAccountId,
+            OperationId = draft.OperationId,
+            Kind = BidKind,
+            Outcome = CreatedOutcome,
+            ListingId = listing.Id,
+            CreatedAt = draft.Now,
+        });
+
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return new AuctionBidResult(AuctionBidOutcome.Placed);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+            return await this.HasBidOperationAsync(context, draft, cancellationToken)
+                ? new AuctionBidResult(AuctionBidOutcome.Replayed)
+                : new AuctionBidResult(AuctionBidOutcome.StaleListing);
+        }
+    }
+
+    private static AuctionBidOutcome? Refusal(AuctionListing listing, ScalarBidDraft draft)
+    {
+        if (listing.Status != 0 || listing.EndsAt <= draft.Now)
+        {
+            return AuctionBidOutcome.NotActive;
+        }
+
+        if (listing.SellerAccountId == draft.BidderAccountId)
+        {
+            return AuctionBidOutcome.SelfBid;
+        }
+
+        return draft.BidAmount < draft.MinimumBid ? AuctionBidOutcome.BidTooLow : null;
+    }
+
+    private async Task<bool> HasBidOperationAsync(EntityDataContext context, ScalarBidDraft draft, CancellationToken cancellationToken)
+    {
+        return await context.Set<AuctionOperation>().AsNoTracking()
+            .AnyAsync(o => o.AccountId == draft.BidderAccountId && o.OperationId == draft.OperationId && o.Kind == BidKind, cancellationToken);
     }
 
     private async Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, AuctionListingDraft draft, CancellationToken cancellationToken)
