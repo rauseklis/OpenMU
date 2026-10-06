@@ -24,6 +24,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     private const byte CancelKind = 3;
     private const byte ClaimKind = 4;
     private const byte FeeRemovedKind = 5;
+    private const byte OutbidNotificationKind = 0;
+    private const byte SoldNotificationKind = 1;
+    private const byte BoughtNotificationKind = 2;
+    private const byte ExpiredNotificationKind = 3;
+    private const byte ReturnedNotificationKind = 4;
 
     /// <summary>
     /// The default inventory money limit, used when no configured limit is given.
@@ -405,6 +410,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 UpdatedAt = draft.Now,
                 Version = 0,
             });
+            context.Set<AuctionNotification>().Add(Notify(previous.BidderAccountId, listing.Id, OutbidNotificationKind, listing.Currency, previous.ScalarAmount, draft.Now));
         }
 
         var bidId = Guid.NewGuid();
@@ -623,6 +629,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 escrow.Status = 1;
                 escrow.ClosedAt = draft.Now;
                 context.Set<AuctionCollection>().Add(ScalarCollection(escrow.BidderAccountId, listing, 3, escrow.ScalarAmount ?? 0, draft.Now));
+                context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, OutbidNotificationKind, listing.Currency, escrow.ScalarAmount, draft.Now));
             }
 
             context.Set<AuctionBid>().Add(new AuctionBid
@@ -659,6 +666,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             Version = 0,
         });
         context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, price - draft.SuccessFee, draft.Now));
+        context.Set<AuctionNotification>().Add(Notify(draft.BuyerAccountId, listing.Id, BoughtNotificationKind, listing.Currency, price, draft.Now));
+        context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, listing.Currency, price, draft.Now));
         context.Set<AuctionOperation>().Add(new AuctionOperation
         {
             Id = Guid.NewGuid(),
@@ -750,6 +759,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         listing.Status = 3;
         listing.FinalizedAt = draft.Now;
         context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, draft.Now));
+        context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, ReturnedNotificationKind, listing.Currency, null, draft.Now));
         context.Set<AuctionOperation>().Add(new AuctionOperation
         {
             Id = Guid.NewGuid(),
@@ -866,16 +876,34 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             listing.Status = 1;
             context.Set<AuctionCollection>().Add(ItemCollection(escrow.BidderAccountId, listing, 0, now));
             context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, price - successFee(price), now));
+            context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, BoughtNotificationKind, listing.Currency, price, now));
+            context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, listing.Currency, price, now));
         }
         else
         {
             listing.Status = 2;
             context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, now));
+            context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, ExpiredNotificationKind, listing.Currency, null, now));
         }
 
         await context.SaveChangesAsync(cancellationToken);
         return AuctionExpireOutcome.Finalized;
     }
+
+    /// <summary>
+    /// Creates a durable notification for an account. Online delivery is best-effort; the Mailbox stays the durable truth.
+    /// </summary>
+    private static AuctionNotification Notify(Guid accountId, Guid listingId, byte kind, byte currency, long? amount, DateTimeOffset now)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            AccountId = accountId,
+            ListingId = listingId,
+            Kind = kind,
+            Currency = currency,
+            Amount = amount,
+            CreatedAt = now,
+        };
 
     private static AuctionCollection ItemCollection(Guid accountId, AuctionListing listing, byte kind, DateTimeOffset now)
     {

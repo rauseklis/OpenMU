@@ -221,4 +221,23 @@ public class AuctionBidTests
 
         Assert.That(result.Outcome, Is.EqualTo(AuctionBidOutcome.CharacterNotOwned));
     }
+
+    /// <summary>
+    /// Verifies the displaced bidder gets a durable outbid notification with the refunded amount.
+    /// </summary>
+    [Test]
+    public async Task OutbidWritesADurableNotification()
+    {
+        await this.Bid(this._bidderOne, 1000, this._version, Guid.NewGuid());
+        await this.Bid(this._bidderTwo, 1100, this._version + 1, Guid.NewGuid());
+
+        await using var context = new EntityDataContext();
+        var notification = await context.Set<AuctionNotification>().AsNoTracking()
+            .SingleAsync(n => n.ListingId == this._listingId && n.AccountId == this._bidderOne);
+        Assert.Multiple(() =>
+        {
+            Assert.That(notification.Kind, Is.EqualTo(0));
+            Assert.That(notification.Amount, Is.EqualTo(1000));
+        });
+    }
 }
