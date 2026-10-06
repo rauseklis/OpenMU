@@ -25,6 +25,11 @@ public sealed record AuctionHouseOptions
     public int ListingFeeBasisPoints { get; init; } = 100;
 
     /// <summary>
+    /// Gets the success fee in basis points of the final sale price. The approved fee is 5%, rounded up with a minimum of one unit.
+    /// </summary>
+    public int SuccessFeeBasisPoints { get; init; } = 500;
+
+    /// <summary>
     /// Gets the maximum number of active listings per account.
     /// </summary>
     public int MaximumActiveListingsPerAccount { get; init; } = 10;

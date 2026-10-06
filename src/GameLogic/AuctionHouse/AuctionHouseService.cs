@@ -156,6 +156,108 @@ public sealed class AuctionHouseService
         };
 
     /// <summary>
+    /// Places a bid. The minimum bid and the anti-sniping extension are computed from the listing as it was read, and the
+    /// repository checks them again against the locked listing and its version.
+    /// </summary>
+    /// <param name="request">The bid request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The bid result.</returns>
+    public async Task<AuctionMutationResult> BidAsync(AuctionBidRequest request, CancellationToken cancellationToken = default)
+    {
+        var now = this._clock();
+        if (!this._options.Enabled)
+        {
+            return new AuctionMutationResult(AuctionResultCode.Disabled, now);
+        }
+
+        var listing = await this._repository.GetListingAsync(request.ListingId, cancellationToken);
+        if (listing is null)
+        {
+            return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
+        }
+
+        var draft = new ScalarBidDraft(
+            request.OperationId,
+            request.AccountId,
+            request.CharacterId,
+            request.ListingId,
+            request.ExpectedVersion,
+            request.BidAmount,
+            AuctionRules.GetMinimumBid(AuctionCurrencyMode.Zen, listing.StartingPrice, listing.CurrentBid ?? 0),
+            request.BidderIp,
+            now,
+            AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now));
+        var result = await this._repository.PlaceScalarBidAsync(draft, cancellationToken);
+        return new AuctionMutationResult(MapBidOutcome(result.Outcome), now);
+    }
+
+    /// <summary>
+    /// Buys a listing out at its buyout price. The success fee is computed from the buyout price.
+    /// </summary>
+    /// <param name="request">The buyout request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The buyout result.</returns>
+    public async Task<AuctionMutationResult> BuyoutAsync(AuctionBuyoutRequest request, CancellationToken cancellationToken = default)
+    {
+        var now = this._clock();
+        if (!this._options.Enabled)
+        {
+            return new AuctionMutationResult(AuctionResultCode.Disabled, now);
+        }
+
+        var listing = await this._repository.GetListingAsync(request.ListingId, cancellationToken);
+        if (listing is null)
+        {
+            return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
+        }
+
+        if (listing.BuyoutPrice is not { } buyoutPrice)
+        {
+            return new AuctionMutationResult(AuctionResultCode.BuyoutUnavailable, now);
+        }
+
+        var draft = new BuyoutDraft(
+            request.OperationId,
+            request.AccountId,
+            request.CharacterId,
+            request.ListingId,
+            request.ExpectedVersion,
+            AuctionRules.CalculateFee(buyoutPrice, this._options.SuccessFeeBasisPoints),
+            request.BuyerIp,
+            now);
+        var result = await this._repository.BuyoutAsync(draft, cancellationToken);
+        return new AuctionMutationResult(MapBuyoutOutcome(result.Outcome), now);
+    }
+
+    private static AuctionResultCode MapBidOutcome(AuctionBidOutcome outcome)
+        => outcome switch
+        {
+            AuctionBidOutcome.Placed or AuctionBidOutcome.Replayed => AuctionResultCode.Success,
+            AuctionBidOutcome.ListingNotFound => AuctionResultCode.ListingNotFound,
+            AuctionBidOutcome.StaleListing => AuctionResultCode.StaleListing,
+            AuctionBidOutcome.NotActive => AuctionResultCode.ListingNotActive,
+            AuctionBidOutcome.SelfBid => AuctionResultCode.SelfTrade,
+            AuctionBidOutcome.BidTooLow => AuctionResultCode.BidTooLow,
+            AuctionBidOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
+            AuctionBidOutcome.UnsupportedCurrency => AuctionResultCode.UnsupportedCurrency,
+            _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
+        };
+
+    private static AuctionResultCode MapBuyoutOutcome(AuctionBuyoutOutcome outcome)
+        => outcome switch
+        {
+            AuctionBuyoutOutcome.Bought or AuctionBuyoutOutcome.Replayed => AuctionResultCode.Success,
+            AuctionBuyoutOutcome.ListingNotFound => AuctionResultCode.ListingNotFound,
+            AuctionBuyoutOutcome.StaleListing => AuctionResultCode.StaleListing,
+            AuctionBuyoutOutcome.NotActive => AuctionResultCode.ListingNotActive,
+            AuctionBuyoutOutcome.SelfBuy => AuctionResultCode.SelfTrade,
+            AuctionBuyoutOutcome.BuyoutUnavailable => AuctionResultCode.BuyoutUnavailable,
+            AuctionBuyoutOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
+            AuctionBuyoutOutcome.UnsupportedCurrency => AuctionResultCode.UnsupportedCurrency,
+            _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
+        };
+
+    /// <summary>
     /// Reads one listing, including its note.
     /// </summary>
     /// <param name="listingId">The listing to read.</param>

@@ -1085,7 +1085,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     {
         return context.Set<AuctionListing>().AsNoTracking()
             .Where(l => l.Id == listingId)
-            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.BidCount, l.SellerName, l.Note))
+            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.OriginalEndsAt, l.BidCount, l.SellerName, l.Note))
             .FirstOrDefaultAsync(cancellationToken);
     }
 

@@ -17,6 +17,7 @@ namespace MUnique.OpenMU.Persistence.AuctionHouse;
 /// <param name="BuyoutPrice">The buyout price, or <c>null</c> when there is none.</param>
 /// <param name="CurrentBid">The current bid, or <c>null</c> when there is none.</param>
 /// <param name="EndsAt">When the listing ends, in UTC.</param>
+/// <param name="OriginalEndsAt">When the listing first ended, in UTC; anti-sniping extensions are capped from here.</param>
 /// <param name="BidCount">The number of bids.</param>
 /// <param name="SellerName">The seller's name.</param>
 /// <param name="Note">The seller's note.</param>
@@ -31,6 +32,7 @@ public sealed record AuctionListingDetail(
     long? BuyoutPrice,
     long? CurrentBid,
     DateTimeOffset EndsAt,
+    DateTimeOffset OriginalEndsAt,
     int BidCount,
     string SellerName,
     string? Note);

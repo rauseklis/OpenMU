@@ -238,3 +238,46 @@ public readonly record struct AuctionListItemRequest(
 /// <param name="ServerTime">The server time, in UTC.</param>
 public readonly record struct AuctionListItemResult(AuctionResultCode Result, Guid ListingId, long ListingNumber, DateTimeOffset ServerTime);
 
+/// <summary>
+/// A request to place a bid on a listing.
+/// </summary>
+/// <param name="OperationId">The client-generated operation identifier.</param>
+/// <param name="AccountId">The bidder's account.</param>
+/// <param name="CharacterId">The bidder's character, whose Zen pays the bid.</param>
+/// <param name="ListingId">The listing.</param>
+/// <param name="ExpectedVersion">The listing version the bidder saw.</param>
+/// <param name="BidAmount">The bid, in Zen.</param>
+/// <param name="BidderIp">The bidder's IP address.</param>
+public readonly record struct AuctionBidRequest(
+    Guid OperationId,
+    Guid AccountId,
+    Guid CharacterId,
+    Guid ListingId,
+    int ExpectedVersion,
+    long BidAmount,
+    string? BidderIp);
+
+/// <summary>
+/// A request to buy a listing out at its buyout price.
+/// </summary>
+/// <param name="OperationId">The client-generated operation identifier.</param>
+/// <param name="AccountId">The buyer's account.</param>
+/// <param name="CharacterId">The buyer's character, whose Zen pays the price.</param>
+/// <param name="ListingId">The listing.</param>
+/// <param name="ExpectedVersion">The listing version the buyer saw.</param>
+/// <param name="BuyerIp">The buyer's IP address.</param>
+public readonly record struct AuctionBuyoutRequest(
+    Guid OperationId,
+    Guid AccountId,
+    Guid CharacterId,
+    Guid ListingId,
+    int ExpectedVersion,
+    string? BuyerIp);
+
+/// <summary>
+/// The result of a bid or a buyout.
+/// </summary>
+/// <param name="Result">The outcome.</param>
+/// <param name="ServerTime">The server time, in UTC.</param>
+public readonly record struct AuctionMutationResult(AuctionResultCode Result, DateTimeOffset ServerTime);
+
