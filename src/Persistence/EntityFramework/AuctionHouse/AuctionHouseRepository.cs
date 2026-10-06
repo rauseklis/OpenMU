@@ -126,6 +126,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.IsAccountRestrictedAsync(context, accountId, now, cancellationToken));
 
     /// <inheritdoc />
+    public Task<AdminRemoveOutcome> AdminRemoveAsync(AdminRemoveDraft draft, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.AdminRemoveAsync(context, draft, cancellationToken));
+
+    /// <inheritdoc />
     public Task<AuctionRepairResult> RepairMissingReturnCollectionsAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.RepairMissingReturnCollectionsAsync(context, now, batchSize, cancellationToken));
 
@@ -390,6 +394,65 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     {
         return context.Set<AuctionAccountRestriction>().AsNoTracking()
             .AnyAsync(r => r.AccountId == accountId && (r.ExpiresAt == null || r.ExpiresAt > now), cancellationToken);
+    }
+
+    /// <summary>
+    /// Removes an active listing administratively, in one transaction. The listing is locked by its status, so a concurrent purchase or
+    /// cancellation cannot also finish it.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="draft">The removal.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the removal.</returns>
+    public async Task<AdminRemoveOutcome> AdminRemoveAsync(EntityDataContext context, AdminRemoveDraft draft, CancellationToken cancellationToken = default)
+    {
+        var exists = await context.Set<AuctionListing>().AsNoTracking().AnyAsync(l => l.Id == draft.ListingId, cancellationToken);
+        if (!exists)
+        {
+            return AdminRemoveOutcome.ListingNotFound;
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var locked = await context.Set<AuctionListing>()
+            .Where(l => l.Id == draft.ListingId && l.Status == 0)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(l => l.Status, (byte)4)
+                .SetProperty(l => l.FinalizedAt, draft.Now)
+                .SetProperty(l => l.Version, l => l.Version + 1), cancellationToken);
+        if (locked == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return AdminRemoveOutcome.NotActive;
+        }
+
+        var listing = await context.Set<AuctionListing>().SingleAsync(l => l.Id == draft.ListingId, cancellationToken);
+        var escrow = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
+        if (escrow is not null)
+        {
+            escrow.Status = 1;
+            escrow.ClosedAt = draft.Now;
+            if (listing.Currency == FruitsCurrency)
+            {
+                context.Set<AuctionCollection>().Add(FruitCollection(escrow.BidderAccountId, listing.Id, 3,
+                    new FruitBasket(escrow.StrengthAmount ?? 0, escrow.AgilityAmount ?? 0, escrow.VitalityAmount ?? 0, escrow.EnergyAmount ?? 0, escrow.CommandAmount ?? 0), draft.Now));
+            }
+            else
+            {
+                context.Set<AuctionCollection>().Add(ScalarCollection(escrow.BidderAccountId, listing, 3, escrow.ScalarAmount ?? 0, draft.Now));
+            }
+
+            context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, OutbidNotificationKind, listing.Currency, escrow.ScalarAmount, draft.Now));
+        }
+
+        context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, draft.Now));
+        context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, ReturnedNotificationKind, listing.Currency, null, draft.Now));
+        var audit = Audit(7, Guid.Empty, null, listing.Id, null, draft.Now, null, listing.SellerAccountId, null, listing.Currency, null);
+        audit.Reason = $"admin {draft.AdministratorIdentity}: {draft.Reason}";
+        context.Set<AuctionTransactionLog>().Add(audit);
+
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return AdminRemoveOutcome.Removed;
     }
 
     /// <summary>

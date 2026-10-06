@@ -555,6 +555,17 @@ public sealed class AuctionHouseService
         => this._repository.IsAccountRestrictedAsync(accountId, now, cancellationToken);
 
     /// <summary>
+    /// Removes an active listing administratively. Runs even while the feature is disabled, so operators can always act.
+    /// </summary>
+    /// <param name="listingId">The listing to remove.</param>
+    /// <param name="administratorIdentity">The administrator, recorded in the audit row.</param>
+    /// <param name="reason">The reason, recorded in the audit row.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the removal.</returns>
+    public Task<AdminRemoveOutcome> AdminRemoveAsync(Guid listingId, string administratorIdentity, string reason, CancellationToken cancellationToken = default)
+        => this._repository.AdminRemoveAsync(new AdminRemoveDraft(listingId, administratorIdentity, reason, this._clock()), cancellationToken);
+
+    /// <summary>
     /// Repairs ended listings which have no return collection. Runs even while the feature is disabled, so operators can always repair.
     /// </summary>
     /// <param name="batchSize">The maximum number of listings to examine.</param>

@@ -180,6 +180,15 @@ public interface IAuctionHouseRepository
     Task<AuctionRepairResult> RepairMissingReturnCollectionsAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Removes an active listing administratively: its item returns to the seller, any escrowed bid is refunded, and an audit row
+    /// records the administrator and the reason.
+    /// </summary>
+    /// <param name="draft">The removal.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the removal.</returns>
+    Task<AdminRemoveOutcome> AdminRemoveAsync(AdminRemoveDraft draft, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads listed items with their definition and options, read-only.
     /// </summary>
     /// <param name="itemIds">The items.</param>
