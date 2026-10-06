@@ -57,8 +57,29 @@ public static class MapsterConfigurator
         Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AppearanceData, MUnique.OpenMU.DataModel.Entities.AppearanceData>()
             .Include<AppearanceData, BasicModel.AppearanceData>();
 
+        Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionAccountRestriction, MUnique.OpenMU.DataModel.Entities.AuctionAccountRestriction>()
+            .Include<AuctionAccountRestriction, BasicModel.AuctionAccountRestriction>();
+
+        Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionBid, MUnique.OpenMU.DataModel.Entities.AuctionBid>()
+            .Include<AuctionBid, BasicModel.AuctionBid>();
+
+        Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionCollection, MUnique.OpenMU.DataModel.Entities.AuctionCollection>()
+            .Include<AuctionCollection, BasicModel.AuctionCollection>();
+
+        Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionCurrencyMovement, MUnique.OpenMU.DataModel.Entities.AuctionCurrencyMovement>()
+            .Include<AuctionCurrencyMovement, BasicModel.AuctionCurrencyMovement>();
+
         Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionListing, MUnique.OpenMU.DataModel.Entities.AuctionListing>()
             .Include<AuctionListing, BasicModel.AuctionListing>();
+
+        Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionNotification, MUnique.OpenMU.DataModel.Entities.AuctionNotification>()
+            .Include<AuctionNotification, BasicModel.AuctionNotification>();
+
+        Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionOperation, MUnique.OpenMU.DataModel.Entities.AuctionOperation>()
+            .Include<AuctionOperation, BasicModel.AuctionOperation>();
+
+        Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.AuctionTransactionLog, MUnique.OpenMU.DataModel.Entities.AuctionTransactionLog>()
+            .Include<AuctionTransactionLog, BasicModel.AuctionTransactionLog>();
 
         Mapster.TypeAdapterConfig.GlobalSettings.NewConfig<MUnique.OpenMU.DataModel.Entities.CastleSiegeData, MUnique.OpenMU.DataModel.Entities.CastleSiegeData>()
             .Include<CastleSiegeData, BasicModel.CastleSiegeData>();

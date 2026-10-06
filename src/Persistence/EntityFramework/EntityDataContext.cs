@@ -41,6 +41,13 @@ public class EntityDataContext : ExtendedTypeContext
     /// </summary>
     internal DbSet<CastleSiegePendingReward> CastleSiegePendingRewards => this.Set<CastleSiegePendingReward>();
     internal DbSet<AuctionListing> AuctionListings => this.Set<AuctionListing>();
+    internal DbSet<AuctionBid> AuctionBids => this.Set<AuctionBid>();
+    internal DbSet<AuctionCollection> AuctionCollections => this.Set<AuctionCollection>();
+    internal DbSet<AuctionCurrencyMovement> AuctionCurrencyMovements => this.Set<AuctionCurrencyMovement>();
+    internal DbSet<AuctionOperation> AuctionOperations => this.Set<AuctionOperation>();
+    internal DbSet<AuctionTransactionLog> AuctionTransactionLogs => this.Set<AuctionTransactionLog>();
+    internal DbSet<AuctionAccountRestriction> AuctionAccountRestrictions => this.Set<AuctionAccountRestriction>();
+    internal DbSet<AuctionNotification> AuctionNotifications => this.Set<AuctionNotification>();
 
     /// <inheritdoc/>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -85,6 +92,13 @@ public class EntityDataContext : ExtendedTypeContext
         modelBuilder.Entity<CastleSiegeGuildRegistration>().Apply();
         modelBuilder.Entity<CastleSiegePendingReward>().Apply();
         modelBuilder.Entity<AuctionListing>().Apply();
+        modelBuilder.Entity<AuctionBid>().Apply();
+        modelBuilder.Entity<AuctionCollection>().Apply();
+        modelBuilder.Entity<AuctionCurrencyMovement>().Apply();
+        modelBuilder.Entity<AuctionOperation>().Apply();
+        modelBuilder.Entity<AuctionTransactionLog>().Apply();
+        modelBuilder.Entity<AuctionAccountRestriction>().Apply();
+        modelBuilder.Entity<AuctionNotification>().Apply();
         modelBuilder.Entity<CastleSiegeNpcDefinition>().Apply();
         modelBuilder.Entity<CastleSiegeNpcState>().Apply();
         modelBuilder.Entity<DropItemGroup>().Apply();

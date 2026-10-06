@@ -27,7 +27,14 @@ public class ExtendedTypeContext : Microsoft.EntityFrameworkCore.DbContext
         modelBuilder.Ignore<MUnique.OpenMU.DataModel.Statistics.MiniGameRankingEntry>();
         modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.Account>();
         modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AppearanceData>();
+        modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionAccountRestriction>();
+        modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionBid>();
+        modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionCollection>();
+        modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionCurrencyMovement>();
         modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionListing>();
+        modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionNotification>();
+        modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionOperation>();
+        modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.AuctionTransactionLog>();
         modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.CastleSiegeData>();
         modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.CastleSiegeGuild>();
         modelBuilder.Ignore<MUnique.OpenMU.DataModel.Entities.CastleSiegeGuildRegistration>();
