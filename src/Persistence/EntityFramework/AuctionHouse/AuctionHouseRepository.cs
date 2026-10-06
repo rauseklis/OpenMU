@@ -465,6 +465,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.CreatedAt,
         });
+        context.Set<AuctionTransactionLog>().Add(Audit(CreateKind, draft.AccountId, draft.SellerCharacterId, listing.Id, draft.OperationId, draft.CreatedAt, draft.SellerIp, null, draft.StartingPrice, draft.Currency, null));
 
         try
         {
@@ -633,6 +634,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
+        context.Set<AuctionTransactionLog>().Add(Audit(BidKind, draft.BidderAccountId, draft.BidderCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BidderIp, listing.SellerAccountId, null, FruitsCurrency, null));
 
         try
         {
@@ -815,6 +817,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
+        context.Set<AuctionTransactionLog>().Add(Audit(BuyoutKind, draft.BuyerAccountId, draft.BuyerCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BuyerIp, listing.SellerAccountId, null, FruitsCurrency, null));
 
         try
         {
@@ -964,6 +967,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
+        context.Set<AuctionTransactionLog>().Add(Audit(BidKind, draft.BidderAccountId, draft.BidderCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BidderIp, listing.SellerAccountId, draft.BidAmount, listing.Currency, null));
 
         try
         {
@@ -1199,6 +1203,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
+        context.Set<AuctionTransactionLog>().Add(Audit(BuyoutKind, draft.BuyerAccountId, draft.BuyerCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BuyerIp, listing.SellerAccountId, price, listing.Currency, draft.SuccessFee));
 
         try
         {
@@ -1291,6 +1296,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
+        context.Set<AuctionTransactionLog>().Add(Audit(CancelKind, draft.AccountId, null, draft.ListingId, draft.OperationId, draft.Now, null, null, null, null, null));
 
         try
         {
@@ -1407,9 +1413,31 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, ExpiredNotificationKind, listing.Currency, null, now));
         }
 
+        context.Set<AuctionTransactionLog>().Add(Audit(5, Guid.Empty, null, listing.Id, null, now, null, listing.SellerAccountId, null, listing.Currency, null));
         await context.SaveChangesAsync(cancellationToken);
         return AuctionExpireOutcome.Finalized;
     }
+
+    /// <summary>
+    /// Creates one immutable audit row. The actor of an expiry is the system, which has no account.
+    /// </summary>
+    private static AuctionTransactionLog Audit(byte action, Guid actorAccountId, Guid? actorCharacterId, Guid? listingId, Guid? operationId, DateTimeOffset now, string? ip, Guid? counterpartAccountId, long? amount, byte? currency, long? fee)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            Action = action,
+            ListingId = listingId,
+            ActorAccountId = actorAccountId,
+            ActorCharacterId = actorCharacterId,
+            CounterpartAccountId = counterpartAccountId,
+            Currency = currency,
+            Amount = amount,
+            Fee = fee,
+            OperationId = operationId,
+            ActorIp = ip,
+            IsSuspicious = false,
+            CreatedAt = now,
+        };
 
     /// <summary>
     /// Creates a durable notification for an account. Online delivery is best-effort; the Mailbox stays the durable truth.
@@ -1596,6 +1624,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             CreatedAt = now,
         });
 
+        context.Set<AuctionTransactionLog>().Add(Audit(ClaimKind, draft.AccountId, draft.CharacterId, null, draft.OperationId, draft.Now, null, null, plan.ClaimedScalar, collection.Currency, null));
+
         try
         {
             await context.SaveChangesAsync(cancellationToken);
@@ -1681,6 +1711,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             CollectionId = collection.Id,
             CreatedAt = now,
         });
+
+        context.Set<AuctionTransactionLog>().Add(Audit(ClaimKind, draft.AccountId, draft.CharacterId, null, draft.OperationId, draft.Now, null, null, null, collection.Currency, null));
 
         try
         {
@@ -2254,6 +2286,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listingId,
             CreatedAt = draft.CreatedAt,
         });
+        context.Set<AuctionTransactionLog>().Add(Audit(CreateKind, draft.AccountId, draft.CharacterId, listingId, draft.OperationId, draft.CreatedAt, draft.SellerIp, null, draft.StartingPrice, draft.Currency, draft.ListingFee));
         if (draft.Currency != FruitsCurrency)
         {
             var feeMovement = Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt);

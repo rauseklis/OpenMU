@@ -240,4 +240,24 @@ public class AuctionBidTests
             Assert.That(notification.Amount, Is.EqualTo(1000));
         });
     }
+
+    /// <summary>
+    /// Verifies a placed bid leaves one immutable audit row with its actor, operation, and amount.
+    /// </summary>
+    [Test]
+    public async Task PlacedBidWritesAnAuditRow()
+    {
+        var operation = Guid.NewGuid();
+        await this.Bid(this._bidderOne, 1000, this._version, operation);
+
+        await using var context = new EntityDataContext();
+        var audit = await context.Set<AuctionTransactionLog>().AsNoTracking().SingleAsync(a => a.OperationId == operation && a.Action == 1);
+        Assert.Multiple(() =>
+        {
+            Assert.That(audit.ActorAccountId, Is.EqualTo(this._bidderOne));
+            Assert.That(audit.Amount, Is.EqualTo(1000));
+            Assert.That(audit.ListingId, Is.EqualTo(this._listingId));
+        });
+    }
 }
+
