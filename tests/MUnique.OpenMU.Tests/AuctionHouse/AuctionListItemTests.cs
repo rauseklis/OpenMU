@@ -222,14 +222,14 @@ public class AuctionListItemTests
     {
         var service = this.CreateService();
 
-        var jewel = await service.ListItemAsync(this.Request(startingPrice: 1000) with { Currency = 1 });
+        var fruits = await service.ListItemAsync(this.Request(startingPrice: 1000) with { Currency = 8 });
         var zeroPrice = await service.ListItemAsync(this.Request(startingPrice: 0));
         var badDuration = await service.ListItemAsync(this.Request(startingPrice: 1000) with { DurationHours = 5 });
         var disabled = await this.CreateService(enabled: false).ListItemAsync(this.Request(startingPrice: 1000));
 
         Assert.Multiple(() =>
         {
-            Assert.That(jewel.Result, Is.EqualTo(AuctionResultCode.UnsupportedCurrency));
+            Assert.That(fruits.Result, Is.EqualTo(AuctionResultCode.UnsupportedCurrency));
             Assert.That(zeroPrice.Result, Is.EqualTo(AuctionResultCode.InvalidPrice));
             Assert.That(badDuration.Result, Is.EqualTo(AuctionResultCode.InvalidDuration));
             Assert.That(disabled.Result, Is.EqualTo(AuctionResultCode.Disabled));
