@@ -956,6 +956,33 @@ public sealed class AuctionHouseRepository
         return new AuctionCreateResult(AuctionCreateOutcome.Replayed, listingId, listingNumber);
     }
 
+    /// <summary>
+    /// Reads one listing, without locking it. Used for the detail view only.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="listingId">The listing to read.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The listing, or <c>null</c> when it does not exist.</returns>
+    public Task<AuctionListingDetail?> GetListingAsync(EntityDataContext context, Guid listingId, CancellationToken cancellationToken = default)
+    {
+        return context.Set<AuctionListing>().AsNoTracking()
+            .Where(l => l.Id == listingId)
+            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.BidCount, l.SellerName, l.Note))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Counts the collections of an account which are not fully claimed yet.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="accountId">The account.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of pending collections.</returns>
+    public Task<int> CountPendingCollectionsAsync(EntityDataContext context, Guid accountId, CancellationToken cancellationToken = default)
+    {
+        return context.Set<AuctionCollection>().AsNoTracking().CountAsync(c => c.AccountId == accountId && c.Status != 2, cancellationToken);
+    }
+
     private static bool IsUniqueViolation(DbUpdateException exception)
         => exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 }
