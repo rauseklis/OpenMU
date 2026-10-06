@@ -26,6 +26,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     private const byte ClaimKind = 4;
     private const byte FeeRemovedKind = 5;
     private const byte TenderInKind = 0;
+    private const byte FruitsCurrency = 8;
     private const byte ChangeOutKind = 1;
     private const byte ClaimMaterializedKind = 6;
     private const byte TenderChangeCollectionKind = 4;
@@ -452,7 +453,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBidResult(refusal);
         }
 
-        if (listing.Currency != 0)
+        if (listing.Currency == FruitsCurrency)
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBidResult(AuctionBidOutcome.UnsupportedCurrency);
@@ -464,7 +465,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBidResult(AuctionBidOutcome.CharacterNotOwned);
         }
 
-        if (!await DebitZenAsync(context, draft.BidderCharacterId, draft.BidAmount, cancellationToken))
+        if (!await PayAsync(context, listing.Currency, draft.BidderAccountId, draft.BidderCharacterId, draft.OperationId, listing.Id, draft.BidAmount, draft.Now, cancellationToken))
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBidResult(AuctionBidOutcome.InsufficientCurrency);
@@ -670,7 +671,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.BuyoutUnavailable);
         }
 
-        if (listing.Currency != 0)
+        if (listing.Currency == FruitsCurrency)
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.UnsupportedCurrency);
@@ -685,7 +686,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.CharacterNotOwned);
         }
 
-        if (!await DebitZenAsync(context, draft.BuyerCharacterId, debit, cancellationToken))
+        if (!await PayAsync(context, listing.Currency, draft.BuyerAccountId, draft.BuyerCharacterId, draft.OperationId, listing.Id, debit, draft.Now, cancellationToken))
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.InsufficientCurrency);
@@ -1282,6 +1283,24 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             $"SELECT jm.\"MixedJewelId\" AS \"Value\" FROM config.\"JewelMix\" jm WHERE jm.\"SingleJewelId\" = {single.Value}")
             .SingleOrDefaultAsync(cancellationToken);
         return (single, pack);
+    }
+
+    /// <summary>
+    /// Pays an amount in the listing's currency: Zen from the character's money, or jewel units from the inventory.
+    /// </summary>
+    private async Task<bool> PayAsync(EntityDataContext context, byte currency, Guid accountId, Guid characterId, Guid operationId, Guid listingId, long amount, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (amount <= 0)
+        {
+            return true;
+        }
+
+        if (currency == 0)
+        {
+            return await DebitZenAsync(context, characterId, amount, cancellationToken);
+        }
+
+        return await this.TenderJewelsAsync(context, accountId, characterId, operationId, listingId, currency, amount, null, now, cancellationToken) == JewelTender.Paid;
     }
 
     /// <summary>

@@ -180,10 +180,10 @@ public class AuctionZenDebitTests
     }
 
     /// <summary>
-    /// Verifies a jewel listing is refused until jewel tender is implemented, so no escrow is ever taken without its debit.
+    /// Verifies a jewel bid from a character the bidder does not own is refused before any jewel is taken.
     /// </summary>
     [Test]
-    public async Task JewelListingBidIsRefusedUntilJewelTenderExists()
+    public async Task JewelBidFromAnUnownedCharacterIsRefused()
     {
         var now = DateTimeOffset.UtcNow;
         var jewel = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
@@ -211,7 +211,7 @@ public class AuctionZenDebitTests
             Now: now,
             NewEndsAt: now.AddHours(24)));
 
-        Assert.That(result.Outcome, Is.EqualTo(AuctionBidOutcome.UnsupportedCurrency));
+        Assert.That(result.Outcome, Is.EqualTo(AuctionBidOutcome.CharacterNotOwned));
         await using var context = new EntityDataContext();
         await context.Set<AuctionListing>().Where(l => l.Id == jewel.ListingId).ExecuteDeleteAsync();
     }

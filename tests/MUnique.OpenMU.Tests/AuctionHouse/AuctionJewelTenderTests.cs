@@ -94,6 +94,9 @@ public class AuctionJewelTenderTests
         await context.Set<AuctionOperation>().Where(o => o.AccountId == this._accountId).ExecuteDeleteAsync();
         await context.Set<AuctionListing>().Where(l => l.SellerAccountId == this._accountId).ExecuteDeleteAsync();
         await context.Set<AuctionCollection>().Where(c => c.AccountId == this._accountId).ExecuteDeleteAsync();
+        await context.Set<AuctionBid>().Where(b => this._listingIds.Contains(b.ListingId)).ExecuteDeleteAsync();
+        await context.Set<AuctionListing>().Where(l => this._listingIds.Contains(l.Id)).ExecuteDeleteAsync();
+        this._listingIds.Clear();
         await context.Set<Item>().Where(i => this._items.Contains(i.Id)).ExecuteDeleteAsync();
         this._items.Clear();
     }
@@ -216,6 +219,75 @@ public class AuctionJewelTenderTests
             Assert.That(persistence.Group, Is.EqualTo((byte)catalog.Group), $"group of mode {mode}");
             Assert.That(persistence.Number, Is.EqualTo((short)catalog.Number), $"number of mode {mode}");
         }
+    }
+
+    /// <summary>
+    /// Verifies a jewel bid is escrowed from the bidder's own jewels: the consumed loose jewels leave the bidder's inventory,
+    /// and the bid is placed at the listing.
+    /// </summary>
+    [Test]
+    public async Task JewelBidIsEscrowedFromTheBiddersJewels()
+    {
+        var owners = await AuctionTestCharacters.FundOwnedAsync(this._connectionString, 0, 2);
+        if (owners.Count < 2)
+        {
+            Assert.Ignore("The database has too few linked characters; use the populated copy.");
+        }
+
+        var bidder = owners[1];
+        var bidderInventory = await this.InventoryOfAsync(bidder.CharacterId);
+        var now = DateTimeOffset.UtcNow;
+        var jewels = new List<Guid>();
+        await using (var context = new EntityDataContext())
+        {
+            await context.Set<Item>().Where(i => i.ItemStorageId == bidderInventory && i.DefinitionId == this._looseDefinitionId).ExecuteDeleteAsync();
+            for (var slot = 70; slot < 72; slot++)
+            {
+                var id = Guid.NewGuid();
+                jewels.Add(id);
+                context.Set<Item>().Add(new Item { Id = id, ItemStorageId = bidderInventory, ItemSlot = (byte)slot, DefinitionId = this._looseDefinitionId, Level = 0, Durability = 1 });
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        var listing = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
+            OperationId: Guid.NewGuid(),
+            AccountId: Guid.NewGuid(),
+            ItemId: Guid.NewGuid(),
+            SellerCharacterId: Guid.NewGuid(),
+            SellerName: "Seller",
+            SellerIp: "127.0.0.1",
+            Currency: 1,
+            Category: 0,
+            StartingPrice: 2,
+            CreatedAt: now,
+            EndsAt: now.AddHours(24)));
+        this._listingIds.Add(listing.ListingId);
+
+        var bid = await new AuctionHouseRepository().PlaceScalarBidAsync(new EntityDataContext(), new ScalarBidDraft(
+            OperationId: Guid.NewGuid(),
+            BidderAccountId: bidder.AccountId,
+            BidderCharacterId: bidder.CharacterId,
+            ListingId: listing.ListingId,
+            ExpectedVersion: 0,
+            BidAmount: 2,
+            MinimumBid: 2,
+            BidderIp: "127.0.0.1",
+            Now: now,
+            NewEndsAt: now.AddHours(24)));
+
+        Assert.That(bid.Outcome, Is.EqualTo(AuctionBidOutcome.Placed));
+        await using var check = new EntityDataContext();
+        Assert.That(await check.Set<Item>().AsNoTracking().CountAsync(i => jewels.Contains(i.Id)), Is.EqualTo(0));
+    }
+
+    private readonly List<Guid> _listingIds = new();
+
+    private async Task<Guid> InventoryOfAsync(Guid characterId)
+    {
+        await using var context = new EntityDataContext();
+        return (await context.Set<Character>().AsNoTracking().Where(c => c.Id == characterId).Select(c => c.InventoryId).SingleAsync())!.Value;
     }
 
     private Guid _lastOperation;
