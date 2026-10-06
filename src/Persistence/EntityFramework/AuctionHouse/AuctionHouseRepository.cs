@@ -1110,6 +1110,22 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             context.Set<AuctionCurrencyMovement>().Add(movement);
         }
 
+        if (plan.ClaimedFruits is { } claimedFruits)
+        {
+            if (!await OwnsCharacterAsync(context, draft.AccountId, draft.CharacterId, cancellationToken))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
+            }
+
+            var placed = await this.MaterializeFruitsAsync(context, draft.CharacterId, claimedFruits, cancellationToken);
+            if (placed != JewelMaterialization.Materialized)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return new AuctionClaimResult(placed == JewelMaterialization.InventoryFull ? AuctionClaimOutcome.InventoryFull : AuctionClaimOutcome.UnsupportedCurrency, 0, null, 0);
+            }
+        }
+
         if (plan.ClaimedFruits is { } fruits)
         {
             var components = new[] { fruits.Strength, fruits.Agility, fruits.Vitality, fruits.Energy, fruits.Command };
@@ -1441,6 +1457,58 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         }
 
         return JewelTender.Paid;
+    }
+
+    /// <summary>
+    /// Materializes a claimed fruit basket as clean fruits: each unit becomes one fruit at its component's level, placed in a free
+    /// main-inventory slot. Either every fruit is placed or none is.
+    /// </summary>
+    private async Task<JewelMaterialization> MaterializeFruitsAsync(EntityDataContext context, Guid characterId, FruitQuantities claimed, CancellationToken cancellationToken)
+    {
+        var fruit = await context.Database.SqlQuery<Guid?>(
+            $"SELECT d.\"Id\" AS \"Value\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" = 13 AND d.\"Number\" = 15")
+            .SingleOrDefaultAsync(cancellationToken);
+        var inventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == characterId)
+            .Select(c => c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (fruit is null || inventoryId is null)
+        {
+            return JewelMaterialization.NotConfigured;
+        }
+
+        var basket = new FruitBasket(claimed.Strength, claimed.Agility, claimed.Vitality, claimed.Energy, claimed.Command);
+        var plan = new List<byte>();
+        foreach (var component in Enum.GetValues<FruitComponent>())
+        {
+            for (var unit = 0; unit < basket.Get(component); unit++)
+            {
+                plan.Add((byte)FruitRules.GetItemLevel(component));
+            }
+        }
+
+        var freeSlots = await context.Database.SqlQuery<int>(
+            $"SELECT s.n AS \"Value\" FROM generate_series({InventoryConstants.EquippableSlotsCount}, {InventoryConstants.EquippableSlotsCount + 63}) AS s(n) WHERE s.n NOT IN (SELECT i.\"ItemSlot\" FROM data.\"Item\" i WHERE i.\"ItemStorageId\" = {inventoryId}) ORDER BY s.n")
+            .ToListAsync(cancellationToken);
+        if (freeSlots.Count < plan.Count)
+        {
+            return JewelMaterialization.InventoryFull;
+        }
+
+        for (var index = 0; index < plan.Count; index++)
+        {
+            context.Set<Item>().Add(new Item
+            {
+                Id = Guid.NewGuid(),
+                ItemStorageId = inventoryId,
+                ItemSlot = (byte)freeSlots[index],
+                DefinitionId = fruit,
+                Level = plan[index],
+                Durability = 1,
+            });
+        }
+
+        return JewelMaterialization.Materialized;
     }
 
     /// <summary>

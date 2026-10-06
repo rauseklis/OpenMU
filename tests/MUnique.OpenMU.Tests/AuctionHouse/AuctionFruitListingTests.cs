@@ -29,6 +29,7 @@ public class AuctionFruitListingTests
     private Guid _listedItemId;
     private Guid _listingId;
     private readonly List<Guid> _fruits = new();
+    private readonly List<Guid> _collections = new();
 
     [OneTimeSetUp]
     public void SetUp()
@@ -81,6 +82,8 @@ public class AuctionFruitListingTests
             await context.Set<Item>().Where(i => i.Id == fruit).ExecuteDeleteAsync();
         }
 
+        await context.Set<AuctionCollection>().Where(c => c.AccountId == this._accountId).ExecuteDeleteAsync();
+        this._collections.Clear();
         this._fruits.Clear();
     }
 
@@ -128,6 +131,61 @@ public class AuctionFruitListingTests
         Assert.That(result.Result, Is.EqualTo(AuctionResultCode.InsufficientCurrency));
         await using var context = new EntityDataContext();
         Assert.That(await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId), Is.EqualTo(2));
+    }
+
+    /// <summary>
+    /// Verifies a claimed fruit balance materializes as clean fruits at each component's level: two Strength fruits at level 3 and
+    /// one Energy fruit at level 0.
+    /// </summary>
+    [Test]
+    public async Task ClaimingAFruitBalanceMaterializesCleanFruits()
+    {
+        var collection = Guid.NewGuid();
+        await using (var context = new EntityDataContext())
+        {
+            var now = DateTimeOffset.UtcNow;
+            context.Set<AuctionCollection>().Add(new AuctionCollection
+            {
+                Id = collection,
+                AccountId = this._accountId,
+                Kind = 2,
+                Currency = 8,
+                OriginalStrength = 2,
+                RemainingStrength = 2,
+                OriginalAgility = 0,
+                RemainingAgility = 0,
+                OriginalVitality = 0,
+                RemainingVitality = 0,
+                OriginalEnergy = 1,
+                RemainingEnergy = 1,
+                OriginalCommand = 0,
+                RemainingCommand = 0,
+                Status = 0,
+                CreatedAt = now,
+                UpdatedAt = now,
+                Version = 0,
+            });
+            await context.SaveChangesAsync();
+        }
+
+        this._collections.Add(collection);
+        var result = await new AuctionHouseRepository().ClaimAsync(new EntityDataContext(), new ClaimDraft(
+            OperationId: Guid.NewGuid(),
+            AccountId: this._accountId,
+            CharacterId: this._characterId,
+            CollectionId: collection,
+            ExpectedVersion: 0,
+            Now: DateTimeOffset.UtcNow));
+
+        Assert.That(result.Outcome, Is.EqualTo(AuctionClaimOutcome.Claimed));
+        await using var check = new EntityDataContext();
+        var level3 = await check.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId && i.Level == 3);
+        var level0 = await check.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId && i.Level == 0);
+        Assert.Multiple(() =>
+        {
+            Assert.That(level3, Is.EqualTo(2));
+            Assert.That(level0, Is.EqualTo(1));
+        });
     }
 
     private Guid _lastOperation;
