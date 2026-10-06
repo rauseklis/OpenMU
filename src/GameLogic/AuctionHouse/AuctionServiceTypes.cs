@@ -256,7 +256,8 @@ public readonly record struct AuctionBidRequest(
     Guid ListingId,
     int ExpectedVersion,
     long BidAmount,
-    string? BidderIp);
+    string? BidderIp,
+    FruitBasket? BidFruits = null);
 
 /// <summary>
 /// A request to buy a listing out at its buyout price.

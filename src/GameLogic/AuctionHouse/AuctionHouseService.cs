@@ -188,6 +188,27 @@ public sealed class AuctionHouseService
             return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
         }
 
+        if (listing.Currency == (byte)AuctionCurrencyMode.Fruits)
+        {
+            if (request.BidFruits is not { } bidBasket)
+            {
+                return new AuctionMutationResult(AuctionResultCode.InvalidFruitBasket, now);
+            }
+
+            var fruitDraft = new FruitBidDraft(
+                request.OperationId,
+                request.AccountId,
+                request.CharacterId,
+                request.ListingId,
+                request.ExpectedVersion,
+                bidBasket,
+                request.BidderIp,
+                now,
+                AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now));
+            var fruitResult = await this._repository.PlaceFruitBidAsync(fruitDraft, cancellationToken).ConfigureAwait(false);
+            return new AuctionMutationResult(MapBidOutcome(fruitResult.Outcome), now);
+        }
+
         var draft = new ScalarBidDraft(
             request.OperationId,
             request.AccountId,

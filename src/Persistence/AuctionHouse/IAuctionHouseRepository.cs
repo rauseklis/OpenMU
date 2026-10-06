@@ -30,6 +30,14 @@ public interface IAuctionHouseRepository
     Task<AuctionBidResult> PlaceScalarBidAsync(ScalarBidDraft draft, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Places a fruit-basket bid, escrowing its fruits and releasing the displaced bid as a refund.
+    /// </summary>
+    /// <param name="draft">The bid.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    Task<AuctionBidResult> PlaceFruitBidAsync(FruitBidDraft draft, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Buys a listing out at its buyout price.
     /// </summary>
     /// <param name="draft">The buyout.</param>
