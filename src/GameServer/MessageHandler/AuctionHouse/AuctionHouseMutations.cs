@@ -23,9 +23,9 @@ using MUnique.OpenMU.Persistence.AuctionHouse;
 internal static class AuctionHouseMutations
 {
     /// <summary>
-    /// The options. The feature stays disabled until its configuration is wired in.
+    /// Gets the options in effect, from the configuration which the expiry worker publishes.
     /// </summary>
-    public static AuctionHouseOptions Options { get; } = new();
+    public static AuctionHouseOptions Options => AuctionHouseConfigurationSource.Current.ToOptions();
 
     /// <summary>
     /// Creates the service, or returns <c>null</c> when the game context has no Auction House database.

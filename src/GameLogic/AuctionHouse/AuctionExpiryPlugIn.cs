@@ -14,27 +14,28 @@ using MUnique.OpenMU.PlugIns;
 /// </summary>
 [PlugIn]
 [Guid("44B287BD-F981-4918-95F7-27AAF5D69998")]
-public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn
+public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfiguration<AuctionHouseConfiguration>, ISupportDefaultCustomConfiguration
 {
-    private const int BatchSize = 50;
-    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(15);
     private DateTime _nextRunUtc = DateTime.MinValue;
 
-    /// <summary>
-    /// Gets or sets the Auction House options. The worker does nothing while the feature is disabled.
-    /// </summary>
-    public AuctionHouseOptions Options { get; set; } = new();
+    /// <inheritdoc />
+    public AuctionHouseConfiguration? Configuration { get; set; }
+
+    /// <inheritdoc />
+    public object CreateDefaultConfig() => new AuctionHouseConfiguration();
 
     /// <inheritdoc />
     public async ValueTask ExecuteTaskAsync(GameContext gameContext)
     {
+        var configuration = this.Configuration ??= new AuctionHouseConfiguration();
+        AuctionHouseConfigurationSource.Current = configuration;
         var now = DateTime.UtcNow;
-        if (!this.Options.Enabled || now < this._nextRunUtc)
+        if (!configuration.Enabled || now < this._nextRunUtc)
         {
             return;
         }
 
-        this._nextRunUtc = now + Interval;
+        this._nextRunUtc = now + TimeSpan.FromSeconds(configuration.ExpiryIntervalSeconds);
         var repository = gameContext.PersistenceContextProvider.CreateAuctionHouseRepository();
         if (repository is null)
         {
@@ -43,8 +44,8 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn
 
         try
         {
-            var service = new AuctionHouseService(repository, this.Options);
-            await service.FinalizeDueListingsAsync(BatchSize).ConfigureAwait(false);
+            var service = new AuctionHouseService(repository, configuration.ToOptions());
+            await service.FinalizeDueListingsAsync(configuration.ExpiryBatchSize).ConfigureAwait(false);
         }
         catch (Exception exception)
         {
