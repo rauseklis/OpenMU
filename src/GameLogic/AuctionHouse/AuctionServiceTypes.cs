@@ -281,3 +281,41 @@ public readonly record struct AuctionBuyoutRequest(
 /// <param name="ServerTime">The server time, in UTC.</param>
 public readonly record struct AuctionMutationResult(AuctionResultCode Result, DateTimeOffset ServerTime);
 
+/// <summary>
+/// A request to cancel a listing which has no bid.
+/// </summary>
+/// <param name="OperationId">The client-generated operation identifier.</param>
+/// <param name="AccountId">The seller's account.</param>
+/// <param name="ListingId">The listing.</param>
+/// <param name="ExpectedVersion">The listing version the seller saw.</param>
+public readonly record struct AuctionCancelRequest(Guid OperationId, Guid AccountId, Guid ListingId, int ExpectedVersion);
+
+/// <summary>
+/// A request to collect a pending collection, fully or partially.
+/// </summary>
+/// <param name="OperationId">The client-generated operation identifier.</param>
+/// <param name="AccountId">The collection's account.</param>
+/// <param name="CharacterId">The character which receives the items or Zen.</param>
+/// <param name="CollectionId">The collection.</param>
+/// <param name="ExpectedVersion">The collection version the player saw.</param>
+/// <param name="RequestedScalar">The Zen or jewel amount to collect, or <c>null</c> for everything.</param>
+/// <param name="RequestedFruits">The fruit amounts to collect, or <c>null</c> for everything.</param>
+public readonly record struct AuctionCollectRequest(
+    Guid OperationId,
+    Guid AccountId,
+    Guid CharacterId,
+    Guid CollectionId,
+    int ExpectedVersion,
+    long? RequestedScalar,
+    FruitQuantities? RequestedFruits);
+
+/// <summary>
+/// The result of a collection.
+/// </summary>
+/// <param name="Result">The outcome.</param>
+/// <param name="Kind">The collected kind, as its wire value.</param>
+/// <param name="ItemId">The item which was collected, or <c>null</c> for a currency collection.</param>
+/// <param name="Amount">The amount collected.</param>
+/// <param name="ServerTime">The server time, in UTC.</param>
+public readonly record struct AuctionCollectResult(AuctionResultCode Result, byte Kind, Guid? ItemId, long Amount, DateTimeOffset ServerTime);
+

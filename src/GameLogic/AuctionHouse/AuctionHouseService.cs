@@ -258,6 +258,77 @@ public sealed class AuctionHouseService
         };
 
     /// <summary>
+    /// Cancels a listing which has no bid. The listing fee is not refunded.
+    /// </summary>
+    /// <param name="request">The cancellation request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The cancellation result.</returns>
+    public async Task<AuctionMutationResult> CancelAsync(AuctionCancelRequest request, CancellationToken cancellationToken = default)
+    {
+        var now = this._clock();
+        if (!this._options.Enabled)
+        {
+            return new AuctionMutationResult(AuctionResultCode.Disabled, now);
+        }
+
+        var draft = new CancelDraft(request.OperationId, request.AccountId, request.ListingId, request.ExpectedVersion, now);
+        var result = await this._repository.CancelAsync(draft, cancellationToken);
+        return new AuctionMutationResult(MapCancelOutcome(result.Outcome), now);
+    }
+
+    /// <summary>
+    /// Collects a pending collection. A collection of another account is reported as not found, not as forbidden.
+    /// </summary>
+    /// <param name="request">The collection request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The collection result.</returns>
+    public async Task<AuctionCollectResult> CollectAsync(AuctionCollectRequest request, CancellationToken cancellationToken = default)
+    {
+        var now = this._clock();
+        if (!this._options.Enabled)
+        {
+            return new AuctionCollectResult(AuctionResultCode.Disabled, 0, null, 0, now);
+        }
+
+        var draft = new ClaimDraft(
+            request.OperationId,
+            request.AccountId,
+            request.CharacterId,
+            request.CollectionId,
+            request.ExpectedVersion,
+            now,
+            request.RequestedScalar,
+            request.RequestedFruits);
+        var result = await this._repository.ClaimAsync(draft, cancellationToken);
+        return new AuctionCollectResult(MapClaimOutcome(result.Outcome), result.Kind, result.ItemId, result.Amount, now);
+    }
+
+    private static AuctionResultCode MapCancelOutcome(AuctionCancelOutcome outcome)
+        => outcome switch
+        {
+            AuctionCancelOutcome.Cancelled or AuctionCancelOutcome.Replayed => AuctionResultCode.Success,
+
+            // A seller who does not own the listing learns nothing more than an unknown listing.
+            AuctionCancelOutcome.ListingNotFound or AuctionCancelOutcome.NotSeller => AuctionResultCode.ListingNotFound,
+            AuctionCancelOutcome.StaleListing => AuctionResultCode.StaleListing,
+            AuctionCancelOutcome.NotActive => AuctionResultCode.ListingNotActive,
+            AuctionCancelOutcome.CannotCancelWithBid => AuctionResultCode.CannotCancelWithBid,
+            _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
+        };
+
+    private static AuctionResultCode MapClaimOutcome(AuctionClaimOutcome outcome)
+        => outcome switch
+        {
+            AuctionClaimOutcome.Claimed or AuctionClaimOutcome.Replayed => AuctionResultCode.Success,
+            AuctionClaimOutcome.NotFound => AuctionResultCode.CollectionNotFound,
+            AuctionClaimOutcome.Stale => AuctionResultCode.StaleListing,
+            AuctionClaimOutcome.AlreadyClaimed => AuctionResultCode.AlreadyProcessed,
+            AuctionClaimOutcome.MoneyLimit => AuctionResultCode.MoneyLimit,
+            AuctionClaimOutcome.InvalidClaimQuantity => AuctionResultCode.InvalidClaimQuantity,
+            _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
+        };
+
+    /// <summary>
     /// Reads one listing, including its note.
     /// </summary>
     /// <param name="listingId">The listing to read.</param>
