@@ -719,7 +719,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
-        context.Set<AuctionTransactionLog>().Add(Audit(BidKind, draft.BidderAccountId, draft.BidderCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BidderIp, listing.SellerAccountId, null, FruitsCurrency, null));
+        context.Set<AuctionTransactionLog>().Add(Audit(BidKind, draft.BidderAccountId, draft.BidderCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BidderIp, listing.SellerAccountId, null, FruitsCurrency, null, SameAddress(draft.BidderIp, listing.SellerIp)));
 
         try
         {
@@ -902,7 +902,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
-        context.Set<AuctionTransactionLog>().Add(Audit(BuyoutKind, draft.BuyerAccountId, draft.BuyerCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BuyerIp, listing.SellerAccountId, null, FruitsCurrency, null));
+        context.Set<AuctionTransactionLog>().Add(Audit(BuyoutKind, draft.BuyerAccountId, draft.BuyerCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BuyerIp, listing.SellerAccountId, null, FruitsCurrency, null, SameAddress(draft.BuyerIp, listing.SellerIp)));
 
         try
         {
@@ -1052,7 +1052,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
-        context.Set<AuctionTransactionLog>().Add(Audit(BidKind, draft.BidderAccountId, draft.BidderCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BidderIp, listing.SellerAccountId, draft.BidAmount, listing.Currency, null));
+        context.Set<AuctionTransactionLog>().Add(Audit(BidKind, draft.BidderAccountId, draft.BidderCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BidderIp, listing.SellerAccountId, draft.BidAmount, listing.Currency, null, SameAddress(draft.BidderIp, listing.SellerIp)));
 
         try
         {
@@ -1288,7 +1288,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listing.Id,
             CreatedAt = draft.Now,
         });
-        context.Set<AuctionTransactionLog>().Add(Audit(BuyoutKind, draft.BuyerAccountId, draft.BuyerCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BuyerIp, listing.SellerAccountId, price, listing.Currency, draft.SuccessFee));
+        context.Set<AuctionTransactionLog>().Add(Audit(BuyoutKind, draft.BuyerAccountId, draft.BuyerCharacterId, listing.Id, draft.OperationId, draft.Now, draft.BuyerIp, listing.SellerAccountId, price, listing.Currency, draft.SuccessFee, SameAddress(draft.BuyerIp, listing.SellerIp)));
 
         try
         {
@@ -1506,7 +1506,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     /// <summary>
     /// Creates one immutable audit row. The actor of an expiry is the system, which has no account.
     /// </summary>
-    private static AuctionTransactionLog Audit(byte action, Guid actorAccountId, Guid? actorCharacterId, Guid? listingId, Guid? operationId, DateTimeOffset now, string? ip, Guid? counterpartAccountId, long? amount, byte? currency, long? fee)
+    private static AuctionTransactionLog Audit(byte action, Guid actorAccountId, Guid? actorCharacterId, Guid? listingId, Guid? operationId, DateTimeOffset now, string? ip, Guid? counterpartAccountId, long? amount, byte? currency, long? fee, bool suspicious = false)
         => new()
         {
             Id = Guid.NewGuid(),
@@ -1520,9 +1520,16 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             Fee = fee,
             OperationId = operationId,
             ActorIp = ip,
-            IsSuspicious = false,
+            IsSuspicious = suspicious,
+            Reason = suspicious ? "same-address" : null,
             CreatedAt = now,
         };
+
+    /// <summary>
+    /// Tells whether the actor's address is the same as the seller's. Such a trade is allowed, but its audit row is flagged.
+    /// </summary>
+    private static bool SameAddress(string? actorIp, string? sellerIp)
+        => actorIp is not null && sellerIp is not null && actorIp == sellerIp;
 
     /// <summary>
     /// Creates a durable notification for an account. Online delivery is best-effort; the Mailbox stays the durable truth.

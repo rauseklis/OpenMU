@@ -259,5 +259,24 @@ public class AuctionBidTests
             Assert.That(audit.ListingId, Is.EqualTo(this._listingId));
         });
     }
+
+    /// <summary>
+    /// Verifies a bid from the seller's own address is still placed, and its audit row is flagged as suspicious.
+    /// </summary>
+    [Test]
+    public async Task BidFromTheSellerAddressIsAllowedButFlagged()
+    {
+        var operation = Guid.NewGuid();
+        var result = await this.Bid(this._bidderOne, 1000, this._version, operation);
+
+        Assert.That(result.Outcome, Is.EqualTo(AuctionBidOutcome.Placed));
+        await using var context = new EntityDataContext();
+        var audit = await context.Set<AuctionTransactionLog>().AsNoTracking().SingleAsync(a => a.OperationId == operation && a.Action == 1);
+        Assert.Multiple(() =>
+        {
+            Assert.That(audit.IsSuspicious, Is.True);
+            Assert.That(audit.Reason, Is.EqualTo("same-address"));
+        });
+    }
 }
 
