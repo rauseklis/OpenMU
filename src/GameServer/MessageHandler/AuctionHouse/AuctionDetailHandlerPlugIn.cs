@@ -79,6 +79,9 @@ internal sealed class AuctionDetailHandlerPlugIn : ISubPacketHandlerPlugIn
 
         var view2 = detail.Listing;
         var bid = view2?.CurrentBid ?? view2?.StartingPrice ?? 0;
+        var isFruits = view2?.Currency == (byte)AuctionCurrencyMode.Fruits;
+        var currentFruits = view2?.CurrentFruits ?? view2?.StartingFruits;
+        var buyoutFruits = view2?.BuyoutFruits;
         var noteBytes = Encoding.UTF8.GetBytes(view2?.Note ?? string.Empty);
         var noteLength = (byte)Math.Min(noteBytes.Length, 80);
         var sellerBytes = Encoding.UTF8.GetBytes(view2?.SellerName ?? string.Empty);
@@ -93,8 +96,10 @@ internal sealed class AuctionDetailHandlerPlugIn : ISubPacketHandlerPlugIn
             (Packets.AuctionListingStatus)(view2?.Status ?? 0),
             (Packets.AuctionCurrencyMode)(view2?.Currency ?? 0),
             (Packets.AuctionCategory)(view2?.Category ?? 0),
-            (uint)bid, 0, 0, 0, 0, 0,
-            (uint)(view2?.BuyoutPrice ?? 0), 0, 0, 0, 0, 0,
+            isFruits ? 0u : (uint)bid,
+            (uint)(currentFruits?.Strength ?? 0), (uint)(currentFruits?.Agility ?? 0), (uint)(currentFruits?.Vitality ?? 0), (uint)(currentFruits?.Energy ?? 0), (uint)(currentFruits?.Command ?? 0),
+            isFruits ? 0u : (uint)(view2?.BuyoutPrice ?? 0),
+            (uint)(buyoutFruits?.Strength ?? 0), (uint)(buyoutFruits?.Agility ?? 0), (uint)(buyoutFruits?.Vitality ?? 0), (uint)(buyoutFruits?.Energy ?? 0), (uint)(buyoutFruits?.Command ?? 0),
             (ushort)(view2?.BidCount ?? 0),
             (uint)(view2?.OriginalEndsAt.ToUnixTimeSeconds() ?? 0),
             (uint)(view2?.EndsAt.ToUnixTimeSeconds() ?? 0),

@@ -4,6 +4,8 @@
 
 namespace MUnique.OpenMU.Persistence.AuctionHouse;
 
+using MUnique.OpenMU.GameLogic.AuctionHouse;
+
 /// <summary>
 /// The order of browse results. Values match the wire catalog.
 /// </summary>
@@ -65,7 +67,35 @@ public readonly record struct AuctionListingRow(
     int ItemLevel,
     Guid ItemId,
     int Version,
-    byte Status);
+    byte Status,
+    long? StartingStrength,
+    long? StartingAgility,
+    long? StartingVitality,
+    long? StartingEnergy,
+    long? StartingCommand,
+    long? CurrentBidStrength,
+    long? CurrentBidAgility,
+    long? CurrentBidVitality,
+    long? CurrentBidEnergy,
+    long? CurrentBidCommand,
+    long? BuyoutStrength,
+    long? BuyoutAgility,
+    long? BuyoutVitality,
+    long? BuyoutEnergy,
+    long? BuyoutCommand)
+{
+    /// <summary>The starting basket of a fruit listing.</summary>
+    public FruitBasket? StartingFruits => Basket(StartingStrength, StartingAgility, StartingVitality, StartingEnergy, StartingCommand);
+
+    /// <summary>The current bid basket of a fruit listing, or <c>null</c> without a bid.</summary>
+    public FruitBasket? CurrentFruits => Basket(CurrentBidStrength, CurrentBidAgility, CurrentBidVitality, CurrentBidEnergy, CurrentBidCommand);
+
+    /// <summary>The buyout basket of a fruit listing, or <c>null</c> when there is none.</summary>
+    public FruitBasket? BuyoutFruits => Basket(BuyoutStrength, BuyoutAgility, BuyoutVitality, BuyoutEnergy, BuyoutCommand);
+
+    private static FruitBasket? Basket(long? strength, long? agility, long? vitality, long? energy, long? command)
+        => strength is null ? null : new FruitBasket(strength ?? 0, agility ?? 0, vitality ?? 0, energy ?? 0, command ?? 0);
+}
 
 /// <summary>
 /// One page of browse results, with the total number of matches.

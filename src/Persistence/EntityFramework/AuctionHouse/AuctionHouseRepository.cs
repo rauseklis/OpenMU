@@ -267,7 +267,22 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.ItemLevel,
                 l.ItemId,
                 l.Version,
-                l.Status))
+                l.Status,
+                l.StartingStrength,
+                l.StartingAgility,
+                l.StartingVitality,
+                l.StartingEnergy,
+                l.StartingCommand,
+                l.CurrentBidStrength,
+                l.CurrentBidAgility,
+                l.CurrentBidVitality,
+                l.CurrentBidEnergy,
+                l.CurrentBidCommand,
+                l.BuyoutStrength,
+                l.BuyoutAgility,
+                l.BuyoutVitality,
+                l.BuyoutEnergy,
+                l.BuyoutCommand))
             .ToListAsync(cancellationToken);
         return new AuctionListingPage(rows, total);
     }
@@ -2082,7 +2097,22 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.ItemLevel,
                 l.ItemId,
                 l.Version,
-                l.Status))
+                l.Status,
+                l.StartingStrength,
+                l.StartingAgility,
+                l.StartingVitality,
+                l.StartingEnergy,
+                l.StartingCommand,
+                l.CurrentBidStrength,
+                l.CurrentBidAgility,
+                l.CurrentBidVitality,
+                l.CurrentBidEnergy,
+                l.CurrentBidCommand,
+                l.BuyoutStrength,
+                l.BuyoutAgility,
+                l.BuyoutVitality,
+                l.BuyoutEnergy,
+                l.BuyoutCommand))
             .ToListAsync(cancellationToken);
         return new AuctionListingPage(rows, total);
     }
@@ -2268,7 +2298,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     {
         return context.Set<AuctionListing>().AsNoTracking()
             .Where(l => l.Id == listingId)
-            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.OriginalEndsAt, l.BidCount, l.SellerName, l.Note))
+            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.OriginalEndsAt, l.BidCount, l.SellerName, l.Note, l.StartingStrength, l.StartingAgility, l.StartingVitality, l.StartingEnergy, l.StartingCommand, l.CurrentBidStrength, l.CurrentBidAgility, l.CurrentBidVitality, l.CurrentBidEnergy, l.CurrentBidCommand, l.BuyoutStrength, l.BuyoutAgility, l.BuyoutVitality, l.BuyoutEnergy, l.BuyoutCommand))
             .FirstOrDefaultAsync(cancellationToken);
     }
 

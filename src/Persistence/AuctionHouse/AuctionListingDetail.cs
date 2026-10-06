@@ -4,6 +4,8 @@
 
 namespace MUnique.OpenMU.Persistence.AuctionHouse;
 
+using MUnique.OpenMU.GameLogic.AuctionHouse;
+
 /// <summary>
 /// The detail view of one listing: the fields a player may see, without the seller's network address or bidder identities.
 /// </summary>
@@ -35,4 +37,32 @@ public sealed record AuctionListingDetail(
     DateTimeOffset OriginalEndsAt,
     int BidCount,
     string SellerName,
-    string? Note);
+    string? Note,
+    long? StartingStrength,
+    long? StartingAgility,
+    long? StartingVitality,
+    long? StartingEnergy,
+    long? StartingCommand,
+    long? CurrentBidStrength,
+    long? CurrentBidAgility,
+    long? CurrentBidVitality,
+    long? CurrentBidEnergy,
+    long? CurrentBidCommand,
+    long? BuyoutStrength,
+    long? BuyoutAgility,
+    long? BuyoutVitality,
+    long? BuyoutEnergy,
+    long? BuyoutCommand)
+{
+    /// <summary>The starting basket of a fruit listing.</summary>
+    public FruitBasket? StartingFruits => Basket(StartingStrength, StartingAgility, StartingVitality, StartingEnergy, StartingCommand);
+
+    /// <summary>The current bid basket of a fruit listing, or <c>null</c> without a bid.</summary>
+    public FruitBasket? CurrentFruits => Basket(CurrentBidStrength, CurrentBidAgility, CurrentBidVitality, CurrentBidEnergy, CurrentBidCommand);
+
+    /// <summary>The buyout basket of a fruit listing, or <c>null</c> when there is none.</summary>
+    public FruitBasket? BuyoutFruits => Basket(BuyoutStrength, BuyoutAgility, BuyoutVitality, BuyoutEnergy, BuyoutCommand);
+
+    private static FruitBasket? Basket(long? strength, long? agility, long? vitality, long? energy, long? command)
+        => strength is null ? null : new FruitBasket(strength ?? 0, agility ?? 0, vitality ?? 0, energy ?? 0, command ?? 0);
+}

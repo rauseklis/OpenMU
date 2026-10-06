@@ -192,4 +192,22 @@ public class AuctionFruitBidTests
         await using var command = new NpgsqlCommand("SELECT \"Id\" FROM config.\"ItemDefinition\" WHERE \"Group\" = 13 AND \"Number\" = 15", connection);
         return (Guid)(await command.ExecuteScalarAsync())!;
     }
+
+    /// <summary>
+    /// Verifies a fruit listing's browse row carries its starting basket before a bid, and its bid basket after one.
+    /// </summary>
+    [Test]
+    public async Task BrowseRowCarriesTheFruitBaskets()
+    {
+        var before = await new AuctionHouseRepository().SearchListingsAsync(new EntityDataContext(), new AuctionListingSearch(Currency: 8, PageSize: 1000));
+        var row = before.Rows.Single(r => r.ListingId == this._listingId);
+        Assert.That(row.StartingFruits, Is.EqualTo(new FruitBasket(2, 0, 0, 1, 0)));
+        Assert.That(row.CurrentFruits, Is.Null);
+
+        await this.PlaceAsync(this._firstAccountId, this._firstCharacterId, version: 0, new FruitBasket(2, 0, 0, 1, 0));
+
+        var after = await new AuctionHouseRepository().SearchListingsAsync(new EntityDataContext(), new AuctionListingSearch(Currency: 8, PageSize: 1000));
+        Assert.That(after.Rows.Single(r => r.ListingId == this._listingId).CurrentFruits, Is.EqualTo(new FruitBasket(2, 0, 0, 1, 0)));
+    }
 }
+
