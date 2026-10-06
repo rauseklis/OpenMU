@@ -104,6 +104,15 @@ public interface IAuctionHouseRepository
     Task<AuctionListingDetail?> GetListingAsync(Guid listingId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Tells whether the account has an Auction House restriction which has not expired.
+    /// </summary>
+    /// <param name="accountId">The account.</param>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns><c>true</c> when the account is restricted.</returns>
+    Task<bool> IsAccountRestrictedAsync(Guid accountId, DateTimeOffset now, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Counts the collections of an account which are not fully claimed.
     /// </summary>
     /// <param name="accountId">The account.</param>

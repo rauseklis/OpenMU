@@ -122,6 +122,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.GetItemsAsync(context, itemIds, cancellationToken));
 
     /// <inheritdoc />
+    public Task<bool> IsAccountRestrictedAsync(Guid accountId, DateTimeOffset now, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.IsAccountRestrictedAsync(context, accountId, now, cancellationToken));
+
+    /// <inheritdoc />
     public Task<Guid?> FindListingIdAsync(long listingNumber, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.FindListingIdAsync(context, listingNumber, cancellationToken));
 
@@ -364,6 +368,20 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             .Where(i => itemIds.Contains(i.Id))
             .ToListAsync(cancellationToken);
         return items.ToDictionary(i => i.Id, i => (MUnique.OpenMU.DataModel.Entities.Item)i);
+    }
+
+    /// <summary>
+    /// Tells whether the account has an Auction House restriction which has not expired. Read-only.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="accountId">The account.</param>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns><c>true</c> when the account is restricted.</returns>
+    public Task<bool> IsAccountRestrictedAsync(EntityDataContext context, Guid accountId, DateTimeOffset now, CancellationToken cancellationToken = default)
+    {
+        return context.Set<AuctionAccountRestriction>().AsNoTracking()
+            .AnyAsync(r => r.AccountId == accountId && (r.ExpiresAt == null || r.ExpiresAt > now), cancellationToken);
     }
 
     /// <summary>

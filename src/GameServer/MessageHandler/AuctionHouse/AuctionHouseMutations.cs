@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameServer.MessageHandler.AuctionHouse;
 
 using MUnique.OpenMU.GameLogic;
+using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.AuctionHouse;
 using MUnique.OpenMU.GameServer.RemoteView;
 using MUnique.OpenMU.Network.Packets;
@@ -41,6 +42,32 @@ internal static class AuctionHouseMutations
     {
         var repository = player.GameContext.PersistenceContextProvider.CreateAuctionHouseRepository();
         return repository is null ? null : new AuctionHouseService(repository, Options);
+    }
+
+    /// <summary>
+    /// Checks the requirements of a mutation: the account is not restricted, the character is high enough, and the account is old enough.
+    /// </summary>
+    /// <param name="player">The requesting player.</param>
+    /// <param name="service">The service, or <c>null</c> when the Auction House database is unavailable.</param>
+    /// <param name="accountId">The requesting account.</param>
+    /// <returns>The refusal, or <c>null</c> when the requester is eligible.</returns>
+    public static async Task<AuctionResultCode?> CheckEligibilityAsync(Player player, AuctionHouseService? service, Guid accountId)
+    {
+        if (service is null)
+        {
+            return null;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var restricted = await service.IsRestrictedAsync(accountId, now).ConfigureAwait(false);
+        var configuration = AuctionHouseConfigurationSource.Current;
+        return AuctionEligibility.Evaluate(
+            (int)(player.Attributes?[Stats.Level] ?? 0),
+            player.Account?.RegistrationDate ?? now.UtcDateTime,
+            now.UtcDateTime,
+            configuration.MinimumCharacterLevel,
+            configuration.MinimumAccountAgeHours,
+            restricted);
     }
 
     /// <summary>

@@ -16,6 +16,16 @@ public class AuctionHouseConfiguration
     public bool Enabled { get; set; }
 
     /// <summary>
+    /// Gets or sets the minimum character level for a mutation (create, bid, buyout, cancel, collect).
+    /// </summary>
+    public int MinimumCharacterLevel { get; set; } = 6;
+
+    /// <summary>
+    /// Gets or sets the minimum account age in hours for a mutation.
+    /// </summary>
+    public int MinimumAccountAgeHours { get; set; } = 24;
+
+    /// <summary>
     /// Gets or sets the number of listings per browse page.
     /// </summary>
     public int PageSize { get; set; } = 8;

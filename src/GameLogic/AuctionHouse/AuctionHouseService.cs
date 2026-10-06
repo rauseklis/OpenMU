@@ -513,6 +513,16 @@ public sealed class AuctionHouseService
     }
 
     /// <summary>
+    /// Tells whether the account has an active Auction House restriction.
+    /// </summary>
+    /// <param name="accountId">The account.</param>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns><c>true</c> when the account is restricted.</returns>
+    public Task<bool> IsRestrictedAsync(Guid accountId, DateTimeOffset now, CancellationToken cancellationToken = default)
+        => this._repository.IsAccountRestrictedAsync(accountId, now, cancellationToken);
+
+    /// <summary>
     /// Loads the items of listings, so the browse rows can carry them.
     /// </summary>
     /// <param name="itemIds">The items.</param>
