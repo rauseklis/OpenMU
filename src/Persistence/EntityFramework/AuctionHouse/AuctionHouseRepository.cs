@@ -7,6 +7,7 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using MUnique.OpenMU.DataModel;
+using MUnique.OpenMU.GameLogic.AuctionHouse;
 using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
 using Npgsql;
@@ -24,6 +25,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     private const byte CancelKind = 3;
     private const byte ClaimKind = 4;
     private const byte FeeRemovedKind = 5;
+    private const byte TenderInKind = 0;
+    private const byte ChangeOutKind = 1;
+    private const byte ClaimMaterializedKind = 6;
+    private const byte TenderChangeCollectionKind = 4;
     private const byte OutbidNotificationKind = 0;
     private const byte SoldNotificationKind = 1;
     private const byte BoughtNotificationKind = 2;
@@ -1069,7 +1074,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionClaimResult(AuctionClaimOutcome.Stale, 0, null, 0);
         }
 
-        if (collection.Currency == 0 && plan.ClaimedScalar > 0)
+        if (plan.ClaimedScalar > 0)
         {
             if (!await OwnsCharacterAsync(context, draft.AccountId, draft.CharacterId, cancellationToken))
             {
@@ -1077,10 +1082,22 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
             }
 
-            if (!await this.CreditZenAsync(context, draft.CharacterId, plan.ClaimedScalar, cancellationToken))
+            if (collection.Currency == 0)
             {
-                await transaction.RollbackAsync(cancellationToken);
-                return new AuctionClaimResult(AuctionClaimOutcome.MoneyLimit, 0, null, 0);
+                if (!await this.CreditZenAsync(context, draft.CharacterId, plan.ClaimedScalar, cancellationToken))
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return new AuctionClaimResult(AuctionClaimOutcome.MoneyLimit, 0, null, 0);
+                }
+            }
+            else
+            {
+                var materialized = await this.MaterializeJewelsAsync(context, draft.CharacterId, collection.Currency, plan.ClaimedScalar, now, cancellationToken);
+                if (materialized != JewelMaterialization.Materialized)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return new AuctionClaimResult(materialized == JewelMaterialization.InventoryFull ? AuctionClaimOutcome.InventoryFull : AuctionClaimOutcome.UnsupportedCurrency, 0, null, 0);
+                }
             }
         }
 
@@ -1219,6 +1236,192 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             context.ChangeTracker.Clear();
             return new AuctionClaimResult(AuctionClaimOutcome.Replayed, 0, null, 0);
         }
+    }
+
+    /// <summary>
+    /// The outcome of a jewel tender: paid from the inventory, or not payable.
+    /// </summary>
+    private enum JewelTender
+    {
+        Paid,
+        Insufficient,
+        NotConfigured,
+    }
+
+    /// <summary>
+    /// The outcome of issuing jewels: materialized as items, or refused.
+    /// </summary>
+    private enum JewelMaterialization
+    {
+        Materialized,
+        InventoryFull,
+        NotConfigured,
+    }
+
+    /// <summary>
+    /// Finds the loose jewel definition and the pack definition of a jewel currency, from the jewel-mix configuration.
+    /// </summary>
+    private static async Task<(Guid? Single, Guid? Pack)> JewelDefinitionsAsync(EntityDataContext context, byte currency, CancellationToken cancellationToken)
+    {
+        if (AuctionJewelIdentities.GetLooseJewel(currency) is not { } loose)
+        {
+            return (null, null);
+        }
+
+        var group = (short)loose.Group;
+        var number = loose.Number;
+        var single = await context.Database.SqlQuery<Guid?>(
+            $"SELECT d.\"Id\" AS \"Value\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" = {group} AND d.\"Number\" = {number}")
+            .SingleOrDefaultAsync(cancellationToken);
+        if (single is null)
+        {
+            return (null, null);
+        }
+
+        var pack = await context.Database.SqlQuery<Guid?>(
+            $"SELECT jm.\"MixedJewelId\" AS \"Value\" FROM config.\"JewelMix\" jm WHERE jm.\"SingleJewelId\" = {single.Value}")
+            .SingleOrDefaultAsync(cancellationToken);
+        return (single, pack);
+    }
+
+    /// <summary>
+    /// Pays a jewel amount from the character's main inventory. The jewels are chosen by the payment planner; the chosen
+    /// items are consumed, the consumed units are recorded, and any change is issued as a collection in the same transaction.
+    /// </summary>
+    private async Task<JewelTender> TenderJewelsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, byte currency, long requiredUnits, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var (single, pack) = await JewelDefinitionsAsync(context, currency, cancellationToken);
+        if (single is null)
+        {
+            return JewelTender.NotConfigured;
+        }
+
+        var inventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == characterId)
+            .Select(c => c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (inventoryId is null)
+        {
+            return JewelTender.Insufficient;
+        }
+
+        var items = await context.Set<Item>().AsNoTracking()
+            .Include(i => i.RawItemOptions)
+            .Where(i => i.ItemStorageId == inventoryId && (i.DefinitionId == single || i.DefinitionId == pack))
+            .ToListAsync(cancellationToken);
+        var candidates = new List<(Guid Id, int Slot, int Units)>();
+        foreach (var item in items)
+        {
+            if (item.Id == excludedItemId || item.ItemSlot < InventoryConstants.EquippableSlotsCount || item.Durability <= 0 || item.SocketCount > 0 || item.RawItemOptions.Count > 0)
+            {
+                continue;
+            }
+
+            if (item.DefinitionId == single && item.Level == 0)
+            {
+                candidates.Add((item.Id, item.ItemSlot, 1));
+            }
+            else if (item.DefinitionId == pack && item.Level <= 2)
+            {
+                candidates.Add((item.Id, item.ItemSlot, JewelPackRules.GetPackUnits(item.Level)));
+            }
+        }
+
+        var payment = JewelPaymentPlanner.Plan(requiredUnits, candidates.Select(c => new JewelStack(c.Slot, c.Units)));
+        if (payment is not { } chosen)
+        {
+            return JewelTender.Insufficient;
+        }
+
+        var consumed = candidates.Where(c => chosen.Slots.Contains(c.Slot)).ToList();
+        var consumedUnits = consumed.Sum(c => (long)c.Units);
+        var consumedIds = consumed.Select(c => c.Id).ToList();
+        await context.Set<Item>().Where(i => consumedIds.Contains(i.Id)).ExecuteDeleteAsync(cancellationToken);
+
+        var tenderIn = Movement(accountId, operationId, listingId, null, consumedUnits, TenderInKind, now);
+        tenderIn.Currency = currency;
+        context.Set<AuctionCurrencyMovement>().Add(tenderIn);
+        if (chosen.ChangeUnits > 0)
+        {
+            var changeOut = Movement(accountId, operationId, listingId, null, chosen.ChangeUnits, ChangeOutKind, now);
+            changeOut.Currency = currency;
+            context.Set<AuctionCurrencyMovement>().Add(changeOut);
+            context.Set<AuctionCollection>().Add(new AuctionCollection
+            {
+                Id = Guid.NewGuid(),
+                AccountId = accountId,
+                ListingId = listingId,
+                Kind = TenderChangeCollectionKind,
+                Currency = currency,
+                OriginalScalar = chosen.ChangeUnits,
+                RemainingScalar = chosen.ChangeUnits,
+                Status = 0,
+                CreatedAt = now,
+                UpdatedAt = now,
+                Version = 0,
+            });
+        }
+
+        return JewelTender.Paid;
+    }
+
+    /// <summary>
+    /// Materializes a jewel amount as new canonical items: the largest packs first (30, 20, 10), then loose jewels, each in a free
+    /// main-inventory slot. Either all items are placed or none is.
+    /// </summary>
+    private async Task<JewelMaterialization> MaterializeJewelsAsync(EntityDataContext context, Guid characterId, byte currency, long units, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var (single, pack) = await JewelDefinitionsAsync(context, currency, cancellationToken);
+        if (single is null || pack is null)
+        {
+            return JewelMaterialization.NotConfigured;
+        }
+
+        var inventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == characterId)
+            .Select(c => c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (inventoryId is null)
+        {
+            return JewelMaterialization.InventoryFull;
+        }
+
+        var plan = new List<(Guid? Definition, byte Level)>();
+        var remaining = units;
+        foreach (byte level in new byte[] { 2, 1, 0 })
+        {
+            var packUnits = JewelPackRules.GetPackUnits(level);
+            while (remaining >= packUnits)
+            {
+                plan.Add((pack, level));
+                remaining -= packUnits;
+            }
+        }
+
+        plan.AddRange(Enumerable.Repeat<(Guid? Definition, byte Level)>((single, 0), (int)remaining));
+
+        var freeSlots = await context.Database.SqlQuery<int>(
+            $"SELECT s.n AS \"Value\" FROM generate_series({InventoryConstants.EquippableSlotsCount}, {InventoryConstants.EquippableSlotsCount + 63}) AS s(n) WHERE s.n NOT IN (SELECT i.\"ItemSlot\" FROM data.\"Item\" i WHERE i.\"ItemStorageId\" = {inventoryId}) ORDER BY s.n")
+            .ToListAsync(cancellationToken);
+        if (freeSlots.Count < plan.Count)
+        {
+            return JewelMaterialization.InventoryFull;
+        }
+
+        for (var index = 0; index < plan.Count; index++)
+        {
+            context.Set<Item>().Add(new Item
+            {
+                Id = Guid.NewGuid(),
+                ItemStorageId = inventoryId,
+                ItemSlot = (byte)freeSlots[index],
+                DefinitionId = plan[index].Definition,
+                Level = plan[index].Level,
+                Durability = 1,
+            });
+        }
+
+        return JewelMaterialization.Materialized;
     }
 
     private static ClaimPlan? Plan(AuctionCollection collection, ClaimDraft draft)
@@ -1391,12 +1594,19 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionItemListingResult(AuctionItemListingOutcome.CharacterNotOwned, Guid.Empty, 0);
         }
 
-        if (!await DebitZenAsync(context, draft.CharacterId, draft.ListingFee, cancellationToken))
+        var listingId = Guid.NewGuid();
+        if (draft.Currency == 0)
+        {
+            if (!await DebitZenAsync(context, draft.CharacterId, draft.ListingFee, cancellationToken))
+            {
+                return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
+            }
+        }
+        else if (await this.TenderJewelsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, draft.Currency, draft.ListingFee, item.Id, draft.CreatedAt, cancellationToken) != JewelTender.Paid)
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
         }
 
-        var listingId = Guid.NewGuid();
         context.Set<AuctionListing>().Add(new AuctionListing
         {
             Id = listingId,
@@ -1425,7 +1635,9 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ListingId = listingId,
             CreatedAt = draft.CreatedAt,
         });
-        context.Set<AuctionCurrencyMovement>().Add(Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt));
+        var feeMovement = Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt);
+        feeMovement.Currency = draft.Currency;
+        context.Set<AuctionCurrencyMovement>().Add(feeMovement);
         item.ItemStorageId = null;
 
         try

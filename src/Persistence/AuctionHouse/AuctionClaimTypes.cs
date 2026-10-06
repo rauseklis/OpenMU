@@ -48,6 +48,11 @@ public enum AuctionClaimOutcome
     /// The character has no free main-inventory slot for the returned item.
     /// </summary>
     InventoryFull,
+
+    /// <summary>
+    /// The collection's currency has no configured loose jewel, so it cannot be materialized.
+    /// </summary>
+    UnsupportedCurrency,
 }
 
 /// <summary>

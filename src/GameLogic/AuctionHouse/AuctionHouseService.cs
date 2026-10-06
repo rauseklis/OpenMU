@@ -94,8 +94,10 @@ public sealed class AuctionHouseService
             return new AuctionListItemResult(AuctionResultCode.Disabled, Guid.Empty, 0, now);
         }
 
-        // Only Zen is supported as a listing currency until jewel tender is implemented.
-        if (request.Currency != (byte)AuctionCurrencyMode.Zen)
+        // Zen and the seven jewel modes can list; Fruits needs its basket rules and is not supported yet.
+        var currency = (AuctionCurrencyMode)request.Currency;
+        if (currency is not (AuctionCurrencyMode.Zen or AuctionCurrencyMode.Chaos or AuctionCurrencyMode.Bless or AuctionCurrencyMode.Soul
+            or AuctionCurrencyMode.Life or AuctionCurrencyMode.Creation or AuctionCurrencyMode.Guardian or AuctionCurrencyMode.Harmony))
         {
             return new AuctionListItemResult(AuctionResultCode.UnsupportedCurrency, Guid.Empty, 0, now);
         }
@@ -105,8 +107,8 @@ public sealed class AuctionHouseService
             return new AuctionListItemResult(AuctionResultCode.InvalidDuration, Guid.Empty, 0, now);
         }
 
-        if (!AuctionRules.IsPriceInRange(AuctionCurrencyMode.Zen, request.StartingPrice)
-            || request.BuyoutPrice is { } buyout && (buyout < request.StartingPrice || !AuctionRules.IsPriceInRange(AuctionCurrencyMode.Zen, buyout)))
+        if (!AuctionRules.IsPriceInRange(currency, request.StartingPrice)
+            || request.BuyoutPrice is { } buyout && (buyout < request.StartingPrice || !AuctionRules.IsPriceInRange(currency, buyout)))
         {
             return new AuctionListItemResult(AuctionResultCode.InvalidPrice, Guid.Empty, 0, now);
         }
@@ -329,6 +331,7 @@ public sealed class AuctionHouseService
             AuctionClaimOutcome.MoneyLimit => AuctionResultCode.MoneyLimit,
             AuctionClaimOutcome.InvalidClaimQuantity => AuctionResultCode.InvalidClaimQuantity,
             AuctionClaimOutcome.InventoryFull => AuctionResultCode.InventoryFull,
+            AuctionClaimOutcome.UnsupportedCurrency => AuctionResultCode.UnsupportedCurrency,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
         };
 
