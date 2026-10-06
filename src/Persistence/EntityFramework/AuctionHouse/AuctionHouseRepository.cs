@@ -126,6 +126,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.IsAccountRestrictedAsync(context, accountId, now, cancellationToken));
 
     /// <inheritdoc />
+    public Task<AuctionRepairResult> RepairMissingReturnCollectionsAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.RepairMissingReturnCollectionsAsync(context, now, batchSize, cancellationToken));
+
+    /// <inheritdoc />
     public Task<int> PurgeFinishedOperationsAsync(DateTimeOffset cutoff, int batchSize, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.PurgeFinishedOperationsAsync(context, cutoff, batchSize, cancellationToken));
 
@@ -386,6 +390,67 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     {
         return context.Set<AuctionAccountRestriction>().AsNoTracking()
             .AnyAsync(r => r.AccountId == accountId && (r.ExpiresAt == null || r.ExpiresAt > now), cancellationToken);
+    }
+
+    /// <summary>
+    /// Repairs ended listings without a return collection. See <see cref="IAuctionHouseRepository.RepairMissingReturnCollectionsAsync"/>.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="batchSize">The maximum number of listings to examine.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The repaired and skipped counts.</returns>
+    public async Task<AuctionRepairResult> RepairMissingReturnCollectionsAsync(EntityDataContext context, DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default)
+    {
+        var size = Math.Clamp(batchSize, 1, 500);
+        var candidates = await context.Set<AuctionListing>().AsNoTracking()
+            .Where(l => (l.Status == 2 || l.Status == 3 || l.Status == 4) && !context.Set<AuctionCollection>().Any(c => c.ListingId == l.Id && c.Kind == 1))
+            .OrderBy(l => l.EndsAt)
+            .Take(size)
+            .Select(l => new { l.Id, l.SellerAccountId, l.ItemId, l.Currency })
+            .ToListAsync(cancellationToken);
+
+        var repaired = 0;
+        var skipped = 0;
+        foreach (var candidate in candidates)
+        {
+            var detached = await context.Set<Item>().AsNoTracking().AnyAsync(i => i.Id == candidate.ItemId && i.ItemStorageId == null, cancellationToken);
+            if (!detached)
+            {
+                skipped++;
+                continue;
+            }
+
+            await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+            context.Set<AuctionCollection>().Add(new AuctionCollection
+            {
+                Id = Guid.NewGuid(),
+                AccountId = candidate.SellerAccountId,
+                ListingId = candidate.Id,
+                Kind = 1,
+                Currency = candidate.Currency,
+                ItemId = candidate.ItemId,
+                Status = 0,
+                CreatedAt = now,
+                UpdatedAt = now,
+                Version = 0,
+            });
+            context.Set<AuctionTransactionLog>().Add(Audit(6, Guid.Empty, null, candidate.Id, null, now, null, candidate.SellerAccountId, null, candidate.Currency, null));
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                repaired++;
+            }
+            catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                context.ChangeTracker.Clear();
+                skipped++;
+            }
+        }
+
+        return new AuctionRepairResult(repaired, skipped);
     }
 
     /// <summary>

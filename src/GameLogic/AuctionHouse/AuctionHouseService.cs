@@ -525,6 +525,15 @@ public sealed class AuctionHouseService
         => this._repository.IsAccountRestrictedAsync(accountId, now, cancellationToken);
 
     /// <summary>
+    /// Repairs ended listings which have no return collection. Runs even while the feature is disabled, so operators can always repair.
+    /// </summary>
+    /// <param name="batchSize">The maximum number of listings to examine.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The repaired and skipped counts.</returns>
+    public Task<AuctionRepairResult> RepairAsync(int batchSize, CancellationToken cancellationToken = default)
+        => this._repository.RepairMissingReturnCollectionsAsync(this._clock(), batchSize, cancellationToken);
+
+    /// <summary>
     /// Deletes one batch of operation records that are older than the retention and can no longer be replayed to any effect.
     /// </summary>
     /// <param name="retention">How long a record is kept.</param>

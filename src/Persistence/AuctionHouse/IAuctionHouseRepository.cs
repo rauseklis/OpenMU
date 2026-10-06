@@ -170,6 +170,16 @@ public interface IAuctionHouseRepository
     Task<int> PurgeFinishedOperationsAsync(DateTimeOffset cutoff, int batchSize, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Repairs ended listings which have no return collection, by creating the missing collection with an audit row. A listing
+    /// whose item is not outside every inventory is skipped and left for manual review.
+    /// </summary>
+    /// <param name="now">The current time, in UTC.</param>
+    /// <param name="batchSize">The maximum number of listings to examine.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The repaired and skipped counts.</returns>
+    Task<AuctionRepairResult> RepairMissingReturnCollectionsAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads listed items with their definition and options, read-only.
     /// </summary>
     /// <param name="itemIds">The items.</param>
