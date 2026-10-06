@@ -813,6 +813,61 @@ public sealed class AuctionHouseRepository
         return new ClaimPlan(2, null, null, 0, null);
     }
 
+    /// <summary>
+    /// Searches active listings of one currency. Results are ordered and paged, and the total count covers every match.
+    /// </summary>
+    /// <param name="context">The context to read from.</param>
+    /// <param name="search">The browse request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The requested page of listings.</returns>
+    /// <exception cref="ArgumentException">A price sort is requested for fruit baskets.</exception>
+    public async Task<AuctionListingPage> SearchListingsAsync(EntityDataContext context, AuctionListingSearch search, CancellationToken cancellationToken = default)
+    {
+        const byte FruitsCurrency = 8;
+        if (search.Currency == FruitsCurrency && search.Sort is AuctionSearchSort.PriceAscending or AuctionSearchSort.PriceDescending)
+        {
+            throw new ArgumentException("Fruit baskets have no price order.", nameof(search));
+        }
+
+        var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.Status == 0 && l.Currency == search.Currency);
+        if (search.Category is { } category)
+        {
+            query = query.Where(l => l.Category == category);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        IOrderedQueryable<AuctionListing> ordered = search.Sort switch
+        {
+            AuctionSearchSort.PriceAscending => query.OrderBy(l => l.CurrentBid ?? l.StartingPrice).ThenBy(l => l.ListingNumber),
+            AuctionSearchSort.PriceDescending => query.OrderByDescending(l => l.CurrentBid ?? l.StartingPrice).ThenBy(l => l.ListingNumber),
+            AuctionSearchSort.Newest => query.OrderByDescending(l => l.ListingNumber),
+            _ => query.OrderBy(l => l.EndsAt).ThenBy(l => l.ListingNumber),
+        };
+
+        var pageNumber = Math.Max(1, search.Page);
+        var size = Math.Max(1, search.PageSize);
+        var rows = await ordered
+            .Skip((pageNumber - 1) * size)
+            .Take(size)
+            .Select(l => new AuctionListingRow(
+                l.Id,
+                l.ListingNumber,
+                l.Currency,
+                l.Category,
+                l.StartingPrice,
+                l.CurrentBid,
+                l.BuyoutPrice,
+                l.EndsAt,
+                l.BidCount,
+                l.SellerAccountId,
+                l.SellerName,
+                l.ItemGroup,
+                l.ItemNumber,
+                l.ItemLevel))
+            .ToListAsync(cancellationToken);
+        return new AuctionListingPage(rows, total);
+    }
+
     private async Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, AuctionListingDraft draft, CancellationToken cancellationToken)
     {
         var operation = await context.Set<AuctionOperation>().AsNoTracking()
