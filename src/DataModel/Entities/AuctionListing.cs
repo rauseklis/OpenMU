@@ -189,6 +189,26 @@ public class AuctionListing
     public int ItemLevel { get; set; }
 
     /// <summary>
+    /// Gets or sets the identifier of the item definition at listing time.
+    /// </summary>
+    public Guid? ItemDefinitionId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the base-character-class usability mask at listing time. Zero means unrestricted.
+    /// </summary>
+    public long ClassMask { get; set; }
+
+    /// <summary>
+    /// Gets or sets the auction item-option flags at listing time.
+    /// </summary>
+    public int OptionFlags { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ordinary additional-option level at listing time.
+    /// </summary>
+    public int OptionLevel { get; set; }
+
+    /// <summary>
     /// Gets or sets the normalized item name used for case-insensitive substring search.
     /// </summary>
     public string NormalizedName { get; set; } = string.Empty;

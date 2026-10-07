@@ -74,6 +74,9 @@ public class AuctionListItemTests
             ItemSlot = this._slot,
             DefinitionId = definitionId,
             Durability = 10,
+            Level = 7,
+            HasSkill = true,
+            SocketCount = 2,
         });
         await context.SaveChangesAsync();
     }
@@ -100,7 +103,10 @@ public class AuctionListItemTests
         await using var context = new EntityDataContext();
         var item = await context.Set<Item>().AsNoTracking().SingleAsync(i => i.Id == this._itemId);
         var listing = await context.Set<AuctionListing>().AsNoTracking().SingleAsync(l => l.Id == result.ListingId);
-        var definition = await context.Set<Item>().AsNoTracking().Where(i => i.Id == this._itemId).Select(i => i.RawDefinition).SingleAsync();
+        var definition = await context.Set<ItemDefinition>().AsNoTracking()
+            .Include(d => d.JoinedQualifiedCharacters).ThenInclude(link => link.CharacterClass)
+            .SingleAsync(d => d.Id == item.DefinitionId);
+        var expectedClassMask = definition.JoinedQualifiedCharacters.Aggregate(0L, (mask, link) => mask | (1L << (link.CharacterClass.Number / 4)));
         var movement = await context.Set<AuctionCurrencyMovement>().AsNoTracking().SingleAsync(m => m.OperationId == this._operationForLastRequest);
         Assert.Multiple(() =>
         {
@@ -109,6 +115,10 @@ public class AuctionListItemTests
             Assert.That(listing.ItemGroup, Is.EqualTo(definition.Group));
             Assert.That(listing.ItemNumber, Is.EqualTo(definition.Number));
             Assert.That(listing.ItemLevel, Is.EqualTo(item.Level));
+            Assert.That(listing.ItemDefinitionId, Is.EqualTo(definition.Id));
+            Assert.That(listing.ClassMask, Is.EqualTo(expectedClassMask));
+            Assert.That(listing.OptionFlags, Is.EqualTo((int)(AuctionItemOptionFlags.HasSkill | AuctionItemOptionFlags.HasSockets)));
+            Assert.That(listing.OptionLevel, Is.Zero);
             Assert.That(listing.NormalizedName, Is.EqualTo(definition.Name.ValueInNeutralLanguage.ToUpperInvariant()));
             Assert.That(movement.Kind, Is.EqualTo(FeeRemovedKind));
             Assert.That(movement.Amount, Is.EqualTo(10));

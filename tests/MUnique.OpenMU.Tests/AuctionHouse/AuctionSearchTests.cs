@@ -175,6 +175,37 @@ public class AuctionSearchTests
     }
 
     /// <summary>
+    /// Verifies class and option filters use their immutable bit-mask snapshots and require every selected option.
+    /// </summary>
+    [Test]
+    public async Task AppliesClassAndOptionFlagFilters()
+    {
+        var wizardLuckSkill = await this.List(currency: 0, category: 0, startingPrice: 1000);
+        var knightLuck = await this.List(currency: 0, category: 0, startingPrice: 2000);
+        await using (var context = new EntityDataContext())
+        {
+            await context.Set<AuctionListing>().Where(l => l.Id == wizardLuckSkill).ExecuteUpdateAsync(s => s
+                .SetProperty(l => l.ClassMask, 1L)
+                .SetProperty(l => l.OptionFlags, (int)(AuctionItemOptionFlags.HasLuck | AuctionItemOptionFlags.HasSkill)));
+            await context.Set<AuctionListing>().Where(l => l.Id == knightLuck).ExecuteUpdateAsync(s => s
+                .SetProperty(l => l.ClassMask, 2L)
+                .SetProperty(l => l.OptionFlags, (int)AuctionItemOptionFlags.HasLuck));
+        }
+
+        var byClass = await this.Search(new AuctionListingSearch(Currency: 0, ClassMask: 1, PageSize: 1000));
+        var byOptions = await this.Search(new AuctionListingSearch(
+            Currency: 0,
+            OptionFlags: AuctionItemOptionFlags.HasLuck | AuctionItemOptionFlags.HasSkill,
+            PageSize: 1000));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(byClass.Rows.Where(r => r.SellerAccountId == this._sellerAccountId).Select(r => r.ListingId), Is.EqualTo(new[] { wizardLuckSkill }));
+            Assert.That(byOptions.Rows.Where(r => r.SellerAccountId == this._sellerAccountId).Select(r => r.ListingId), Is.EqualTo(new[] { wizardLuckSkill }));
+        });
+    }
+
+    /// <summary>
     /// Verifies a price sort is refused for fruit baskets, because baskets have no defensible total order.
     /// </summary>
     [Test]

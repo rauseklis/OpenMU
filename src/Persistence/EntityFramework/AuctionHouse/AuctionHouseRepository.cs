@@ -7,6 +7,7 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using MUnique.OpenMU.DataModel;
+using MUnique.OpenMU.DataModel.Configuration.Items;
 using MUnique.OpenMU.GameLogic.AuctionHouse;
 using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
@@ -2289,6 +2290,18 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             query = query.Where(l => l.ItemLevel <= search.LevelMaximum);
         }
 
+        if (search.ClassMask != 0)
+        {
+            var classMask = (long)search.ClassMask;
+            query = query.Where(l => l.ClassMask == 0 || (l.ClassMask & classMask) != 0);
+        }
+
+        if (search.OptionFlags != AuctionItemOptionFlags.None)
+        {
+            var optionFlags = (int)search.OptionFlags;
+            query = query.Where(l => (l.OptionFlags & optionFlags) == optionFlags);
+        }
+
         if (search.Currency == FruitsCurrency)
         {
             if (search.MinimumFruits is { } minimum)
@@ -2404,7 +2417,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             .SingleOrDefaultAsync(cancellationToken);
         var item = inventoryId is null
             ? null
-            : await context.Set<Item>().Include(i => i.RawDefinition)
+            : await context.Set<Item>()
+                .Include(i => i.RawDefinition).ThenInclude(d => d.JoinedQualifiedCharacters).ThenInclude(link => link.CharacterClass)
+                .Include(i => i.RawItemOptions).ThenInclude(link => link.RawItemOption)
+                .Include(i => i.JoinedItemSetGroups).ThenInclude(link => link.ItemOfItemSet)
                 .SingleOrDefaultAsync(i => i.ItemStorageId == inventoryId && i.ItemSlot == draft.InventorySlot, cancellationToken);
         if (item is null)
         {
@@ -2499,6 +2515,14 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ItemGroup = definition?.Group ?? 0,
             ItemNumber = definition?.Number ?? 0,
             ItemLevel = item.Level,
+            ItemDefinitionId = item.DefinitionId,
+            ClassMask = CreateClassMask(item),
+            OptionFlags = (int)CreateOptionFlags(item),
+            OptionLevel = item.RawItemOptions
+                .Where(link => link.RawItemOption?.OptionTypeId == ItemOptionTypes.Option.Id)
+                .Select(link => link.Level)
+                .DefaultIfEmpty()
+                .Max(),
             NormalizedName = definition?.Name.ValueInNeutralLanguage.ToUpperInvariant() ?? string.Empty,
         });
         context.Set<AuctionOperation>().Add(new AuctionOperation
@@ -2542,6 +2566,68 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             .Select(l => l.ListingNumber)
             .SingleAsync(cancellationToken);
         return new AuctionItemListingResult(AuctionItemListingOutcome.Created, listingId, listingNumber);
+    }
+
+    private static long CreateClassMask(Item item)
+    {
+        long result = 0;
+        foreach (var qualifiedClass in item.RawDefinition.JoinedQualifiedCharacters.Select(link => link.CharacterClass))
+        {
+            result |= 1L << (qualifiedClass.Number / 4);
+        }
+
+        return result;
+    }
+
+    private static AuctionItemOptionFlags CreateOptionFlags(Item item)
+    {
+        var result = AuctionItemOptionFlags.None;
+        var optionTypeIds = item.RawItemOptions.Select(link => link.RawItemOption?.OptionTypeId).ToHashSet();
+        if (optionTypeIds.Contains(ItemOptionTypes.Option.Id))
+        {
+            result |= AuctionItemOptionFlags.HasOption;
+        }
+
+        if (optionTypeIds.Contains(ItemOptionTypes.Luck.Id))
+        {
+            result |= AuctionItemOptionFlags.HasLuck;
+        }
+
+        if (item.HasSkill)
+        {
+            result |= AuctionItemOptionFlags.HasSkill;
+        }
+
+        if (optionTypeIds.Contains(ItemOptionTypes.Excellent.Id)
+            || optionTypeIds.Contains(ItemOptionTypes.Wing.Id)
+            || optionTypeIds.Contains(ItemOptionTypes.BlackFenrir.Id)
+            || optionTypeIds.Contains(ItemOptionTypes.BlueFenrir.Id)
+            || optionTypeIds.Contains(ItemOptionTypes.GoldFenrir.Id))
+        {
+            result |= AuctionItemOptionFlags.HasExcellent;
+        }
+
+        if (item.JoinedItemSetGroups.Any(link => link.ItemOfItemSet.AncientSetDiscriminator != 0))
+        {
+            result |= AuctionItemOptionFlags.HasAncient;
+        }
+
+        if (optionTypeIds.Contains(ItemOptionTypes.HarmonyOption.Id))
+        {
+            result |= AuctionItemOptionFlags.HasHarmony;
+        }
+
+        if (optionTypeIds.Contains(ItemOptionTypes.GuardianOption.Id))
+        {
+            result |= AuctionItemOptionFlags.HasGuardian;
+        }
+
+        if (item.SocketCount > 0)
+        {
+            result |= AuctionItemOptionFlags.HasSockets;
+        }
+
+        return result;
     }
 
     private Task<AuctionCreateResult?> FindReplayAsync(EntityDataContext context, AuctionListingDraft draft, CancellationToken cancellationToken)

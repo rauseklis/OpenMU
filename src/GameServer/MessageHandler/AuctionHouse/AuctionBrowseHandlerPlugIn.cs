@@ -59,7 +59,9 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
             MaximumScalar: request.MaximumScalar,
             MinimumFruits: new FruitBasket(request.MinimumStrength, request.MinimumAgility, request.MinimumVitality, request.MinimumEnergy, request.MinimumCommand),
             MaximumFruits: new FruitBasket(request.MaximumStrength, request.MaximumAgility, request.MaximumVitality, request.MaximumEnergy, request.MaximumCommand),
-            MaxRemainingHours: request.MaxRemainingHours);
+            MaxRemainingHours: request.MaxRemainingHours,
+            ClassMask: request.ClassMask,
+            OptionFlags: (AuctionItemOptionFlags)request.OptionFlags);
 
         AuctionBrowseResult browse;
         if (identity is null)

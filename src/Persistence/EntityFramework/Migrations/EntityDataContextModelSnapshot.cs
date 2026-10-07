@@ -572,6 +572,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<byte>("Category")
                         .HasColumnType("smallint");
 
+                    b.Property<long>("ClassMask")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -608,6 +611,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<DateTimeOffset?>("FinalizedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("ItemDefinitionId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("ItemGroup")
                         .HasColumnType("integer");
 
@@ -635,6 +641,12 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
                     b.Property<string>("Note")
                         .HasColumnType("text");
+
+                    b.Property<int>("OptionFlags")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OptionLevel")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("OriginalEndsAt")
                         .HasColumnType("timestamp with time zone");

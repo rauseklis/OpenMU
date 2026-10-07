@@ -33,6 +33,23 @@ public enum AuctionSearchSort
 }
 
 /// <summary>
+/// The searchable item-option flags. Values match the extended item wire format.
+/// </summary>
+[Flags]
+public enum AuctionItemOptionFlags : ushort
+{
+    None = 0,
+    HasOption = 0x01,
+    HasLuck = 0x02,
+    HasSkill = 0x04,
+    HasExcellent = 0x08,
+    HasAncient = 0x10,
+    HasHarmony = 0x20,
+    HasGuardian = 0x40,
+    HasSockets = 0x80,
+}
+
+/// <summary>
 /// A browse request. Results are always restricted to one currency, because prices never compare across currencies.
 /// </summary>
 /// <param name="Currency">The currency mode as its wire value.</param>
@@ -48,6 +65,8 @@ public enum AuctionSearchSort
 /// <param name="MinimumFruits">The component-wise minimum effective fruit price.</param>
 /// <param name="MaximumFruits">The component-wise maximum effective fruit price.</param>
 /// <param name="MaxRemainingHours">The maximum whole hours remaining, or zero for no maximum.</param>
+/// <param name="ClassMask">The acceptable base-character-class bits, or zero for every class.</param>
+/// <param name="OptionFlags">The item-option flags which must all be present.</param>
 public readonly record struct AuctionListingSearch(
     byte Currency,
     byte? Category = null,
@@ -61,7 +80,9 @@ public readonly record struct AuctionListingSearch(
     long MaximumScalar = 0,
     FruitBasket? MinimumFruits = null,
     FruitBasket? MaximumFruits = null,
-    int MaxRemainingHours = 0);
+    int MaxRemainingHours = 0,
+    uint ClassMask = 0,
+    AuctionItemOptionFlags OptionFlags = AuctionItemOptionFlags.None);
 
 /// <summary>
 /// The browse-row summary of a listing.
