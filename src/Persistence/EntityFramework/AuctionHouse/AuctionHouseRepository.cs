@@ -2273,6 +2273,61 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             query = query.Where(l => l.Category == category);
         }
 
+        var normalizedName = search.Name?.Trim().ToUpperInvariant();
+        if (!string.IsNullOrEmpty(normalizedName))
+        {
+            query = query.Where(l => l.NormalizedName.Contains(normalizedName));
+        }
+
+        if (search.LevelMinimum > 0)
+        {
+            query = query.Where(l => l.ItemLevel >= search.LevelMinimum);
+        }
+
+        if (search.LevelMaximum > 0)
+        {
+            query = query.Where(l => l.ItemLevel <= search.LevelMaximum);
+        }
+
+        if (search.Currency == FruitsCurrency)
+        {
+            if (search.MinimumFruits is { } minimum)
+            {
+                query = query.Where(l => (l.CurrentBidStrength ?? l.StartingStrength) >= minimum.Strength
+                                         && (l.CurrentBidAgility ?? l.StartingAgility) >= minimum.Agility
+                                         && (l.CurrentBidVitality ?? l.StartingVitality) >= minimum.Vitality
+                                         && (l.CurrentBidEnergy ?? l.StartingEnergy) >= minimum.Energy
+                                         && (l.CurrentBidCommand ?? l.StartingCommand) >= minimum.Command);
+            }
+
+            if (search.MaximumFruits is { } maximum)
+            {
+                query = query.Where(l => (maximum.Strength == 0 || (l.CurrentBidStrength ?? l.StartingStrength) <= maximum.Strength)
+                                         && (maximum.Agility == 0 || (l.CurrentBidAgility ?? l.StartingAgility) <= maximum.Agility)
+                                         && (maximum.Vitality == 0 || (l.CurrentBidVitality ?? l.StartingVitality) <= maximum.Vitality)
+                                         && (maximum.Energy == 0 || (l.CurrentBidEnergy ?? l.StartingEnergy) <= maximum.Energy)
+                                         && (maximum.Command == 0 || (l.CurrentBidCommand ?? l.StartingCommand) <= maximum.Command));
+            }
+        }
+        else
+        {
+            if (search.MinimumScalar > 0)
+            {
+                query = query.Where(l => (l.CurrentBid ?? l.StartingPrice) >= search.MinimumScalar);
+            }
+
+            if (search.MaximumScalar > 0)
+            {
+                query = query.Where(l => (l.CurrentBid ?? l.StartingPrice) <= search.MaximumScalar);
+            }
+        }
+
+        if (search.MaxRemainingHours > 0)
+        {
+            var latestEnd = DateTimeOffset.UtcNow.AddHours(search.MaxRemainingHours);
+            query = query.Where(l => l.EndsAt <= latestEnd);
+        }
+
         var total = await query.CountAsync(cancellationToken);
         IOrderedQueryable<AuctionListing> ordered = search.Sort switch
         {

@@ -139,6 +139,42 @@ public class AuctionSearchTests
     }
 
     /// <summary>
+    /// Verifies the item-name, level, scalar-price, and remaining-time filters use the immutable listing snapshots.
+    /// </summary>
+    [Test]
+    public async Task AppliesSnapshotAndScalarRangeFilters()
+    {
+        var breaker = await this.List(currency: 0, category: 0, startingPrice: 1000, hours: 6);
+        var darkSteel = await this.List(currency: 0, category: 0, startingPrice: 3000, hours: 48);
+        var lightSaber = await this.List(currency: 0, category: 0, startingPrice: 2000, hours: 12);
+        await using (var context = new EntityDataContext())
+        {
+            await context.Set<AuctionListing>().Where(l => l.Id == breaker).ExecuteUpdateAsync(s => s
+                .SetProperty(l => l.NormalizedName, "DARK BREAKER")
+                .SetProperty(l => l.ItemLevel, 9));
+            await context.Set<AuctionListing>().Where(l => l.Id == darkSteel).ExecuteUpdateAsync(s => s
+                .SetProperty(l => l.NormalizedName, "DARK STEEL")
+                .SetProperty(l => l.ItemLevel, 12));
+            await context.Set<AuctionListing>().Where(l => l.Id == lightSaber).ExecuteUpdateAsync(s => s
+                .SetProperty(l => l.NormalizedName, "LIGHT SABER")
+                .SetProperty(l => l.ItemLevel, 7));
+        }
+
+        var byName = await this.Search(new AuctionListingSearch(Currency: 0, Name: "dark", PageSize: 1000));
+        var byLevel = await this.Search(new AuctionListingSearch(Currency: 0, LevelMinimum: 8, LevelMaximum: 10, PageSize: 1000));
+        var byPrice = await this.Search(new AuctionListingSearch(Currency: 0, MinimumScalar: 1500, MaximumScalar: 2500, PageSize: 1000));
+        var byRemainingTime = await this.Search(new AuctionListingSearch(Currency: 0, MaxRemainingHours: 8, PageSize: 1000));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(byName.Rows.Where(r => r.SellerAccountId == this._sellerAccountId).Select(r => r.ListingId), Is.EquivalentTo(new[] { breaker, darkSteel }));
+            Assert.That(byLevel.Rows.Where(r => r.SellerAccountId == this._sellerAccountId).Select(r => r.ListingId), Is.EqualTo(new[] { breaker }));
+            Assert.That(byPrice.Rows.Where(r => r.SellerAccountId == this._sellerAccountId).Select(r => r.ListingId), Is.EqualTo(new[] { lightSaber }));
+            Assert.That(byRemainingTime.Rows.Where(r => r.SellerAccountId == this._sellerAccountId).Select(r => r.ListingId), Is.EqualTo(new[] { breaker }));
+        });
+    }
+
+    /// <summary>
     /// Verifies a price sort is refused for fruit baskets, because baskets have no defensible total order.
     /// </summary>
     [Test]

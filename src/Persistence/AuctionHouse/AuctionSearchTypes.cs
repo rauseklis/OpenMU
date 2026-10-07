@@ -40,12 +40,28 @@ public enum AuctionSearchSort
 /// <param name="Sort">The order of results.</param>
 /// <param name="Page">The page, starting at 1.</param>
 /// <param name="PageSize">The number of listings per page.</param>
+/// <param name="Name">The normalized neutral-name substring, or <c>null</c> for every name.</param>
+/// <param name="LevelMinimum">The minimum item level, or zero when only <paramref name="LevelMaximum"/> is relevant.</param>
+/// <param name="LevelMaximum">The maximum item level, or zero for no maximum.</param>
+/// <param name="MinimumScalar">The minimum effective scalar price, or zero for no minimum.</param>
+/// <param name="MaximumScalar">The maximum effective scalar price, or zero for no maximum.</param>
+/// <param name="MinimumFruits">The component-wise minimum effective fruit price.</param>
+/// <param name="MaximumFruits">The component-wise maximum effective fruit price.</param>
+/// <param name="MaxRemainingHours">The maximum whole hours remaining, or zero for no maximum.</param>
 public readonly record struct AuctionListingSearch(
     byte Currency,
     byte? Category = null,
     AuctionSearchSort Sort = AuctionSearchSort.EndingSoonest,
     int Page = 1,
-    int PageSize = 8);
+    int PageSize = 8,
+    string? Name = null,
+    byte LevelMinimum = 0,
+    byte LevelMaximum = 0,
+    long MinimumScalar = 0,
+    long MaximumScalar = 0,
+    FruitBasket? MinimumFruits = null,
+    FruitBasket? MaximumFruits = null,
+    int MaxRemainingHours = 0);
 
 /// <summary>
 /// The browse-row summary of a listing.

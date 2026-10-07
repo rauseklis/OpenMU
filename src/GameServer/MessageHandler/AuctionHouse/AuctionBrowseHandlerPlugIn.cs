@@ -51,7 +51,15 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
             Currency: (byte)request.CurrencyMode,
             Category: request.Category == AllCategories ? null : request.Category,
             Sort: (AuctionSearchSort)(int)request.Sort,
-            Page: Math.Max(1, (int)request.Page));
+            Page: Math.Max(1, (int)request.Page),
+            Name: DecodeName(request),
+            LevelMinimum: request.LevelMinimum,
+            LevelMaximum: request.LevelMaximum,
+            MinimumScalar: request.MinimumScalar,
+            MaximumScalar: request.MaximumScalar,
+            MinimumFruits: new FruitBasket(request.MinimumStrength, request.MinimumAgility, request.MinimumVitality, request.MinimumEnergy, request.MinimumCommand),
+            MaximumFruits: new FruitBasket(request.MaximumStrength, request.MaximumAgility, request.MaximumVitality, request.MaximumEnergy, request.MaximumCommand),
+            MaxRemainingHours: request.MaxRemainingHours);
 
         AuctionBrowseResult browse;
         if (identity is null)
@@ -136,5 +144,23 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    private static string? DecodeName(Wire.AuctionBrowseRequest request)
+    {
+        var length = Math.Min((int)request.NameLength, request.Name.Length);
+        if (length == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true).GetString(request.Name[..length]);
+        }
+        catch (DecoderFallbackException)
+        {
+            return "\u0001";
+        }
     }
 }

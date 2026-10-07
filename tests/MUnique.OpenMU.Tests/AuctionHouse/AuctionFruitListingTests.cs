@@ -137,6 +137,41 @@ public class AuctionFruitListingTests
     }
 
     /// <summary>
+    /// Verifies fruit price ranges compare every component independently instead of inventing a basket total.
+    /// </summary>
+    [Test]
+    public async Task BasketSearchFiltersEachComponent()
+    {
+        await this.AddFruitAsync(level: 3, slot: 70);
+        await this.AddFruitAsync(level: 3, slot: 71);
+        await this.AddFruitAsync(level: 0, slot: 72);
+        var result = await this.ListAsync(new FruitBasket(Strength: 2, Agility: 0, Vitality: 0, Energy: 1, Command: 0));
+        Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Success));
+        var repository = new AuctionHouseRepository();
+
+        var minimumMatch = await repository.SearchListingsAsync(new EntityDataContext(), new AuctionListingSearch(
+            Currency: 8,
+            MinimumFruits: new FruitBasket(2, 0, 0, 1, 0)));
+        var minimumMiss = await repository.SearchListingsAsync(new EntityDataContext(), new AuctionListingSearch(
+            Currency: 8,
+            MinimumFruits: new FruitBasket(3, 0, 0, 1, 0)));
+        var maximumMatch = await repository.SearchListingsAsync(new EntityDataContext(), new AuctionListingSearch(
+            Currency: 8,
+            MaximumFruits: new FruitBasket(2, 0, 0, 1, 0)));
+        var maximumMiss = await repository.SearchListingsAsync(new EntityDataContext(), new AuctionListingSearch(
+            Currency: 8,
+            MaximumFruits: new FruitBasket(1, 0, 0, 1, 0)));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(minimumMatch.Rows.Any(r => r.ListingId == this._listingId), Is.True);
+            Assert.That(minimumMiss.Rows.Any(r => r.ListingId == this._listingId), Is.False);
+            Assert.That(maximumMatch.Rows.Any(r => r.ListingId == this._listingId), Is.True);
+            Assert.That(maximumMiss.Rows.Any(r => r.ListingId == this._listingId), Is.False);
+        });
+    }
+
+    /// <summary>
     /// Verifies a claimed fruit balance materializes as clean fruits at each component's level: two Strength fruits at level 3 and
     /// one Energy fruit at level 0.
     /// </summary>
