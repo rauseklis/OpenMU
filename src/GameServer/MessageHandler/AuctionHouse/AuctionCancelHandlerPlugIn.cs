@@ -65,6 +65,11 @@ internal sealed class AuctionCancelHandlerPlugIn : ISubPacketHandlerPlugIn
 
         var result = await player.RunPersistenceExclusiveAsync(async () =>
         {
+            if (AuctionHouseMutations.CheckGameplayState(player) is { } stateRefusal)
+            {
+                return new AuctionMutationResult(stateRefusal, DateTimeOffset.UtcNow);
+            }
+
             await player.SaveProgressAsync().ConfigureAwait(false);
             return await service.CancelAsync(new AuctionCancelRequest(new Guid(operationId), who.AccountId, listing, (int)request.ExpectedVersion)).ConfigureAwait(false);
         }).ConfigureAwait(false);

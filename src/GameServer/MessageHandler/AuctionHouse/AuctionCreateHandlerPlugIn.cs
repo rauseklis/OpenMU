@@ -60,6 +60,11 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
 
         var result = await player.RunPersistenceExclusiveAsync(async () =>
         {
+            if (AuctionHouseMutations.CheckGameplayState(player) is { } stateRefusal)
+            {
+                return new AuctionListItemResult(stateRefusal, Guid.Empty, 0, DateTimeOffset.UtcNow);
+            }
+
             await player.SaveProgressAsync().ConfigureAwait(false);
             return await service.ListItemAsync(new AuctionListItemRequest(
                 OperationId: new Guid(operationId),

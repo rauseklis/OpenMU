@@ -7,6 +7,7 @@ namespace MUnique.OpenMU.GameServer.MessageHandler.AuctionHouse;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.AuctionHouse;
+using MUnique.OpenMU.GameLogic.GuildWar;
 using MUnique.OpenMU.GameServer.RemoteView;
 using MUnique.OpenMU.Network.Packets;
 using MUnique.OpenMU.Network.Packets.ServerToClient;
@@ -58,6 +59,11 @@ internal static class AuctionHouseMutations
             return null;
         }
 
+        if (CheckGameplayState(player) is { } stateRefusal)
+        {
+            return stateRefusal;
+        }
+
         var now = DateTimeOffset.UtcNow;
         var restricted = await service.IsRestrictedAsync(accountId, now).ConfigureAwait(false);
         var configuration = AuctionHouseConfigurationSource.Current;
@@ -68,6 +74,27 @@ internal static class AuctionHouseMutations
             configuration.MinimumCharacterLevel,
             configuration.MinimumAccountAgeHours,
             restricted);
+    }
+
+    /// <summary>
+    /// Checks whether the player's current gameplay state permits an Auction House mutation.
+    /// </summary>
+    /// <param name="player">The requesting player.</param>
+    /// <returns>The state refusal, or <c>null</c> when the mutation may proceed.</returns>
+    public static AuctionResultCode? CheckGameplayState(Player player)
+    {
+        var state = new AuctionMutationState(
+            HasEnteredWorld: player.PlayerState.CurrentState == PlayerState.EnteredWorld,
+            IsAlive: player.IsAlive,
+            IsInSafeZone: player.IsAtSafezone(),
+            IsTeleporting: player.IsTeleporting,
+            IsTrading: player.TradingPartner is not null,
+            IsVending: player.ShopStorage?.StoreOpen ?? false,
+            HasOpenedNpc: player.OpenedNpc is not null,
+            IsDueling: player.DuelRoom is not null,
+            IsInMiniGame: player.CurrentMiniGame is not null,
+            IsInGuildWar: player.GuildWarContext?.State is GuildWarState.Requested or GuildWarState.Started);
+        return AuctionMutationEligibility.IsAllowed(state) ? null : AuctionResultCode.StateRestricted;
     }
 
     /// <summary>
