@@ -35853,7 +35853,7 @@ public readonly ref struct AuctionCurrencyDescriptorRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 39;
+    public static int Length => 45;
 
     /// <summary>
     /// Gets or sets the currency mode.
@@ -35961,6 +35961,33 @@ public readonly ref struct AuctionCurrencyDescriptorRef
     {
         get => ReadUInt32LittleEndian(this._data[35..]);
         set => WriteUInt32LittleEndian(this._data[35..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the small pack units.
+    /// </summary>
+    public ushort SmallPackUnits
+    {
+        get => ReadUInt16LittleEndian(this._data[39..]);
+        set => WriteUInt16LittleEndian(this._data[39..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the medium pack units.
+    /// </summary>
+    public ushort MediumPackUnits
+    {
+        get => ReadUInt16LittleEndian(this._data[41..]);
+        set => WriteUInt16LittleEndian(this._data[41..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the large pack units.
+    /// </summary>
+    public ushort LargePackUnits
+    {
+        get => ReadUInt16LittleEndian(this._data[43..]);
+        set => WriteUInt16LittleEndian(this._data[43..], value);
     }
 }
 }

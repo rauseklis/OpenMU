@@ -60,7 +60,7 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
             response.RequestId = request.RequestId;
             response.Result = (AuctionResult)open.Result;
             response.ServerTime = (uint)open.ServerTime.ToUnixTimeSeconds();
-            response.ConfigurationVersion = 1;
+            response.ConfigurationVersion = 2;
             response.ListingFeeBasisPoints = (ushort)options.ListingFeeBasisPoints;
             response.SuccessFeeBasisPoints = (ushort)options.SuccessFeeBasisPoints;
             response.DurationMask = 0x0F;
@@ -84,6 +84,11 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
                 descriptor.SpendableVitality = 0;
                 descriptor.SpendableEnergy = 0;
                 descriptor.SpendableCommand = 0;
+                var supportsJewelPacks = index is >= (int)MUnique.OpenMU.GameLogic.AuctionHouse.AuctionCurrencyMode.Chaos
+                    and <= (int)MUnique.OpenMU.GameLogic.AuctionHouse.AuctionCurrencyMode.Harmony;
+                descriptor.SmallPackUnits = supportsJewelPacks ? (ushort)JewelPackRules.GetPackUnits(0) : (ushort)0;
+                descriptor.MediumPackUnits = supportsJewelPacks ? (ushort)JewelPackRules.GetPackUnits(1) : (ushort)0;
+                descriptor.LargePackUnits = supportsJewelPacks ? (ushort)JewelPackRules.GetPackUnits(2) : (ushort)0;
             }
 
             return response.Header.Length;

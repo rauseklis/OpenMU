@@ -33,7 +33,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 
 
 
-Length: 39 Bytes
+Length: 45 Bytes
 
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
@@ -49,6 +49,9 @@ Length: 39 Bytes
 | 27 | 4 | IntegerLittleEndian |  | SpendableVitality |
 | 31 | 4 | IntegerLittleEndian |  | SpendableEnergy |
 | 35 | 4 | IntegerLittleEndian |  | SpendableCommand |
+| 39 | 2 | ShortLittleEndian |  | SmallPackUnits |
+| 41 | 2 | ShortLittleEndian |  | MediumPackUnits |
+| 43 | 2 | ShortLittleEndian |  | LargePackUnits |
 
 ### AuctionCurrencyMode Enum
 

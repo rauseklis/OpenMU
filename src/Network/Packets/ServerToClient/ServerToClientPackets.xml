@@ -13558,7 +13558,7 @@
       <Structures>
         <Structure>
           <Name>AuctionCurrencyDescriptor</Name>
-          <Length>39</Length>
+          <Length>45</Length>
           <Fields>
             <Field>
               <Index>0</Index>
@@ -13620,6 +13620,21 @@
               <Index>35</Index>
               <Type>IntegerLittleEndian</Type>
               <Name>SpendableCommand</Name>
+            </Field>
+            <Field>
+              <Index>39</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>SmallPackUnits</Name>
+            </Field>
+            <Field>
+              <Index>41</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>MediumPackUnits</Name>
+            </Field>
+            <Field>
+              <Index>43</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>LargePackUnits</Name>
             </Field>
           </Fields>
         </Structure>
