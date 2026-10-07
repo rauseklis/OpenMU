@@ -63,6 +63,9 @@ public class AuctionFruitListingTests
             .FirstAsync();
 
         await context.Set<Item>().Where(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId).ExecuteDeleteAsync();
+        // Against a populated copy of the real database, slots 70-73 of this inventory may already hold
+        // real, unrelated items; clear them so these fixed test slots are deterministic.
+        await context.Set<Item>().Where(i => i.ItemStorageId == this._inventoryId && i.ItemSlot >= 70 && i.ItemSlot <= 73).ExecuteDeleteAsync();
         this._listedItemId = Guid.NewGuid();
         context.Set<Item>().Add(new Item { Id = this._listedItemId, ItemStorageId = this._inventoryId, ItemSlot = 73, DefinitionId = listedDefinition, Durability = 10 });
         await context.SaveChangesAsync();

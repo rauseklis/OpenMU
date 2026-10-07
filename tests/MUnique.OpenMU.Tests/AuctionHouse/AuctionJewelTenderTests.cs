@@ -240,7 +240,9 @@ public class AuctionJewelTenderTests
         var jewels = new List<Guid>();
         await using (var context = new EntityDataContext())
         {
-            await context.Set<Item>().Where(i => i.ItemStorageId == bidderInventory && i.DefinitionId == this._looseDefinitionId).ExecuteDeleteAsync();
+            // Clear by slot, not just by definition: against a populated copy of the real database, these
+            // fixed slots may already hold some other, unrelated real item.
+            await context.Set<Item>().Where(i => i.ItemStorageId == bidderInventory && i.ItemSlot >= 70 && i.ItemSlot < 72).ExecuteDeleteAsync();
             for (var slot = 70; slot < 72; slot++)
             {
                 var id = Guid.NewGuid();
@@ -296,6 +298,10 @@ public class AuctionJewelTenderTests
     {
         var id = Guid.NewGuid();
         await using var context = new EntityDataContext();
+        // Against a populated copy of the real database, this inventory's slot may already hold a real item.
+        // Clear it first so the fixed test slot is deterministic, same as the rest of this test's own arrange
+        // step (it already overwrites this character's Zen unconditionally).
+        await context.Set<Item>().Where(i => i.ItemStorageId == this._inventoryId && i.ItemSlot == slot).ExecuteDeleteAsync();
         context.Set<Item>().Add(new Item
         {
             Id = id,
