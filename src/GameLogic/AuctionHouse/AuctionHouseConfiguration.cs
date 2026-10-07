@@ -29,7 +29,7 @@ public class AuctionHouseConfiguration
     /// <summary>
     /// Gets or sets the number of listings per browse page.
     /// </summary>
-    public int PageSize { get; set; } = 8;
+    public int PageSize { get; set; } = 24;
 
     /// <summary>
     /// Gets or sets the listing fee in basis points of the starting price.

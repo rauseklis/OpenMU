@@ -15,6 +15,19 @@ public class AuctionRulesTests
     private static readonly DateTimeOffset OriginalEndsAt = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
     /// <summary>
+    /// Verifies the default page contains three client viewports, so the Browse scrollbar represents real rows.
+    /// </summary>
+    [Test]
+    public void DefaultPageSizeSupportsScrollableBrowseResults()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(new AuctionHouseConfiguration().PageSize, Is.EqualTo(24));
+            Assert.That(new AuctionHouseOptions().PageSize, Is.EqualTo(24));
+        });
+    }
+
+    /// <summary>
     /// Verifies that fees are rounded up with a minimum of one unit of the charged currency.
     /// </summary>
     /// <param name="amount">The charged amount.</param>
