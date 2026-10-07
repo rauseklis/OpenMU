@@ -67,7 +67,10 @@ internal sealed class AuctionMailboxHandlerPlugIn : ISubPacketHandlerPlugIn
             mailbox = await service.MailboxAsync(identity.Value.AccountId, page, kind).ConfigureAwait(false);
         }
 
-        var rows = mailbox.Page.Rows;
+        // Page.Rows is a reference-type property inside a record struct: every early-exit branch above
+        // constructs its result with `default`, which leaves Rows null rather than empty. Coalesce here so a
+        // disabled/unauthenticated/rate-limited/service-unavailable mailbox request never null-refs below.
+        var rows = mailbox.Page.Rows ?? Array.Empty<AuctionCollectionRow>();
         var itemIds = rows.Where(r => r.ItemId is not null).Select(r => r.ItemId!.Value).Distinct().ToList();
         IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item> items = service is null || itemIds.Count == 0
             ? new Dictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>()

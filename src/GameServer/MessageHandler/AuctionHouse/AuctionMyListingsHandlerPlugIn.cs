@@ -68,7 +68,10 @@ internal sealed class AuctionMyListingsHandlerPlugIn : ISubPacketHandlerPlugIn
             listed = await service.MyListingsAsync(identity.Value.AccountId, page, status).ConfigureAwait(false);
         }
 
-        var rows = listed.Page.Rows;
+        // Page.Rows is a reference-type property inside a record struct: every early-exit branch above
+        // constructs its result with `default`, which leaves Rows null rather than empty. Coalesce here so a
+        // disabled/unauthenticated/rate-limited/service-unavailable my-listings request never null-refs below.
+        var rows = listed.Page.Rows ?? Array.Empty<AuctionListingRow>();
         IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item> items = service is null || rows.Count == 0
             ? new Dictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>()
             : await service.LoadItemsAsync(rows.Select(r => r.ItemId).Distinct().ToList()).ConfigureAwait(false);

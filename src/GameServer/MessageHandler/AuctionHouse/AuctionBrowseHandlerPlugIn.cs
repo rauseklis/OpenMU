@@ -81,7 +81,10 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
             browse = await service.BrowseAsync(search).ConfigureAwait(false);
         }
 
-        var rows = browse.Page.Rows;
+        // Page.Rows is a reference-type property inside a record struct: every early-exit branch above
+        // constructs its result with `default`, which leaves Rows null rather than empty. Coalesce here so a
+        // disabled/unauthenticated/rate-limited/service-unavailable browse never null-refs below.
+        var rows = browse.Page.Rows ?? Array.Empty<AuctionListingRow>();
         IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item> items = service is null || rows.Count == 0
             ? new Dictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>()
             : await service.LoadItemsAsync(rows.Select(r => r.ItemId).Distinct().ToList()).ConfigureAwait(false);
