@@ -100,11 +100,16 @@ public class AuctionListItemTests
         await using var context = new EntityDataContext();
         var item = await context.Set<Item>().AsNoTracking().SingleAsync(i => i.Id == this._itemId);
         var listing = await context.Set<AuctionListing>().AsNoTracking().SingleAsync(l => l.Id == result.ListingId);
+        var definition = await context.Set<Item>().AsNoTracking().Where(i => i.Id == this._itemId).Select(i => i.RawDefinition).SingleAsync();
         var movement = await context.Set<AuctionCurrencyMovement>().AsNoTracking().SingleAsync(m => m.OperationId == this._operationForLastRequest);
         Assert.Multiple(() =>
         {
             Assert.That(item.ItemStorageId, Is.Null);
             Assert.That(listing.ItemId, Is.EqualTo(this._itemId));
+            Assert.That(listing.ItemGroup, Is.EqualTo(definition.Group));
+            Assert.That(listing.ItemNumber, Is.EqualTo(definition.Number));
+            Assert.That(listing.ItemLevel, Is.EqualTo(item.Level));
+            Assert.That(listing.NormalizedName, Is.EqualTo(definition.Name.ValueInNeutralLanguage.ToUpperInvariant()));
             Assert.That(movement.Kind, Is.EqualTo(FeeRemovedKind));
             Assert.That(movement.Amount, Is.EqualTo(10));
         });

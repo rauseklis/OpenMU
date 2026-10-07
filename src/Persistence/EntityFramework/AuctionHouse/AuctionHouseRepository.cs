@@ -2441,7 +2441,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             CreatedAt = draft.CreatedAt,
             OriginalEndsAt = draft.EndsAt,
             EndsAt = draft.EndsAt,
-            NormalizedName = string.Empty,
+            ItemGroup = definition?.Group ?? 0,
+            ItemNumber = definition?.Number ?? 0,
+            ItemLevel = item.Level,
+            NormalizedName = definition?.Name.ValueInNeutralLanguage.ToUpperInvariant() ?? string.Empty,
         });
         context.Set<AuctionOperation>().Add(new AuctionOperation
         {
