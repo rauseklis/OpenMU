@@ -143,6 +143,26 @@ public class AuctionCancelCollectServiceTests
         Assert.That(result.Result, Is.EqualTo(AuctionResultCode.CollectionNotFound));
     }
 
+    /// <summary>
+    /// Verifies maintenance mode still reaches collection recovery instead of rejecting it as disabled.
+    /// </summary>
+    [Test]
+    public async Task DisabledFeatureStillAllowsCollectionRecovery()
+    {
+        var service = new AuctionHouseService(new AuctionHouseRepository(), new AuctionHouseOptions { Enabled = false });
+
+        var result = await service.CollectAsync(new AuctionCollectRequest(
+            OperationId: Guid.NewGuid(),
+            AccountId: this._sellerAccountId,
+            CharacterId: Guid.NewGuid(),
+            CollectionId: Guid.NewGuid(),
+            ExpectedVersion: 0,
+            RequestedScalar: null,
+            RequestedFruits: null));
+
+        Assert.That(result.Result, Is.EqualTo(AuctionResultCode.CollectionNotFound));
+    }
+
     private AuctionHouseService CreateService()
     {
         return new AuctionHouseService(new AuctionHouseRepository(), new AuctionHouseOptions { Enabled = true });

@@ -30,7 +30,9 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
         var configuration = this.Configuration ??= new AuctionHouseConfiguration();
         AuctionHouseConfigurationSource.Current = configuration;
         var now = DateTime.UtcNow;
-        if (!configuration.Enabled || now < this._nextRunUtc)
+        // Enabled is the kill switch for new player mutations. Existing listings, notifications, operation cleanup,
+        // and collections must continue to progress in maintenance mode so no item or escrow can be stranded.
+        if (now < this._nextRunUtc)
         {
             return;
         }

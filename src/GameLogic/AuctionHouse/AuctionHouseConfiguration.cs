@@ -11,7 +11,8 @@ namespace MUnique.OpenMU.GameLogic.AuctionHouse;
 public class AuctionHouseConfiguration
 {
     /// <summary>
-    /// Gets or sets a value indicating whether the Auction House is enabled.
+    /// Gets or sets a value indicating whether new player auction mutations are enabled. Reads, collection recovery,
+    /// expiry, notifications, reconciliation, and maintenance continue while this switch is off.
     /// </summary>
     public bool Enabled { get; set; }
 

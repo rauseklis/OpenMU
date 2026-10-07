@@ -12,9 +12,9 @@ using MUnique.OpenMU.GameLogic.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
 
 /// <summary>
-/// Verifies the read-only service operations against PostgreSQL: a disabled feature refuses every request, browsing is
-/// bounded to the configured page size, an invalid sort is reported as a request error, detail reports a missing listing,
-/// and open reports the pending Mailbox count.
+/// Verifies the read-only service operations against PostgreSQL: maintenance mode preserves reads and recovery,
+/// browsing is bounded to the configured page size, an invalid sort is reported as a request error, detail reports a
+/// missing listing, and open reports the pending Mailbox count.
 /// Requires <c>AUCTION_TEST_CONNECTION_STRING</c>; otherwise the tests are skipped.
 /// </summary>
 [TestFixture]
@@ -50,16 +50,31 @@ public class AuctionHouseServiceTests
     }
 
     /// <summary>
-    /// Verifies a disabled feature refuses browsing without querying.
+    /// Verifies disabling new auction mutations leaves open, browse, detail, owned listings, and Mailbox available.
     /// </summary>
     [Test]
-    public async Task DisabledFeatureRefusesBrowse()
+    public async Task DisabledFeatureKeepsReadsAndRecoveryViewsAvailable()
     {
+        var listingId = await this.List(startingPrice: 1000);
         var service = this.CreateService(enabled: false);
 
-        var result = await service.BrowseAsync(new AuctionListingSearch(Currency: 0));
+        var opened = await service.OpenAsync(this._sellerAccountId);
+        var browsed = await service.BrowseAsync(new AuctionListingSearch(Currency: 1, Category: 4));
+        var detail = await service.DetailAsync(listingId);
+        var owned = await service.MyListingsAsync(this._sellerAccountId, 1, status: null);
+        var mailbox = await service.MailboxAsync(this._sellerAccountId, 1, kind: null);
 
-        Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Disabled));
+        Assert.Multiple(() =>
+        {
+            Assert.That(opened.Result, Is.EqualTo(AuctionResultCode.Success));
+            Assert.That(browsed.Result, Is.EqualTo(AuctionResultCode.Success));
+            Assert.That(browsed.Page.Rows.Select(row => row.ListingId), Does.Contain(listingId));
+            Assert.That(detail.Result, Is.EqualTo(AuctionResultCode.Success));
+            Assert.That(detail.Listing!.ListingId, Is.EqualTo(listingId));
+            Assert.That(owned.Result, Is.EqualTo(AuctionResultCode.Success));
+            Assert.That(owned.Page.Rows.Select(row => row.ListingId), Does.Contain(listingId));
+            Assert.That(mailbox.Result, Is.EqualTo(AuctionResultCode.Success));
+        });
     }
 
     /// <summary>

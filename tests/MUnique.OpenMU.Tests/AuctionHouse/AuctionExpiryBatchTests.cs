@@ -183,17 +183,17 @@ public class AuctionExpiryBatchTests
     }
 
     /// <summary>
-    /// Verifies the service leaves the listings alone while the feature is disabled.
+    /// Verifies maintenance mode still finalizes due listings so existing escrow and lots cannot be stranded.
     /// </summary>
     [Test]
-    public async Task ServiceDoesNothingWhenDisabled()
+    public async Task ServiceFinalizesDueListingsWhenDisabled()
     {
         var service = new AuctionHouseService(new AuctionHouseRepository(), new AuctionHouseOptions { Enabled = false });
 
         var finalized = await service.FinalizeDueListingsAsync(50);
 
-        Assert.That(finalized, Is.EqualTo(0));
+        Assert.That(finalized, Is.GreaterThanOrEqualTo(this._listings.Count));
         await using var context = new EntityDataContext();
-        Assert.That(await context.Set<AuctionListing>().AsNoTracking().Where(l => this._listings.Contains(l.Id)).AllAsync(l => l.Status == 0), Is.True);
+        Assert.That(await context.Set<AuctionListing>().AsNoTracking().Where(l => this._listings.Contains(l.Id)).AllAsync(l => l.Status != 0), Is.True);
     }
 }

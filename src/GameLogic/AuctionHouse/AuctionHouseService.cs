@@ -46,11 +46,6 @@ public sealed class AuctionHouseService
     public async Task<AuctionOpenResult> OpenAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         var now = this._clock();
-        if (!this._options.Enabled)
-        {
-            return new AuctionOpenResult(AuctionResultCode.Disabled, 0, now, this._options.PageSize);
-        }
-
         var pending = await this._repository.CountPendingCollectionsAsync(accountId, cancellationToken);
         return new AuctionOpenResult(AuctionResultCode.Success, pending, now, this._options.PageSize);
     }
@@ -64,11 +59,6 @@ public sealed class AuctionHouseService
     public async Task<AuctionBrowseResult> BrowseAsync(AuctionListingSearch search, CancellationToken cancellationToken = default)
     {
         var now = this._clock();
-        if (!this._options.Enabled)
-        {
-            return new AuctionBrowseResult(AuctionResultCode.Disabled, default, now);
-        }
-
         if (search.Page < 1)
         {
             return new AuctionBrowseResult(AuctionResultCode.InvalidRequest, default, now);
@@ -372,11 +362,6 @@ public sealed class AuctionHouseService
     {
         var started = Stopwatch.GetTimestamp();
         var now = this._clock();
-        if (!this._options.Enabled)
-        {
-            return new AuctionCollectResult(AuctionResultCode.Disabled, 0, null, 0, now);
-        }
-
         var draft = new ClaimDraft(
             request.OperationId,
             request.AccountId,
@@ -428,11 +413,6 @@ public sealed class AuctionHouseService
     /// <returns>The number of listings finalized.</returns>
     public async Task<int> FinalizeDueListingsAsync(int batchSize, CancellationToken cancellationToken = default)
     {
-        if (!this._options.Enabled)
-        {
-            return 0;
-        }
-
         var finalized = await this._repository.ExpireBatchAsync(this._clock(), batchSize, price => AuctionRules.CalculateFee(price, this._options.SuccessFeeBasisPoints), cancellationToken);
         AuctionHouseMetrics.RecordExpiries(finalized);
         return finalized;
@@ -449,11 +429,6 @@ public sealed class AuctionHouseService
     public async Task<AuctionBrowseResult> MyListingsAsync(Guid accountId, int page, byte? status, CancellationToken cancellationToken = default)
     {
         var now = this._clock();
-        if (!this._options.Enabled)
-        {
-            return new AuctionBrowseResult(AuctionResultCode.Disabled, default, now);
-        }
-
         if (page < 1)
         {
             return new AuctionBrowseResult(AuctionResultCode.InvalidRequest, default, now);
@@ -474,11 +449,6 @@ public sealed class AuctionHouseService
     public async Task<AuctionMailboxResult> MailboxAsync(Guid accountId, int page, byte? kind, CancellationToken cancellationToken = default)
     {
         var now = this._clock();
-        if (!this._options.Enabled)
-        {
-            return new AuctionMailboxResult(AuctionResultCode.Disabled, default, now);
-        }
-
         if (page < 1)
         {
             return new AuctionMailboxResult(AuctionResultCode.InvalidRequest, default, now);
@@ -512,11 +482,6 @@ public sealed class AuctionHouseService
     /// <returns>The totals of the batch.</returns>
     public async Task<AuctionNotificationDeliveryResult> DeliverNotificationsAsync(int batchSize, Func<AuctionNotificationRow, Task<AuctionNotificationDeliveryOutcome>> deliver, CancellationToken cancellationToken = default)
     {
-        if (!this._options.Enabled)
-        {
-            return default;
-        }
-
         var claimed = await this._repository.ClaimUndeliveredNotificationsAsync(batchSize, this._clock(), cancellationToken).ConfigureAwait(false);
         var delivered = 0;
         var notOnline = 0;
@@ -581,51 +546,36 @@ public sealed class AuctionHouseService
     /// <param name="retention">How long a record is kept.</param>
     /// <param name="batchSize">The maximum number of records to delete.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The number of records deleted; zero when the feature is disabled.</returns>
+    /// <returns>The number of records deleted.</returns>
     public Task<int> PurgeOperationsAsync(TimeSpan retention, int batchSize, CancellationToken cancellationToken = default)
-    {
-        if (!this._options.Enabled)
-        {
-            return Task.FromResult(0);
-        }
-
-        return this._repository.PurgeFinishedOperationsAsync(this._clock() - retention, batchSize, cancellationToken);
-    }
+        => this._repository.PurgeFinishedOperationsAsync(this._clock() - retention, batchSize, cancellationToken);
 
     /// <summary>
     /// Loads the items of listings, so the browse rows can carry them.
     /// </summary>
     /// <param name="itemIds">The items.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The items by identifier; empty when the feature is disabled.</returns>
+    /// <returns>The items by identifier.</returns>
     public async Task<IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>> LoadItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default)
-    {
-        return this._options.Enabled
-            ? await this._repository.GetItemsAsync(itemIds, cancellationToken)
-            : new Dictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item>();
-    }
+        => await this._repository.GetItemsAsync(itemIds, cancellationToken);
 
     /// <summary>
     /// Resolves a listing number from the wire to the listing identifier.
     /// </summary>
     /// <param name="listingNumber">The listing number.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The listing identifier, or <c>null</c> when the feature is disabled or the number is unknown.</returns>
+    /// <returns>The listing identifier, or <c>null</c> when the number is unknown.</returns>
     public async Task<Guid?> ResolveListingIdAsync(long listingNumber, CancellationToken cancellationToken = default)
-    {
-        return this._options.Enabled ? await this._repository.FindListingIdAsync(listingNumber, cancellationToken) : null;
-    }
+        => await this._repository.FindListingIdAsync(listingNumber, cancellationToken);
 
     /// <summary>
     /// Resolves a collection number from the wire to the collection identifier.
     /// </summary>
     /// <param name="collectionNumber">The collection number.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The collection identifier, or <c>null</c> when the feature is disabled or the number is unknown.</returns>
+    /// <returns>The collection identifier, or <c>null</c> when the number is unknown.</returns>
     public async Task<Guid?> ResolveCollectionIdAsync(long collectionNumber, CancellationToken cancellationToken = default)
-    {
-        return this._options.Enabled ? await this._repository.FindCollectionIdAsync(collectionNumber, cancellationToken) : null;
-    }
+        => await this._repository.FindCollectionIdAsync(collectionNumber, cancellationToken);
 
     /// <summary>
     /// Reads one listing, including its note.
@@ -636,11 +586,6 @@ public sealed class AuctionHouseService
     public async Task<AuctionDetailResult> DetailAsync(Guid listingId, CancellationToken cancellationToken = default)
     {
         var now = this._clock();
-        if (!this._options.Enabled)
-        {
-            return new AuctionDetailResult(AuctionResultCode.Disabled, null, now);
-        }
-
         var listing = await this._repository.GetListingAsync(listingId, cancellationToken);
         return listing is null
             ? new AuctionDetailResult(AuctionResultCode.ListingNotFound, null, now)
