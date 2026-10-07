@@ -204,6 +204,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 "SELECT x.\"ItemId\" AS \"Value\" FROM (SELECT \"ItemId\" FROM data.\"AuctionListing\" WHERE \"Status\" = 0 UNION ALL SELECT \"ItemId\" FROM data.\"AuctionCollection\" WHERE \"ItemId\" IS NOT NULL AND \"Status\" <> 2) x GROUP BY x.\"ItemId\" HAVING COUNT(*) > 1"),
             ("ClaimedCollectionStillOwesAmount",
                 "SELECT c.\"Id\" AS \"Value\" FROM data.\"AuctionCollection\" c WHERE c.\"Status\" = 2 AND (COALESCE(c.\"RemainingScalar\", 0) > 0 OR COALESCE(c.\"RemainingStrength\", 0) > 0 OR COALESCE(c.\"RemainingAgility\", 0) > 0 OR COALESCE(c.\"RemainingVitality\", 0) > 0 OR COALESCE(c.\"RemainingEnergy\", 0) > 0 OR COALESCE(c.\"RemainingCommand\", 0) > 0)"),
+            ("OperationIdHasContradictoryResults",
+                "SELECT o.\"AccountId\" AS \"Value\" FROM data.\"AuctionOperation\" o GROUP BY o.\"AccountId\", o.\"OperationId\" HAVING COUNT(DISTINCT o.\"Kind\") > 1 OR COUNT(DISTINCT o.\"Outcome\") > 1"),
         };
 
         var findings = new List<AuctionReconciliationFinding>();

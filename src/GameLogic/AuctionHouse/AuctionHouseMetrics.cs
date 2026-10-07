@@ -25,6 +25,7 @@ public static class AuctionHouseMetrics
     private static readonly Counter<long> ExpiriesFinalized = Meter.CreateCounter<long>("auction.expiries.finalized");
     private static readonly Counter<long> Notifications = Meter.CreateCounter<long>("auction.notifications");
     private static readonly Counter<long> ReconciliationFindings = Meter.CreateCounter<long>("auction.reconciliation.findings");
+    private static readonly Histogram<double> OperationDuration = Meter.CreateHistogram<double>("auction.operation.duration", unit: "ms");
 
     /// <summary>
     /// Records the outcome of one operation. A replay is recorded as its own outcome, so it is never mistaken for a new event.
@@ -94,6 +95,14 @@ public static class AuctionHouseMetrics
         Notifications.Add(notOnline, new KeyValuePair<string, object?>("result", "not_online"));
         Notifications.Add(failed, new KeyValuePair<string, object?>("result", "failed"));
     }
+
+    /// <summary>
+    /// Records how long one operation took, wall-clock, under its own name.
+    /// </summary>
+    /// <param name="operation">The operation: create, bid, buyout, cancel or collect.</param>
+    /// <param name="milliseconds">The elapsed time in milliseconds.</param>
+    public static void RecordOperationDuration(string operation, double milliseconds)
+        => OperationDuration.Record(milliseconds, new KeyValuePair<string, object?>("operation", operation));
 
     /// <summary>
     /// Records the broken invariants found by a reconciliation run.

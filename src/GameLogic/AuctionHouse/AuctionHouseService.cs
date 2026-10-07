@@ -300,6 +300,7 @@ public sealed class AuctionHouseService
     private void LogOperation(string operation, string outcome, Guid accountId, Guid? listingId, long started)
     {
         var elapsed = Stopwatch.GetElapsedTime(started);
+        AuctionHouseMetrics.RecordOperationDuration(operation, elapsed.TotalMilliseconds);
         this._logger.LogInformation(
             "Auction {Operation} {Outcome} account {AccountId} listing {ListingId} in {ElapsedMilliseconds} ms",
             operation,

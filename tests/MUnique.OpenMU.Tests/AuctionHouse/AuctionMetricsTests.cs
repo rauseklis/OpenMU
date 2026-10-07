@@ -18,6 +18,7 @@ using MUnique.OpenMU.Persistence.AuctionHouse;
 public class AuctionMetricsTests
 {
     private readonly List<(string Name, long Value, Dictionary<string, object?> Tags)> _measurements = new();
+    private readonly List<(string Name, double Value, Dictionary<string, object?> Tags)> _durations = new();
     private MeterListener? _listener;
 
     /// <summary>
@@ -27,6 +28,7 @@ public class AuctionMetricsTests
     public void StartListening()
     {
         this._measurements.Clear();
+        this._durations.Clear();
         this._listener = new MeterListener();
         this._listener.InstrumentPublished = (instrument, listener) =>
         {
@@ -46,6 +48,19 @@ public class AuctionMetricsTests
             lock (this._measurements)
             {
                 this._measurements.Add((instrument.Name, value, dictionary));
+            }
+        });
+        this._listener.SetMeasurementEventCallback<double>((instrument, value, tags, state) =>
+        {
+            var dictionary = new Dictionary<string, object?>();
+            foreach (var tag in tags)
+            {
+                dictionary[tag.Key] = tag.Value;
+            }
+
+            lock (this._durations)
+            {
+                this._durations.Add((instrument.Name, value, dictionary));
             }
         });
         this._listener.Start();
@@ -98,6 +113,28 @@ public class AuctionMetricsTests
             Assert.That(this.Count("auction.operation.results", "operation", "create", "outcome", "Replayed"), Is.EqualTo(1));
             Assert.That(this.Sum("auction.fees.removed", "currency", "Zen"), Is.EqualTo(0));
         });
+    }
+
+    /// <summary>
+    /// Verifies a completed operation records its wall-clock duration under its own operation name, so slow operations show up
+    /// without being confused with a different one.
+    /// </summary>
+    [Test]
+    public async Task CompletedOperationRecordsItsDuration()
+    {
+        var repository = new Mock<IAuctionHouseRepository>();
+        repository.Setup(r => r.ListItemAsync(It.IsAny<ItemListingDraft>(), It.IsAny<Func<ItemListingFacts, bool>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AuctionItemListingResult(AuctionItemListingOutcome.Created, Guid.NewGuid(), 1));
+        var service = new AuctionHouseService(repository.Object, new AuctionHouseOptions { Enabled = true });
+
+        await service.ListItemAsync(ZenRequest());
+
+        lock (this._durations)
+        {
+            Assert.That(
+                this._durations.Any(m => m.Name == "auction.operation.duration" && Equals(m.Tags.GetValueOrDefault("operation"), "create") && m.Value >= 0),
+                Is.True);
+        }
     }
 
     private static AuctionListItemRequest ZenRequest()
