@@ -29,6 +29,11 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
     /// </summary>
     private const byte AllCategories = byte.MaxValue;
 
+    /// <summary>
+    /// The currency value of the request which browses every currency.
+    /// </summary>
+    private const byte AllCurrencies = byte.MaxValue;
+
     /// <inheritdoc />
     public bool IsEncryptionExpected => true;
 
@@ -48,7 +53,7 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
         var service = AuctionHouseMutations.CreateService(player);
         var identity = AuctionHouseMutations.GetIdentity(player);
         var search = new AuctionListingSearch(
-            Currency: (byte)request.CurrencyMode,
+            Currency: (byte)request.CurrencyMode == AllCurrencies ? null : (byte)request.CurrencyMode,
             Category: request.Category == AllCategories ? null : request.Category,
             Sort: (AuctionSearchSort)(int)request.Sort,
             Page: Math.Max(1, (int)request.Page),

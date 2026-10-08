@@ -2253,22 +2253,31 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     }
 
     /// <summary>
-    /// Searches active listings of one currency. Results are ordered and paged, and the total count covers every match.
+    /// Searches active listings. Results are ordered and paged, and the total count covers every match.
     /// </summary>
     /// <param name="context">The context to read from.</param>
     /// <param name="search">The browse request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The requested page of listings.</returns>
-    /// <exception cref="ArgumentException">A price sort is requested for fruit baskets.</exception>
+    /// <exception cref="ArgumentException">A price sort or price filter is requested without a comparable single currency.</exception>
     public async Task<AuctionListingPage> SearchListingsAsync(EntityDataContext context, AuctionListingSearch search, CancellationToken cancellationToken = default)
     {
         const byte FruitsCurrency = 8;
+        if (search.Currency is null && search.Sort is AuctionSearchSort.PriceAscending or AuctionSearchSort.PriceDescending)
+        {
+            throw new ArgumentException("Listings of different currencies have no price order.", nameof(search));
+        }
+
         if (search.Currency == FruitsCurrency && search.Sort is AuctionSearchSort.PriceAscending or AuctionSearchSort.PriceDescending)
         {
             throw new ArgumentException("Fruit baskets have no price order.", nameof(search));
         }
 
-        var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.Status == 0 && l.Currency == search.Currency);
+        var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.Status == 0);
+        if (search.Currency is { } currency)
+        {
+            query = query.Where(l => l.Currency == currency);
+        }
         if (search.Category is { } category)
         {
             query = query.Where(l => l.Category == category);
@@ -2322,7 +2331,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                                          && (maximum.Command == 0 || (l.CurrentBidCommand ?? l.StartingCommand) <= maximum.Command));
             }
         }
-        else
+        else if (search.Currency is not null)
         {
             if (search.MinimumScalar > 0)
             {
@@ -2333,6 +2342,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             {
                 query = query.Where(l => (l.CurrentBid ?? l.StartingPrice) <= search.MaximumScalar);
             }
+        }
+        else if (search.MinimumScalar > 0 || search.MaximumScalar > 0 || search.MinimumFruits is not null || search.MaximumFruits is not null)
+        {
+            throw new ArgumentException("Price filters require one selected currency.", nameof(search));
         }
 
         if (search.MaxRemainingHours > 0)

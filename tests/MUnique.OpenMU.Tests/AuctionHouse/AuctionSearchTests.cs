@@ -68,6 +68,22 @@ public class AuctionSearchTests
     }
 
     /// <summary>
+    /// Verifies the marketplace view can return matching listings priced in different currencies. Mixed-currency
+    /// rows are intentionally only ordered by a currency-neutral field such as expiry.
+    /// </summary>
+    [Test]
+    public async Task ReturnsAllCurrenciesWhenCurrencyIsNotFiltered()
+    {
+        var zen = await this.List(currency: 0, category: 0, startingPrice: 1000);
+        var chaos = await this.List(currency: 1, category: 0, startingPrice: 2);
+
+        var page = await this.Search(new AuctionListingSearch(Currency: null, PageSize: 1000));
+        var listingIds = page.Rows.Where(row => row.SellerAccountId == this._sellerAccountId).Select(row => row.ListingId);
+
+        Assert.That(listingIds, Is.EquivalentTo(new[] { zen, chaos }));
+    }
+
+    /// <summary>
     /// Verifies a cancelled listing is no longer returned.
     /// </summary>
     [Test]
@@ -213,6 +229,17 @@ public class AuctionSearchTests
     {
         Assert.That(
             async () => await this.Search(new AuctionListingSearch(Currency: 8, Sort: AuctionSearchSort.PriceAscending)),
+            Throws.TypeOf<ArgumentException>());
+    }
+
+    /// <summary>
+    /// A price order across Zen, jewels and fruit would imply an exchange rate the game does not define.
+    /// </summary>
+    [Test]
+    public void PriceSortIsRefusedWhenCurrencyIsNotFiltered()
+    {
+        Assert.That(
+            async () => await this.Search(new AuctionListingSearch(Currency: null, Sort: AuctionSearchSort.PriceAscending)),
             Throws.TypeOf<ArgumentException>());
     }
 

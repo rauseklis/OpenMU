@@ -50,9 +50,10 @@ public enum AuctionItemOptionFlags : ushort
 }
 
 /// <summary>
-/// A browse request. Results are always restricted to one currency, because prices never compare across currencies.
+/// A browse request. When no currency is selected, listings of every currency are returned. Price ordering and price-range
+/// filters require a single currency because values in different currencies cannot be compared honestly.
 /// </summary>
-/// <param name="Currency">The currency mode as its wire value.</param>
+/// <param name="Currency">The currency mode as its wire value, or <c>null</c> for every currency.</param>
 /// <param name="Category">The category filter, or <c>null</c> for all categories.</param>
 /// <param name="Sort">The order of results.</param>
 /// <param name="Page">The page, starting at 1.</param>
@@ -68,7 +69,7 @@ public enum AuctionItemOptionFlags : ushort
 /// <param name="ClassMask">The acceptable base-character-class bits, or zero for every class.</param>
 /// <param name="OptionFlags">The item-option flags which must all be present.</param>
 public readonly record struct AuctionListingSearch(
-    byte Currency,
+    byte? Currency,
     byte? Category = null,
     AuctionSearchSort Sort = AuctionSearchSort.EndingSoonest,
     int Page = 1,
