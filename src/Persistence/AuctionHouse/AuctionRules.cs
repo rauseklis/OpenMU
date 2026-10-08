@@ -17,10 +17,10 @@ public static class AuctionRules
 
     public const int MinimumZenPrice = 1000;
     public const int MaximumZenPrice = 2_000_000_000;
-    private const int MinimumJewelPrice = 2;
-    private const int MaximumJewelPrice = 10_000;
+    public const int MinimumJewelPrice = 2;
+    public const int MaximumJewelPrice = 10_000;
     public const int MinimumZenBidIncrement = 1000;
-    private const int MinimumJewelBidIncrement = 1;
+    public const int MinimumJewelBidIncrement = 1;
     public const int BidIncrementPercent = 5;
     private const int BasisPointsDivisor = 10_000;
     private static readonly TimeSpan AntiSnipingWindow = TimeSpan.FromMinutes(2);

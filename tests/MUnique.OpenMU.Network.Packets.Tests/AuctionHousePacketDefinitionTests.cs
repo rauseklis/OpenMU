@@ -176,12 +176,15 @@ public class AuctionHousePacketDefinitionTests
         yield return new TestCaseData(
             "AuctionOpenResponse",
             "AuctionCurrencyDescriptor",
-            "45",
+            "57",
             "0:Enum:CurrencyMode;1:Boolean:Enabled;2:IntegerLittleEndian:MinimumStartingPrice;"
             + "6:IntegerLittleEndian:MaximumStartingPrice;10:IntegerLittleEndian:MinimumIncrement;"
             + "14:Byte:IncrementPercent;" + Amount(15, "Spendable") + ";"
             + "39:ShortLittleEndian:SmallPackUnits;41:ShortLittleEndian:MediumPackUnits;"
-            + "43:ShortLittleEndian:LargePackUnits");
+            + "43:ShortLittleEndian:LargePackUnits;45:ShortLittleEndian:LooseItemType;"
+            + "47:ShortLittleEndian:PackItemType;49:ShortLittleEndian:LooseItemCount;"
+            + "51:ShortLittleEndian:SmallPackCount;53:ShortLittleEndian:MediumPackCount;"
+            + "55:ShortLittleEndian:LargePackCount");
         yield return new TestCaseData(
             "AuctionBrowseResponse",
             "AuctionListingSummary",

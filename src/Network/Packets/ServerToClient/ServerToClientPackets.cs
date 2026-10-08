@@ -37938,7 +37938,7 @@ public readonly struct AuctionCurrencyDescriptor
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 45;
+    public static int Length => 57;
 
     /// <summary>
     /// Gets or sets the currency mode.
@@ -38073,6 +38073,60 @@ public readonly struct AuctionCurrencyDescriptor
     {
         get => ReadUInt16LittleEndian(this._data.Span[43..]);
         set => WriteUInt16LittleEndian(this._data.Span[43..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the loose item type.
+    /// </summary>
+    public ushort LooseItemType
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[45..]);
+        set => WriteUInt16LittleEndian(this._data.Span[45..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the pack item type.
+    /// </summary>
+    public ushort PackItemType
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[47..]);
+        set => WriteUInt16LittleEndian(this._data.Span[47..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the loose item count.
+    /// </summary>
+    public ushort LooseItemCount
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[49..]);
+        set => WriteUInt16LittleEndian(this._data.Span[49..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the small pack count.
+    /// </summary>
+    public ushort SmallPackCount
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[51..]);
+        set => WriteUInt16LittleEndian(this._data.Span[51..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the medium pack count.
+    /// </summary>
+    public ushort MediumPackCount
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[53..]);
+        set => WriteUInt16LittleEndian(this._data.Span[53..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the large pack count.
+    /// </summary>
+    public ushort LargePackCount
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[55..]);
+        set => WriteUInt16LittleEndian(this._data.Span[55..], value);
     }
 }
 }

@@ -13558,7 +13558,7 @@
       <Structures>
         <Structure>
           <Name>AuctionCurrencyDescriptor</Name>
-          <Length>45</Length>
+          <Length>57</Length>
           <Fields>
             <Field>
               <Index>0</Index>
@@ -13635,6 +13635,36 @@
               <Index>43</Index>
               <Type>ShortLittleEndian</Type>
               <Name>LargePackUnits</Name>
+            </Field>
+            <Field>
+              <Index>45</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>LooseItemType</Name>
+            </Field>
+            <Field>
+              <Index>47</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>PackItemType</Name>
+            </Field>
+            <Field>
+              <Index>49</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>LooseItemCount</Name>
+            </Field>
+            <Field>
+              <Index>51</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>SmallPackCount</Name>
+            </Field>
+            <Field>
+              <Index>53</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>MediumPackCount</Name>
+            </Field>
+            <Field>
+              <Index>55</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>LargePackCount</Name>
             </Field>
           </Fields>
         </Structure>
