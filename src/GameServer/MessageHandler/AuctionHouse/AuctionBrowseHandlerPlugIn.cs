@@ -52,18 +52,19 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
         var now = DateTimeOffset.UtcNow;
         var service = AuctionHouseMutations.CreateService(player);
         var identity = AuctionHouseMutations.GetIdentity(player);
+        var allCurrencies = (byte)request.CurrencyMode == AllCurrencies;
         var search = new AuctionListingSearch(
-            Currency: (byte)request.CurrencyMode == AllCurrencies ? null : (byte)request.CurrencyMode,
+            Currency: allCurrencies ? null : (byte)request.CurrencyMode,
             Category: request.Category == AllCategories ? null : request.Category,
             Sort: (AuctionSearchSort)(int)request.Sort,
             Page: Math.Max(1, (int)request.Page),
             Name: DecodeName(request),
             LevelMinimum: request.LevelMinimum,
             LevelMaximum: request.LevelMaximum,
-            MinimumScalar: request.MinimumScalar,
-            MaximumScalar: request.MaximumScalar,
-            MinimumFruits: new FruitBasket(request.MinimumStrength, request.MinimumAgility, request.MinimumVitality, request.MinimumEnergy, request.MinimumCommand),
-            MaximumFruits: new FruitBasket(request.MaximumStrength, request.MaximumAgility, request.MaximumVitality, request.MaximumEnergy, request.MaximumCommand),
+            MinimumScalar: allCurrencies ? 0 : request.MinimumScalar,
+            MaximumScalar: allCurrencies ? 0 : request.MaximumScalar,
+            MinimumFruits: allCurrencies ? null : new FruitBasket(request.MinimumStrength, request.MinimumAgility, request.MinimumVitality, request.MinimumEnergy, request.MinimumCommand),
+            MaximumFruits: allCurrencies ? null : new FruitBasket(request.MaximumStrength, request.MaximumAgility, request.MaximumVitality, request.MaximumEnergy, request.MaximumCommand),
             MaxRemainingHours: request.MaxRemainingHours,
             ClassMask: request.ClassMask,
             OptionFlags: (AuctionItemOptionFlags)request.OptionFlags);
