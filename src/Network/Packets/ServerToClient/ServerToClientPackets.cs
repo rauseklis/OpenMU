@@ -37938,7 +37938,7 @@ public readonly struct AuctionCurrencyDescriptor
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 57;
+    public static int Length => 72;
 
     /// <summary>
     /// Gets or sets the currency mode.
@@ -38127,6 +38127,96 @@ public readonly struct AuctionCurrencyDescriptor
     {
         get => ReadUInt16LittleEndian(this._data.Span[55..]);
         set => WriteUInt16LittleEndian(this._data.Span[55..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the strength fruit item type.
+    /// </summary>
+    public ushort StrengthFruitItemType
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[57..]);
+        set => WriteUInt16LittleEndian(this._data.Span[57..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the agility fruit item type.
+    /// </summary>
+    public ushort AgilityFruitItemType
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[59..]);
+        set => WriteUInt16LittleEndian(this._data.Span[59..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the vitality fruit item type.
+    /// </summary>
+    public ushort VitalityFruitItemType
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[61..]);
+        set => WriteUInt16LittleEndian(this._data.Span[61..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the energy fruit item type.
+    /// </summary>
+    public ushort EnergyFruitItemType
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[63..]);
+        set => WriteUInt16LittleEndian(this._data.Span[63..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the command fruit item type.
+    /// </summary>
+    public ushort CommandFruitItemType
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[65..]);
+        set => WriteUInt16LittleEndian(this._data.Span[65..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the strength fruit item level.
+    /// </summary>
+    public byte StrengthFruitItemLevel
+    {
+        get => this._data.Span[67];
+        set => this._data.Span[67] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the agility fruit item level.
+    /// </summary>
+    public byte AgilityFruitItemLevel
+    {
+        get => this._data.Span[68];
+        set => this._data.Span[68] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the vitality fruit item level.
+    /// </summary>
+    public byte VitalityFruitItemLevel
+    {
+        get => this._data.Span[69];
+        set => this._data.Span[69] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the energy fruit item level.
+    /// </summary>
+    public byte EnergyFruitItemLevel
+    {
+        get => this._data.Span[70];
+        set => this._data.Span[70] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the command fruit item level.
+    /// </summary>
+    public byte CommandFruitItemLevel
+    {
+        get => this._data.Span[71];
+        set => this._data.Span[71] = value;
     }
 }
 }

@@ -66,7 +66,7 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
             response.RequestId = request.RequestId;
             response.Result = (AuctionResult)open.Result;
             response.ServerTime = (uint)open.ServerTime.ToUnixTimeSeconds();
-            response.ConfigurationVersion = 3;
+            response.ConfigurationVersion = 4;
             response.ListingFeeBasisPoints = (ushort)options.ListingFeeBasisPoints;
             response.SuccessFeeBasisPoints = (ushort)options.SuccessFeeBasisPoints;
             response.DurationMask = 0x0F;
@@ -109,6 +109,16 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
                 descriptor.SmallPackCount = jewel?.PackCounts[0] ?? 0;
                 descriptor.MediumPackCount = jewel?.PackCounts[1] ?? 0;
                 descriptor.LargePackCount = jewel?.PackCounts[2] ?? 0;
+                descriptor.StrengthFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
+                descriptor.AgilityFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
+                descriptor.VitalityFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
+                descriptor.EnergyFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
+                descriptor.CommandFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
+                descriptor.StrengthFruitItemLevel = isFruits ? (byte)FruitRules.GetItemLevel(FruitComponent.Strength) : (byte)0;
+                descriptor.AgilityFruitItemLevel = isFruits ? (byte)FruitRules.GetItemLevel(FruitComponent.Agility) : (byte)0;
+                descriptor.VitalityFruitItemLevel = isFruits ? (byte)FruitRules.GetItemLevel(FruitComponent.Vitality) : (byte)0;
+                descriptor.EnergyFruitItemLevel = isFruits ? (byte)FruitRules.GetItemLevel(FruitComponent.Energy) : (byte)0;
+                descriptor.CommandFruitItemLevel = isFruits ? (byte)FruitRules.GetItemLevel(FruitComponent.Command) : (byte)0;
             }
 
             return response.Header.Length;

@@ -176,7 +176,7 @@ public class AuctionHousePacketDefinitionTests
         yield return new TestCaseData(
             "AuctionOpenResponse",
             "AuctionCurrencyDescriptor",
-            "57",
+            "72",
             "0:Enum:CurrencyMode;1:Boolean:Enabled;2:IntegerLittleEndian:MinimumStartingPrice;"
             + "6:IntegerLittleEndian:MaximumStartingPrice;10:IntegerLittleEndian:MinimumIncrement;"
             + "14:Byte:IncrementPercent;" + Amount(15, "Spendable") + ";"
@@ -184,7 +184,11 @@ public class AuctionHousePacketDefinitionTests
             + "43:ShortLittleEndian:LargePackUnits;45:ShortLittleEndian:LooseItemType;"
             + "47:ShortLittleEndian:PackItemType;49:ShortLittleEndian:LooseItemCount;"
             + "51:ShortLittleEndian:SmallPackCount;53:ShortLittleEndian:MediumPackCount;"
-            + "55:ShortLittleEndian:LargePackCount");
+            + "55:ShortLittleEndian:LargePackCount;57:ShortLittleEndian:StrengthFruitItemType;"
+            + "59:ShortLittleEndian:AgilityFruitItemType;61:ShortLittleEndian:VitalityFruitItemType;"
+            + "63:ShortLittleEndian:EnergyFruitItemType;65:ShortLittleEndian:CommandFruitItemType;"
+            + "67:Byte:StrengthFruitItemLevel;68:Byte:AgilityFruitItemLevel;69:Byte:VitalityFruitItemLevel;"
+            + "70:Byte:EnergyFruitItemLevel;71:Byte:CommandFruitItemLevel");
         yield return new TestCaseData(
             "AuctionBrowseResponse",
             "AuctionListingSummary",

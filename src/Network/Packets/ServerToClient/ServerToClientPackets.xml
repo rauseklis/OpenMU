@@ -13558,7 +13558,7 @@
       <Structures>
         <Structure>
           <Name>AuctionCurrencyDescriptor</Name>
-          <Length>57</Length>
+          <Length>72</Length>
           <Fields>
             <Field>
               <Index>0</Index>
@@ -13665,6 +13665,56 @@
               <Index>55</Index>
               <Type>ShortLittleEndian</Type>
               <Name>LargePackCount</Name>
+            </Field>
+            <Field>
+              <Index>57</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>StrengthFruitItemType</Name>
+            </Field>
+            <Field>
+              <Index>59</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>AgilityFruitItemType</Name>
+            </Field>
+            <Field>
+              <Index>61</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>VitalityFruitItemType</Name>
+            </Field>
+            <Field>
+              <Index>63</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>EnergyFruitItemType</Name>
+            </Field>
+            <Field>
+              <Index>65</Index>
+              <Type>ShortLittleEndian</Type>
+              <Name>CommandFruitItemType</Name>
+            </Field>
+            <Field>
+              <Index>67</Index>
+              <Type>Byte</Type>
+              <Name>StrengthFruitItemLevel</Name>
+            </Field>
+            <Field>
+              <Index>68</Index>
+              <Type>Byte</Type>
+              <Name>AgilityFruitItemLevel</Name>
+            </Field>
+            <Field>
+              <Index>69</Index>
+              <Type>Byte</Type>
+              <Name>VitalityFruitItemLevel</Name>
+            </Field>
+            <Field>
+              <Index>70</Index>
+              <Type>Byte</Type>
+              <Name>EnergyFruitItemLevel</Name>
+            </Field>
+            <Field>
+              <Index>71</Index>
+              <Type>Byte</Type>
+              <Name>CommandFruitItemLevel</Name>
             </Field>
           </Fields>
         </Structure>

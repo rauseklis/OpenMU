@@ -70,6 +70,7 @@ public class AuctionCurrencyInventorySnapshotTests
         Assert.Multiple(() =>
         {
             Assert.That(snapshot.IsConfigured, Is.True);
+            Assert.That(snapshot.FruitItemType, Is.EqualTo((13 * 512) + 15));
             Assert.That(snapshot.Spendable, Is.EqualTo(new FruitBasket(1, 2, 0, 0, 1)));
         });
     }

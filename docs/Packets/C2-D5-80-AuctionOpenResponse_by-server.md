@@ -33,7 +33,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 
 
 
-Length: 57 Bytes
+Length: 72 Bytes
 
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
@@ -58,6 +58,16 @@ Length: 57 Bytes
 | 51 | 2 | ShortLittleEndian |  | SmallPackCount |
 | 53 | 2 | ShortLittleEndian |  | MediumPackCount |
 | 55 | 2 | ShortLittleEndian |  | LargePackCount |
+| 57 | 2 | ShortLittleEndian |  | StrengthFruitItemType |
+| 59 | 2 | ShortLittleEndian |  | AgilityFruitItemType |
+| 61 | 2 | ShortLittleEndian |  | VitalityFruitItemType |
+| 63 | 2 | ShortLittleEndian |  | EnergyFruitItemType |
+| 65 | 2 | ShortLittleEndian |  | CommandFruitItemType |
+| 67 | 1 | Byte |  | StrengthFruitItemLevel |
+| 68 | 1 | Byte |  | AgilityFruitItemLevel |
+| 69 | 1 | Byte |  | VitalityFruitItemLevel |
+| 70 | 1 | Byte |  | EnergyFruitItemLevel |
+| 71 | 1 | Byte |  | CommandFruitItemLevel |
 
 ### AuctionCurrencyMode Enum
 

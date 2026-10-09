@@ -92,7 +92,7 @@ public sealed record AuctionCurrencyInventorySnapshot(
 /// <summary>
 /// Describes the clean Fruits which the Auction House tender rules can spend.
 /// </summary>
-public readonly record struct AuctionFruitInventorySnapshot(bool IsConfigured, FruitBasket Spendable)
+public readonly record struct AuctionFruitInventorySnapshot(bool IsConfigured, ushort FruitItemType, FruitBasket Spendable)
 {
     /// <summary>
     /// Builds a Fruits snapshot using the same item constraints as transactional tendering.
@@ -105,7 +105,7 @@ public readonly record struct AuctionFruitInventorySnapshot(bool IsConfigured, F
         var fruit = definitions.FirstOrDefault(definition => definition.Group == 13 && definition.Number == 15);
         if (fruit is null)
         {
-            return new AuctionFruitInventorySnapshot(false, default);
+            return new AuctionFruitInventorySnapshot(false, default, default);
         }
 
         var counts = new long[5];
@@ -129,6 +129,7 @@ public readonly record struct AuctionFruitInventorySnapshot(bool IsConfigured, F
 
         return new AuctionFruitInventorySnapshot(
             true,
+            GetItemType(fruit),
             new FruitBasket(
                 counts[(int)FruitComponent.Strength],
                 counts[(int)FruitComponent.Agility],
@@ -136,4 +137,7 @@ public readonly record struct AuctionFruitInventorySnapshot(bool IsConfigured, F
                 counts[(int)FruitComponent.Energy],
                 counts[(int)FruitComponent.Command]));
     }
+
+    private static ushort GetItemType(ItemDefinition definition)
+        => (ushort)((definition.Group * 512) + definition.Number);
 }
