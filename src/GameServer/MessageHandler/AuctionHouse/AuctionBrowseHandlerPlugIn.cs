@@ -146,6 +146,7 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
                 if (items.TryGetValue(row.ItemId, out var item))
                 {
                     var itemLength = Math.Min(serializer.SerializeItem(itemBuffer, item), itemData.Length);
+                    itemLength = ApplyListingOptionSnapshot(itemBuffer, itemLength, row.OptionFlags);
                     itemBuffer.AsSpan(0, itemLength).CopyTo(itemData);
                     summary.ItemDataLength = (byte)itemLength;
                 }
@@ -155,6 +156,99 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Applies the immutable option snapshot kept on an auction listing to the item bytes sent to the browse UI.
+    /// A listed item must keep its visual rarity even if its option configuration is no longer loaded (for example
+    /// after a seasonal configuration change). The extended item wire format is self-describing, so rebuilding its
+    /// optional fields here preserves the original serializer output and fills only snapshot-backed flags.
+    /// </summary>
+    private static int ApplyListingOptionSnapshot(Span<byte> itemData, int itemLength, int optionFlags)
+    {
+        const byte HasSkill = 0x04;
+        const byte HasExcellent = 0x08;
+        const byte HasAncient = 0x10;
+        const byte HasOption = 0x01;
+        const byte HasHarmony = 0x20;
+        const byte HasSockets = 0x80;
+        const int HeaderLength = 5;
+
+        if (itemLength < HeaderLength || itemLength > itemData.Length)
+        {
+            return itemLength;
+        }
+
+        var originalFlags = itemData[4];
+        var snapshotFlags = (byte)optionFlags;
+        var flags = (byte)(originalFlags | (snapshotFlags & (HasSkill | HasExcellent | HasAncient)));
+        if (flags == originalFlags)
+        {
+            return itemLength;
+        }
+
+        Span<byte> rebuilt = stackalloc byte[15];
+        itemData[..HeaderLength].CopyTo(rebuilt);
+        rebuilt[4] = flags;
+        var source = HeaderLength;
+        var destination = HeaderLength;
+
+        if (!CopyOptionalField(itemData, itemLength, rebuilt, originalFlags, flags, HasOption, 0, ref source, ref destination)
+            || !CopyOptionalField(itemData, itemLength, rebuilt, originalFlags, flags, HasExcellent, 0x3F, ref source, ref destination)
+            || !CopyOptionalField(itemData, itemLength, rebuilt, originalFlags, flags, HasAncient, 0x01, ref source, ref destination)
+            || !CopyOptionalField(itemData, itemLength, rebuilt, originalFlags, flags, HasHarmony, 0, ref source, ref destination))
+        {
+            return itemLength;
+        }
+
+        if ((originalFlags & HasSockets) != 0)
+        {
+            if (source >= itemLength)
+            {
+                return itemLength;
+            }
+
+            var socketDescriptor = itemData[source++];
+            if ((flags & HasSockets) != 0)
+            {
+                rebuilt[destination++] = socketDescriptor;
+                var socketCount = socketDescriptor & 0x0F;
+                if (source + socketCount > itemLength || destination + socketCount > rebuilt.Length)
+                {
+                    return itemLength;
+                }
+
+                itemData.Slice(source, socketCount).CopyTo(rebuilt[destination..]);
+                destination += socketCount;
+            }
+        }
+
+        rebuilt[..destination].CopyTo(itemData);
+        return destination;
+    }
+
+    private static bool CopyOptionalField(Span<byte> sourceData, int sourceLength, Span<byte> destinationData,
+        byte originalFlags, byte targetFlags, byte fieldFlag, byte defaultValue, ref int sourceOffset, ref int destinationOffset)
+    {
+        if ((originalFlags & fieldFlag) != 0)
+        {
+            if (sourceOffset >= sourceLength)
+            {
+                return false;
+            }
+
+            var value = sourceData[sourceOffset++];
+            if ((targetFlags & fieldFlag) != 0)
+            {
+                destinationData[destinationOffset++] = value;
+            }
+        }
+        else if ((targetFlags & fieldFlag) != 0)
+        {
+            destinationData[destinationOffset++] = defaultValue;
+        }
+
+        return true;
     }
 
     private static string? DecodeName(Wire.AuctionBrowseRequest request)

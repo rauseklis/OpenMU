@@ -287,6 +287,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.ItemId,
                 l.Version,
                 l.Status,
+                l.OptionFlags,
                 l.StartingStrength,
                 l.StartingAgility,
                 l.StartingVitality,
@@ -380,6 +381,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         var items = await context.Set<Item>().AsNoTracking()
             .Include(i => i.RawDefinition)
             .Include(i => i.RawItemOptions).ThenInclude(o => o.RawItemOption)
+            .Include(i => i.JoinedItemSetGroups).ThenInclude(link => link.ItemOfItemSet)
             .Where(i => itemIds.Contains(i.Id))
             .ToListAsync(cancellationToken);
         return items.ToDictionary(i => i.Id, i => (MUnique.OpenMU.DataModel.Entities.Item)i);
@@ -2386,6 +2388,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.ItemId,
                 l.Version,
                 l.Status,
+                l.OptionFlags,
                 l.StartingStrength,
                 l.StartingAgility,
                 l.StartingVitality,

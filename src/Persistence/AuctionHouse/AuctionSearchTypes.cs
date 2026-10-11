@@ -106,6 +106,7 @@ public readonly record struct AuctionListingRow(
     Guid ItemId,
     int Version,
     byte Status,
+    int OptionFlags,
     long? StartingStrength,
     long? StartingAgility,
     long? StartingVitality,
