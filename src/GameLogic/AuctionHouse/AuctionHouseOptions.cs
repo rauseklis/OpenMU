@@ -21,7 +21,18 @@ public sealed record AuctionHouseOptions
     public int PageSize { get; init; } = 25;
 
     /// <summary>
-    /// Gets the listing fee in basis points of the starting price. The approved fee is 1%, rounded up with a minimum of one unit.
+    /// Gets the flat sale fee: one fixed charge per completed sale, held when the listing is created and returned if
+    /// the item does not sell. It takes over from the percentage fees below when mixed prices go live.
+    /// </summary>
+    public SaleFee SaleFee { get; init; } = SaleFee.Default;
+
+    /// <summary>
+    /// Gets the limits a price has to respect.
+    /// </summary>
+    public PriceLimits PriceLimits { get; init; } = PriceLimits.Default;
+
+    /// <summary>
+    /// Gets the legacy listing fee in basis points of the starting price. The approved fee is 1%, rounded up with a minimum of one unit.
     /// </summary>
     public int ListingFeeBasisPoints { get; init; } = 100;
 

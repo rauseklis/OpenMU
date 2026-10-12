@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameLogic.AuctionHouse;
 
+using System.IO;
 using System.Runtime.InteropServices;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.PlugIns;
@@ -16,7 +17,11 @@ using MUnique.OpenMU.PlugIns;
 [Guid("44B287BD-F981-4918-95F7-27AAF5D69998")]
 public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfiguration<AuctionHouseConfiguration>, ISupportDefaultCustomConfiguration
 {
+    private static readonly TimeSpan IniCheckInterval = TimeSpan.FromSeconds(5);
+
+    private readonly AuctionHouseIniFile _iniFile = new(Path.Combine(AppContext.BaseDirectory, "AuctionHouse.ini"));
     private DateTime _nextRunUtc = DateTime.MinValue;
+    private DateTime _nextIniCheckUtc = DateTime.MinValue;
 
     /// <inheritdoc />
     public AuctionHouseConfiguration? Configuration { get; set; }
@@ -28,8 +33,9 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
     public async ValueTask ExecuteTaskAsync(GameContext gameContext)
     {
         var configuration = this.Configuration ??= new AuctionHouseConfiguration();
-        AuctionHouseConfigurationSource.Current = configuration;
         var now = DateTime.UtcNow;
+        this.RefreshIniFile(gameContext, configuration, now);
+        AuctionHouseConfigurationSource.Current = configuration;
         // Enabled is the kill switch for new player mutations. Existing listings, notifications, operation cleanup,
         // and collections must continue to progress in maintenance mode so no item or escrow can be stranded.
         if (now < this._nextRunUtc)
@@ -58,6 +64,32 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
         catch (Exception exception)
         {
             gameContext.LoggerFactory.CreateLogger<AuctionExpiryPlugIn>().LogError(exception, "Auction House expiry batch failed; it is retried on the next run.");
+        }
+    }
+
+    /// <summary>
+    /// Reads the hand-editable <c>AuctionHouse.ini</c> next to the server whenever it changed, so the owner can adjust
+    /// settings without the admin panel or a restart. The file is created from the current settings on first use.
+    /// </summary>
+    private void RefreshIniFile(GameContext gameContext, AuctionHouseConfiguration configuration, DateTime now)
+    {
+        if (now < this._nextIniCheckUtc)
+        {
+            return;
+        }
+
+        this._nextIniCheckUtc = now + IniCheckInterval;
+        var result = this._iniFile.RefreshIfChanged(configuration);
+        if (result is null)
+        {
+            return;
+        }
+
+        var logger = gameContext.LoggerFactory.CreateLogger<AuctionExpiryPlugIn>();
+        logger.LogInformation("Auction House settings read from {Path}: {Count} applied.", this._iniFile.Path, result.AppliedCount);
+        foreach (var error in result.Errors)
+        {
+            logger.LogWarning("AuctionHouse.ini: {Error}", error);
         }
     }
 

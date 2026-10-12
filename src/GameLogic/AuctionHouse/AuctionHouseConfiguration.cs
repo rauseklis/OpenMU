@@ -32,12 +32,60 @@ public class AuctionHouseConfiguration
     public int PageSize { get; set; } = 25;
 
     /// <summary>
-    /// Gets or sets the listing fee in basis points of the starting price.
+    /// Gets or sets what the flat sale fee is paid in. The fee is held when a listing is created and returned if the
+    /// item does not sell. Only <see cref="SaleFeeCurrency.Zen"/> is charged for now.
+    /// </summary>
+    public SaleFeeCurrency SaleFeeCurrency { get; set; } = SaleFeeCurrency.Zen;
+
+    /// <summary>
+    /// Gets or sets the flat sale fee amount in whole units; zero means no fee.
+    /// </summary>
+    public long SaleFeeAmount { get; set; } = 100_000;
+
+    /// <summary>
+    /// Gets or sets the most components one price may have.
+    /// </summary>
+    public int MaximumPriceComponents { get; set; } = 5;
+
+    /// <summary>
+    /// Gets or sets the smallest Zen quantity in a price.
+    /// </summary>
+    public long ZenMinimumPrice { get; set; } = 1_000;
+
+    /// <summary>
+    /// Gets or sets the largest Zen quantity in a price.
+    /// </summary>
+    public long ZenMaximumPrice { get; set; } = 2_000_000_000;
+
+    /// <summary>
+    /// Gets or sets the smallest quantity of one jewel kind in a price.
+    /// </summary>
+    public long JewelMinimumPrice { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the largest quantity of one jewel kind in a price.
+    /// </summary>
+    public long JewelMaximumPrice { get; set; } = 10_000;
+
+    /// <summary>
+    /// Gets or sets the smallest quantity of one stat fruit kind in a price.
+    /// </summary>
+    public long FruitMinimumPrice { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the largest quantity of one stat fruit kind in a price.
+    /// </summary>
+    public long FruitMaximumPrice { get; set; } = 10_000;
+
+    /// <summary>
+    /// Gets or sets the legacy listing fee in basis points of the starting price. It stays in force until the flat sale
+    /// fee replaces it.
     /// </summary>
     public int ListingFeeBasisPoints { get; set; } = 100;
 
     /// <summary>
-    /// Gets or sets the success fee in basis points of the final sale price.
+    /// Gets or sets the legacy success fee in basis points of the final sale price. It stays in force until the flat
+    /// sale fee replaces it.
     /// </summary>
     public int SuccessFeeBasisPoints { get; set; } = 500;
 
@@ -94,6 +142,17 @@ public class AuctionHouseConfiguration
             PageSize = this.PageSize,
             ListingFeeBasisPoints = this.ListingFeeBasisPoints,
             SuccessFeeBasisPoints = this.SuccessFeeBasisPoints,
+            SaleFee = new SaleFee(this.SaleFeeCurrency, this.SaleFeeAmount),
+            PriceLimits = new PriceLimits
+            {
+                MaximumComponents = this.MaximumPriceComponents,
+                ZenMinimum = this.ZenMinimumPrice,
+                ZenMaximum = this.ZenMaximumPrice,
+                JewelMinimum = this.JewelMinimumPrice,
+                JewelMaximum = this.JewelMaximumPrice,
+                FruitMinimum = this.FruitMinimumPrice,
+                FruitMaximum = this.FruitMaximumPrice,
+            },
             MaximumActiveListingsPerAccount = this.MaximumActiveListingsPerAccount,
             MaximumActiveListingsPerCharacter = this.MaximumActiveListingsPerCharacter,
         };
