@@ -54,6 +54,7 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
         {
             var service = new AuctionHouseService(repository, configuration.ToOptions());
             await service.FinalizeDueListingsAsync(configuration.ExpiryBatchSize).ConfigureAwait(false);
+            await service.ReclassifyListingsAsync(configuration.ExpiryBatchSize).ConfigureAwait(false);
             if (configuration.NotificationsEnabled)
             {
                 await DeliverNotificationsAsync(gameContext, service, configuration).ConfigureAwait(false);

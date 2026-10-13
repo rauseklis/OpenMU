@@ -541,6 +541,15 @@ public sealed class AuctionHouseService
         => this._repository.RepairMissingReturnCollectionsAsync(this._clock(), batchSize, cancellationToken);
 
     /// <summary>
+    /// Re-classifies one batch of listings created before sub-categories existed. Runs even while the feature is disabled.
+    /// </summary>
+    /// <param name="batchSize">The maximum number of listings to change.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of listings changed.</returns>
+    public Task<int> ReclassifyListingsAsync(int batchSize, CancellationToken cancellationToken = default)
+        => this._repository.ReclassifyListingsAsync(batchSize, cancellationToken);
+
+    /// <summary>
     /// Deletes one batch of operation records that are older than the retention and can no longer be replayed to any effect.
     /// </summary>
     /// <param name="retention">How long a record is kept.</param>

@@ -135,6 +135,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.RepairMissingReturnCollectionsAsync(context, now, batchSize, cancellationToken));
 
     /// <inheritdoc />
+    public Task<int> ReclassifyListingsAsync(int batchSize, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.ReclassifyListingsAsync(context, batchSize, cancellationToken));
+
+    /// <inheritdoc />
     public Task<int> PurgeFinishedOperationsAsync(DateTimeOffset cutoff, int batchSize, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.PurgeFinishedOperationsAsync(context, cutoff, batchSize, cancellationToken));
 
@@ -519,6 +523,37 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         }
 
         return new AuctionRepairResult(repaired, skipped);
+    }
+
+    /// <summary>
+    /// Re-classifies one batch of unclassified listings. See <see cref="IAuctionHouseRepository.ReclassifyListingsAsync"/>.
+    /// The listing's version is deliberately left alone, so a bid or buyout in flight is not invalidated.
+    /// </summary>
+    /// <param name="context">The context to write with.</param>
+    /// <param name="batchSize">The maximum number of listings to change.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of listings changed.</returns>
+    public async Task<int> ReclassifyListingsAsync(EntityDataContext context, int batchSize, CancellationToken cancellationToken = default)
+    {
+        var size = Math.Clamp(batchSize, 1, 1000);
+        var rows = await context.Set<AuctionListing>()
+            .Where(l => l.SubCategory == AuctionTaxonomy.AllSubCategories)
+            .OrderBy(l => l.ListingNumber)
+            .Take(size)
+            .ToListAsync(cancellationToken);
+        foreach (var row in rows)
+        {
+            var classification = AuctionTaxonomy.Classify(row.ItemGroup, row.ItemNumber);
+            row.Category = (byte)classification.Category;
+            row.SubCategory = classification.SubCategory;
+        }
+
+        if (rows.Count > 0)
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        return rows.Count;
     }
 
     /// <summary>

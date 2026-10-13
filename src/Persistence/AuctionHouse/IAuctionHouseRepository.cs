@@ -180,6 +180,15 @@ public interface IAuctionHouseRepository
     Task<AuctionRepairResult> RepairMissingReturnCollectionsAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Re-classifies one batch of listings which were created before sub-categories existed (sub-category 255), from their
+    /// stored item group and number. Idempotent: a listing is changed once, and a finished backlog changes nothing.
+    /// </summary>
+    /// <param name="batchSize">The maximum number of listings to change.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of listings changed.</returns>
+    Task<int> ReclassifyListingsAsync(int batchSize, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Removes an active listing administratively: its item returns to the seller, any escrowed bid is refunded, and an audit row
     /// records the administrator and the reason.
     /// </summary>
