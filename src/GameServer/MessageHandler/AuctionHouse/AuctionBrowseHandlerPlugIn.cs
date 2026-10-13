@@ -56,6 +56,7 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
         var search = new AuctionListingSearch(
             Currency: allCurrencies ? null : (byte)request.CurrencyMode,
             Category: request.Category == AllCategories ? null : request.Category,
+            SubCategory: AuctionTaxonomy.ToSubCategoryFilter(request.Category, request.SubCategory),
             Sort: (AuctionSearchSort)(int)request.Sort,
             Page: Math.Max(1, (int)request.Page),
             Name: DecodeName(request),
