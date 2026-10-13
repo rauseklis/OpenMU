@@ -62,6 +62,12 @@ public class AuctionListing
     public byte Category { get; set; }
 
     /// <summary>
+    /// Gets or sets the sub-category snapshot within <see cref="Category"/>. 255 means the listing has not been classified into
+    /// a sub-category yet; the maintenance task fills it in.
+    /// </summary>
+    public byte SubCategory { get; set; } = 255;
+
+    /// <summary>
     /// Gets or sets the scalar starting price, used by Zen and jewel modes.
     /// </summary>
     public long StartingPrice { get; set; }

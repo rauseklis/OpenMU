@@ -68,6 +68,34 @@ public class AuctionSearchTests
     }
 
     /// <summary>
+    /// Verifies a sub-category narrows the category to exactly the matching listings.
+    /// </summary>
+    [Test]
+    public async Task SubCategoryNarrowsTheCategory()
+    {
+        await this.List(currency: 0, category: 1, startingPrice: 10, subCategory: 3);
+        await this.List(currency: 0, category: 1, startingPrice: 20, subCategory: 4);
+        await this.List(currency: 0, category: 0, startingPrice: 30, subCategory: 3);
+
+        var gloves = await this.Search(new AuctionListingSearch(Currency: 0, Category: 1, SubCategory: 3, PageSize: 1000));
+
+        Assert.That(gloves.Rows.Count(r => r.SellerAccountId == this._sellerAccountId), Is.EqualTo(1));
+    }
+
+    /// <summary>
+    /// Verifies a sub-category the category does not have is an empty page, not an error.
+    /// </summary>
+    [Test]
+    public async Task UnknownSubCategoryReturnsNoRows()
+    {
+        await this.List(currency: 0, category: 1, startingPrice: 10, subCategory: 3);
+
+        var page = await this.Search(new AuctionListingSearch(Currency: 0, Category: 1, SubCategory: 99, PageSize: 1000));
+
+        Assert.That(page.Rows.Count(r => r.SellerAccountId == this._sellerAccountId), Is.Zero);
+    }
+
+    /// <summary>
     /// Verifies the marketplace view can return matching listings priced in different currencies. Mixed-currency
     /// rows are intentionally only ordered by a currency-neutral field such as expiry.
     /// </summary>
@@ -243,7 +271,7 @@ public class AuctionSearchTests
             Throws.TypeOf<ArgumentException>());
     }
 
-    private async Task<Guid> List(byte currency, byte category, long startingPrice, int hours = 24)
+    private async Task<Guid> List(byte currency, byte category, long startingPrice, int hours = 24, byte subCategory = 255)
     {
         var now = DateTimeOffset.UtcNow;
         var created = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
@@ -257,7 +285,8 @@ public class AuctionSearchTests
             Category: category,
             StartingPrice: startingPrice,
             CreatedAt: now,
-            EndsAt: now.AddHours(hours)));
+            EndsAt: now.AddHours(hours),
+            SubCategory: subCategory));
         return created.ListingId;
     }
 

@@ -685,6 +685,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("smallint");
 
+                    b.Property<byte>("SubCategory")
+                        .HasColumnType("smallint");
+
                     b.Property<int>("Version")
                         .HasColumnType("integer");
 

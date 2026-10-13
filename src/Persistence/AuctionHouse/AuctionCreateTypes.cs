@@ -47,6 +47,7 @@ public readonly record struct AuctionCreateResult(AuctionCreateOutcome Outcome, 
 /// <param name="StartingPrice">The scalar starting price.</param>
 /// <param name="CreatedAt">The creation time, in UTC.</param>
 /// <param name="EndsAt">The expiry, in UTC.</param>
+/// <param name="SubCategory">The sub-category, 255 until it has been classified.</param>
 public readonly record struct AuctionListingDraft(
     Guid OperationId,
     Guid AccountId,
@@ -59,4 +60,5 @@ public readonly record struct AuctionListingDraft(
     long StartingPrice,
     DateTimeOffset CreatedAt,
     DateTimeOffset EndsAt,
-    long? BuyoutPrice = null);
+    long? BuyoutPrice = null,
+    byte SubCategory = 255);

@@ -68,6 +68,7 @@ public enum AuctionItemOptionFlags : ushort
 /// <param name="MaxRemainingHours">The maximum whole hours remaining, or zero for no maximum.</param>
 /// <param name="ClassMask">The acceptable base-character-class bits, or zero for every class.</param>
 /// <param name="OptionFlags">The item-option flags which must all be present.</param>
+/// <param name="SubCategory">The sub-category filter within <paramref name="Category"/>, or <c>null</c> for every sub-category.</param>
 public readonly record struct AuctionListingSearch(
     byte? Currency,
     byte? Category = null,
@@ -83,7 +84,8 @@ public readonly record struct AuctionListingSearch(
     FruitBasket? MaximumFruits = null,
     int MaxRemainingHours = 0,
     uint ClassMask = 0,
-    AuctionItemOptionFlags OptionFlags = AuctionItemOptionFlags.None);
+    AuctionItemOptionFlags OptionFlags = AuctionItemOptionFlags.None,
+    byte? SubCategory = null);
 
 /// <summary>
 /// The browse-row summary of a listing.

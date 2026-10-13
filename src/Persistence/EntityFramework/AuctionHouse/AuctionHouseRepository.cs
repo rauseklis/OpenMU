@@ -600,6 +600,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             Status = 0,
             Currency = draft.Currency,
             Category = draft.Category,
+            SubCategory = draft.SubCategory,
             StartingPrice = draft.StartingPrice,
             CreatedAt = draft.CreatedAt,
             OriginalEndsAt = draft.EndsAt,
@@ -2285,6 +2286,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             query = query.Where(l => l.Category == category);
         }
 
+        if (search.SubCategory is { } subCategory)
+        {
+            query = query.Where(l => l.SubCategory == subCategory);
+        }
+
         var normalizedName = search.Name?.Trim().ToUpperInvariant();
         if (!string.IsNullOrEmpty(normalizedName))
         {
@@ -2463,7 +2469,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionItemListingResult(AuctionItemListingOutcome.InvalidNote, Guid.Empty, 0);
         }
 
-        var category = AuctionCategoryClassifier.Classify(facts.ItemGroup, facts.ItemNumber);
+        var classification = AuctionTaxonomy.Classify(facts.ItemGroup, facts.ItemNumber);
         if (!isEligible(facts))
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.NotEligible, Guid.Empty, 0);
@@ -2511,7 +2517,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             SellerIp = draft.SellerIp,
             Status = 0,
             Currency = draft.Currency,
-            Category = (byte)category,
+            Category = (byte)classification.Category,
+            SubCategory = classification.SubCategory,
             StartingPrice = draft.StartingPrice,
             StartingStrength = draft.StartingFruits?.Strength ?? 0,
             StartingAgility = draft.StartingFruits?.Agility ?? 0,
