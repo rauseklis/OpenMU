@@ -28,11 +28,11 @@ public class AuctionHousePacketDefinitionTests
         yield return new TestCaseData(
             "AuctionBrowseRequest",
             "01",
-            "104",
+            "105",
             "4:IntegerLittleEndian:RequestId;8:ShortLittleEndian:Page;10:Byte:Category;11:Enum:CurrencyMode;"
             + "12:Enum:Sort;13:IntegerLittleEndian:ClassMask;17:Byte:LevelMinimum;18:Byte:LevelMaximum;"
             + "19:ShortLittleEndian:OptionFlags;" + Amount(21, "Minimum") + ";" + Amount(45, "Maximum") + ";"
-            + "69:ShortLittleEndian:MaxRemainingHours;71:Byte:NameLength;72:Binary:Name[32]");
+            + "69:ShortLittleEndian:MaxRemainingHours;71:Byte:NameLength;72:Binary:Name[32];104:Byte:SubCategory");
         yield return new TestCaseData("AuctionDetailRequest", "02", "16", "4:IntegerLittleEndian:RequestId;8:LongLittleEndian:ListingId");
         yield return new TestCaseData(
             "AuctionCreateRequest",
@@ -244,7 +244,7 @@ public class AuctionHousePacketDefinitionTests
     {
         yield return new TestCaseData("AuctionResult", "Success=0;Disabled=1;NotAuthenticated=2;StateRestricted=3;LevelTooLow=4;AccountTooNew=5;AccountRestricted=6;RateLimited=7;InvalidRequest=8;UnsupportedCurrency=9;CurrencyConfigurationInvalid=10;InvalidDuration=11;InvalidPrice=12;InvalidFruitBasket=13;ItemNotFound=14;ItemNotEligible=15;ListingLimitReached=16;InsufficientCurrency=17;ListingNotFound=18;ListingNotActive=19;ListingExpired=20;StaleListing=21;SelfTrade=22;AlreadyHighestBidder=23;BidTooLow=24;BuyoutUnavailable=25;CannotCancelWithBid=26;CollectionNotFound=27;InvalidClaimQuantity=28;InventoryFull=29;MoneyLimit=30;AlreadyProcessed=31;ServiceUnavailable=32");
         yield return new TestCaseData("AuctionCurrencyMode", "Zen=0;Chaos=1;Bless=2;Soul=3;Life=4;Creation=5;Guardian=6;Harmony=7;Fruits=8");
-        yield return new TestCaseData("AuctionCategory", "Weapon=0;Armor=1;Wing=2;PetHelper=3;JewelMaterial=4;Consumable=5;Miscellaneous=6");
+        yield return new TestCaseData("AuctionCategory", "Weapon=0;Armor=1;Wing=2;PetHelper=3;JewelMaterial=4;Consumable=5;Miscellaneous=6;ScrollOrb=7");
         yield return new TestCaseData("AuctionSort", "PriceAscending=0;PriceDescending=1;EndingSoonest=2;Newest=3");
         yield return new TestCaseData("AuctionListingStatus", "Active=0;Sold=1;Expired=2;Cancelled=3;AdminRemoved=4");
         yield return new TestCaseData("AuctionCollectionKind", "PurchasedItem=0;ReturnedItem=1;SaleProceeds=2;OutbidRefund=3;TenderChange=4;AdminRefund=5");

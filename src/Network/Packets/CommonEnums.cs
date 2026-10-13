@@ -611,6 +611,11 @@ using static System.Buffers.Binary.BinaryPrimitives;    /// <summary>
         /// Miscellaneous.
         /// </summary>
             Miscellaneous = 6,
+
+        /// <summary>
+        /// ScrollOrb.
+        /// </summary>
+            ScrollOrb = 7,
     }
 
     /// <summary>

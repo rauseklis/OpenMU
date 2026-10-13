@@ -3945,7 +3945,7 @@ public class PacketStructureTests
     public void AuctionBrowseRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 104;
+        const int expectedLength = 105;
         var actualLength = AuctionBrowseRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -4046,6 +4046,10 @@ public class PacketStructureTests
         // Validate field 'Name' boundary
         Assert.That(72 + 32, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'Name' exceeds packet boundary");
+        
+        // Validate field 'SubCategory' boundary
+        Assert.That(104 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'SubCategory' exceeds packet boundary");
     }
 
     /// <summary>

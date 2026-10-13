@@ -4287,7 +4287,7 @@
       <Code>D5</Code>
       <SubCode>01</SubCode>
       <Name>AuctionBrowseRequest</Name>
-      <Length>104</Length>
+      <Length>105</Length>
       <Direction>ClientToServer</Direction>
       <SentWhen>Auction House request AuctionBrowseRequest (sub 01).</SentWhen>
       <CausedReaction>Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.</CausedReaction>
@@ -4414,6 +4414,11 @@
           <Type>Binary</Type>
           <Name>Name</Name>
           <Length>32</Length>
+        </Field>
+        <Field>
+          <Index>104</Index>
+          <Type>Byte</Type>
+          <Name>SubCategory</Name>
         </Field>
       </Fields>
     </Packet>

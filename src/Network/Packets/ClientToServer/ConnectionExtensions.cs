@@ -5630,11 +5630,12 @@ public static class ConnectionExtensions
     /// <param name="maxRemainingHours">The max remaining hours.</param>
     /// <param name="nameLength">The name length.</param>
     /// <param name="name">The name.</param>
+    /// <param name="subCategory">The sub category.</param>
     /// <remarks>
     /// Is sent by the client when: Auction House request AuctionBrowseRequest (sub 01).
     /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
     /// </remarks>
-    public static async ValueTask SendAuctionBrowseRequestAsync(this IConnection? connection, uint @requestId, ushort @page, byte @category, AuctionCurrencyMode @currencyMode, AuctionSort @sort, uint @classMask, byte @levelMinimum, byte @levelMaximum, ushort @optionFlags, uint @minimumScalar, uint @minimumStrength, uint @minimumAgility, uint @minimumVitality, uint @minimumEnergy, uint @minimumCommand, uint @maximumScalar, uint @maximumStrength, uint @maximumAgility, uint @maximumVitality, uint @maximumEnergy, uint @maximumCommand, ushort @maxRemainingHours, byte @nameLength, Memory<byte> @name)
+    public static async ValueTask SendAuctionBrowseRequestAsync(this IConnection? connection, uint @requestId, ushort @page, byte @category, AuctionCurrencyMode @currencyMode, AuctionSort @sort, uint @classMask, byte @levelMinimum, byte @levelMaximum, ushort @optionFlags, uint @minimumScalar, uint @minimumStrength, uint @minimumAgility, uint @minimumVitality, uint @minimumEnergy, uint @minimumCommand, uint @maximumScalar, uint @maximumStrength, uint @maximumAgility, uint @maximumVitality, uint @maximumEnergy, uint @maximumCommand, ushort @maxRemainingHours, byte @nameLength, Memory<byte> @name, byte @subCategory)
     {
         if (connection is null)
         {
@@ -5669,6 +5670,7 @@ public static class ConnectionExtensions
             packet.MaxRemainingHours = @maxRemainingHours;
             packet.NameLength = @nameLength;
             @name.Span.CopyTo(packet.Name);
+            packet.SubCategory = @subCategory;
 
             return packet.Header.Length;
         }

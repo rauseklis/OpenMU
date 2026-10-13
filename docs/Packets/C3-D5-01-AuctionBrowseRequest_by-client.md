@@ -13,7 +13,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
 | 0 | 1 |   Byte   | 0xC3  | [Packet type](PacketTypes.md) |
-| 1 | 1 |    Byte   |   104   | Packet header - length of the packet |
+| 1 | 1 |    Byte   |   105   | Packet header - length of the packet |
 | 2 | 1 |    Byte   | 0xD5  | Packet header - packet type identifier |
 | 3 | 1 |    Byte   | 0x01  | Packet header - sub packet type identifier |
 | 4 | 4 | IntegerLittleEndian |  | RequestId |
@@ -40,6 +40,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 | 69 | 2 | ShortLittleEndian |  | MaxRemainingHours |
 | 71 | 1 | Byte |  | NameLength |
 | 72 | 32 | Binary |  | Name |
+| 104 | 1 | Byte |  | SubCategory |
 
 ### AuctionCurrencyMode Enum
 

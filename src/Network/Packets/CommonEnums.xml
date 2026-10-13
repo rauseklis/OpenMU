@@ -602,6 +602,11 @@
           <Description>Miscellaneous.</Description>
           <Value>6</Value>
         </EnumValue>
+        <EnumValue>
+          <Name>ScrollOrb</Name>
+          <Description>ScrollOrb.</Description>
+          <Value>7</Value>
+        </EnumValue>
       </Values>
     </Enum>
     <Enum>

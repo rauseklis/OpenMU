@@ -127,3 +127,4 @@ Auction House categories.
 | 4 | JewelMaterial | JewelMaterial. |
 | 5 | Consumable | Consumable. |
 | 6 | Miscellaneous | Miscellaneous. |
+| 7 | ScrollOrb | ScrollOrb. |

@@ -17732,7 +17732,7 @@ public readonly struct AuctionBrowseRequest
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 104;
+    public static int Length => 105;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -17952,6 +17952,15 @@ public readonly struct AuctionBrowseRequest
     public Span<byte> Name
     {
         get => this._data.Slice(72, 32).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the sub category.
+    /// </summary>
+    public byte SubCategory
+    {
+        get => this._data.Span[104];
+        set => this._data.Span[104] = value;
     }
 
     /// <summary>
