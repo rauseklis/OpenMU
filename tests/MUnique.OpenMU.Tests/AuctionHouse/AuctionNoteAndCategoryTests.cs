@@ -77,7 +77,7 @@ public class AuctionNoteAndCategoryTests
     [TestCase(12, 0, AuctionCategory.Wing)]
     [TestCase(13, 0, AuctionCategory.PetHelper)]
     [TestCase(14, 0, AuctionCategory.Consumable)]
-    [TestCase(15, 0, AuctionCategory.Miscellaneous)]
+    [TestCase(15, 0, AuctionCategory.ScrollOrb)]
     [TestCase(16, 0, AuctionCategory.Miscellaneous)]
     public void GroupsClassifyByDefaultRanges(int group, int number, AuctionCategory category)
     {

@@ -1,0 +1,1839 @@
+0	0	Kris
+0	1	Short Sword
+0	2	Rapier
+0	3	Katana
+0	4	Sword of Assassin
+0	5	Blade
+0	6	Gladius
+0	7	Falchion
+0	8	Serpent Sword
+0	9	Sword of Salamander
+0	10	Light Saber
+0	11	Legendary Sword
+0	12	Heliacal Sword
+0	13	Double Blade
+0	14	Lighting Sword
+0	15	Giant Sword
+0	16	Sword of Destruction
+0	17	Dark Breaker
+0	18	Thunder Blade
+0	19	Divine Sword of Archangel
+0	20	Knight Blade
+0	21	Dark Reign Blade
+0	22	Bone Blade
+0	23	Explosion Blade
+0	24	Daybreak
+0	25	Sword Dancer
+0	26	Flameberge
+0	27	Sword Breaker
+0	28	Rune Bastard Sword
+0	31	Rune Blade
+0	32	Sacred Glove
+0	33	Holly Storm Claws
+0	34	Piercing Glove
+0	35	Phoenix Soul Star
+0	50	Sonic Blade
+0	51	Cyclone Sword
+0	52	Blast Break
+0	53	Asura Sword
+0	54	BlessedDivine Sword
+0	55	BloodAngel Sword
+0	56	DarkAngel Sword
+0	57	HolyAngel Sword
+0	58	Awakening Soul Sword
+0	59	Blue Eye Sword
+0	60	Silver Heart Sword
+0	61	BloodAngel MagicSword
+0	62	DarkAngel MagicSword
+0	63	HolyAngel MagicSword
+0	64	Awakening Soul MagicSword
+0	65	Blue Eye MagicSword
+0	66	Silver Heart MagicSword
+0	67	Mantiacore Sword
+0	68	Mantiacore MagicSword
+0	69	MantiacoreD MagicSword
+0	70	Brilliant Sword
+0	71	Brilliant MagicSword
+0	72	BrilliantD MagicSword
+0	73	Apocalypse Sword
+0	74	Apocalypse MagicSword
+0	75	ApocalypseD MagicSword
+0	76	BloodAngelD MagicSword
+0	77	DarkAngelD MagicSword
+0	78	HolyAngelD MagicSword
+0	79	AwakeningD MagicSword
+0	80	Blue EyeD MagicSword
+0	81	Silver heartD MagicSword
+0	82	Lightning Sword
+0	83	Lightning MagicSword
+0	84	LightningD MagicSword
+0	100	Pantera Claws
+0	101	Devast Claws
+0	102	BloodAngel Claws
+0	103	DarkAngel Claws
+0	104	HolyAngel Claws
+0	105	Arch Divine Claws
+0	106	Blessed Divine Claws
+0	107	Awakening Claws
+0	108	Aura Claws
+0	110	BloodyDragon Claws
+0	111	Blue Eye Claws
+0	112	Silver Heart Claws
+0	113	Mantiacore Claws
+0	114	Brilliant Claws
+0	115	Apocalypse Claws
+0	116	Lightning Claws
+0	350	HolyAngel Sword(Divine)
+0	351	BlessedDivine Sword(Divine)
+0	352	BlessedDivine Sword(Relic)
+0	353	HolyAngel Sword(Relic)
+0	354	Blessed MagicSword(Divine)
+0	355	Holy MagicSword(Relic)
+0	356	Blessed MagicSword(Relic)
+0	357	Holy MagicSword(Divine)
+0	358	Tier12nn
+0	359	Tier12Gre
+0	360	SwordGhost
+1	0	Small Axe
+1	1	Hand Axe
+1	2	Double Axe
+1	3	Tomahawk
+1	4	Elven Axe
+1	5	Battle Axe
+1	6	Nikea Axe
+1	7	Larkan Axe
+1	8	Crescent Axe
+2	0	Mace
+2	1	Morning Star
+2	2	Flail
+2	3	Great Hammer
+2	4	Crystal Morning Star
+2	5	Crystal Sword
+2	6	Chaos Dragon Axe
+2	7	Elemental Mace
+2	8	Battle Scepter
+2	9	Master Scepter
+2	10	Great Scepter
+2	11	Lord Scepter
+2	12	Great Lord Scepter
+2	13	Divine Scepter of Archangel
+2	14	Soleil Sceptor
+2	15	Shining Scepter
+2	16	Frost Mace
+2	17	Absolute Scepter
+2	18	Striker Scepter
+2	20	Thunderbolt
+2	21	Horn Of Steal
+2	22	BlessedDivine Scepter
+2	23	BloodAngel Scepter
+2	24	DarkAngel Scepter
+2	25	HolyAngel Scepter
+2	26	Awakening Soul Scepter
+2	27	Blue Eye Scepter
+2	28	Silver Heart Mace
+2	29	Silver Heart Scepter
+2	30	Mantiacore Scepter
+2	31	Brilliant Scepter
+2	32	Apocalypse Scepter
+2	33	Lightning Scepter
+2	300	Red Mace of Emberion
+2	301	Blue Mace of Emberion
+2	302	BlessedDivine Scepter(Relic)
+2	303	BlessedDivine Scepter(Divine)
+2	304	HolyAngel Scepter(Relic)
+2	305	HolyAngel Scepter(Divine)
+3	0	Light Spear
+3	1	Spear
+3	2	Dragon Lance
+3	3	Giant Trident
+3	4	Serpent Spear
+3	5	Double Poleaxe
+3	6	Halberd
+3	7	Berdysh
+3	8	Great Scythe
+3	9	Bill of Balrog
+3	10	Dragon Spear
+3	11	Brova
+3	15	Magnus Peer
+3	40	Baruba Red
+3	41	Baruba Blue
+4	0	Short Bow
+4	1	Bow
+4	2	Elven Bow
+4	3	Battle Bow
+4	4	Tiger Bow
+4	5	Silver Bow
+4	6	Chaos Nature Bow
+4	7	Bolt
+4	8	Crossbow
+4	9	Golden Crossbow
+4	10	Arquebus
+4	11	Light Crossbow
+4	12	Serpent Crossbow
+4	13	Bluewing Crossbow
+4	14	Aquagold Crossbow
+4	15	Arrow
+4	16	Saint Crossbow
+4	17	Celestial Bow
+4	18	Divine Crossbow of Archangel
+4	19	Great Reign Crossbow
+4	20	Arrow Viper Bow
+4	21	Sylph Wind Bow
+4	22	Albatross Bow
+4	23	Dark Stinger
+4	24	Aileen Bow
+4	25	Devil Crossbow
+4	26	Angelic Bow
+4	28	BloodAngel Bow
+4	29	DarkAngel Bow
+4	30	HolyAngel Bow
+4	31	Awakening Soul Bow
+4	32	Blue Eye Bow
+4	33	Silver Heart Bow
+4	34	BlessedDivine CrossBow
+4	35	Mantiacore Bow
+4	36	Brilliant Bow
+4	37	Apocalypse Bow
+4	38	Lightning Bow
+4	300	HolyAngel Bow(Relic)
+4	301	HolyAngel Bow(Divine)
+4	302	BlessedDivine Bow(Relic)
+4	303	BlessedDivine Bow(Divine)
+5	0	Skull Staff
+5	1	Angelic Staff
+5	2	Serpent Staff
+5	3	Thunder Staff
+5	4	Gorgon Staff
+5	5	Legendary Staff
+5	6	Staff of Resurrection
+5	7	Chaos Lighting Staff
+5	8	Staff of Destruction
+5	9	Dragon Soul Staff
+5	10	Divine Staff of Archangel
+5	11	Staff of Kundun
+5	12	Grand Viper Staff
+5	13	Platina Staff
+5	14	Mystery Stick
+5	15	Violent Wind Stick
+5	16	Red Wing Stick
+5	17	Ancient Stick
+5	18	Demonic Stick
+5	19	Storm Blitz Stick
+5	20	Eternal Wing Stick
+5	21	Book of Samut
+5	22	Book of Neil
+5	23	Book of Lagle
+5	30	Deadly Staff
+5	31	Inberial Staff
+5	32	Summon Spirit Stick
+5	33	Chromatic Staff
+5	34	Raven Stick
+5	35	Miracle Staff
+5	36	Divine Stick of Archangel
+5	37	Spite Staff
+5	41	Soulbringer Stick
+5	42	BleesedDivine Staff
+5	43	BleesedDivine Stick
+5	44	BloodAngel Staff
+5	45	DarkAngel Staff
+5	46	HolyAngel Stick
+5	47	HolyAngel Staff
+5	48	BloodAngel Stick
+5	49	DarkAngel Stick
+5	50	Awakening Soul Staff
+5	51	Awakening Soul Stick
+5	52	Blue Eye Stick
+5	53	Blue Eye Staff
+5	54	Silver Heart Stick
+5	55	Silver Heart Staff
+5	56	Mantiacore Staff
+5	57	Mantiacore Stick
+5	58	Brilliant Staff
+5	59	Brilliant Stick
+5	60	Apocalypse Staff
+5	61	Apocalypse Stick
+5	62	Lightning Staff
+5	63	Lightning Stick
+5	300	BleesedDivine Staff(Relic)
+5	301	BleesedDivine Staff(Divine)
+5	302	HolyAngel Staff(Relic)
+5	303	HolyAngel Staff(Divine)
+5	304	BleesedDivine Stick(Relic)
+5	305	BleesedDivine Stick(Divine)
+5	306	HolyAngel Stick(Relic)
+5	307	HolyAngel Stick(Divine)
+6	0	Small Shield
+6	1	Horn Shield
+6	2	Kite Shield
+6	3	Elven Shield
+6	4	Buckler
+6	5	Dragon Slayer Shield
+6	6	Skull Shield
+6	7	Spiked Shield
+6	8	Tower Shield
+6	9	Plate Shield
+6	10	Large Round Shield
+6	11	Serpent Shield
+6	12	Bronze Shield
+6	13	Dragon Shield
+6	14	Legendary Shield
+6	15	Grand Soul Shield
+6	16	Elemental Shield
+6	17	Crimson Glory
+6	18	Salamander Shield
+6	19	Frost Barrier
+6	20	Guardian Shield
+6	21	Cross Shield
+6	22	Dark Evil Shield
+6	23	Lazy Wind Shield
+6	24	Light Lord Shield
+6	25	Magic Knight Shield
+6	26	Ambition Shield
+6	27	Bloodangel Shield
+6	28	Darkangel Shield
+6	29	Holyangel Shield
+6	30	Soul Shield
+6	31	Blue Eye Shield
+6	32	Silver Heart Shield
+6	33	Mantiacore Shield
+6	34	Brilliant Shield
+6	35	Bloodangel Elf Shield
+6	36	Darkangel Elf Shield
+6	37	Holyangel Elf Shield
+6	38	Soul Elf Shield
+6	39	Blue Eye Elf Shield
+6	40	Silver Heart Elf Shield
+6	41	Mantiacore Elf Shield
+6	42	Brilliant Elf Shield
+6	43	Apocalypse Shield
+6	44	Apocalypse Elf Shield
+6	45	Lightning Shield
+6	46	Lightning Elf Shield
+7	0	Bronze Helm
+7	1	Dragon Helm
+7	2	Pad Helm
+7	3	Legendary Helm
+7	4	Bone Helm
+7	5	Leather Helm
+7	6	Scale Helm
+7	7	Sphinx Mask
+7	8	Brass Helm
+7	9	Plate Helm
+7	10	Vine Helm
+7	11	Silk Helm
+7	12	Wind Helm
+7	13	Spirit Helm
+7	14	Guardian Helm
+7	16	Black Dragon Helm
+7	17	Dark Phoenix Helm
+7	18	Grand Soul Helm
+7	19	Divine Helm
+7	21	Great Dragon Helm
+7	22	Dark Soul Helm
+7	24	Red Spirit Helm
+7	25	Light Plate Mask
+7	26	Adamantine Mask
+7	27	Dark Steel Mask
+7	28	Dark Master Mask
+7	29	Dragon Knight Helm
+7	30	Venom Mist Helm
+7	31	Sylphid Ray Helm
+7	33	Sunlight Mask
+7	34	Ashcrow Helm
+7	35	Eclipse Helm
+7	36	Iris Helm
+7	38	Glorious Mask
+7	39	Violent Wind Helm
+7	40	Red Wing Helm
+7	41	Ancient Helm
+7	42	Demonic Helm
+7	43	Storm Blitz Helm
+7	44	Eternal Helm
+7	45	Titan Helm
+7	46	Brave Helm
+7	49	Seraphim Helm
+7	50	faith Helm
+7	51	Royal Mask
+7	52	Hades Helm
+7	53	Queen Helm
+7	59	Sacred Helm
+7	60	Storm Hard Helm
+7	61	Piercing Helm
+7	62	Lucky Scale Helm
+7	63	Lucky Silk Helm
+7	64	Lucky Sphinx Helm
+7	65	Lucky Violent Wind Helm
+7	66	Lucky Dark Soul Helm
+7	67	Lucky Dragon Helm
+7	68	Lucky Guardian Helm
+7	69	Lucky Legendary Helm
+7	70	Lucky Red Wing Helm
+7	72	Lucky Storm Hard Helm
+7	73	Phoenix Soul Helm
+7	89	Lazy Wind Helm
+7	90	Dark Devil Helm
+7	91	Stormwing Helm
+7	92	Sticky Helm
+7	94	Ambition Mask
+7	95	Succubus Helm
+7	96	BloodyDragon Helm
+7	97	Light Lord Helmet
+7	98	Tigris Helm
+7	99	Crimson Skull Helm
+7	100	Bloodangel Wizard Helm
+7	101	Bloodangel Knight Helm
+7	102	Bloodangel Elf Helm
+7	104	Bloodangel Lord Helm
+7	105	Bloodangel Summoner Helm
+7	106	Bloodangel Fighter Helm
+7	107	Darkangel Wizard Helm
+7	108	Darkangel Knight Helm
+7	109	Darkangel Elf Helm
+7	111	Darkangel Lord Helm
+7	112	Darkangel Summoner Helm
+7	113	Darkangel Fighter Helm
+7	114	Holyangel Wizard Helm
+7	115	Holyangel Knight Helm
+7	116	Holyangel Elf Helm
+7	117	Holyangel Lord Helm
+7	118	Holyangel Summoner Helm
+7	119	Holyangel Fighter Helm
+7	121	Awakening Soul Wizard Helm
+7	122	Awakening Soul Knight Helm
+7	123	Awakening Soul Elf Helm
+7	125	Awakening Soul Lord Helm
+7	126	Awakening Soul Summoner Helm
+7	127	Awakening Soul Fighter Helm
+7	128	Blue Eye Wizard Helm
+7	129	Blue Eye Knight Helm
+7	130	Blue Eye Elf Helm
+7	132	Blue Eye Lord Helm
+7	133	Blue Eye Summoner Helm
+7	134	Blue Eye Fighter Helm
+7	135	Silver Heart Wizard Helm
+7	136	Silverheart Knight Helm
+7	137	Silverheart Elf Helm
+7	139	Silverheart Lord Helm
+7	140	Silverheart Summoner Helm
+7	141	Silverheart Fighter Helm
+7	142	Manticore Wizard Helm
+7	143	Manticore Knight Helm
+7	144	Manticore Elf Helm
+7	146	Manticore Lord Helm
+7	147	Manticore Summon Helm
+7	148	Manticore Fighter Helm
+7	149	Brilliant Wizard Helm
+7	150	Brilliant Knight Helm
+7	151	Brilliant Elf Helm
+7	153	Brilliant Lord Helm
+7	154	Brilliant Summon Helm
+7	155	Brilliant Fighter Helm
+7	156	Apocalypse Wizard Helm
+7	157	Apocalypse Knight Helm
+7	158	Apocalypse Elf Helm
+7	160	Apocalypse Lord Helm
+7	161	Apocalypse Summon Helm
+7	162	Apocalypse Fighter Helm
+7	163	Lightning Wizard Helm
+7	164	Lightning Knight Helm
+7	165	Lightning Elf Helm
+7	167	Lightning Lord Helm
+7	168	Lightning Summon Helm
+7	169	Lightning Fighter Helm
+7	300	Titan Helm(380)
+7	301	Brave Helm(380
+7	304	Seraphim Helm(380)
+7	305	faith Helm(380)
+7	306	Royal Mask(380)
+7	307	Hades Helm(380)
+7	308	Queen Helm(380)
+7	309	New Dragon Helm
+7	310	New Guardian Helm
+7	311	New Legendary Helm
+8	0	Bronze Armor
+8	1	Dragon Armor
+8	2	Pad Armor
+8	3	Legendary Armor
+8	4	Bone Armor
+8	5	Leather Armor
+8	6	Scale Armor
+8	7	Sphinx Armor
+8	8	Brass Armor
+8	9	Plate Armor
+8	10	Vine Armor
+8	11	Silk Armor
+8	12	Wind Armor
+8	13	Spirit Armor
+8	14	Guardian Armor
+8	15	Storm Crow Armor
+8	16	Black Dragon Armor
+8	17	Dark Phoenix Armor
+8	18	Grand Soul Armor
+8	19	Divine Armor
+8	20	Thunder Hawk Armor
+8	21	Great Dragon Armor
+8	22	Dark Soul Armor
+8	23	Hurricane Armor
+8	24	Red Sprit Armor
+8	25	Light Plate Armor
+8	26	Adamantine Armor
+8	27	Dark Steel Armor
+8	28	Dark Master Armor
+8	29	Dragon Knight Armor
+8	30	Venom Mist Armor
+8	31	Sylphid Ray Armor
+8	32	Volcano Armor
+8	33	Sunlight Armor
+8	34	Ashcrow Armor
+8	35	Eclipse Armor
+8	36	Iris Armor
+8	37	Valiant Armor
+8	38	Glorious Armor
+8	39	Violent Wind Armor
+8	40	Red Wing Armor
+8	41	Ancient Armor
+8	42	Demonic Armor
+8	43	Storm Blitz Armor
+8	44	Eternal Armor
+8	45	Titan Armor
+8	46	Brave Armor
+8	47	Phantom Armor
+8	48	Destroy Armor
+8	49	Seraphim Armor
+8	50	Divine Armor
+8	51	Royal Armor
+8	52	Hades Armor
+8	53	Queen Armor
+8	59	Sacred Armor
+8	60	Storm Hard Armor
+8	61	Piercing Armor
+8	62	Lucky Scale Armor
+8	63	Lucky Silk Armor
+8	64	Lucky Sphinx Armor
+8	65	Lucky Violent Wind Armor
+8	66	Lucky Dark Soul Armor
+8	67	Lucky Dragon Armor
+8	68	Lucky Guardian Armor
+8	69	Lucky Legendary Armor
+8	70	Lucky Red Wing Armor
+8	71	Lucky Atlans Armor
+8	72	Lucky Storm Hard Armor
+8	73	Phoenix Soul Armor
+8	88	Magic Knight Armor
+8	89	Lazy Wind Armor
+8	90	Dark Devil Armor
+8	91	Stormwing Armor
+8	92	Sticky Armor
+8	93	Hell Night Armor
+8	94	Ambition Armor
+8	95	Succubus Armor
+8	96	BloodyDragon Armor
+8	97	Light Lord Armor
+8	98	Tigris Armor
+8	99	Crimson Skull Armor
+8	100	Bloodangel Wizard Armor
+8	101	Bloodangel Knight Armor
+8	102	Bloodangel Elf Armor
+8	103	Bloodangel Magic Armor
+8	104	Bloodangel Lord Armor
+8	105	Bloodangel Summoner Armor
+8	106	Bloodangel Fighter Armor
+8	107	Darkangel Wizard Armor
+8	108	Darkangel Knight Armor
+8	109	Darkangel Elf Armor
+8	110	Darkangel Magic Armor
+8	111	Darkangel Lord Armor
+8	112	Darkangel Summoner Armor
+8	113	Darkangel Fighter Armor
+8	114	Holyangel Wizard Armor
+8	115	Holyangel Knight Armor
+8	116	Holyangel Elf Armor
+8	117	Holyangel Lord Armor
+8	118	Holyangel Summoner Armor
+8	119	Holyangel Fighter Armor
+8	120	Holyangel Magic Armor
+8	121	Awakening Soul Wizard Armor
+8	122	Awakening Soul Knight Armor
+8	123	Awakening Soul Elf Armor
+8	124	Awakening Soul Magic Armor
+8	125	Awakening Soul Lord Armor
+8	126	Awakening Soul Summoner Armor
+8	127	Awakening Soul Fighter Armor
+8	128	Blue Eye Wizard Armor
+8	129	Blue Eye Knight Armor
+8	130	Blue Eye Elf Armor
+8	131	Blue Eye Magic Armor
+8	132	Blue Eye Lord Armor
+8	133	Blue Eye Summoner Armor
+8	134	Blue Eye Fighter Armor
+8	135	Silverheart Wizard Armor
+8	136	Silverheart Knight Armor
+8	137	Silverheart Elf Armor
+8	138	Silverheart Magic Armor
+8	139	Silverheart Lord Armor
+8	140	Silverheart Summoner Armor
+8	141	Silverheart Fighter Armor
+8	142	Manticore Wizard Armor
+8	143	Manticore Knight Armor
+8	144	Manticore Elf Armor
+8	145	Manticore Magic Armor
+8	146	Manticore Lord Armor
+8	147	Manticore Summon Armor
+8	148	Manticore Fighter Armor
+8	149	Brilliant Wizard Armor
+8	150	Brilliant Knight Armor
+8	151	Brilliant Elf Armor
+8	152	Brilliant Magic Armor
+8	153	Brilliant Lord Armor
+8	154	Brilliant Summon Armor
+8	155	Brilliant Fighter Armor
+8	156	Apocalypse Wizard Armor
+8	157	Apocalypse Knight Armor
+8	158	Apocalypse Elf Armor
+8	159	Apocalypse Magic Armor
+8	160	Apocalypse Lord Armor
+8	161	Apocalypse Summon Armor
+8	162	Apocalypse Fighter Armor
+8	163	Lightning Wizard Armor
+8	164	Lightning Knight Armor
+8	165	Lightning Elf Armor
+8	166	Lightning Magic Armor
+8	167	Lightning Lord Armor
+8	168	Lightning Summon Armor
+8	169	Lightning Fighter Armor
+8	300	Titan Armor(380)
+8	301	Brave Armor(380)
+8	302	Phantom Armor(380)
+8	303	Destroy Armor(380)
+8	304	Seraphim Armor(380)
+8	305	Divine Armor(380)
+8	306	Royal Armor(380)
+8	307	Hades Armor(380)
+8	308	Queen Armor(380)
+8	309	New Dragon Armor
+8	310	New Guardian Armor
+8	311	New Legendary Armor
+9	0	Bronze Pants
+9	1	Dragon Pants
+9	2	Pad Pants
+9	3	Legendary Pants
+9	4	Bone Pants
+9	5	Leather Pants
+9	6	Scale Pants
+9	7	Sphinx Pants
+9	8	Brass Pants
+9	9	Plate Pants
+9	10	Vine Pants
+9	11	Silk Pants
+9	12	Wind Pants
+9	13	Spirit Pants
+9	14	Guardian Pants
+9	15	Storm Crow Pants
+9	16	Black Dragon Pants
+9	17	Dark Phoenix Pants
+9	18	Grand Soul Pants
+9	19	Divine Pants
+9	20	Thunder Hawk Pants
+9	21	Great Dragon Pants
+9	22	Dark Soul Pants
+9	23	Hurricane Pants
+9	24	Red Spirit Pants
+9	25	Light Plate Pants
+9	26	Adamantine Pants
+9	27	Dark Steel Pants
+9	28	Dark Master Pants
+9	29	Dragon Knight Pants
+9	30	Venom Mist Pants
+9	31	Sylphid Ray Pants
+9	32	Volcano Pants
+9	33	Sunlight Pants
+9	34	Ashcrow Pants
+9	35	Eclipse Pants
+9	36	Iris Pants
+9	37	Valiant Pants
+9	38	Glorious Pants
+9	39	Violent Wind Pants
+9	40	Red Wing Pants
+9	41	Ancient Pants
+9	42	Demonic Pants
+9	43	Storm Blitz Pants
+9	44	Eternal Pants
+9	45	Titan  Pants
+9	46	Brave Pants
+9	47	Phantom  Pants
+9	48	Destroy Pants
+9	49	Seraphim Pants
+9	50	Divine Pants
+9	51	Royal Pants
+9	52	Hades Pants
+9	53	Queen Pants
+9	59	Sacred Pants
+9	60	Storm Hard Pants
+9	61	Piercing Pants
+9	62	Lucky Scale Pants
+9	63	Lucky Silk Pants
+9	64	Lucky Sphinx Pants
+9	65	Lucky Violent Wind Pants
+9	66	Lucky Dark Soul Pants
+9	67	Lucky Dragon Pants
+9	68	Lucky Guardian Pants
+9	69	Lucky Legendary Pants
+9	70	Lucky Red Wing Pants
+9	71	Lucky Atlans Pants
+9	72	Lucky Storm Hard Pants
+9	73	Phoenix Soul Pants
+9	88	Magic Knight Pants
+9	89	Lazy Wind Pants
+9	90	Dark Devil Pants
+9	91	Stormwing Pants
+9	92	Sticky Pants
+9	93	Hell Night Pants
+9	94	Ambition Pants
+9	95	Succubus Pants
+9	96	BloodyDragon Pants
+9	97	Light Lord Pants
+9	98	Tigris Pants
+9	99	Crimson Skull Pants
+9	100	Bloodangel Wizard Pants
+9	101	Bloodangel Knight Pants
+9	102	Bloodangel Elf Pant
+9	103	Bloodangel Magic Pants
+9	104	Bloodangel Lord Pants
+9	105	Bloodangel Summoner Pants
+9	106	Bloodangel Fighter Pants
+9	107	Darkangel Wizard Pants
+9	108	Darkangel Knight Pants
+9	109	Darkangel Elf Pants
+9	110	Darkangel Magic Pants
+9	111	Darkangel Lord Pants
+9	112	Darkangel Summoner Pants
+9	113	Darkangel Fighter Pants
+9	114	Holyangel Wizard Pants
+9	115	Holyangel Knight Pants
+9	116	Holyangel Elf Pants
+9	117	Holyangel Lord Pants
+9	118	Holyangel Summoner Pants
+9	119	Holyangel Fighter Pants
+9	120	Holyangel Magic Pants
+9	121	Awakening Soul Wizard Pants
+9	122	Awakening Soul Knight Pants
+9	123	Awakening Soul Elf Pants
+9	124	Awakening Soul Magic Pants
+9	125	Awakening Soul Lord Pants
+9	126	Awakening Soul Summoner Pants
+9	127	Awakening Soul Fighter Pants
+9	128	Blue Eye Wizard Pants
+9	129	Blue Eye Knight Pants
+9	130	Blue Eye Elf Pants
+9	131	Blue Eye Magic Pants
+9	132	Blue Eye Lord Pants
+9	133	Blue Eye Summoner Pants
+9	134	Blue Eye Fighter Pants
+9	135	Silverheart Wizard Pants
+9	136	Silverheart Knight Pants
+9	137	Silverheart Elf Pants
+9	138	Silverheart Magic Pants
+9	139	Silverheart Lord Pants
+9	140	Silverheart Summoner Pants
+9	141	Silverheart Fighter Pants
+9	142	Manticore Wizard Pants
+9	143	Manticore Knight Pants
+9	144	Manticore Elf Pants
+9	145	Manticore Magic Pants
+9	146	Manticore Lord Pants
+9	147	Manticore Summon Pants
+9	148	Manticore Fighter Pants
+9	149	Brilliant Wizard Pants
+9	150	Brilliant Knight Pants
+9	151	Brilliant Elf Pants
+9	152	Brilliant Magic Pants
+9	153	Brilliant Lord Pants
+9	154	Brilliant Summon Pants
+9	155	Brilliant Fighter Pants
+9	156	Apocalypse Wizard Pants
+9	157	Apocalypse Knight Pants
+9	158	Apocalypse Elf Pants
+9	159	Apocalypse Magic Pants
+9	160	Apocalypse Lord Pants
+9	161	Apocalypse Summon Pants
+9	162	Apocalypse Fighter Pants
+9	163	Lightning Wizard Pants
+9	164	Lightning Knight Pants
+9	165	Lightning Elf Pants
+9	166	Lightning Magic Pants
+9	167	Lightning Lord Pants
+9	168	Lightning Summon Pants
+9	169	Lightning Fighter Pants
+9	300	Titan  Pants(380)
+9	301	Brave Pants(380)
+9	302	Phantom  Pants(380)
+9	303	Destroy Pants(380)
+9	304	Seraphim Pants(380)
+9	305	Divine Pants(380)
+9	306	Royal Pants(380)
+9	307	Hades Pants(380)
+9	308	Queen Armor(380)
+9	309	New Dragon Pants
+9	310	New Guardian Pants
+9	311	New Legendary Pants
+10	0	Bronze Gloves
+10	1	Dragon Gloves
+10	2	Pad Gloves
+10	3	Legendary Gloves
+10	4	Bone Gloves
+10	5	Leather Gloves
+10	6	Scale Gloves
+10	7	Sphinx Gloves
+10	8	Brass Gloves
+10	9	Plate Gloves
+10	10	Vine Gloves
+10	11	Silk Gloves
+10	12	Wind Gloves
+10	13	Spirit Gloves
+10	14	Guardian Gloves
+10	15	Storm Crow Gloves
+10	16	Black Dragon Gloves
+10	17	Dark Phoenix Gloves
+10	18	Grand Soul Gloves
+10	19	Divine Gloves
+10	20	Thunder Hawk Gloves
+10	21	Great Dragon Gloves
+10	22	Dark Soul Gloves
+10	23	Hurricane Gloves
+10	24	Red Spirit Gloves
+10	25	Light Plate Gloves
+10	26	Adamantine Gloves
+10	27	Dark Steel Gloves
+10	28	Dark Master Gloves
+10	29	Dragon Knight Gloves
+10	30	Venom Mist Gloves
+10	31	Sylphid Ray Gloves
+10	32	Volcano Gloves
+10	33	Sunlight Gloves
+10	34	Ashcrow Gloves
+10	35	Eclipse Gloves
+10	36	Iris Gloves
+10	37	Valiant Gloves
+10	38	Glorious Gloves
+10	39	Violent Wind Gloves
+10	40	Red Wing Gloves
+10	41	Ancient Gloves
+10	42	Demonic Gloves
+10	43	Storm Blitz Gloves
+10	44	Eternal Gloves
+10	45	Titan  Gloves
+10	46	Brave Gloves
+10	47	Phantom  Gloves
+10	48	Destroy Gloves
+10	49	Seraphim Gloves
+10	50	Divine Gloves
+10	51	Royal Gloves
+10	52	Hades Gloves
+10	53	Queen Gloves
+10	62	Lucky Scale Gloves
+10	63	Lucky Silk Gloves
+10	64	Lucky Sphinx Gloves
+10	65	Lucky Violent Wind Gloves
+10	66	Lucky Dark Soul Gloves
+10	67	Lucky Dragon Gloves
+10	68	Lucky Guardian Gloves
+10	69	Lucky Legendary Gloves
+10	70	Lucky Red Wing Gloves
+10	71	Lucky Atlans Gloves
+10	88	Magic Knight Gloves
+10	89	Lazy Wind Gloves
+10	90	Dark Devil Gloves
+10	91	Stormwing Gloves
+10	92	Sticky Gloves
+10	93	Hell Night Gloves
+10	94	Ambition Gloves
+10	95	Succubus Gloves
+10	97	Light Lord Gloves
+10	100	Bloodangel Wizard Gloves
+10	101	Bloodangel Knight Gloves
+10	102	Bloodangel Elf Gloves
+10	103	Bloodangel Magic Gloves
+10	104	Bloodangel Lord Gloves
+10	105	Bloodangel Summoner Gloves
+10	107	Darkangel Wizard Gloves
+10	108	Darkangel Knight Gloves
+10	109	Darkangel Elf Gloves
+10	110	Darkangel Magic Gloves
+10	111	Darkangel Lord Gloves
+10	112	Darkangel Summoner Gloves
+10	114	Holyangel Wizard Gloves
+10	115	Holyangel Knight Gloves
+10	116	Holyangel Elf Gloves
+10	117	Holyangel Lord Gloves
+10	118	Holyangel Summoner Gloves
+10	120	Holyangel Magic Gloves
+10	121	Awakening Soul Wizard Gloves
+10	122	Awakening Soul Knight Gloves
+10	123	Awakening Soul Elf Gloves
+10	124	Awakening Soul Magic Gloves
+10	125	Awakening Soul Lord Gloves
+10	126	Awakening Soul Summoner Gloves
+10	128	Blue Eye Wizard Gloves
+10	129	Blue Eye Knight Gloves
+10	130	Blue Eye Elf Gloves
+10	131	Blue Eye Magic Gloves
+10	132	Blue Eye Lord Gloves
+10	133	Blue Eye Summoner Gloves
+10	135	Silverheart Wizard Gloves
+10	136	Silverheart Knight Gloves
+10	137	Silverheart Elf Gloves
+10	138	Silverheart Magic Gloves
+10	139	Silverheart Lord Gloves
+10	140	Silverheart Summoner Gloves
+10	142	Manticore Wizard Gloves
+10	143	Manticore Knight Gloves
+10	144	Manticore Elf Gloves
+10	145	Manticore Magic Gloves
+10	146	Manticore Lord Gloves
+10	147	Manticore Summon Gloves
+10	149	Brilliant Wizard Gloves
+10	150	Brilliant Knight Gloves
+10	151	Brilliant Elf Gloves
+10	152	Brilliant Magic Gloves
+10	153	Brilliant Lord Gloves
+10	154	Brilliant Summon Gloves
+10	156	Apocalypse Wizard Gloves
+10	157	Apocalypse Knight Gloves
+10	158	Apocalypse Elf Gloves
+10	159	Apocalypse Magic Gloves
+10	160	Apocalypse Lord Gloves
+10	161	Apocalypse Summon Gloves
+10	163	Lightning Wizard Gloves
+10	164	Lightning Knight Gloves
+10	165	Lightning Elf Gloves
+10	166	Lightning Magic Gloves
+10	167	Lightning Lord Gloves
+10	168	Lightning Summon Gloves
+10	300	Titan  Gloves(380)
+10	301	Brave Gloves(380)
+10	302	Phantom  Gloves(380)
+10	303	Destroy Gloves(380)
+10	304	Seraphim Gloves(380)
+10	305	Divine Gloves(380)
+10	306	Royal Gloves(380)
+10	307	Hades Gloves(380)
+10	308	Queen Gloves(380)
+10	309	New Dragon Gloves
+10	310	New Guardian Gloves
+10	311	New Legendary Gloves
+11	0	Bronze Boots
+11	1	Dragon Boots
+11	2	Pad Boots
+11	3	Legendary Boots
+11	4	Bone Boots
+11	5	Leather Boots
+11	6	Scale Boots
+11	7	Sphinx Boots
+11	8	Brass Boots
+11	9	Plate Boots
+11	10	Vine Boots
+11	11	Silk Boots
+11	12	Wind Boots
+11	13	Spirit Boots
+11	14	Guardian Boots
+11	15	Storm Crow Boots
+11	16	Black Dragon Boots
+11	17	Dark Phoenix Boots
+11	18	Grand Soul Boots
+11	19	Divine Boots
+11	20	Thunder Hawk Boots
+11	21	Great Dragon Boots
+11	22	Dark Soul Boots
+11	23	Hurricane Boots
+11	24	Red Spirit Boots
+11	25	Light Plate Boots
+11	26	Adamantine Boots
+11	27	Dark Steel Boots
+11	28	Dark Master Boots
+11	29	Dragon Knight Boots
+11	30	Venom Mist Boots
+11	31	Sylphid Ray Boots
+11	32	Volcano Boots
+11	33	Sunlight Boots
+11	34	Ashcrow Boots
+11	35	Eclipse Boots
+11	36	Iris Boots
+11	37	Valiant Boots
+11	38	Glorious Boots
+11	39	Violent Wind Boots
+11	40	Red Wing Boots
+11	41	Ancient Boots
+11	42	Demonic Boots
+11	43	Storm Blitz Boots
+11	44	Eternal Boots
+11	45	Titan Boots
+11	46	Brave Boots
+11	47	Phantom Boots
+11	48	Destroy Boots
+11	49	Seraphim Boots
+11	50	Divine Boots
+11	51	Royal Boots
+11	52	Hades Boots
+11	53	Queen Boots
+11	59	Sacred Boots
+11	60	Storm Hard Boots
+11	61	Piercing Boots
+11	62	Lucky Scale Boots
+11	63	Lucky Silk Boots
+11	64	Lucky Sphinx Boots
+11	65	Lucky Violent Wind Boots
+11	66	Lucky Dark Soul Boots
+11	67	Lucky Dragon Boots
+11	68	Lucky Guardian Boots
+11	69	Lucky Legendary Boots
+11	70	Lucky Red Wing Boots
+11	71	Lucky Atlans Boots
+11	72	Lucky Storm Hard Boots
+11	73	Phoenix Soul Boots
+11	88	Magic Knight Boots
+11	89	Lazy Wind Boots
+11	90	Dark Devil Boots
+11	91	Stormwing Boots
+11	92	Sticky Boots
+11	93	Hell Night Boots
+11	94	Ambition Boots
+11	95	Succubus Boots
+11	96	BloodyDragon Boots
+11	97	Light Lord Boots
+11	98	Tigris Boots
+11	99	Crimson Skull Boots
+11	100	Bloodangel Wizard Boots
+11	101	Bloodangel Knight Boots
+11	102	Bloodangel Elf Boots
+11	103	Bloodangel Magic Boots
+11	104	Bloodangel Lord Boots
+11	105	Bloodangel Summoner Boots
+11	106	Bloodangel Fighter Boots
+11	107	Darkangel Wizard Boots
+11	108	Darkangel Knight Boots
+11	109	Darkangel Elf Boots
+11	110	Darkangel Magic Boots
+11	111	Darkangel Lord Boots
+11	112	Darkangel Summoner Boots
+11	113	Darkangel Fighter Boots
+11	114	Holyangel Wizard Boots
+11	115	Holyangel Knight Boots
+11	116	Holyangel Elf Boots
+11	117	Holyangel Lord Boots
+11	118	Holyangel Summoner Boots
+11	119	Holyangel Fighter Boots
+11	120	Holyangel Magic Boots
+11	121	Awakening Soul Wizard Boots
+11	122	Awakening Soul Knight Boots
+11	123	Awakening Soul Elf Boots
+11	124	Awakening Soul Magic Boots
+11	125	Awakening Soul Lord Boots
+11	126	Awakening Soul Summoner Boots
+11	127	Awakening Soul Fighter Boots
+11	128	Blue Eye Wizard Boots
+11	129	Blue Eye Knight Boots
+11	130	Blue Eye Elf Boots
+11	131	Blue Eye Magic Boots
+11	132	Blue Eye Lord Boots
+11	133	Blue Eye Summoner Boots
+11	134	Blue Eye Fighter Boots
+11	135	Silverheart Wizard Boots
+11	136	Silverheart Knight Boots
+11	137	Silverheart Elf Boots
+11	138	Silverheart Magic Boots
+11	139	Silverheart Lord Boots
+11	140	Silverheart Summoner Boots
+11	141	Silverheart Fighter Boots
+11	142	Manticore Wizard Boots
+11	143	Manticore Knight Boots
+11	144	Manticore Elf Boots
+11	145	Manticore Magic Boots
+11	146	Manticore Lord Boots
+11	147	Manticore Summon Boots
+11	148	Manticore Fighter Boots
+11	149	Brilliant Wizard Boots
+11	150	Brilliant Knight Boots
+11	151	Brilliant Elf Boots
+11	152	Brilliant Magic Boots
+11	153	Brilliant Lord Boots
+11	154	Brilliant Summon Boots
+11	155	Brilliant Fighter Boots
+11	156	Apocalypse Wizard Boots
+11	157	Apocalypse Knight Boots
+11	158	Apocalypse Elf Boots
+11	159	Apocalypse Magic Boots
+11	160	Apocalypse Lord Boots
+11	161	Apocalypse Summon Boots
+11	162	Apocalypse Fighter Boots
+11	163	Lightning Wizard Boots
+11	164	Lightning Knight Boots
+11	165	Lightning Elf Boots
+11	166	Lightning Magic Boots
+11	167	Lightning Lord Boots
+11	168	Lightning Summon Boots
+11	169	Lightning Fighter Boots
+11	300	Titan Boots(380)
+11	301	Brave Boots(380)
+11	302	Phantom Boots(380)
+11	303	Destroy Boots(380)
+11	304	Seraphim Boots(380)
+11	305	Divine Boots(380)
+11	306	Royal Boots(380)
+11	307	Hades Boots(380)
+11	308	Queen Boots(380)
+11	309	New Dragon Boots
+11	310	New Guardian Boots
+11	311	New Legendary Boots
+12	0	Wings of Elf
+12	1	Wings of Heaven
+12	2	Wings of Satan
+12	3	Wings of Spirits
+12	4	Wings of Soul
+12	5	Wings of Dragon
+12	6	Wings of Darkness
+12	7	Orb of Twisting Slash
+12	8	Healing Orb
+12	9	Orb of Greater Fortitude
+12	10	Orb of Greater Damage
+12	11	Orb of Summoning
+12	12	Orb of Rageful Blow
+12	13	Orb of Impale
+12	14	Orb of Greater Fortitude
+12	15	Jewel of Chaos
+12	16	Orb of Fire Slash
+12	17	Orb of Penetration
+12	18	Orb of Ice Arrow
+12	19	Orb of Death Stab
+12	21	Scroll of FireBurst
+12	22	Scroll of Summon
+12	23	Scroll of Critical Damage
+12	24	Scroll of Electric Spark
+12	26	Gem of Secret
+12	30	Bundled Jewel of Bless
+12	31	Bundled Jewel of Soul
+12	32	Box of Red Ribbon
+12	33	Box of Green Ribbon
+12	34	Box of Blue Ribbon
+12	35	Scroll of Fire Scream
+12	36	Wing of Storm
+12	37	Wing of Eternal
+12	38	Wing of Illusion
+12	39	Wing of Ruin
+12	40	Cape of Emperor
+12	41	Wing of Curse
+12	42	Wind of Despair
+12	43	Wing of Dimension
+12	44	Crystal of Destruction
+12	45	Crystal of Multi-Shot
+12	46	Crystal of Recovery
+12	47	Crystal of Flame Strike
+12	48	Scroll of Chaotic Diseier
+12	49	Cloak of Warrior
+12	50	Lord of the Cape
+12	60	Seed (Fire)
+12	61	Seed (Water)
+12	62	Seed (Ice)
+12	63	Seed (Wind)
+12	64	Seed (Lightning)
+12	65	Seed (Earth)
+12	70	Sphere (Mono)
+12	71	Sphere (Di)
+12	72	Sphere (Tri)
+12	73	Sphere (Tetra)
+12	74	Sphere (Penta)
+12	100	Seed Sphere (Fire)
+12	101	Seed Sphere (Water)
+12	102	Seed Sphere (Ice)
+12	103	Seed Sphere (Wind)
+12	104	Seed Sphere (Lightning)
+12	105	Seed Sphere (Earth)
+12	106	Seed Sphere (Fire)
+12	107	Seed Sphere (Water)
+12	108	Seed Sphere (Ice)
+12	109	Seed Sphere (Wind)
+12	110	Seed Sphere (Lightning)
+12	111	Seed Sphere (Earth)
+12	112	Seed Sphere (Fire)
+12	113	Seed Sphere (Water)
+12	114	Seed Sphere (Ice)
+12	115	Seed Sphere (Wind)
+12	116	Seed Sphere (Lightning)
+12	117	Seed Sphere (Earth)
+12	118	Seed Sphere (Fire)
+12	119	Seed Sphere (Water)
+12	120	Seed Sphere (Ice)
+12	121	Seed Sphere (Wind)
+12	122	Seed Sphere (Lightning)
+12	123	Seed Sphere (Earth)
+12	124	Seed Sphere (Fire)
+12	125	Seed Sphere (Water)
+12	126	Seed Sphere (Ice)
+12	127	Seed Sphere (Wind)
+12	128	Seed Sphere (Lightning)
+12	129	Seed Sphere (Earth)
+12	130	Small Cape of Lord
+12	131	Small Wing of Curse
+12	132	Small Wings of Elf
+12	133	Small Wings of Heaven
+12	134	Small Wings of Satan
+12	135	Small Cloak of Warrior
+12	136	Bundled Jewel of Life
+12	137	Bundled Jewel of Creation
+12	138	Bundled Jewel of Guardian
+12	139	Bundled Gemstone
+12	140	Bundled Jewel of Harmony
+12	141	Bundled Jewel of Chaos
+12	142	Bundled Lower Refining Stone
+12	143	Bundled Higer Refining Stone
+12	150	Wings of Dragon (Demonic)
+12	151	Wings of Soul (Demonic)
+12	152	Wings of Darkness (Demonic)
+12	153	Wings of Spirits (Demonic)
+12	154	Cape Of Lord (Demonic)
+12	155	Wings of Despair (Demonic)
+12	156	Cloak Of Warrior (Demonic)
+12	157	Wings of Dragon (Celestial)
+12	158	Wings of Soul (Celestial)
+12	159	Wings of Darkness (Celestial)
+12	160	Wings of Spirits (Celestial)
+12	161	Cape Of Lord (Celestial)
+12	162	Wings of Despair (Celestial)
+12	163	Cloak Of Warrior (Celestial)
+12	164	Tier 12 Awakening
+12	165	Tier 12 Awakening
+12	166	Tier 12 Awakening
+12	167	Wing of Power
+12	168	Wing of Sun
+12	169	Wing of DualDragon
+12	170	Wing of BlueDragon
+12	171	Wing of GreenDragon
+12	172	Wing of DualAngelic
+12	173	Wing of BlueAngelic
+12	174	Wing of RedAngelic
+12	175	Wing of WhiteRain
+12	176	Wing of Circular
+12	177	Wing of EvoCircular
+12	178	Wing of RedFenix
+12	179	Wing of Magestic
+12	180	Wing of Iluice
+12	181	Wing of InferalBlue
+12	182	Wing of MultiColector
+12	183	Wing of Colectored
+12	184	Wing of Power 2.0
+12	204	Wings of Heaven
+12	205	Wings of Flame God
+12	206	Wing of Celestial Body
+12	207	Wings of Annihilation
+12	208	Cloak of Dominator
+12	209	Wings of Other World
+12	210	Cloak of Judgment
+12	211	Eternity Cloak
+12	212	Wing of Fire
+12	213	Wing of Elemente
+12	214	Wing of Torment
+12	220	Wing of God
+12	221	Wing of White
+12	222	Wing of Firev1
+12	223	Wing of Firev2
+12	224	Wing of Firev3
+12	225	Wing of Angel And Devil
+12	226	Wing of Conqueros
+12	227	Wing of Magic
+12	228	Wing of Chaos
+12	229	Wing of Life
+12	230	Wing of Death
+12	231	Wing of Arcangel
+12	232	Wing of Disillusionment
+12	233	Wing of Fenix
+12	234	Cloak Awakening
+12	235	Wings of Fate
+12	236	Wings of Virtue
+12	237	Wings of Destruction
+12	238	Wings of Fantasy
+12	239	Wings of Punishment
+12	240	Cloak Spirit
+12	241	Wings of Barrier
+12	242	Cloak of Oath
+13	0	Guardian Angel
+13	1	Imp
+13	2	Horn of Uniria
+13	3	Horn of Dinorant
+13	4	Dark Horse
+13	5	Dark Raven
+13	7	Contract (Summon)
+13	8	Ring of Ice
+13	9	Ring of Poison
+13	10	Transformation Ring
+13	11	Order (Guardian/Life Stone)
+13	12	Pendant of Lighting
+13	13	Pendant of Fire
+13	14	Loch's Feather
+13	15	Fruits
+13	16	Scroll of Archangel
+13	17	Blood Bone
+13	18	Invisibility Cloak
+13	19	Absolute Weapon of Archangel
+13	20	Wizards Ring
+13	21	Ring of Fire
+13	22	Ring of Earth
+13	23	Ring of Wind
+13	24	Ring of Magic
+13	25	Pendant of Ice
+13	26	Pendant of Wind
+13	27	Pendant of Water
+13	28	Pendant of Ability
+13	29	Armor of Guardsman
+13	30	Cape of Lord
+13	31	Spirit
+13	32	Splinter of Armor
+13	33	Bless of Guardian
+13	34	Claw of Beast
+13	35	Fragment of Horn
+13	36	Broken Horn
+13	37	Horn of Fenrir
+13	38	Moonstone Pendant
+13	39	Eilte Transfer Skeleton Ring
+13	40	Jack Olantern Ring
+13	41	Transfer Christmas Ring
+13	42	Ring of GM
+13	43	Seal of Ascension
+13	44	Seal of Wealth
+13	45	Seal of Sustenance
+13	46	Devil Square Ticket
+13	47	Blood Castle Ticket
+13	48	Kalima Ticket
+13	49	Old Scroll
+13	50	Illusion Sorcerer Covenant
+13	51	Scroll of Blood
+13	52	Condor Flame
+13	53	Condor Feather
+13	54	Reset Fruit Strength
+13	55	Reset Fruit Quickness
+13	56	Reset Fruit Health
+13	57	Reset Fruit Energy
+13	58	Reset Fruit Control
+13	59	Seal of Mobility
+13	60	Indulgence
+13	61	Illusion Temple Ticket
+13	62	Seal of Healing
+13	63	Seal of Divinity
+13	64	Demon
+13	65	Spirit of Guardian
+13	66	Invitation to Santa Village
+13	67	Pet Rudolf
+13	68	Snowman Transformation Ring
+13	69	Talisman of Resurrection
+13	70	Talisman of Mobility
+13	71	Sword/Mace/Spear
+13	72	Staff
+13	73	Bow/Crossbow
+13	74	Scepter
+13	75	Stick
+13	76	Panda Ring
+13	80	Pet Panda
+13	81	Talisman of Guardian
+13	82	Talisman of Item Protection
+13	83	Talisman of Wings of Satan
+13	84	Talisman of Wings of Heaven
+13	85	Talisman of Wings of Elf
+13	86	Talisman of Wing of Curse
+13	87	Talisman of Cape of Emperor
+13	88	Talisman of Wings of Dragon
+13	89	Talisman of Wings of Soul
+13	90	Talisman of Wings of Spirits
+13	91	Talisman of Wing of Despair
+13	92	Talisman of Wings of Darkness
+13	93	Master Seal of Ascension
+13	94	Master Seal of Wealth
+13	95	Gladiator's Honor
+13	96	Seal of Strength
+13	103	Party EXP Scroll
+13	104	Max AG Boost Aura
+13	105	Max SD Boost Aura
+13	106	Pet Unicorn
+13	107	Lethal Wizard's Ring
+13	109	Sapphire Ring
+13	110	Ruby Ring
+13	111	Topaz Ring
+13	112	Amethyst Ring
+13	113	Ruby Necklace
+13	114	Emerald Necklace
+13	115	Sapphire Necklace
+13	116	Seal of Wealth
+13	117	Minimum Vitality Potion
+13	118	Low Vitality Potion
+13	119	Medium Vitality Potion
+13	120	High Vitality Potion
+13	121	Open Access Ticket to Chaos Ca
+13	122	Skeleton Transformation Ring
+13	123	Pet Skeleton
+13	124	Paid Channel Access Ticket
+13	125	Open Access Ticket to Doppelga
+13	126	Open Access Ticket to Varka
+13	127	Open Access Ticket to Varka Ma
+13	128	Hawk Figurine
+13	129	Goat Figurine
+13	130	Oak Charm
+13	131	Maple Charm
+13	132	Golden Oak Charm
+13	133	Golden Maple Charm
+13	134	Worn Horseshoe
+13	135	1st Lucky Armor Ticket
+13	136	1st Lucky Pants Ticket
+13	137	1st Lucky Helm Ticket
+13	138	1st Lucky Gloves Ticket
+13	139	1st Lucky Boots Ticket
+13	140	2sd Lucky Armor Ticket
+13	141	2sd Lucky Pants Ticket
+13	142	2sd Lucky Helm Ticket
+13	143	2sd Lucky Gloves Ticket
+13	144	2sd Lucky Boots Ticket
+13	145	Pet Panda
+13	155	Divine Stone
+13	156	Frament Divine Stone
+13	157	Celestial Archangel Box
+13	158	Feather Celestial Archangel
+13	159	Electric Celestial Box
+13	160	Fire Celestial Box
+13	161	Control Celestial Box
+13	163	Higher Magic Stone
+13	164	Golden Crest
+13	165	Garuda Feather
+13	166	Garuda Flame
+13	167	Coin Dorada
+13	168	Coin Silver
+13	169	Coin Bronce
+13	170	MediaCoin Dorada
+13	171	MediaCoin Silver
+13	172	MediaCoin Bronce
+13	173	Demonic Feather
+13	174	Demonic Box
+13	175	Spirit Map Fragment
+13	176	Spirit Map
+13	200	Egg DemonGG
+13	202	Egg DK
+13	204	Egg DW
+13	206	Egg Elf
+13	208	Egg RuneWizard
+13	210	Egg LoveElf
+13	212	Egg GolemFire
+13	214	Egg Monkey
+13	216	Egg WarriorBird
+13	218	Egg Heaven
+13	220	Egg ProWar
+13	222	Egg BlackDK
+13	224	Egg BlackDW
+13	226	Egg BlackElf
+13	228	Egg Necromancer
+13	230	Mummified Boy
+13	232	BlackPanter
+13	234	Selupan
+13	236	Lordsilvester
+13	238	Nightmare
+13	240	Balrog
+13	242	Tiger
+13	244	AplleSword
+13	246	SportyGirl
+13	248	Captain
+13	250	Hellmine
+13	252	Hooded T-rex
+13	254	Hydra
+13	256	Kairuku
+13	258	King Cow
+13	260	Magician
+13	262	Phoenix
+13	264	Rapa
+13	266	Refear
+13	268	Goalkeeper
+13	270	Mix Dual Pet
+13	273	Mix Dual Pet
+13	276	Mix Dual Pet
+13	400	Ghost Horse
+13	401	Demonic Ghost Horse
+13	402	Celestial Ghost Horse
+13	403	Divine Horse
+13	404	Slot Libre Horse
+13	405	Slot Libre Horse
+13	406	Slot Libre Horse
+13	407	Slot Libre Horse
+13	408	Slot Libre Horse
+13	409	Slot Libre Horse
+13	410	Slot Libre Horse
+13	411	Slot Libre Horse
+13	412	Demonic Fenrir
+13	413	Ghost Fenrir
+13	414	Ice Dragon
+13	415	Ice Dragon(Rare)
+13	416	RockDark Fenrir
+13	417	Ice Dragon(Steel)
+13	418	Fierce Lion
+13	419	Fierce Lion(Rare)
+13	420	Shining Tail
+13	421	Shining Tail(Rare)
+13	422	Ur
+13	423	Ur(Rare)
+13	424	Slot Libre Fenrir
+14	0	Apple
+14	1	Small Healing Potion
+14	2	Healing Potion
+14	3	Large Healing Potion
+14	4	Small Mana Potion
+14	5	Mana Potion
+14	6	Large Mana Potion
+14	7	Siege Potion
+14	8	Antidote
+14	9	Ale
+14	10	Town Portal Scroll
+14	11	Box of Luck
+14	12	Heart
+14	13	Jewel of Bless
+14	14	Jewel of Soul
+14	15	Zen
+14	16	Jewel of Life
+14	17	Devil's Eye
+14	18	Devil's Key
+14	19	Devil's Invitation
+14	20	Remedy of Love
+14	21	Rena
+14	22	Jewel of Creation
+14	23	Scroll of the Emperor
+14	24	Broken Sword
+14	25	Tear of Elf
+14	26	Soul Shard of Wizard
+14	28	Lost Map
+14	29	Symbol of Kundun
+14	31	Jewel of Guardian
+14	32	Pink Chocolate Box
+14	33	Red Chocolate Box
+14	34	Blue Chocolate Box
+14	35	Small SD Potion
+14	36	SD Potion
+14	37	Large SD Potion
+14	38	Small Complex Potion
+14	39	Complex Potion
+14	40	Large Complex Potion
+14	41	Gemstone
+14	42	Jewel of Harmony
+14	43	Lower refining stone
+14	44	Higher refining stone
+14	45	Pumpkin of Luck
+14	46	Jack O'Lantern Blessings
+14	47	Jack O'Lantern Wrath
+14	48	Jack O'Lantern Cry
+14	49	Jack O'Lantern Food
+14	50	Jack O'Lantern Drink
+14	51	Chistmas Star
+14	52	GM Gift
+14	53	Talisman of Luck
+14	54	Chaos Card
+14	55	Green Chaos Box
+14	56	Red Chaos Box
+14	57	Purple Chaos Box
+14	58	Rare Item Ticket1
+14	59	Rare Item Ticket2
+14	60	Rare Item Ticket3
+14	61	Rare Item Ticket4
+14	62	Rare Item Ticket5
+14	63	Firecracker
+14	64	Cursed Castle Water
+14	65	Death-beam Knight Flame
+14	66	Hell-Miner Horn
+14	67	Dark Phoenix Feather
+14	68	Abyssal Eye
+14	70	Elite Healing Potion
+14	71	Elite Mana Potion
+14	72	Scroll of Quickness
+14	73	Scroll of Defense
+14	74	Scroll of Wrath
+14	75	Scroll of Wizardry
+14	76	Scroll of Health
+14	77	Scroll of Mana
+14	78	Elixir of Strength
+14	79	Elixir of Agility
+14	80	Elixir of Health
+14	81	Elixir of Energy
+14	82	Elixir of Control
+14	83	Rare Item Ticket
+14	84	Cherry Blossom Play-Box
+14	85	Cherry Blossom Wine
+14	86	Cherry Blossom Rice Cake
+14	87	Cherry Blossom Flower Petal
+14	88	White Cherry Blossom Branch
+14	89	Red Cherry Blossom Branch
+14	90	Golden Cherry Blossom Branch
+14	91	Summoner Character Card
+14	92	Chaos Card Gold
+14	93	Chaos Card Rare
+14	94	Medium Elite Healing Potion
+14	95	Chaos Card  Mini
+14	96	Talisman of Chaos Assembly
+14	97	Scroll of Battle
+14	98	Scroll of Strength
+14	99	Christmas Firecracker
+14	100	Lucky Coin
+14	101	Suspicious Scrap of Paper
+14	102	Gaions Order
+14	103	First Secromicon Fragment
+14	104	Second Secromicon Fragment
+14	105	Third Secromicon Fragment
+14	106	Fourth Secromicon Fragment
+14	107	Fifth Secromicon Fragment
+14	108	Sixth Secromicon Fragment
+14	109	Complete Secromicon
+14	110	Sign of Dimensions
+14	111	Mirror of Dimensions
+14	112	Silver Key
+14	113	Gold Key
+14	114	Master Skill Reset
+14	115	Stat Adjustment
+14	116	Character Relocation Service
+14	117	Character Rename Service
+14	118	Server Relocation Service
+14	119	Premium Package
+14	120	Goblin Gold Coin
+14	121	Sealed Golden Box
+14	122	Sealed Silver Box
+14	123	Golden Box
+14	124	Silver Box
+14	125	Package Box
+14	126	30-Day Pass
+14	127	90-Day Pass
+14	128	30-Day Pass - Points
+14	129	90-Day Pass - Points
+14	130	3-Hour Pass
+14	131	5-Hour Pass
+14	132	10-Hour Pass
+14	133	Elite SD Potion
+14	134	Package Box A
+14	135	Package Box B
+14	136	Package Box C
+14	137	Package Box D
+14	138	Package Box E
+14	139	Package Box F
+14	140	Scroll of Healing
+14	141	Shining Jewelry Case
+14	142	Elegant Jewelry Case
+14	143	Steel Jewelry Case
+14	144	Old Jewelry Case
+14	145	Rare Item Ticket 7
+14	146	Rare Item Ticket 8
+14	147	Rare Item Ticket 9
+14	148	Rare Item Ticket 10
+14	149	Rare Item Ticket 11
+14	150	Rare Item Ticket 12
+14	151	Lv. 1 Letter of Request
+14	152	Lv. 1 Completion Certificate
+14	153	Stardust
+14	154	Kalt Stone
+14	155	Tantalos's Armor
+14	156	Burnt Murderer's Club
+14	157	Green Box
+14	158	Red Box
+14	159	Purple Box
+14	160	Jewel of Extension
+14	161	Jewel of Elevation
+14	162	Magic Backpack
+14	163	Vault Expansion Certificate
+14	164	Ancient Statue
+14	165	Magic Cloth
+14	166	Space Cloth
+14	167	Phase Cloth
+14	169	RageFighter Character Card
+14	176	Death King's Bone
+14	177	Hell Maine's Leather
+14	178	Dark Phoenix Flame
+14	179	Death Beam Knight Soul
+14	180	Ice Walker's Mane
+14	181	Mammoth's Bundle of Fur
+14	182	Giant's Icicle
+14	183	Coolutin's Poison
+14	184	Iron Knight's Heart
+14	185	Dark Mammoth's Horn
+14	186	Dark Giant's Axe
+14	187	Dark Coolutin's Blood
+14	188	Dark Iron Knight's Sword
+14	189	Sonic Combination Note
+14	190	Cyclone Combination Note
+14	191	Blast Combination Note
+14	192	Magma Combination Note
+14	193	Horn Combination Note
+14	194	Angelic Combination Note
+14	195	Devil Cross Combination Note
+14	196	Miracle Combination Note
+14	197	Spite Combination Note
+14	198	Asura Combination Note
+14	199	Thunder Combination Note
+14	200	Soul Combination Note
+14	201	Bloody Combination Note
+14	222	Steel of Heaven
+14	223	Archangel's Hammer
+14	244	Jewel Of Level
+14	245	Jewel Of Skill
+14	246	Jewel Of Luck
+14	247	Jewel Of Adicional
+14	248	Jewel Of Excelentt
+14	249	Jewel Of Socket
+14	250	Jewel Of Ancient 1
+14	251	Jewel Of Ancient 2
+14	252	Jewel Of full
+14	253	Jewel of Evolucion(0-1)
+14	254	Jewel of Evolucion(1-2)
+14	256	Jewel of Evolucion(libre)
+14	257	Jewel of Evolucion(libre)
+14	258	Jewel of Evolucion(libre)
+14	259	Jewel of Evolucion(libre)
+14	260	Reliquia Perfecta
+14	261	Fragment De Reliquia
+14	263	Card Ascension DW lv 1
+14	264	Card Ascension DW lv 2
+14	265	Card Ascension DW lv 3
+14	266	Card Ascension DW lv 4
+14	267	Card Ascension DW lv 5
+14	268	Card Ascension DK lv 1
+14	269	Card Ascension DK lv 2
+14	270	Card Ascension DK lv 3
+14	271	Card Ascension DK lv 4
+14	272	Card Ascension DK lv 5
+14	273	Card Ascension ELF lv 1
+14	274	Card Ascension ELF lv 2
+14	275	Card Ascension ELF lv 3
+14	276	Card Ascension ELF lv 4
+14	277	Card Ascension ELF lv 5
+14	278	Card Ascension MG lv 1
+14	279	Card Ascension MG lv 2
+14	280	Card Ascension MG lv 3
+14	281	Card Ascension MG lv 4
+14	282	Card Ascension MG lv 5
+14	283	Card Ascension DL lv 1
+14	284	Card Ascension DL lv 2
+14	285	Card Ascension DL lv 3
+14	286	Card Ascension DL lv 4
+14	287	Card Ascension DL lv 5
+14	288	Card Ascension SUM lv 1
+14	289	Card Ascension SUM lv 2
+14	290	Card Ascension SUM lv 3
+14	291	Card Ascension SUM lv 4
+14	292	Card Ascension SUM lv 5
+14	293	Card Ascension RF lv 1
+14	294	Card Ascension RF lv 2
+14	295	Card Ascension RF lv 3
+14	296	Card Ascension RF lv 4
+14	297	Card Ascension RF lv 5
+14	298	Fragment SkyEvent
+14	299	Complete Pass SkyEvent
+14	300	Seal of Ghost Horses
+14	301	Fragment of Resurrection
+14	302	Guardian Upgrade Stone
+14	303	Elite Guardian Upgrade Stone
+14	304	Elite Guardian Option.F
+14	305	Guardian Elite Option C.Stone
+14	306	1st Wing Relic
+14	307	2st Wing Relic
+14	308	3st Wing Relic
+14	309	4st Wing Relic
+14	310	5st Wing Relic
+14	399	Nixie's spirit fragment
+14	400	Mastery Box (Minor)
+14	401	Mastery Box (Standard)
+14	402	Mastery Box (Greater)
+14	403	Ancient Hero's Soul
+14	404	(Hero) Bloodangel Spirit
+14	405	Darkangel Anvil
+14	406	Sealed Stone Shard
+14	407	Holyangel Anvil
+14	408	Holyangel Soul
+14	409	Soul Moru
+14	410	Awakening Soul
+14	411	Blue Eye Anvil
+14	412	Cold Horn
+14	413	SilverHeart Anvil
+14	414	Fleet Soul
+14	415	Manticore Anvil
+14	416	Manticore Soul
+14	417	Brilliant Anvil
+14	418	Brilliant Soul
+14	419	Apocalypse Anvil
+14	420	Apocalypse Soul
+14	421	Lightning Anvil
+14	422	Lightning Soul
+14	466	Sd BloodAngel Wizard Helm
+14	467	Sd BloodAngel Knight Helm
+14	468	Sd BloodAngel Elf Helm
+14	469	Sd BloodAngel Lord Helm
+14	470	Sd BloodAngel Summoner Helm
+14	471	Sd BloodAngel Fighter Helm
+14	472	Sd BloodAngel Wizard Armor
+14	473	Sd BloodAngel Knight Armor
+14	474	Sd BloodAngel Elf Armor
+14	475	Sd BloodAngel Magic Armor
+14	476	Sd BloodAngel Lord Armor
+14	477	Sd BloodAngel Summoner Armor
+14	478	Sd BloodAngel Fighter Armor
+14	479	Sd BloodAngel Wizard Pants
+14	480	Sd BloodAngel Knight Pants
+14	481	Sd BloodAngel Elf Pants
+14	482	Sd BloodAngel Magic Pants
+14	483	Sd BloodAngel Lord Pants
+14	484	Sd BloodAngel Summoner Pants
+14	485	Sd BloodAngel Fighter Pants
+14	486	Sd BloodAngel Wizard Gloves
+14	487	Sd BloodAngel Knight Gloves
+14	488	Sd BloodAngel Elf Gloves
+14	489	Sd BloodAngel Magic Gloves
+14	490	Sd BloodAngel Lord Gloves
+14	491	Sd BloodAngel Summoner Gloves
+14	492	Sd BloodAngel Wizard Boots
+14	493	Sd BloodAngel Knight Boots
+14	494	Sd BloodAngel Elf Boots
+14	495	Sd BloodAngel Magic Boots
+14	496	Sd BloodAngel Lord Boots
+14	497	Sd BloodAngel Summoner Boots
+14	498	Sd BloodAngel Fighter Boots
+14	499	Scratched Bloodangel Helmet
+14	500	Scratched Bloodangel Armor
+14	501	Scratched Bloodangel Pants
+14	502	Scratched Bloodangel Gloves
+14	503	Scratched Bloodangel Boots
+14	504	Scratched Bloodangel Weapom
+14	505	Sealed Helmet Sculpture
+14	506	Sealed Armor Sculpture
+14	507	Sealed Pants Sculpture
+14	508	Sealed Gloves Sculpture
+14	509	Sealed Boots Sculpture
+14	510	Sealed Weapom Sculpture
+15	0	Scroll of Poison
+15	1	Scroll of Meteorite
+15	2	Scroll of Lighting
+15	3	Scroll of Fire Ball
+15	4	Scroll of Flame
+15	5	Scroll of Teleport
+15	6	Scroll of Ice
+15	7	Scroll of Twister
+15	8	Scroll of Evil Spirit
+15	9	Scroll of Hellfire
+15	10	Scroll of Power Wave
+15	11	Scroll of Aqua Beam
+15	12	Scroll of Cometfall
+15	13	Scroll of Inferno
+15	14	Scroll of Teleport Ally
+15	15	Scroll of Soul Barrier
+15	16	Scroll of Decay
+15	17	Scroll of Ice Storm
+15	18	Scroll of Nova
+15	19	Chain Lightning Parchment
+15	20	Drain Life Parchment
+15	21	Lightning Shock Parchment
+15	22	Damage Reflection Parchment
+15	23	Berserker Parchment
+15	24	Sleep Parchment
+15	26	Weakness Parchment
+15	27	Innovation Parchment
+15	28	Scroll of Wizardry Enhance
+15	29	Scroll of Gigantic Storm
+15	30	Chain Driver Parchment
+15	31	Dark Side Parchment
+15	32	Dragon Lore Parchment
+15	33	Dragon Slayer Parchment
+15	34	Red Armor Ignore Parchment
+15	35	Fitness Parchment
+15	36	Defense Rate Parchment

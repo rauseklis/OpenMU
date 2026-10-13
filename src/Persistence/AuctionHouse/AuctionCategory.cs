@@ -43,4 +43,9 @@ public enum AuctionCategory
     /// Everything else.
     /// </summary>
     Miscellaneous = 6,
+
+    /// <summary>
+    /// Skill orbs, crystals, scrolls and parchments (group 15, and the orb and scroll entries of group 12).
+    /// </summary>
+    ScrollOrb = 7,
 }

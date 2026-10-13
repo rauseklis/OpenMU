@@ -52,4 +52,10 @@
     <ProjectReference Include="..\..\src\Persistence\InMemory\MUnique.OpenMU.Persistence.InMemory.csproj" />
     <ProjectReference Include="..\..\src\Persistence\MUnique.OpenMU.Persistence.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="AuctionHouse\Fixtures\ItemCatalog.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
