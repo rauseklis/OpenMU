@@ -62,18 +62,30 @@ public class AuctionReclassifyTests
                 await context.SaveChangesAsync();
             }
 
+            // Other tests may leave unclassified rows behind, so the backlog is not exactly ours: run batches of two until
+            // one comes back empty, and check every batch respects its size.
             var repository = new AuctionHouseRepository();
-            var first = await repository.ReclassifyListingsAsync(new EntityDataContext(), batchSize: 2);
-            var second = await repository.ReclassifyListingsAsync(new EntityDataContext(), batchSize: 2);
-            var third = await repository.ReclassifyListingsAsync(new EntityDataContext(), batchSize: 2);
+            var processed = 0;
+            var runs = 0;
+            int batch;
+            do
+            {
+                batch = await repository.ReclassifyListingsAsync(new EntityDataContext(), batchSize: 2);
+                Assert.That(batch, Is.LessThanOrEqualTo(2));
+                processed += batch;
+                runs++;
+            }
+            while (batch > 0 && runs < 1000);
+
+            var afterwards = await repository.ReclassifyListingsAsync(new EntityDataContext(), batchSize: 2);
 
             await using var check = new EntityDataContext();
             var rows = await check.Set<AuctionListing>().Where(l => l.SellerAccountId == seller).OrderBy(l => l.ItemGroup).ToListAsync();
             Assert.Multiple(() =>
             {
-                Assert.That(first, Is.EqualTo(2));
-                Assert.That(second, Is.EqualTo(1));
-                Assert.That(third, Is.Zero);
+                Assert.That(processed, Is.GreaterThanOrEqualTo(3));
+                Assert.That(runs, Is.GreaterThan(1), "a backlog larger than one batch takes more than one run");
+                Assert.That(afterwards, Is.Zero, "a finished backlog changes nothing");
                 Assert.That(rows.Select(r => ((int)r.Category, (int)r.SubCategory)), Is.EqualTo(new[] { (1, 3), (3, 2), (5, 0) }));
             });
         }
