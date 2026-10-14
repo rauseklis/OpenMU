@@ -35,11 +35,6 @@ public static class PriceRules
             return ValidateComponents(buyout, limits);
         }
 
-        if (starting.Count > 1)
-        {
-            return PriceValidationResult.MixedStartingPrice;
-        }
-
         var startResult = ValidateComponents(starting, limits);
         if (startResult != PriceValidationResult.Valid || buyout.Count == 0)
         {
@@ -52,14 +47,15 @@ public static class PriceRules
             return buyoutResult;
         }
 
-        var start = starting.First();
-        var buyoutComponent = buyout.First();
-        if (buyout.Count != 1 || buyoutComponent.Kind != start.Kind)
+        // The buyout names exactly the starting currencies, each at least as high.
+        var startingKinds = starting.Select(component => component.Kind).ToHashSet();
+        if (buyout.Count != startingKinds.Count || buyout.Any(component => !startingKinds.Contains(component.Kind)))
         {
             return PriceValidationResult.BuyoutKindsDiffer;
         }
 
-        return buyoutComponent.Quantity >= start.Quantity ? PriceValidationResult.Valid : PriceValidationResult.BuyoutBelowStart;
+        var belowStart = starting.Any(start => buyout.First(component => component.Kind == start.Kind).Quantity < start.Quantity);
+        return belowStart ? PriceValidationResult.BuyoutBelowStart : PriceValidationResult.Valid;
     }
 
     /// <summary>
@@ -68,7 +64,36 @@ public static class PriceRules
     /// </summary>
     /// <param name="starting">The starting price components.</param>
     /// <returns><c>true</c> if bids are allowed.</returns>
-    public static bool IsBiddable(IReadOnlyCollection<PriceComponent> starting) => starting.Count == 1;
+    public static bool IsBiddable(IReadOnlyCollection<PriceComponent> starting) => starting.Count >= 1;
+
+    /// <summary>
+    /// Decides whether a bid is allowed on a (possibly mixed-currency) listing. The first bid must be at least the starting
+    /// price in every currency of that price; a later bid must keep every currency of the current bid at the same amount or
+    /// higher and raise at least one. A bid may add currencies. The bid itself is validated like a price: at most the
+    /// configured number of currencies, each quantity within its range.
+    /// </summary>
+    /// <param name="starting">The listing's starting price.</param>
+    /// <param name="current">The current high bid, or <c>null</c> before the first bid.</param>
+    /// <param name="bid">The new bid.</param>
+    /// <param name="limits">The price limits, or <c>null</c> for the defaults.</param>
+    /// <returns><c>true</c> when the bid is allowed.</returns>
+    public static bool IsBidAllowed(PriceBasket starting, PriceBasket? current, PriceBasket bid, PriceLimits? limits = null)
+    {
+        limits ??= PriceLimits.Default;
+        if (bid.IsEmpty)
+        {
+            return false;
+        }
+
+        var components = bid.Components;
+        if (components.Count > limits.MaximumComponents
+            || components.Any(component => component.Quantity < limits.MinimumOf(component.Kind) || component.Quantity > limits.MaximumOf(component.Kind)))
+        {
+            return false;
+        }
+
+        return current is { } high ? bid.IsRaiseOf(high) : bid.Dominates(starting);
+    }
 
     /// <summary>
     /// Determines whether a kind is one of the seven jewels.

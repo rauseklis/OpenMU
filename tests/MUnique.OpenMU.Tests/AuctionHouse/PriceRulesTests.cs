@@ -8,7 +8,7 @@ using MUnique.OpenMU.GameLogic.AuctionHouse;
 
 /// <summary>
 /// Verifies the mixed-price rules: a listing's price is a list of up to five components drawn from Zen, the jewels
-/// and the stat fruits, and only a single-component listing can take bids.
+/// and the stat fruits, and any listing with a starting price can take bids.
 /// </summary>
 [TestFixture]
 public class PriceRulesTests
@@ -128,14 +128,14 @@ public class PriceRulesTests
     }
 
     /// <summary>
-    /// Verifies that an auction needs a single-component starting price.
+    /// Verifies that an auction's starting price may mix several currencies.
     /// </summary>
     [Test]
-    public void AuctionStartingPriceMustBeOneComponent()
+    public void AuctionStartingPriceMayMixSeveralCurrencies()
     {
         var starting = new[] { Part(PriceKind.Bless, 5), Part(PriceKind.Soul, 5) };
 
-        Assert.That(PriceRules.ValidateListing(starting, None), Is.EqualTo(PriceValidationResult.MixedStartingPrice));
+        Assert.That(PriceRules.ValidateListing(starting, None), Is.EqualTo(PriceValidationResult.Valid));
     }
 
     /// <summary>
@@ -167,6 +167,23 @@ public class PriceRulesTests
     }
 
     /// <summary>
+    /// Verifies that a mixed auction's buyout covers exactly the starting currencies, each at least as high.
+    /// </summary>
+    [Test]
+    public void MixedAuctionBuyoutCoversEveryStartingCurrency()
+    {
+        var starting = new[] { Part(PriceKind.Bless, 5), Part(PriceKind.Soul, 2) };
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(PriceRules.ValidateListing(starting, new[] { Part(PriceKind.Soul, 2), Part(PriceKind.Bless, 5) }), Is.EqualTo(PriceValidationResult.Valid));
+            Assert.That(PriceRules.ValidateListing(starting, new[] { Part(PriceKind.Bless, 9), Part(PriceKind.Soul, 4) }), Is.EqualTo(PriceValidationResult.Valid));
+            Assert.That(PriceRules.ValidateListing(starting, new[] { Part(PriceKind.Bless, 9) }), Is.EqualTo(PriceValidationResult.BuyoutKindsDiffer));
+            Assert.That(PriceRules.ValidateListing(starting, new[] { Part(PriceKind.Bless, 4), Part(PriceKind.Soul, 2) }), Is.EqualTo(PriceValidationResult.BuyoutBelowStart));
+        });
+    }
+
+    /// <summary>
     /// Verifies that the quantities of the starting price are range-checked too.
     /// </summary>
     [Test]
@@ -178,14 +195,14 @@ public class PriceRulesTests
     }
 
     /// <summary>
-    /// Verifies that only a single-component starting price takes bids.
+    /// Verifies that any listing with a starting price takes bids, and a buy-now listing (no starting price) does not.
     /// </summary>
     [Test]
-    public void OnlyASingleComponentStartingPriceIsBiddable()
+    public void AnyStartingPriceIsBiddable()
     {
         Assert.That(PriceRules.IsBiddable(new[] { Part(PriceKind.Chaos, 3) }), Is.True);
         Assert.That(PriceRules.IsBiddable(None), Is.False);
-        Assert.That(PriceRules.IsBiddable(new[] { Part(PriceKind.Chaos, 3), Part(PriceKind.Bless, 1) }), Is.False);
+        Assert.That(PriceRules.IsBiddable(new[] { Part(PriceKind.Chaos, 3), Part(PriceKind.Bless, 1) }), Is.True);
     }
 
     /// <summary>
