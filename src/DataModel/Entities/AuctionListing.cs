@@ -164,6 +164,28 @@ public class AuctionListing
     public byte SaleFeeState { get; set; }
 
     /// <summary>
+    /// Gets or sets the starting price of a mixed-currency listing as 13 comma-separated quantities in price-kind order.
+    /// <c>null</c> for single-currency listings and for buy-now listings, which have no starting price.
+    /// </summary>
+    public string? PriceVector { get; set; }
+
+    /// <summary>
+    /// Gets or sets the buyout price of a mixed-currency listing as 13 comma-separated quantities, or <c>null</c>.
+    /// </summary>
+    public string? BuyoutVector { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current high bid of a mixed-currency listing as 13 comma-separated quantities, or <c>null</c>.
+    /// </summary>
+    public string? CurrentBidVector { get; set; }
+
+    /// <summary>
+    /// Gets or sets a bit mask with one bit (the price kind's number) for every kind the listing's price uses. It serves
+    /// the currency filter of browse. Zero for single-currency listings.
+    /// </summary>
+    public int KindMask { get; set; }
+
+    /// <summary>
     /// Gets or sets the current expiry, in UTC. Anti-sniping may extend it up to the cap.
     /// </summary>
     public DateTimeOffset EndsAt { get; set; }

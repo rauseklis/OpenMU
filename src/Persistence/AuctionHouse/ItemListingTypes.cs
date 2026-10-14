@@ -89,6 +89,8 @@ public readonly record struct ItemListingFacts(
 /// <param name="ListingLimitPerAccount">The maximum number of active listings of the account.</param>
 /// <param name="ListingLimitPerCharacter">The maximum number of active listings of the character.</param>
 /// <param name="SaleFee">The flat sale fee in Zen, held until the listing ends. Zero charges none.</param>
+/// <param name="StartingBasket">The starting price of a mixed-currency auction, or <c>null</c> for a buy-now listing or a single-currency listing.</param>
+/// <param name="BuyoutBasket">The buyout (or buy-now) price of a mixed-currency listing, or <c>null</c>.</param>
 public readonly record struct ItemListingDraft(
     Guid OperationId,
     Guid AccountId,
@@ -109,4 +111,6 @@ public readonly record struct ItemListingDraft(
     FruitBasket? FeeFruits = null,
     FruitBasket? BuyoutFruits = null,
     string? Note = null,
-    long SaleFee = 0);
+    long SaleFee = 0,
+    PriceBasket? StartingBasket = null,
+    PriceBasket? BuyoutBasket = null);

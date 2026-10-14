@@ -52,7 +52,10 @@ public sealed record AuctionListingDetail(
     long? BuyoutAgility,
     long? BuyoutVitality,
     long? BuyoutEnergy,
-    long? BuyoutCommand)
+    long? BuyoutCommand,
+    string? PriceVector = null,
+    string? BuyoutVector = null,
+    string? CurrentBidVector = null)
 {
     /// <summary>The starting basket of a fruit listing.</summary>
     public FruitBasket? StartingFruits => Basket(StartingStrength, StartingAgility, StartingVitality, StartingEnergy, StartingCommand);

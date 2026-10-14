@@ -352,6 +352,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<long?>("AgilityAmount")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("AmountVector")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("BidderAccountId")
                         .HasColumnType("uuid");
 
@@ -447,6 +450,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<long?>("OriginalStrength")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("OriginalVector")
+                        .HasColumnType("text");
+
                     b.Property<long?>("OriginalVitality")
                         .HasColumnType("bigint");
 
@@ -464,6 +470,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
                     b.Property<long?>("RemainingStrength")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("RemainingVector")
+                        .HasColumnType("text");
 
                     b.Property<long?>("RemainingVitality")
                         .HasColumnType("bigint");
@@ -566,6 +575,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<long?>("BuyoutStrength")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("BuyoutVector")
+                        .HasColumnType("text");
+
                     b.Property<long?>("BuyoutVitality")
                         .HasColumnType("bigint");
 
@@ -595,6 +607,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
                     b.Property<long?>("CurrentBidStrength")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("CurrentBidVector")
+                        .HasColumnType("text");
 
                     b.Property<long?>("CurrentBidVitality")
                         .HasColumnType("bigint");
@@ -626,6 +641,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<int>("ItemNumber")
                         .HasColumnType("integer");
 
+                    b.Property<int>("KindMask")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("LastBidAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -650,6 +668,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
                     b.Property<DateTimeOffset>("OriginalEndsAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PriceVector")
+                        .HasColumnType("text");
 
                     b.Property<long>("SaleFeeHeld")
                         .HasColumnType("bigint");

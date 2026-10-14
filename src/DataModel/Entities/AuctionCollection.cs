@@ -107,6 +107,17 @@ public class AuctionCollection
     public long? RemainingCommand { get; set; }
 
     /// <summary>
+    /// Gets or sets the original amount of a mixed-currency obligation as 13 comma-separated quantities in price-kind order.
+    /// </summary>
+    public string? OriginalVector { get; set; }
+
+    /// <summary>
+    /// Gets or sets the remaining amount of a mixed-currency obligation as 13 comma-separated quantities in price-kind order.
+    /// A mixed obligation is claimed all at once, so it is either the original amount or all zeros.
+    /// </summary>
+    public string? RemainingVector { get; set; }
+
+    /// <summary>
     /// Gets or sets the collection status as its wire value: 0 Pending, 1 PartiallyClaimed, 2 Claimed.
     /// </summary>
     public byte Status { get; set; }

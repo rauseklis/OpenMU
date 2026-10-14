@@ -18,6 +18,8 @@ namespace MUnique.OpenMU.Persistence.AuctionHouse;
 /// <param name="SourceListingNumber">The listing the collection came from, on the wire.</param>
 /// <param name="ItemId">The item of an item collection, or <c>null</c>.</param>
 /// <param name="Version">The collection version.</param>
+/// <param name="OriginalVector">The original amount of a mixed-currency obligation as 13 comma-separated quantities, or <c>null</c>.</param>
+/// <param name="RemainingVector">The remaining amount of a mixed-currency obligation, or <c>null</c>.</param>
 public readonly record struct AuctionCollectionRow(
     long CollectionNumber,
     byte Kind,
@@ -29,7 +31,9 @@ public readonly record struct AuctionCollectionRow(
     FruitQuantities? RemainingFruits,
     long SourceListingNumber,
     Guid? ItemId,
-    int Version);
+    int Version,
+    string? OriginalVector = null,
+    string? RemainingVector = null);
 
 /// <summary>
 /// One page of mailbox entries, with the total number of entries.

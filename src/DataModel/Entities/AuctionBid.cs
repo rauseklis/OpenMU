@@ -66,6 +66,11 @@ public class AuctionBid
     public long? CommandAmount { get; set; }
 
     /// <summary>
+    /// Gets or sets the escrowed amount of a mixed-currency bid as 13 comma-separated quantities in price-kind order.
+    /// </summary>
+    public string? AmountVector { get; set; }
+
+    /// <summary>
     /// Gets or sets the bidder's IP address at the time of the bid.
     /// </summary>
     public string? BidderIp { get; set; }

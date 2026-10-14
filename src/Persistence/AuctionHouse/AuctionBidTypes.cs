@@ -58,6 +58,11 @@ public enum AuctionBidOutcome
     /// The character does not belong to the requesting account.
     /// </summary>
     CharacterNotOwned,
+
+    /// <summary>
+    /// The listing is a buy-now listing: it has no starting price and takes no bids.
+    /// </summary>
+    NotBiddable,
 }
 
 /// <summary>

@@ -53,4 +53,9 @@ public enum AuctionCurrencyMode
     /// A seller-defined basket of the five stat fruits. Priced per component, never as a scalar.
     /// </summary>
     Fruits = 8,
+
+    /// <summary>
+    /// A price made of two or more kinds (Zen, jewels, stat fruits) in any mix, or a buy-now price. Stored as a basket of 13 quantities.
+    /// </summary>
+    Mixed = 9,
 }

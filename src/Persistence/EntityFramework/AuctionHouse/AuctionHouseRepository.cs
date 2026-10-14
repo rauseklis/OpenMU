@@ -17,7 +17,7 @@ using Npgsql;
 /// Persists Auction House operations. Each operation runs in one database transaction, and its operation record is
 /// written with it, so an operation either fully happens or not at all.
 /// </summary>
-public sealed class AuctionHouseRepository : IAuctionHouseRepository
+public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
 {
     private const byte CreateKind = 0;
     private const int CreatedOutcome = 0;
@@ -201,7 +201,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ("ActiveListingItemStillInInventory",
                 "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l JOIN data.\"Item\" i ON i.\"Id\" = l.\"ItemId\" WHERE l.\"Status\" = 0 AND i.\"ItemStorageId\" IS NOT NULL"),
             ("ActiveListingBidEscrowMismatch",
-                "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" = 0 AND (SELECT COUNT(*) FROM data.\"AuctionBid\" b WHERE b.\"ListingId\" = l.\"Id\" AND b.\"Status\" = 0) <> (CASE WHEN l.\"CurrentBid\" IS NULL THEN 0 ELSE 1 END)"),
+                "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" = 0 AND (SELECT COUNT(*) FROM data.\"AuctionBid\" b WHERE b.\"ListingId\" = l.\"Id\" AND b.\"Status\" = 0) <> (CASE WHEN l.\"CurrentBid\" IS NULL AND l.\"CurrentBidVector\" IS NULL THEN 0 ELSE 1 END)"),
             ("SoldListingCollectionsMismatch",
                 "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" = 1 AND ((SELECT COUNT(*) FROM data.\"AuctionCollection\" c WHERE c.\"ListingId\" = l.\"Id\" AND c.\"Kind\" = 0) <> 1 OR (SELECT COUNT(*) FROM data.\"AuctionCollection\" c WHERE c.\"ListingId\" = l.\"Id\" AND c.\"Kind\" = 2) <> 1)"),
             ("UnsoldListingReturnCollectionMismatch",
@@ -209,7 +209,9 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             ("ItemOwnedByMoreThanOneListingOrCollection",
                 "SELECT x.\"ItemId\" AS \"Value\" FROM (SELECT \"ItemId\" FROM data.\"AuctionListing\" WHERE \"Status\" = 0 UNION ALL SELECT \"ItemId\" FROM data.\"AuctionCollection\" WHERE \"ItemId\" IS NOT NULL AND \"Status\" <> 2) x GROUP BY x.\"ItemId\" HAVING COUNT(*) > 1"),
             ("ClaimedCollectionStillOwesAmount",
-                "SELECT c.\"Id\" AS \"Value\" FROM data.\"AuctionCollection\" c WHERE c.\"Status\" = 2 AND (COALESCE(c.\"RemainingScalar\", 0) > 0 OR COALESCE(c.\"RemainingStrength\", 0) > 0 OR COALESCE(c.\"RemainingAgility\", 0) > 0 OR COALESCE(c.\"RemainingVitality\", 0) > 0 OR COALESCE(c.\"RemainingEnergy\", 0) > 0 OR COALESCE(c.\"RemainingCommand\", 0) > 0)"),
+                "SELECT c.\"Id\" AS \"Value\" FROM data.\"AuctionCollection\" c WHERE c.\"Status\" = 2 AND (COALESCE(c.\"RemainingScalar\", 0) > 0 OR COALESCE(c.\"RemainingStrength\", 0) > 0 OR COALESCE(c.\"RemainingAgility\", 0) > 0 OR COALESCE(c.\"RemainingVitality\", 0) > 0 OR COALESCE(c.\"RemainingEnergy\", 0) > 0 OR COALESCE(c.\"RemainingCommand\", 0) > 0 OR (c.\"RemainingVector\" IS NOT NULL AND c.\"RemainingVector\" <> '0,0,0,0,0,0,0,0,0,0,0,0,0'))"),
+            ("MixedEscrowDiffersFromBidObligation",
+                "SELECT l.\"Id\" AS \"Value\" FROM data.\"AuctionListing\" l WHERE l.\"Status\" = 0 AND l.\"Currency\" = 9 AND COALESCE(l.\"CurrentBidVector\", '') <> COALESCE((SELECT b.\"AmountVector\" FROM data.\"AuctionBid\" b WHERE b.\"ListingId\" = l.\"Id\" AND b.\"Status\" = 0 LIMIT 1), '')"),
             ("OperationIdHasContradictoryResults",
                 "SELECT o.\"AccountId\" AS \"Value\" FROM data.\"AuctionOperation\" o GROUP BY o.\"AccountId\", o.\"OperationId\" HAVING COUNT(DISTINCT o.\"Kind\") > 1 OR COUNT(DISTINCT o.\"Outcome\") > 1"),
         };
@@ -307,7 +309,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.BuyoutAgility,
                 l.BuyoutVitality,
                 l.BuyoutEnergy,
-                l.BuyoutCommand))
+                l.BuyoutCommand,
+                l.PriceVector,
+                l.BuyoutVector,
+                l.CurrentBidVector))
             .ToListAsync(cancellationToken);
         return new AuctionListingPage(rows, total);
     }
@@ -354,6 +359,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 c.RemainingVitality,
                 c.RemainingEnergy,
                 c.RemainingCommand,
+                c.OriginalVector,
+                c.RemainingVector,
                 SourceListingNumber = context.Set<AuctionListing>().Where(l => l.Id == c.ListingId).Select(l => l.ListingNumber).FirstOrDefault(),
                 c.ItemId,
                 c.Version,
@@ -370,7 +377,9 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             c.RemainingStrength is null ? null : new FruitQuantities(c.RemainingStrength ?? 0, c.RemainingAgility ?? 0, c.RemainingVitality ?? 0, c.RemainingEnergy ?? 0, c.RemainingCommand ?? 0),
             c.SourceListingNumber,
             c.ItemId,
-            c.Version)).ToList();
+            c.Version,
+            c.OriginalVector,
+            c.RemainingVector)).ToList();
         return new AuctionCollectionPage(rows, total);
     }
 
@@ -441,7 +450,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         {
             escrow.Status = 1;
             escrow.ClosedAt = draft.Now;
-            if (listing.Currency == FruitsCurrency)
+            if (listing.Currency == MixedCurrency)
+            {
+                context.Set<AuctionCollection>().Add(MixedCollection(escrow.BidderAccountId, listing.Id, RefundCollectionKind, PriceBasket.Parse(escrow.AmountVector) ?? PriceBasket.Empty, draft.Now));
+            }
+            else if (listing.Currency == FruitsCurrency)
             {
                 context.Set<AuctionCollection>().Add(FruitCollection(escrow.BidderAccountId, listing.Id, 3,
                     new FruitBasket(escrow.StrengthAmount ?? 0, escrow.AgilityAmount ?? 0, escrow.VitalityAmount ?? 0, escrow.EnergyAmount ?? 0, escrow.CommandAmount ?? 0), draft.Now));
@@ -1089,7 +1102,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBidResult(refusal);
         }
 
-        if (listing.Currency == FruitsCurrency)
+        if (listing.Currency is FruitsCurrency or MixedCurrency)
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBidResult(AuctionBidOutcome.UnsupportedCurrency);
@@ -1308,7 +1321,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.BuyoutUnavailable);
         }
 
-        if (listing.Currency == FruitsCurrency)
+        if (listing.Currency is FruitsCurrency or MixedCurrency)
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.UnsupportedCurrency);
@@ -1635,9 +1648,18 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             listing.Status = 1;
             ConsumeSaleFee(listing);
             context.Set<AuctionCollection>().Add(ItemCollection(escrow.BidderAccountId, listing, 0, now));
-            context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, price - successFee(price), now));
-            context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, BoughtNotificationKind, listing.Currency, price, now));
-            context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, listing.Currency, price, now));
+            if (listing.Currency == MixedCurrency)
+            {
+                context.Set<AuctionCollection>().Add(MixedCollection(listing.SellerAccountId, listing.Id, ProceedsCollectionKind, PriceBasket.Parse(escrow.AmountVector) ?? PriceBasket.Empty, now));
+                context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, BoughtNotificationKind, listing.Currency, null, now));
+                context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, listing.Currency, null, now));
+            }
+            else
+            {
+                context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, price - successFee(price), now));
+                context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, BoughtNotificationKind, listing.Currency, price, now));
+                context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, listing.Currency, price, now));
+            }
         }
         else
         {
@@ -1750,6 +1772,11 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         if (collection.ItemId is { } lotItemId)
         {
             return await this.ClaimLotAsync(context, draft, collection, lotItemId, cancellationToken);
+        }
+
+        if (collection.Currency == MixedCurrency)
+        {
+            return await this.ClaimMixedAsync(context, draft, collection, cancellationToken);
         }
 
         if (Plan(collection, draft) is not { } plan)
@@ -2359,7 +2386,27 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.Status == 0);
         if (search.Currency is { } currency)
         {
-            query = query.Where(l => l.Currency == currency);
+            if (currency == MixedCurrency)
+            {
+                query = query.Where(l => l.Currency == MixedCurrency);
+            }
+            else if (currency == FruitsCurrency)
+            {
+                var fruitKinds = 0x1F00;
+                query = query.Where(l => l.Currency == FruitsCurrency || (l.Currency == MixedCurrency && (l.KindMask & fruitKinds) != 0));
+            }
+            else
+            {
+                var kindBit = 1 << currency;
+                query = query.Where(l => l.Currency == currency || (l.Currency == MixedCurrency && (l.KindMask & kindBit) != 0));
+            }
+        }
+
+        if (search.Sort is AuctionSearchSort.PriceAscending or AuctionSearchSort.PriceDescending
+            || search.MinimumScalar > 0 || search.MaximumScalar > 0 || search.MinimumFruits is not null || search.MaximumFruits is not null)
+        {
+            // A basket of several kinds has no single price: it is left out of a price order and of price limits.
+            query = query.Where(l => l.Currency != MixedCurrency);
         }
         if (search.Category is { } category)
         {
@@ -2489,7 +2536,10 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 l.BuyoutAgility,
                 l.BuyoutVitality,
                 l.BuyoutEnergy,
-                l.BuyoutCommand))
+                l.BuyoutCommand,
+                l.PriceVector,
+                l.BuyoutVector,
+                l.CurrentBidVector))
             .ToListAsync(cancellationToken);
         return new AuctionListingPage(rows, total);
     }
@@ -2575,6 +2625,13 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
                 return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
             }
         }
+        else if (draft.Currency == MixedCurrency)
+        {
+            if (!await DebitZenAsync(context, draft.CharacterId, draft.ListingFee, cancellationToken))
+            {
+                return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
+            }
+        }
         else if (draft.Currency == FruitsCurrency)
         {
             if (draft.FeeFruits is not { } feeFruits || !await this.TenderFruitsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, feeFruits, FeeRemovedKind, item.Id, draft.CreatedAt, cancellationToken))
@@ -2608,6 +2665,9 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             SaleFeeHeld = draft.SaleFee,
             SaleFeeState = draft.SaleFee > 0 ? (byte)SaleFeeState.Held : (byte)SaleFeeState.None,
             StartingPrice = draft.StartingPrice,
+            PriceVector = draft.StartingBasket?.ToVectorText(),
+            BuyoutVector = draft.BuyoutBasket?.ToVectorText(),
+            KindMask = (draft.StartingBasket ?? PriceBasket.Empty).KindMask | (draft.BuyoutBasket ?? PriceBasket.Empty).KindMask,
             StartingStrength = draft.StartingFruits?.Strength ?? 0,
             StartingAgility = draft.StartingFruits?.Agility ?? 0,
             StartingVitality = draft.StartingFruits?.Vitality ?? 0,
@@ -2650,7 +2710,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         if (draft.Currency != FruitsCurrency && draft.ListingFee > 0)
         {
             var feeMovement = Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt);
-            feeMovement.Currency = draft.Currency;
+            feeMovement.Currency = draft.Currency == MixedCurrency ? (byte)0 : draft.Currency;
             context.Set<AuctionCurrencyMovement>().Add(feeMovement);
         }
 
@@ -2778,7 +2838,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     {
         return context.Set<AuctionListing>().AsNoTracking()
             .Where(l => l.Id == listingId)
-            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.OriginalEndsAt, l.BidCount, l.SellerName, l.Note, l.StartingStrength, l.StartingAgility, l.StartingVitality, l.StartingEnergy, l.StartingCommand, l.CurrentBidStrength, l.CurrentBidAgility, l.CurrentBidVitality, l.CurrentBidEnergy, l.CurrentBidCommand, l.BuyoutStrength, l.BuyoutAgility, l.BuyoutVitality, l.BuyoutEnergy, l.BuyoutCommand))
+            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.OriginalEndsAt, l.BidCount, l.SellerName, l.Note, l.StartingStrength, l.StartingAgility, l.StartingVitality, l.StartingEnergy, l.StartingCommand, l.CurrentBidStrength, l.CurrentBidAgility, l.CurrentBidVitality, l.CurrentBidEnergy, l.CurrentBidCommand, l.BuyoutStrength, l.BuyoutAgility, l.BuyoutVitality, l.BuyoutEnergy, l.BuyoutCommand, l.PriceVector, l.BuyoutVector, l.CurrentBidVector))
             .FirstOrDefaultAsync(cancellationToken);
     }
 

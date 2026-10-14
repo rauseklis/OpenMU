@@ -46,6 +46,23 @@ public interface IAuctionHouseRepository
     Task<AuctionBuyoutResult> BuyoutAsync(BuyoutDraft draft, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Places a bid on a mixed-currency listing. Every component of the bid is escrowed or none is, and the displaced bid is
+    /// released into a refund collection in the same transaction.
+    /// </summary>
+    /// <param name="draft">The bid.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    Task<AuctionBidResult> PlaceMixedBidAsync(MixedBidDraft draft, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Buys a mixed-currency listing out. The buyer pays the buyout basket less what they already escrowed as the high bidder.
+    /// </summary>
+    /// <param name="draft">The buyout.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome of the request.</returns>
+    Task<AuctionBuyoutResult> PlaceMixedBuyoutAsync(MixedBuyoutDraft draft, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Buys a fruit-basket listing out at its buyout basket.
     /// </summary>
     /// <param name="draft">The buyout.</param>
