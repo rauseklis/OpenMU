@@ -137,7 +137,8 @@ public sealed class AuctionHouseService
             request.StartingFruits,
             feeFruits,
             isFruits ? request.BuyoutFruits : null,
-            request.Note);
+            request.Note,
+            this._options.SaleFee.Currency == SaleFeeCurrency.Zen ? Math.Max(0, this._options.SaleFee.Amount) : 0);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
         AuctionHouseMetrics.RecordOperation("create", result.Outcome.ToString());
         LogOperation("create", result.Outcome.ToString(), request.AccountId, result.ListingId, started);

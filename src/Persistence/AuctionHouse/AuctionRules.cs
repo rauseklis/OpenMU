@@ -35,7 +35,7 @@ public static class AuctionRules
     /// <returns>The fee in whole units.</returns>
     public static long CalculateFee(long amount, int basisPoints)
     {
-        if (amount <= 0)
+        if (amount <= 0 || basisPoints <= 0)
         {
             return 0;
         }

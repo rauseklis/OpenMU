@@ -651,6 +651,12 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<DateTimeOffset>("OriginalEndsAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long>("SaleFeeHeld")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte>("SaleFeeState")
+                        .HasColumnType("smallint");
+
                     b.Property<Guid>("SellerAccountId")
                         .HasColumnType("uuid");
 

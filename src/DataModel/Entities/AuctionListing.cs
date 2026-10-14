@@ -154,6 +154,16 @@ public class AuctionListing
     public DateTimeOffset OriginalEndsAt { get; set; }
 
     /// <summary>
+    /// Gets or sets the flat sale fee held when the listing was created, in Zen. Zero when no fee was charged.
+    /// </summary>
+    public long SaleFeeHeld { get; set; }
+
+    /// <summary>
+    /// Gets or sets the state of the held fee as its wire value: 0 none, 1 held, 2 consumed by a sale, 3 refunded.
+    /// </summary>
+    public byte SaleFeeState { get; set; }
+
+    /// <summary>
     /// Gets or sets the current expiry, in UTC. Anti-sniping may extend it up to the cap.
     /// </summary>
     public DateTimeOffset EndsAt { get; set; }

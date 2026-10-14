@@ -88,6 +88,7 @@ public readonly record struct ItemListingFacts(
 /// <param name="ListingFee">The listing fee, charged in the listing currency.</param>
 /// <param name="ListingLimitPerAccount">The maximum number of active listings of the account.</param>
 /// <param name="ListingLimitPerCharacter">The maximum number of active listings of the character.</param>
+/// <param name="SaleFee">The flat sale fee in Zen, held until the listing ends. Zero charges none.</param>
 public readonly record struct ItemListingDraft(
     Guid OperationId,
     Guid AccountId,
@@ -107,4 +108,5 @@ public readonly record struct ItemListingDraft(
     FruitBasket? StartingFruits = null,
     FruitBasket? FeeFruits = null,
     FruitBasket? BuyoutFruits = null,
-    string? Note = null);
+    string? Note = null,
+    long SaleFee = 0);

@@ -24,7 +24,7 @@ public sealed record AuctionHouseOptions
     /// Gets the flat sale fee: one fixed charge per completed sale, held when the listing is created and returned if
     /// the item does not sell. It takes over from the percentage fees below when mixed prices go live.
     /// </summary>
-    public SaleFee SaleFee { get; init; } = SaleFee.Default;
+    public SaleFee SaleFee { get; init; } = new(SaleFeeCurrency.Zen, 0);
 
     /// <summary>
     /// Gets the limits a price has to respect.

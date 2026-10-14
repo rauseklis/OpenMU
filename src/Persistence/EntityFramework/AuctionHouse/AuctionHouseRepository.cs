@@ -31,6 +31,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
     private const byte ChangeOutKind = 1;
     private const byte ClaimMaterializedKind = 6;
     private const byte TenderChangeCollectionKind = 4;
+    private const byte FeeRefundCollectionKind = 6;
     private const byte OutbidNotificationKind = 0;
     private const byte SoldNotificationKind = 1;
     private const byte BoughtNotificationKind = 2;
@@ -454,6 +455,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         }
 
         context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, draft.Now));
+        RefundSaleFee(context, listing, draft.Now);
         context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, ReturnedNotificationKind, listing.Currency, null, draft.Now));
         var audit = Audit(7, Guid.Empty, null, listing.Id, null, draft.Now, null, listing.SellerAccountId, null, listing.Currency, null);
         audit.Reason = $"admin {draft.AdministratorIdentity}: {draft.Reason}";
@@ -964,6 +966,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         }
 
         listing.Status = 1;
+        ConsumeSaleFee(listing);
         listing.CurrentBid = null;
         listing.CurrentBidStrength = buyout.Strength;
         listing.CurrentBidAgility = buyout.Agility;
@@ -1362,6 +1365,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         }
 
         listing.Status = 1;
+        ConsumeSaleFee(listing);
         listing.CurrentBid = price;
         listing.CurrentBidderAccountId = draft.BuyerAccountId;
         listing.CurrentBidderCharacterId = draft.BuyerCharacterId;
@@ -1406,6 +1410,44 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             context.ChangeTracker.Clear();
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.StaleListing);
         }
+    }
+
+    /// <summary>
+    /// Marks the held sale fee consumed because the listing sold.
+    /// </summary>
+    private static void ConsumeSaleFee(AuctionListing listing)
+    {
+        if (listing.SaleFeeState == (byte)SaleFeeState.Held)
+        {
+            listing.SaleFeeState = (byte)SaleFeeState.Consumed;
+        }
+    }
+
+    /// <summary>
+    /// Returns the held sale fee to the seller through a Zen collection because the listing ended unsold.
+    /// </summary>
+    private static void RefundSaleFee(EntityDataContext context, AuctionListing listing, DateTimeOffset now)
+    {
+        if (listing.SaleFeeState != (byte)SaleFeeState.Held || listing.SaleFeeHeld <= 0)
+        {
+            return;
+        }
+
+        listing.SaleFeeState = (byte)SaleFeeState.Refunded;
+        context.Set<AuctionCollection>().Add(new AuctionCollection
+        {
+            Id = Guid.NewGuid(),
+            AccountId = listing.SellerAccountId,
+            ListingId = listing.Id,
+            Kind = FeeRefundCollectionKind,
+            Currency = 0,
+            OriginalScalar = listing.SaleFeeHeld,
+            RemainingScalar = listing.SaleFeeHeld,
+            Status = 0,
+            CreatedAt = now,
+            UpdatedAt = now,
+            Version = 0,
+        });
     }
 
     private static AuctionCollection ScalarCollection(Guid accountId, AuctionListing listing, byte kind, long amount, DateTimeOffset now)
@@ -1473,6 +1515,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
 
         listing.Status = 3;
         listing.FinalizedAt = draft.Now;
+        RefundSaleFee(context, listing, draft.Now);
         context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, draft.Now));
         context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, ReturnedNotificationKind, listing.Currency, null, draft.Now));
         context.Set<AuctionOperation>().Add(new AuctionOperation
@@ -1590,6 +1633,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             escrow.Status = 2;
             escrow.ClosedAt = now;
             listing.Status = 1;
+            ConsumeSaleFee(listing);
             context.Set<AuctionCollection>().Add(ItemCollection(escrow.BidderAccountId, listing, 0, now));
             context.Set<AuctionCollection>().Add(ScalarCollection(listing.SellerAccountId, listing, 2, price - successFee(price), now));
             context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, BoughtNotificationKind, listing.Currency, price, now));
@@ -1598,6 +1642,7 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
         else
         {
             listing.Status = 2;
+            RefundSaleFee(context, listing, now);
             context.Set<AuctionCollection>().Add(ItemCollection(listing.SellerAccountId, listing, 1, now));
             context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, ExpiredNotificationKind, listing.Currency, null, now));
         }
@@ -2542,6 +2587,12 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
         }
 
+        // The flat sale fee is held in Zen until the listing ends: consumed by a sale, refunded through the Mailbox otherwise.
+        if (draft.SaleFee > 0 && !await DebitZenAsync(context, draft.CharacterId, draft.SaleFee, cancellationToken))
+        {
+            return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
+        }
+
         context.Set<AuctionListing>().Add(new AuctionListing
         {
             Id = listingId,
@@ -2554,6 +2605,8 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             Currency = draft.Currency,
             Category = (byte)classification.Category,
             SubCategory = classification.SubCategory,
+            SaleFeeHeld = draft.SaleFee,
+            SaleFeeState = draft.SaleFee > 0 ? (byte)SaleFeeState.Held : (byte)SaleFeeState.None,
             StartingPrice = draft.StartingPrice,
             StartingStrength = draft.StartingFruits?.Strength ?? 0,
             StartingAgility = draft.StartingFruits?.Agility ?? 0,
@@ -2594,11 +2647,18 @@ public sealed class AuctionHouseRepository : IAuctionHouseRepository
             CreatedAt = draft.CreatedAt,
         });
         context.Set<AuctionTransactionLog>().Add(Audit(CreateKind, draft.AccountId, draft.CharacterId, listingId, draft.OperationId, draft.CreatedAt, draft.SellerIp, null, draft.StartingPrice, draft.Currency, draft.ListingFee));
-        if (draft.Currency != FruitsCurrency)
+        if (draft.Currency != FruitsCurrency && draft.ListingFee > 0)
         {
             var feeMovement = Movement(draft.AccountId, draft.OperationId, listingId, null, draft.ListingFee, FeeRemovedKind, draft.CreatedAt);
             feeMovement.Currency = draft.Currency;
             context.Set<AuctionCurrencyMovement>().Add(feeMovement);
+        }
+
+        if (draft.SaleFee > 0)
+        {
+            var heldFee = Movement(draft.AccountId, draft.OperationId, listingId, null, draft.SaleFee, FeeRemovedKind, draft.CreatedAt);
+            heldFee.Currency = 0;
+            context.Set<AuctionCurrencyMovement>().Add(heldFee);
         }
         item.ItemStorageId = null;
 
