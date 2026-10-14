@@ -47,7 +47,8 @@ public sealed class AuctionHouseService
     {
         var now = this._clock();
         var pending = await this._repository.CountPendingCollectionsAsync(accountId, cancellationToken);
-        return new AuctionOpenResult(AuctionResultCode.Success, pending, now, this._options.PageSize);
+        var saleFee = this._options.SaleFee.Currency == SaleFeeCurrency.Zen ? Math.Max(0, this._options.SaleFee.Amount) : 0;
+        return new AuctionOpenResult(AuctionResultCode.Success, pending, now, this._options.PageSize, saleFee, this._options.MixedPricesEnabled);
     }
 
     /// <summary>
@@ -89,6 +90,11 @@ public sealed class AuctionHouseService
         if (!this._options.Enabled)
         {
             return new AuctionListItemResult(AuctionResultCode.Disabled, Guid.Empty, 0, now);
+        }
+
+        if (request.Currency == (byte)AuctionCurrencyMode.Mixed)
+        {
+            return await this.ListMixedAsync(request, now, started, cancellationToken);
         }
 
         // Zen, the seven jewel modes and the fruit basket can list.
@@ -150,6 +156,55 @@ public sealed class AuctionHouseService
         return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now, draft.ListingFee, feeFruits);
     }
 
+    /// <summary>
+    /// Lists an item for a basket price or a buy-now price. The prices are checked against the price rules; no percentage fee is
+    /// charged, only the flat sale fee.
+    /// </summary>
+    private async Task<AuctionListItemResult> ListMixedAsync(AuctionListItemRequest request, DateTimeOffset now, long started, CancellationToken cancellationToken)
+    {
+        if (!this._options.MixedPricesEnabled)
+        {
+            return new AuctionListItemResult(AuctionResultCode.UnsupportedCurrency, Guid.Empty, 0, now);
+        }
+
+        if (!AuctionRules.IsValidDuration(request.DurationHours))
+        {
+            return new AuctionListItemResult(AuctionResultCode.InvalidDuration, Guid.Empty, 0, now);
+        }
+
+        var starting = request.StartingBasket ?? PriceBasket.Empty;
+        var buyout = request.BuyoutBasket ?? PriceBasket.Empty;
+        if (PriceRules.ValidateListing(starting.Components, buyout.Components, this._options.PriceLimits) != PriceValidationResult.Valid)
+        {
+            return new AuctionListItemResult(AuctionResultCode.InvalidPrice, Guid.Empty, 0, now);
+        }
+
+        var draft = new ItemListingDraft(
+            request.OperationId,
+            request.AccountId,
+            request.CharacterId,
+            request.SellerName,
+            request.SellerIp,
+            request.InventorySlot,
+            request.Currency,
+            request.Category,
+            0,
+            null,
+            now,
+            now.AddHours(request.DurationHours),
+            0,
+            this._options.MaximumActiveListingsPerAccount,
+            this._options.MaximumActiveListingsPerCharacter,
+            Note: request.Note,
+            SaleFee: this._options.SaleFee.Currency == SaleFeeCurrency.Zen ? Math.Max(0, this._options.SaleFee.Amount) : 0,
+            StartingBasket: starting.IsEmpty ? null : starting,
+            BuyoutBasket: buyout.IsEmpty ? null : buyout);
+        var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
+        AuctionHouseMetrics.RecordOperation("create", result.Outcome.ToString());
+        LogOperation("create", result.Outcome.ToString(), request.AccountId, result.ListingId, started);
+        return new AuctionListItemResult(MapListingOutcome(result.Outcome), result.ListingId, result.ListingNumber, now);
+    }
+
     private static bool IsEligible(ItemListingFacts facts)
     {
         var candidate = new ListingCandidate(
@@ -196,6 +251,30 @@ public sealed class AuctionHouseService
         if (listing is null)
         {
             return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
+        }
+
+        if (listing.Currency == (byte)AuctionCurrencyMode.Mixed)
+        {
+            if (request.BidBasket is not { } mixedBid)
+            {
+                return new AuctionMutationResult(AuctionResultCode.InvalidRequest, now);
+            }
+
+            var mixedDraft = new MixedBidDraft(
+                request.OperationId,
+                request.AccountId,
+                request.CharacterId,
+                request.ListingId,
+                request.ExpectedVersion,
+                mixedBid,
+                request.BidderIp,
+                now,
+                AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now),
+                this._options.PriceLimits);
+            var mixedResult = await this._repository.PlaceMixedBidAsync(mixedDraft, cancellationToken).ConfigureAwait(false);
+            AuctionHouseMetrics.RecordOperation("bid", mixedResult.Outcome.ToString());
+            LogOperation("bid", mixedResult.Outcome.ToString(), request.AccountId, request.ListingId, started);
+            return new AuctionMutationResult(MapBidOutcome(mixedResult.Outcome), now);
         }
 
         if (listing.Currency == (byte)AuctionCurrencyMode.Fruits)
@@ -259,6 +338,15 @@ public sealed class AuctionHouseService
             return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
         }
 
+        if (listing.Currency == (byte)AuctionCurrencyMode.Mixed)
+        {
+            var mixedBuyout = new MixedBuyoutDraft(request.OperationId, request.AccountId, request.CharacterId, request.ListingId, request.ExpectedVersion, request.BuyerIp, now);
+            var mixedResult = await this._repository.PlaceMixedBuyoutAsync(mixedBuyout, cancellationToken).ConfigureAwait(false);
+            AuctionHouseMetrics.RecordOperation("buyout", mixedResult.Outcome.ToString());
+            LogOperation("buyout", mixedResult.Outcome.ToString(), request.AccountId, request.ListingId, started);
+            return new AuctionMutationResult(MapBuyoutOutcome(mixedResult.Outcome), now);
+        }
+
         if (listing.Currency == (byte)AuctionCurrencyMode.Fruits)
         {
             var fruitBuyout = new FruitBuyoutDraft(request.OperationId, request.AccountId, request.CharacterId, request.ListingId, request.ExpectedVersion, request.BuyerIp, now, this._options.SuccessFeeBasisPoints);
@@ -313,6 +401,7 @@ public sealed class AuctionHouseService
             AuctionBidOutcome.InsufficientCurrency => AuctionResultCode.InsufficientCurrency,
             AuctionBidOutcome.UnsupportedCurrency => AuctionResultCode.UnsupportedCurrency,
             AuctionBidOutcome.CharacterNotOwned => AuctionResultCode.InvalidRequest,
+            AuctionBidOutcome.NotBiddable => AuctionResultCode.InvalidRequest,
             _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, null),
         };
 

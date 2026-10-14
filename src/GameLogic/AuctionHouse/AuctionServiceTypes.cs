@@ -184,7 +184,7 @@ public enum AuctionResultCode
 /// <param name="PendingMailbox">The number of collections the account has not finished claiming.</param>
 /// <param name="ServerTime">The server time, in UTC.</param>
 /// <param name="PageSize">The configured number of listings per page.</param>
-public readonly record struct AuctionOpenResult(AuctionResultCode Result, int PendingMailbox, DateTimeOffset ServerTime, int PageSize);
+public readonly record struct AuctionOpenResult(AuctionResultCode Result, int PendingMailbox, DateTimeOffset ServerTime, int PageSize, long SaleFee = 0, bool MixedPricesEnabled = false);
 
 /// <summary>
 /// The result of a browse request.
@@ -230,7 +230,9 @@ public readonly record struct AuctionListItemRequest(
     int DurationHours,
     FruitBasket? StartingFruits = null,
     FruitBasket? BuyoutFruits = null,
-    string? Note = null);
+    string? Note = null,
+    PriceBasket? StartingBasket = null,
+    PriceBasket? BuyoutBasket = null);
 
 /// <summary>
 /// The result of listing an inventory item.
@@ -259,7 +261,8 @@ public readonly record struct AuctionBidRequest(
     int ExpectedVersion,
     long BidAmount,
     string? BidderIp,
-    FruitBasket? BidFruits = null);
+    FruitBasket? BidFruits = null,
+    PriceBasket? BidBasket = null);
 
 /// <summary>
 /// A request to buy a listing out at its buyout price.

@@ -27,6 +27,12 @@ public sealed record AuctionHouseOptions
     public SaleFee SaleFee { get; init; } = new(SaleFeeCurrency.Zen, 0);
 
     /// <summary>
+    /// Gets a value indicating whether new listings may be priced in a basket of several currencies, or as buy-now. Bids, buyouts and
+    /// claims on existing mixed listings work whatever this is, so turning it off never traps a player's escrow.
+    /// </summary>
+    public bool MixedPricesEnabled { get; init; }
+
+    /// <summary>
     /// Gets the limits a price has to respect.
     /// </summary>
     public PriceLimits PriceLimits { get; init; } = PriceLimits.Default;

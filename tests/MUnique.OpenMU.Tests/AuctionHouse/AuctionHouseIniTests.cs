@@ -258,7 +258,7 @@ public class AuctionHouseIniTests
             Assert.That(text, Does.Contain(key + "="), key);
         }
 
-        Assert.That(AuctionHouseIni.SettingNames, Has.Count.EqualTo(23));
+        Assert.That(AuctionHouseIni.SettingNames, Has.Count.EqualTo(24));
     }
 
     /// <summary>

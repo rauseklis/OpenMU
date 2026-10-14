@@ -48,6 +48,11 @@ public class AuctionHouseConfiguration
     public int MaximumPriceComponents { get; set; } = 5;
 
     /// <summary>
+    /// Gets or sets a value indicating whether new listings may mix currencies or be priced buy-now.
+    /// </summary>
+    public bool MixedPricesEnabled { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the smallest Zen quantity in a price.
     /// </summary>
     public long ZenMinimumPrice { get; set; } = 1_000;
@@ -145,6 +150,7 @@ public class AuctionHouseConfiguration
             ListingFeeBasisPoints = flatFee ? 0 : this.ListingFeeBasisPoints,
             SuccessFeeBasisPoints = flatFee ? 0 : this.SuccessFeeBasisPoints,
             SaleFee = new SaleFee(this.SaleFeeCurrency, this.SaleFeeAmount),
+            MixedPricesEnabled = this.MixedPricesEnabled,
             PriceLimits = new PriceLimits
             {
                 MaximumComponents = this.MaximumPriceComponents,
