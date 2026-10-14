@@ -135,6 +135,8 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
                 summary.BuyoutPriceVitality = isFruits ? (uint)(buyoutFruits?.Vitality ?? 0) : 0;
                 summary.BuyoutPriceEnergy = isFruits ? (uint)(buyoutFruits?.Energy ?? 0) : 0;
                 summary.BuyoutPriceCommand = isFruits ? (uint)(buyoutFruits?.Command ?? 0) : 0;
+                PriceBasketWire.Write(summary.CurrentBasket, row.CurrentBidVector ?? row.PriceVector);
+                PriceBasketWire.Write(summary.BuyoutBasket, row.BuyoutVector);
                 summary.BidCount = (ushort)row.BidCount;
                 summary.EndsAt = (uint)row.EndsAt.ToUnixTimeSeconds();
                 var nameBytes = Encoding.UTF8.GetBytes(row.SellerName);

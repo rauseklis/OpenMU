@@ -5730,11 +5730,13 @@ public static class ConnectionExtensions
     /// <param name="durationHours">The duration hours.</param>
     /// <param name="noteLength">The note length.</param>
     /// <param name="note">The note.</param>
+    /// <param name="startingBasket">The starting basket.</param>
+    /// <param name="buyoutBasket">The buyout basket.</param>
     /// <remarks>
     /// Is sent by the client when: Auction House request AuctionCreateRequest (sub 03).
     /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
     /// </remarks>
-    public static async ValueTask SendAuctionCreateRequestAsync(this IConnection? connection, Memory<byte> @operationId, byte @inventorySlot, AuctionCurrencyMode @currencyMode, uint @startingScalar, uint @startingStrength, uint @startingAgility, uint @startingVitality, uint @startingEnergy, uint @startingCommand, uint @buyoutScalar, uint @buyoutStrength, uint @buyoutAgility, uint @buyoutVitality, uint @buyoutEnergy, uint @buyoutCommand, byte @durationHours, byte @noteLength, Memory<byte> @note)
+    public static async ValueTask SendAuctionCreateRequestAsync(this IConnection? connection, Memory<byte> @operationId, byte @inventorySlot, AuctionCurrencyMode @currencyMode, uint @startingScalar, uint @startingStrength, uint @startingAgility, uint @startingVitality, uint @startingEnergy, uint @startingCommand, uint @buyoutScalar, uint @buyoutStrength, uint @buyoutAgility, uint @buyoutVitality, uint @buyoutEnergy, uint @buyoutCommand, byte @durationHours, byte @noteLength, Memory<byte> @note, Memory<byte> @startingBasket, Memory<byte> @buyoutBasket)
     {
         if (connection is null)
         {
@@ -5763,6 +5765,8 @@ public static class ConnectionExtensions
             packet.DurationHours = @durationHours;
             packet.NoteLength = @noteLength;
             @note.Span.CopyTo(packet.Note);
+            @startingBasket.Span.CopyTo(packet.StartingBasket);
+            @buyoutBasket.Span.CopyTo(packet.BuyoutBasket);
 
             return packet.Header.Length;
         }
@@ -5783,11 +5787,12 @@ public static class ConnectionExtensions
     /// <param name="bidVitality">The bid vitality.</param>
     /// <param name="bidEnergy">The bid energy.</param>
     /// <param name="bidCommand">The bid command.</param>
+    /// <param name="bidBasket">The bid basket.</param>
     /// <remarks>
     /// Is sent by the client when: Auction House request AuctionBidRequest (sub 04).
     /// Causes reaction on server side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
     /// </remarks>
-    public static async ValueTask SendAuctionBidRequestAsync(this IConnection? connection, Memory<byte> @operationId, ulong @listingId, uint @expectedVersion, uint @bidScalar, uint @bidStrength, uint @bidAgility, uint @bidVitality, uint @bidEnergy, uint @bidCommand)
+    public static async ValueTask SendAuctionBidRequestAsync(this IConnection? connection, Memory<byte> @operationId, ulong @listingId, uint @expectedVersion, uint @bidScalar, uint @bidStrength, uint @bidAgility, uint @bidVitality, uint @bidEnergy, uint @bidCommand, Memory<byte> @bidBasket)
     {
         if (connection is null)
         {
@@ -5807,6 +5812,7 @@ public static class ConnectionExtensions
             packet.BidVitality = @bidVitality;
             packet.BidEnergy = @bidEnergy;
             packet.BidCommand = @bidCommand;
+            @bidBasket.Span.CopyTo(packet.BidBasket);
 
             return packet.Header.Length;
         }

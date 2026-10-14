@@ -113,6 +113,8 @@ internal sealed class AuctionMailboxHandlerPlugIn : ISubPacketHandlerPlugIn
                 entry.RemainingCommand = (uint)(row.RemainingFruits?.Command ?? 0);
                 entry.SourceListingId = (ulong)row.SourceListingNumber;
                 entry.Version = (uint)row.Version;
+                PriceBasketWire.Write(entry.OriginalBasket, row.OriginalVector);
+                PriceBasketWire.Write(entry.RemainingBasket, row.RemainingVector);
                 var itemData = entry.ItemData;
                 itemData.Clear();
                 entry.ItemDataLength = 0;

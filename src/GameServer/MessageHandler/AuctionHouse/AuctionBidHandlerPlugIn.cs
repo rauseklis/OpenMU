@@ -79,7 +79,8 @@ internal sealed class AuctionBidHandlerPlugIn : ISubPacketHandlerPlugIn
                 ExpectedVersion: (int)request.ExpectedVersion,
                 BidAmount: request.BidScalar,
                 BidderIp: who.Ip,
-                BidFruits: new FruitBasket(request.BidStrength, request.BidAgility, request.BidVitality, request.BidEnergy, request.BidCommand))).ConfigureAwait(false);
+                BidFruits: new FruitBasket(request.BidStrength, request.BidAgility, request.BidVitality, request.BidEnergy, request.BidCommand),
+                BidBasket: BidBasketOf(request))).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
         await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Bid, result.Result, request.ListingId, 0, 0, result.ServerTime).ConfigureAwait(false);
@@ -87,5 +88,11 @@ internal sealed class AuctionBidHandlerPlugIn : ISubPacketHandlerPlugIn
         {
             await AuctionHouseMutations.ReloadAfterChangeAsync(player).ConfigureAwait(false);
         }
+    }
+
+    private static PriceBasket? BidBasketOf(Wire.AuctionBidRequest request)
+    {
+        var basket = PriceBasketWire.Read(request.BidBasket);
+        return basket.IsEmpty ? null : basket;
     }
 }

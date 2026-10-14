@@ -35812,9 +35812,27 @@ public readonly ref struct AuctionOpenResponseRef
     }
 
     /// <summary>
+    /// Gets or sets the sale fee.
+    /// </summary>
+    public uint SaleFee
+    {
+        get => ReadUInt32LittleEndian(this._data[28..]);
+        set => WriteUInt32LittleEndian(this._data[28..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the mixed prices enabled.
+    /// </summary>
+    public byte MixedPricesEnabled
+    {
+        get => this._data[32];
+        set => this._data[32] = value;
+    }
+
+    /// <summary>
     /// Gets the <see cref="AuctionCurrencyDescriptorRef"/> of the specified index.
     /// </summary>
-        public AuctionCurrencyDescriptorRef this[int index] => new (this._data[(28 + index * AuctionCurrencyDescriptorRef.Length)..]);
+        public AuctionCurrencyDescriptorRef this[int index] => new (this._data[(33 + index * AuctionCurrencyDescriptorRef.Length)..]);
 
     /// <summary>
     /// Performs an implicit conversion from a Span of bytes to a <see cref="AuctionOpenResponse"/>.
@@ -35835,7 +35853,7 @@ public readonly ref struct AuctionOpenResponseRef
     /// </summary>
     /// <param name="currenciesCount">The count of <see cref="AuctionCurrencyDescriptorRef"/> from which the size will be calculated.</param>
         
-    public static int GetRequiredSize(int currenciesCount) => currenciesCount * AuctionCurrencyDescriptorRef.Length + 28;
+    public static int GetRequiredSize(int currenciesCount) => currenciesCount * AuctionCurrencyDescriptorRef.Length + 33;
 
 public readonly ref struct AuctionCurrencyDescriptorRef
 {
@@ -36298,7 +36316,7 @@ public readonly ref struct AuctionListingSummaryRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 95;
+    public static int Length => 199;
 
     /// <summary>
     /// Gets or sets the listing id.
@@ -36495,6 +36513,22 @@ public readonly ref struct AuctionListingSummaryRef
     {
         get => this._data.Slice(80, 15);
     }
+
+    /// <summary>
+    /// Gets or sets the current basket.
+    /// </summary>
+    public Span<byte> CurrentBasket
+    {
+        get => this._data.Slice(95, 52);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout basket.
+    /// </summary>
+    public Span<byte> BuyoutBasket
+    {
+        get => this._data.Slice(147, 52);
+    }
 }
 }
 
@@ -36553,7 +36587,7 @@ public readonly ref struct AuctionDetailResponseRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 204;
+    public static int Length => 360;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -36815,6 +36849,30 @@ public readonly ref struct AuctionDetailResponseRef
     public Span<byte> ItemData
     {
         get => this._data.Slice(189, 15);
+    }
+
+    /// <summary>
+    /// Gets or sets the starting basket.
+    /// </summary>
+    public Span<byte> StartingBasket
+    {
+        get => this._data.Slice(204, 52);
+    }
+
+    /// <summary>
+    /// Gets or sets the current basket.
+    /// </summary>
+    public Span<byte> CurrentBasket
+    {
+        get => this._data.Slice(256, 52);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout basket.
+    /// </summary>
+    public Span<byte> BuyoutBasket
+    {
+        get => this._data.Slice(308, 52);
     }
 
     /// <summary>
@@ -37358,7 +37416,7 @@ public readonly ref struct AuctionListingSummaryRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 95;
+    public static int Length => 199;
 
     /// <summary>
     /// Gets or sets the listing id.
@@ -37555,6 +37613,22 @@ public readonly ref struct AuctionListingSummaryRef
     {
         get => this._data.Slice(80, 15);
     }
+
+    /// <summary>
+    /// Gets or sets the current basket.
+    /// </summary>
+    public Span<byte> CurrentBasket
+    {
+        get => this._data.Slice(95, 52);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout basket.
+    /// </summary>
+    public Span<byte> BuyoutBasket
+    {
+        get => this._data.Slice(147, 52);
+    }
 }
 }
 
@@ -37720,7 +37794,7 @@ public readonly ref struct AuctionMailboxEntryRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 88;
+    public static int Length => 192;
 
     /// <summary>
     /// Gets or sets the collection id.
@@ -37908,6 +37982,22 @@ public readonly ref struct AuctionMailboxEntryRef
     {
         get => ReadUInt32LittleEndian(this._data[84..]);
         set => WriteUInt32LittleEndian(this._data[84..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the original basket.
+    /// </summary>
+    public Span<byte> OriginalBasket
+    {
+        get => this._data.Slice(88, 52);
+    }
+
+    /// <summary>
+    /// Gets or sets the remaining basket.
+    /// </summary>
+    public Span<byte> RemainingBasket
+    {
+        get => this._data.Slice(140, 52);
     }
 }
 }

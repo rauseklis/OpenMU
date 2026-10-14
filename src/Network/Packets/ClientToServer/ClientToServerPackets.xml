@@ -4449,7 +4449,7 @@
       <Code>D5</Code>
       <SubCode>03</SubCode>
       <Name>AuctionCreateRequest</Name>
-      <Length>152</Length>
+      <Length>256</Length>
       <Direction>ClientToServer</Direction>
       <SentWhen>Auction House request AuctionCreateRequest (sub 03).</SentWhen>
       <CausedReaction>Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.</CausedReaction>
@@ -4547,6 +4547,18 @@
           <Name>Note</Name>
           <Length>80</Length>
         </Field>
+        <Field>
+          <Index>152</Index>
+          <Type>Binary</Type>
+          <Name>StartingBasket</Name>
+          <Length>52</Length>
+        </Field>
+        <Field>
+          <Index>204</Index>
+          <Type>Binary</Type>
+          <Name>BuyoutBasket</Name>
+          <Length>52</Length>
+        </Field>
       </Fields>
     </Packet>
     <Packet>
@@ -4554,7 +4566,7 @@
       <Code>D5</Code>
       <SubCode>04</SubCode>
       <Name>AuctionBidRequest</Name>
-      <Length>56</Length>
+      <Length>108</Length>
       <Direction>ClientToServer</Direction>
       <SentWhen>Auction House request AuctionBidRequest (sub 04).</SentWhen>
       <CausedReaction>Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.</CausedReaction>
@@ -4604,6 +4616,12 @@
           <Index>52</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BidCommand</Name>
+        </Field>
+        <Field>
+          <Index>56</Index>
+          <Type>Binary</Type>
+          <Name>BidBasket</Name>
+          <Length>52</Length>
         </Field>
       </Fields>
     </Packet>

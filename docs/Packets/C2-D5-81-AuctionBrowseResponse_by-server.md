@@ -29,7 +29,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 
 
 
-Length: 95 Bytes
+Length: 199 Bytes
 
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
@@ -55,6 +55,8 @@ Length: 95 Bytes
 | 69 | 10 | Binary |  | SellerName |
 | 79 | 1 | Byte |  | ItemDataLength |
 | 80 | 15 | Binary |  | ItemData |
+| 95 | 52 | Binary |  | CurrentBasket |
+| 147 | 52 | Binary |  | BuyoutBasket |
 
 ### AuctionListingStatus Enum
 
@@ -83,6 +85,7 @@ Auction House currency modes.
 | 6 | Guardian | Guardian. |
 | 7 | Harmony | Harmony. |
 | 8 | Fruits | Fruits. |
+| 9 | Mixed | A basket of several currencies, or a buy-now price. |
 
 ### AuctionCategory Enum
 

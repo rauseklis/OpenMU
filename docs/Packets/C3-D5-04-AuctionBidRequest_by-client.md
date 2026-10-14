@@ -13,7 +13,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
 | 0 | 1 |   Byte   | 0xC3  | [Packet type](PacketTypes.md) |
-| 1 | 1 |    Byte   |   56   | Packet header - length of the packet |
+| 1 | 1 |    Byte   |   108   | Packet header - length of the packet |
 | 2 | 1 |    Byte   | 0xD5  | Packet header - packet type identifier |
 | 3 | 1 |    Byte   | 0x04  | Packet header - sub packet type identifier |
 | 4 | 16 | Binary |  | OperationId |
@@ -25,3 +25,4 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 | 44 | 4 | IntegerLittleEndian |  | BidVitality |
 | 48 | 4 | IntegerLittleEndian |  | BidEnergy |
 | 52 | 4 | IntegerLittleEndian |  | BidCommand |
+| 56 | 52 | Binary |  | BidBasket |

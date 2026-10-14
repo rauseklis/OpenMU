@@ -13,7 +13,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
 | 0 | 1 |   Byte   | 0xC3  | [Packet type](PacketTypes.md) |
-| 1 | 1 |    Byte   |   152   | Packet header - length of the packet |
+| 1 | 1 |    Byte   |   256   | Packet header - length of the packet |
 | 2 | 1 |    Byte   | 0xD5  | Packet header - packet type identifier |
 | 3 | 1 |    Byte   | 0x03  | Packet header - sub packet type identifier |
 | 4 | 16 | Binary |  | OperationId |
@@ -34,6 +34,8 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 | 70 | 1 | Byte |  | DurationHours |
 | 71 | 1 | Byte |  | NoteLength |
 | 72 | 80 | Binary |  | Note |
+| 152 | 52 | Binary |  | StartingBasket |
+| 204 | 52 | Binary |  | BuyoutBasket |
 
 ### AuctionCurrencyMode Enum
 
@@ -50,3 +52,4 @@ Auction House currency modes.
 | 6 | Guardian | Guardian. |
 | 7 | Harmony | Harmony. |
 | 8 | Fruits | Fruits. |
+| 9 | Mixed | A basket of several currencies, or a buy-now price. |

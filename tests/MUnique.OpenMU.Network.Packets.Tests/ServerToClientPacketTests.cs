@@ -7936,6 +7936,14 @@ public class PacketStructureTests
         // Field 'CurrencyCount' starts at index 27 with size 1
         Assert.That(27, Is.GreaterThanOrEqualTo(0), 
             "Field 'CurrencyCount' has invalid negative index");
+        
+        // Field 'SaleFee' starts at index 28 with size 4
+        Assert.That(28, Is.GreaterThanOrEqualTo(0), 
+            "Field 'SaleFee' has invalid negative index");
+        
+        // Field 'MixedPricesEnabled' starts at index 32 with size 1
+        Assert.That(32, Is.GreaterThanOrEqualTo(0), 
+            "Field 'MixedPricesEnabled' has invalid negative index");
     }
 
     /// <summary>
@@ -7983,7 +7991,7 @@ public class PacketStructureTests
     public void AuctionDetailResponse_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 204;
+        const int expectedLength = 360;
         var actualLength = AuctionDetailResponseRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -8104,6 +8112,18 @@ public class PacketStructureTests
         // Validate field 'ItemData' boundary
         Assert.That(189 + 15, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'ItemData' exceeds packet boundary");
+        
+        // Validate field 'StartingBasket' boundary
+        Assert.That(204 + 52, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'StartingBasket' exceeds packet boundary");
+        
+        // Validate field 'CurrentBasket' boundary
+        Assert.That(256 + 52, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'CurrentBasket' exceeds packet boundary");
+        
+        // Validate field 'BuyoutBasket' boundary
+        Assert.That(308 + 52, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'BuyoutBasket' exceeds packet boundary");
     }
 
     /// <summary>

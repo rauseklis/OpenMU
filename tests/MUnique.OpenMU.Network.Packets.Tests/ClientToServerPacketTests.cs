@@ -4081,7 +4081,7 @@ public class PacketStructureTests
     public void AuctionCreateRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 152;
+        const int expectedLength = 256;
         var actualLength = AuctionCreateRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -4158,6 +4158,14 @@ public class PacketStructureTests
         // Validate field 'Note' boundary
         Assert.That(72 + 80, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'Note' exceeds packet boundary");
+        
+        // Validate field 'StartingBasket' boundary
+        Assert.That(152 + 52, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'StartingBasket' exceeds packet boundary");
+        
+        // Validate field 'BuyoutBasket' boundary
+        Assert.That(204 + 52, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'BuyoutBasket' exceeds packet boundary");
     }
 
     /// <summary>
@@ -4167,7 +4175,7 @@ public class PacketStructureTests
     public void AuctionBidRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 56;
+        const int expectedLength = 108;
         var actualLength = AuctionBidRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -4208,6 +4216,10 @@ public class PacketStructureTests
         // Validate field 'BidCommand' boundary
         Assert.That(52 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BidCommand' exceeds packet boundary");
+        
+        // Validate field 'BidBasket' boundary
+        Assert.That(56 + 52, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'BidBasket' exceeds packet boundary");
     }
 
     /// <summary>

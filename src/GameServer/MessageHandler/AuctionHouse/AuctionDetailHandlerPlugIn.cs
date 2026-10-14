@@ -86,6 +86,12 @@ internal sealed class AuctionDetailHandlerPlugIn : ISubPacketHandlerPlugIn
         var noteLength = (byte)Math.Min(noteBytes.Length, 80);
         var sellerBytes = Encoding.UTF8.GetBytes(view2?.SellerName ?? string.Empty);
         var sellerName = sellerBytes.AsMemory(0, Math.Min(sellerBytes.Length, 10));
+        var startingBasket = new byte[PriceBasketWire.Size];
+        var currentBasket = new byte[PriceBasketWire.Size];
+        var buyoutBasket = new byte[PriceBasketWire.Size];
+        PriceBasketWire.Write(startingBasket, view2?.PriceVector);
+        PriceBasketWire.Write(currentBasket, view2?.CurrentBidVector);
+        PriceBasketWire.Write(buyoutBasket, view2?.BuyoutVector);
 
         await connection.SendAuctionDetailResponseAsync(
             request.RequestId,
@@ -108,6 +114,9 @@ internal sealed class AuctionDetailHandlerPlugIn : ISubPacketHandlerPlugIn
             noteLength,
             noteBytes.AsMemory(0, noteLength),
             (byte)itemLength,
-            itemBytes.AsMemory(0, Math.Min(itemLength, 15))).ConfigureAwait(false);
+            itemBytes.AsMemory(0, Math.Min(itemLength, 15)),
+            startingBasket,
+            currentBasket,
+            buyoutBasket).ConfigureAwait(false);
     }
 }

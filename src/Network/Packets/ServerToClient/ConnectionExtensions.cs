@@ -8017,11 +8017,14 @@ public static class ConnectionExtensions
     /// <param name="note">The note.</param>
     /// <param name="itemDataLength">The item data length.</param>
     /// <param name="itemData">The item data.</param>
+    /// <param name="startingBasket">The starting basket.</param>
+    /// <param name="currentBasket">The current basket.</param>
+    /// <param name="buyoutBasket">The buyout basket.</param>
     /// <remarks>
     /// Is sent by the server when: Listing detail.
     /// Causes reaction on client side: Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.
     /// </remarks>
-    public static async ValueTask SendAuctionDetailResponseAsync(this IConnection? connection, uint @requestId, AuctionResult @result, uint @serverTime, ulong @listingId, uint @version, AuctionListingStatus @status, AuctionCurrencyMode @currencyMode, AuctionCategory @category, uint @currentPriceScalar, uint @currentPriceStrength, uint @currentPriceAgility, uint @currentPriceVitality, uint @currentPriceEnergy, uint @currentPriceCommand, uint @buyoutPriceScalar, uint @buyoutPriceStrength, uint @buyoutPriceAgility, uint @buyoutPriceVitality, uint @buyoutPriceEnergy, uint @buyoutPriceCommand, ushort @bidCount, uint @originalEndsAt, uint @endsAt, Memory<byte> @sellerName, Memory<byte> @currentBidderName, byte @noteLength, Memory<byte> @note, byte @itemDataLength, Memory<byte> @itemData)
+    public static async ValueTask SendAuctionDetailResponseAsync(this IConnection? connection, uint @requestId, AuctionResult @result, uint @serverTime, ulong @listingId, uint @version, AuctionListingStatus @status, AuctionCurrencyMode @currencyMode, AuctionCategory @category, uint @currentPriceScalar, uint @currentPriceStrength, uint @currentPriceAgility, uint @currentPriceVitality, uint @currentPriceEnergy, uint @currentPriceCommand, uint @buyoutPriceScalar, uint @buyoutPriceStrength, uint @buyoutPriceAgility, uint @buyoutPriceVitality, uint @buyoutPriceEnergy, uint @buyoutPriceCommand, ushort @bidCount, uint @originalEndsAt, uint @endsAt, Memory<byte> @sellerName, Memory<byte> @currentBidderName, byte @noteLength, Memory<byte> @note, byte @itemDataLength, Memory<byte> @itemData, Memory<byte> @startingBasket, Memory<byte> @currentBasket, Memory<byte> @buyoutBasket)
     {
         if (connection is null)
         {
@@ -8061,6 +8064,9 @@ public static class ConnectionExtensions
             @note.Span.CopyTo(packet.Note);
             packet.ItemDataLength = @itemDataLength;
             @itemData.Span.CopyTo(packet.ItemData);
+            @startingBasket.Span.CopyTo(packet.StartingBasket);
+            @currentBasket.Span.CopyTo(packet.CurrentBasket);
+            @buyoutBasket.Span.CopyTo(packet.BuyoutBasket);
 
             return packet.Header.Length;
         }

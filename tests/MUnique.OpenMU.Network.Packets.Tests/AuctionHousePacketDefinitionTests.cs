@@ -37,14 +37,14 @@ public class AuctionHousePacketDefinitionTests
         yield return new TestCaseData(
             "AuctionCreateRequest",
             "03",
-            "152",
+            "256",
             "4:Binary:OperationId[16];20:Byte:InventorySlot;21:Enum:CurrencyMode;" + Amount(22, "Starting") + ";"
-            + Amount(46, "Buyout") + ";70:Byte:DurationHours;71:Byte:NoteLength;72:Binary:Note[80]");
+            + Amount(46, "Buyout") + ";70:Byte:DurationHours;71:Byte:NoteLength;72:Binary:Note[80];152:Binary:StartingBasket[52];204:Binary:BuyoutBasket[52]");
         yield return new TestCaseData(
             "AuctionBidRequest",
             "04",
-            "56",
-            "4:Binary:OperationId[16];20:LongLittleEndian:ListingId;28:IntegerLittleEndian:ExpectedVersion;" + Amount(32, "Bid"));
+            "108",
+            "4:Binary:OperationId[16];20:LongLittleEndian:ListingId;28:IntegerLittleEndian:ExpectedVersion;" + Amount(32, "Bid") + ";56:Binary:BidBasket[52]");
         yield return new TestCaseData(
             "AuctionBuyoutRequest",
             "05",
@@ -100,7 +100,7 @@ public class AuctionHousePacketDefinitionTests
             + "14:IntegerLittleEndian:ConfigurationVersion;18:ShortLittleEndian:ListingFeeBasisPoints;"
             + "20:ShortLittleEndian:SuccessFeeBasisPoints;22:Byte:DurationMask;23:Byte:DefaultDurationHours;"
             + "24:Byte:PageSize;25:ShortLittleEndian:PendingMailboxCount;27:Byte:CurrencyCount;"
-            + "28:Structure[]:Currencies");
+            + "28:IntegerLittleEndian:SaleFee;32:Byte:MixedPricesEnabled;33:Structure[]:Currencies");
         yield return new TestCaseData(
             "AuctionBrowseResponse",
             "C2HeaderWithSubCode",
@@ -113,13 +113,13 @@ public class AuctionHousePacketDefinitionTests
             "AuctionDetailResponse",
             "C2HeaderWithSubCode",
             "82",
-            "204",
+            "360",
             "5:IntegerLittleEndian:RequestId;9:Enum:Result;10:IntegerLittleEndian:ServerTime;"
             + "14:LongLittleEndian:ListingId;22:IntegerLittleEndian:Version;26:Enum:Status;27:Enum:CurrencyMode;"
             + "28:Enum:Category;" + Amount(29, "CurrentPrice") + ";" + Amount(53, "BuyoutPrice") + ";"
             + "77:ShortLittleEndian:BidCount;79:IntegerLittleEndian:OriginalEndsAt;83:IntegerLittleEndian:EndsAt;"
             + "87:Binary:SellerName[10];97:Binary:CurrentBidderName[10];107:Byte:NoteLength;108:Binary:Note[80];"
-            + "188:Byte:ItemDataLength;189:Binary:ItemData[15]");
+            + "188:Byte:ItemDataLength;189:Binary:ItemData[15];204:Binary:StartingBasket[52];256:Binary:CurrentBasket[52];308:Binary:BuyoutBasket[52]");
         yield return new TestCaseData(
             "AuctionOperationResponse",
             "C1HeaderWithSubCode",
@@ -192,26 +192,26 @@ public class AuctionHousePacketDefinitionTests
         yield return new TestCaseData(
             "AuctionBrowseResponse",
             "AuctionListingSummary",
-            "95",
+            "199",
             "0:LongLittleEndian:ListingId;8:IntegerLittleEndian:Version;12:Enum:Status;13:Enum:CurrencyMode;"
             + "14:Enum:Category;" + Amount(15, "CurrentPrice") + ";" + Amount(39, "BuyoutPrice") + ";"
             + "63:ShortLittleEndian:BidCount;65:IntegerLittleEndian:EndsAt;69:Binary:SellerName[10];"
-            + "79:Byte:ItemDataLength;80:Binary:ItemData[15]");
+            + "79:Byte:ItemDataLength;80:Binary:ItemData[15];95:Binary:CurrentBasket[52];147:Binary:BuyoutBasket[52]");
         yield return new TestCaseData(
             "AuctionMyListingsResponse",
             "AuctionListingSummary",
-            "95",
+            "199",
             "0:LongLittleEndian:ListingId;8:IntegerLittleEndian:Version;12:Enum:Status;13:Enum:CurrencyMode;"
             + "14:Enum:Category;" + Amount(15, "CurrentPrice") + ";" + Amount(39, "BuyoutPrice") + ";"
             + "63:ShortLittleEndian:BidCount;65:IntegerLittleEndian:EndsAt;69:Binary:SellerName[10];"
-            + "79:Byte:ItemDataLength;80:Binary:ItemData[15]");
+            + "79:Byte:ItemDataLength;80:Binary:ItemData[15];95:Binary:CurrentBasket[52];147:Binary:BuyoutBasket[52]");
         yield return new TestCaseData(
             "AuctionMailboxResponse",
             "AuctionMailboxEntry",
-            "88",
+            "192",
             "0:LongLittleEndian:CollectionId;8:Enum:CollectionKind;9:Enum:CollectionStatus;10:Enum:CurrencyMode;"
             + Amount(11, "Original") + ";" + Amount(35, "Remaining") + ";59:LongLittleEndian:SourceListingId;"
-            + "67:Boolean:HasItem;68:Byte:ItemDataLength;69:Binary:ItemData[15];84:IntegerLittleEndian:Version");
+            + "67:Boolean:HasItem;68:Byte:ItemDataLength;69:Binary:ItemData[15];84:IntegerLittleEndian:Version;88:Binary:OriginalBasket[52];140:Binary:RemainingBasket[52]");
     }
 
     /// <summary>
@@ -243,11 +243,11 @@ public class AuctionHousePacketDefinitionTests
     public static IEnumerable<TestCaseData> EnumCases()
     {
         yield return new TestCaseData("AuctionResult", "Success=0;Disabled=1;NotAuthenticated=2;StateRestricted=3;LevelTooLow=4;AccountTooNew=5;AccountRestricted=6;RateLimited=7;InvalidRequest=8;UnsupportedCurrency=9;CurrencyConfigurationInvalid=10;InvalidDuration=11;InvalidPrice=12;InvalidFruitBasket=13;ItemNotFound=14;ItemNotEligible=15;ListingLimitReached=16;InsufficientCurrency=17;ListingNotFound=18;ListingNotActive=19;ListingExpired=20;StaleListing=21;SelfTrade=22;AlreadyHighestBidder=23;BidTooLow=24;BuyoutUnavailable=25;CannotCancelWithBid=26;CollectionNotFound=27;InvalidClaimQuantity=28;InventoryFull=29;MoneyLimit=30;AlreadyProcessed=31;ServiceUnavailable=32");
-        yield return new TestCaseData("AuctionCurrencyMode", "Zen=0;Chaos=1;Bless=2;Soul=3;Life=4;Creation=5;Guardian=6;Harmony=7;Fruits=8");
+        yield return new TestCaseData("AuctionCurrencyMode", "Zen=0;Chaos=1;Bless=2;Soul=3;Life=4;Creation=5;Guardian=6;Harmony=7;Fruits=8;Mixed=9");
         yield return new TestCaseData("AuctionCategory", "Weapon=0;Armor=1;Wing=2;PetHelper=3;JewelMaterial=4;Consumable=5;Miscellaneous=6;ScrollOrb=7");
         yield return new TestCaseData("AuctionSort", "PriceAscending=0;PriceDescending=1;EndingSoonest=2;Newest=3");
         yield return new TestCaseData("AuctionListingStatus", "Active=0;Sold=1;Expired=2;Cancelled=3;AdminRemoved=4");
-        yield return new TestCaseData("AuctionCollectionKind", "PurchasedItem=0;ReturnedItem=1;SaleProceeds=2;OutbidRefund=3;TenderChange=4;AdminRefund=5");
+        yield return new TestCaseData("AuctionCollectionKind", "PurchasedItem=0;ReturnedItem=1;SaleProceeds=2;OutbidRefund=3;TenderChange=4;AdminRefund=5;FeeRefund=6");
         yield return new TestCaseData("AuctionCollectionStatus", "Pending=0;PartiallyClaimed=1;Claimed=2");
         yield return new TestCaseData("AuctionOperationType", "Create=0;Bid=1;Buyout=2;Cancel=3;Collect=4");
         yield return new TestCaseData("AuctionNotificationKind", "Outbid=0;Sold=1;Bought=2;Expired=3;Returned=4;Collected=5;AdminAdjusted=6");

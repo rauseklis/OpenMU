@@ -561,6 +561,11 @@
           <Description>Fruits.</Description>
           <Value>8</Value>
         </EnumValue>
+        <EnumValue>
+          <Name>Mixed</Name>
+          <Description>A basket of several currencies, or a buy-now price.</Description>
+          <Value>9</Value>
+        </EnumValue>
       </Values>
     </Enum>
     <Enum>
@@ -699,6 +704,11 @@
           <Name>AdminRefund</Name>
           <Description>AdminRefund.</Description>
           <Value>5</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>FeeRefund</Name>
+          <Description>The flat sale fee returned because the listing ended unsold.</Description>
+          <Value>6</Value>
         </EnumValue>
       </Values>
     </Enum>

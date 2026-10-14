@@ -84,7 +84,9 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
                     : null,
                 BuyoutFruits: request.CurrencyMode == Packets.AuctionCurrencyMode.Fruits && (long)request.BuyoutStrength + request.BuyoutAgility + request.BuyoutVitality + request.BuyoutEnergy + request.BuyoutCommand > 0
                     ? new FruitBasket(request.BuyoutStrength, request.BuyoutAgility, request.BuyoutVitality, request.BuyoutEnergy, request.BuyoutCommand)
-                    : null)).ConfigureAwait(false);
+                    : null,
+                StartingBasket: MixedBasket(request.CurrencyMode, request.StartingBasket),
+                BuyoutBasket: MixedBasket(request.CurrencyMode, request.BuyoutBasket))).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
         await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Create, result.Result, (ulong)result.ListingNumber, 0, 0, result.ServerTime, result.FeeScalar, result.FeeFruits, (byte)request.CurrencyMode).ConfigureAwait(false);
@@ -92,6 +94,20 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
         {
             await AuctionHouseMutations.ReloadAfterChangeAsync(player).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Reads a basket of a mixed-currency request; other currency modes carry none, and an empty basket is no basket.
+    /// </summary>
+    private static PriceBasket? MixedBasket(Packets.AuctionCurrencyMode mode, ReadOnlySpan<byte> wire)
+    {
+        if (mode != Packets.AuctionCurrencyMode.Mixed)
+        {
+            return null;
+        }
+
+        var basket = PriceBasketWire.Read(wire);
+        return basket.IsEmpty ? null : basket;
     }
 
     /// <summary>

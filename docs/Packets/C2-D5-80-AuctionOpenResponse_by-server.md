@@ -27,7 +27,9 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 | 24 | 1 | Byte |  | PageSize |
 | 25 | 2 | ShortLittleEndian |  | PendingMailboxCount |
 | 27 | 1 | Byte |  | CurrencyCount |
-| 28 | AuctionCurrencyDescriptor.Length * CurrencyCount | Array of AuctionCurrencyDescriptor |  | Currencies |
+| 28 | 4 | IntegerLittleEndian |  | SaleFee |
+| 32 | 1 | Byte |  | MixedPricesEnabled |
+| 33 | AuctionCurrencyDescriptor.Length * CurrencyCount | Array of AuctionCurrencyDescriptor |  | Currencies |
 
 ### AuctionCurrencyDescriptor Structure
 
@@ -84,6 +86,7 @@ Auction House currency modes.
 | 6 | Guardian | Guardian. |
 | 7 | Harmony | Harmony. |
 | 8 | Fruits | Fruits. |
+| 9 | Mixed | A basket of several currencies, or a buy-now price. |
 
 ### AuctionResult Enum
 

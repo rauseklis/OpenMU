@@ -29,7 +29,7 @@ Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-desig
 
 
 
-Length: 88 Bytes
+Length: 192 Bytes
 
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
@@ -54,6 +54,8 @@ Length: 88 Bytes
 | 68 | 1 | Byte |  | ItemDataLength |
 | 69 | 15 | Binary |  | ItemData |
 | 84 | 4 | IntegerLittleEndian |  | Version |
+| 88 | 52 | Binary |  | OriginalBasket |
+| 140 | 52 | Binary |  | RemainingBasket |
 
 ### AuctionCollectionKind Enum
 
@@ -67,6 +69,7 @@ Auction House collection kinds.
 | 3 | OutbidRefund | OutbidRefund. |
 | 4 | TenderChange | TenderChange. |
 | 5 | AdminRefund | AdminRefund. |
+| 6 | FeeRefund | The flat sale fee returned because the listing ended unsold. |
 
 ### AuctionCollectionStatus Enum
 
@@ -93,6 +96,7 @@ Auction House currency modes.
 | 6 | Guardian | Guardian. |
 | 7 | Harmony | Harmony. |
 | 8 | Fruits | Fruits. |
+| 9 | Mixed | A basket of several currencies, or a buy-now price. |
 
 ### AuctionResult Enum
 

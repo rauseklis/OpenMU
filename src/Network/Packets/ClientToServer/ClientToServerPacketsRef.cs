@@ -17921,7 +17921,7 @@ public readonly ref struct AuctionCreateRequestRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 152;
+    public static int Length => 256;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -18089,6 +18089,22 @@ public readonly ref struct AuctionCreateRequestRef
     }
 
     /// <summary>
+    /// Gets or sets the starting basket.
+    /// </summary>
+    public Span<byte> StartingBasket
+    {
+        get => this._data.Slice(152, 52);
+    }
+
+    /// <summary>
+    /// Gets or sets the buyout basket.
+    /// </summary>
+    public Span<byte> BuyoutBasket
+    {
+        get => this._data.Slice(204, 52);
+    }
+
+    /// <summary>
     /// Performs an implicit conversion from a Span of bytes to a <see cref="AuctionCreateRequest"/>.
     /// </summary>
     /// <param name="packet">The packet as span.</param>
@@ -18158,7 +18174,7 @@ public readonly ref struct AuctionBidRequestRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 56;
+    public static int Length => 108;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -18243,6 +18259,14 @@ public readonly ref struct AuctionBidRequestRef
     {
         get => ReadUInt32LittleEndian(this._data[52..]);
         set => WriteUInt32LittleEndian(this._data[52..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bid basket.
+    /// </summary>
+    public Span<byte> BidBasket
+    {
+        get => this._data.Slice(56, 52);
     }
 
     /// <summary>

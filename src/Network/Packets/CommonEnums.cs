@@ -570,6 +570,11 @@ using static System.Buffers.Binary.BinaryPrimitives;    /// <summary>
         /// Fruits.
         /// </summary>
             Fruits = 8,
+
+        /// <summary>
+        /// A basket of several currencies, or a buy-now price.
+        /// </summary>
+            Mixed = 9,
     }
 
     /// <summary>
@@ -709,6 +714,11 @@ using static System.Buffers.Binary.BinaryPrimitives;    /// <summary>
         /// AdminRefund.
         /// </summary>
             AdminRefund = 5,
+
+        /// <summary>
+        /// The flat sale fee returned because the listing ended unsold.
+        /// </summary>
+            FeeRefund = 6,
     }
 
     /// <summary>

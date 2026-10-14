@@ -66,7 +66,9 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
             response.RequestId = request.RequestId;
             response.Result = (AuctionResult)open.Result;
             response.ServerTime = (uint)open.ServerTime.ToUnixTimeSeconds();
-            response.ConfigurationVersion = 4;
+            response.ConfigurationVersion = 5;
+            response.SaleFee = (uint)Math.Min(open.SaleFee, uint.MaxValue);
+            response.MixedPricesEnabled = (byte)(open.MixedPricesEnabled ? 1 : 0);
             response.ListingFeeBasisPoints = (ushort)options.ListingFeeBasisPoints;
             response.SuccessFeeBasisPoints = (ushort)options.SuccessFeeBasisPoints;
             response.DurationMask = 0x0F;
