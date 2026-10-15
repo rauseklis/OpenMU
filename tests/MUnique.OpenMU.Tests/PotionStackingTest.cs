@@ -22,7 +22,7 @@ public class PotionStackingTest
     [TestCase(3)]
     public void ConfiguredStackCapacityIsRespected(int capacity)
     {
-        var definition = new ItemDefinition { Group = 14, Number = 1, Durability = (short)capacity };
+        var definition = new ItemDefinition { Group = 14, Number = 1, Durability = (byte)capacity };
         var source = new Item { Definition = definition, Durability = 1 };
         var target = new Item { Definition = definition, Durability = capacity - 1 };
         Assert.That(source.CanCompletelyStackOn(target), Is.True);
