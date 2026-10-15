@@ -8,6 +8,7 @@ using MUnique.OpenMU.Persistence.EntityFramework;
 using MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
+using MUnique.OpenMU.GameLogic.AuctionHouse;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -56,13 +57,14 @@ public class AuctionSearchTests
         await this.List(currency: 0, category: 1, startingPrice: 1000);
         await this.List(currency: 1, category: 4, startingPrice: 2);
 
-        var zen = await this.Search(new AuctionListingSearch(Currency: 0));
-        var armor = await this.Search(new AuctionListingSearch(Currency: 0, Category: 1));
+        var zen = await this.Search(new AuctionListingSearch(Currency: 0, PageSize: 1000));
+        var armor = await this.Search(new AuctionListingSearch(Currency: 0, Category: 1, PageSize: 1000));
 
         Assert.Multiple(() =>
         {
             Assert.That(zen.TotalCount, Is.GreaterThanOrEqualTo(2));
-            Assert.That(zen.Rows.All(r => r.Currency == 0), Is.True);
+            Assert.That(zen.Rows.All(r => r.Currency == 0
+                || (r.Currency == 9 && PriceBasket.Parse(r.PriceVector)?.Get(PriceKind.Zen) > 0)), Is.True);
             Assert.That(armor.Rows.Count(r => r.SellerAccountId == this._sellerAccountId), Is.EqualTo(1));
         });
     }
@@ -139,7 +141,7 @@ public class AuctionSearchTests
         var later = await this.List(currency: 1, category: 4, startingPrice: 2, hours: 48);
         var sooner = await this.List(currency: 1, category: 4, startingPrice: 2, hours: 6);
 
-        var page = await this.Search(new AuctionListingSearch(Currency: 1, Sort: AuctionSearchSort.EndingSoonest));
+        var page = await this.Search(new AuctionListingSearch(Currency: 1, Sort: AuctionSearchSort.EndingSoonest, PageSize: 1000));
 
         var rows = page.Rows.Where(r => r.ListingId == later || r.ListingId == sooner).Select(r => r.ListingId).ToList();
         Assert.That(rows, Is.EqualTo(new[] { sooner, later }));
