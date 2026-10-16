@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.GameLogic;
 
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.PlugIns;
+using MUnique.OpenMU.GameLogic.Premium;
 using MUnique.OpenMU.GameLogic.Views.Character;
 using MUnique.OpenMU.GameLogic.Views.World;
 using Nito.AsyncEx;
@@ -44,6 +45,11 @@ internal sealed class PlayerExperience
         if (experience == 0)
         {
             return 0;
+        }
+
+        if (this._player.Attributes?[PremiumBuffStats.ExperienceBlocked] > 0)
+        {
+            return experience;
         }
 
         if (isMasterExperience)
@@ -113,6 +119,10 @@ internal sealed class PlayerExperience
     /// <param name="killedObject">The killed object that caused the experience gain.</param>
     public async ValueTask AddMasterExperienceAsync(int experience, IAttackable? killedObject)
     {
+        if (this._player.Attributes?[PremiumBuffStats.ExperienceBlocked] > 0)
+        {
+            return;
+        }
         using var d = await this._lock.LockAsync().ConfigureAwait(false);
         await this.AddMasterExperienceCoreAsync(experience, killedObject).ConfigureAwait(false);
     }
@@ -124,6 +134,10 @@ internal sealed class PlayerExperience
     /// <param name="killedObject">The killed object that caused the experience gain.</param>
     public async ValueTask AddExperienceAsync(int experience, IAttackable? killedObject)
     {
+        if (this._player.Attributes?[PremiumBuffStats.ExperienceBlocked] > 0)
+        {
+            return;
+        }
         using var d = await this._lock.LockAsync().ConfigureAwait(false);
         await this.AddExperienceCoreAsync(experience, killedObject).ConfigureAwait(false);
     }

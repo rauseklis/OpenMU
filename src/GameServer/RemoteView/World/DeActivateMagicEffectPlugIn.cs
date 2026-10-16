@@ -83,5 +83,10 @@ public class DeActivateMagicEffectPlugIn : IActivateMagicEffectPlugIn, IDeactiva
         {
             await this._player.Connection.SendMagicEffectStatusAsync(isActive, objectId, (byte)effect.Id).ConfigureAwait(false);
         }
+
+        if (affectedObject == this._player)
+        {
+            await MagicEffectDetailsPacket.SendAsync(this._player, effect, isActive).ConfigureAwait(false);
+        }
     }
 }

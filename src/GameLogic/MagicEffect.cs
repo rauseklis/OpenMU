@@ -15,7 +15,9 @@ using MUnique.OpenMU.PlugIns;
 /// </summary>
 public class MagicEffect : AsyncDisposable
 {
+    private static readonly TimeSpan MaximumTimerSlice = TimeSpan.FromDays(20);
     private readonly Timer _finishTimer;
+    private long _timerStarted;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MagicEffect"/> class.
@@ -44,7 +46,8 @@ public class MagicEffect : AsyncDisposable
         this.PowerUpElements = powerUps;
         this.Definition = definition;
         this.Duration = duration;
-        this._finishTimer = new Timer(this.OnTimerTimeout, null, (int)this.Duration.TotalMilliseconds, Timeout.Infinite);
+        this._timerStarted = Stopwatch.GetTimestamp();
+        this._finishTimer = new Timer(this.OnTimerTimeout, null, GetTimerSlice(duration), Timeout.InfiniteTimeSpan);
     }
 
     /// <summary>
@@ -61,6 +64,13 @@ public class MagicEffect : AsyncDisposable
     /// Gets or sets the duration of the effect.
     /// </summary>
     public TimeSpan Duration { get; set; }
+
+    /// <summary>
+    /// Gets the remaining duration of the currently applied effect.
+    /// </summary>
+    public TimeSpan RemainingDuration => this.IsDisposed || this.IsDisposing
+        ? TimeSpan.Zero
+        : TimeSpan.FromMilliseconds(Math.Max(0, (this.Duration - Stopwatch.GetElapsedTime(Interlocked.Read(ref this._timerStarted))).TotalMilliseconds));
 
     /// <summary>
     /// Gets the value.
@@ -98,7 +108,8 @@ public class MagicEffect : AsyncDisposable
             throw new ObjectDisposedException(nameof(MagicEffect));
         }
 
-        this._finishTimer.Change((int)this.Duration.TotalMilliseconds, Timeout.Infinite);
+        Interlocked.Exchange(ref this._timerStarted, Stopwatch.GetTimestamp());
+        this._finishTimer.Change(GetTimerSlice(this.Duration), Timeout.InfiniteTimeSpan);
     }
 
     /// <inheritdoc/>
@@ -116,6 +127,11 @@ public class MagicEffect : AsyncDisposable
     {
         try
         {
+            if (this.RemainingDuration > TimeSpan.Zero)
+            {
+                this._finishTimer.Change(GetTimerSlice(this.RemainingDuration), Timeout.InfiniteTimeSpan);
+                return;
+            }
             await this.DisposeAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -123,6 +139,10 @@ public class MagicEffect : AsyncDisposable
             Debug.Fail(ex.Message, ex.StackTrace);
         }
     }
+
+    private static TimeSpan GetTimerSlice(TimeSpan duration) => duration == Timeout.InfiniteTimeSpan
+        ? Timeout.InfiniteTimeSpan
+        : TimeSpan.FromMilliseconds(Math.Clamp(Math.Ceiling(duration.TotalMilliseconds), 0, MaximumTimerSlice.TotalMilliseconds));
 
     private async ValueTask OnEffectTimeOutAsync()
     {

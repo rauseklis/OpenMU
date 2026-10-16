@@ -609,4 +609,5 @@ public enum UpdateVersion
     /// The version of the <see cref="AddLostMapsToLumenStorePlugIn"/>.
     /// </summary>
     AddLostMapsToLumenStore = 121,
+    AddPremiumBuffs = 122,
 }

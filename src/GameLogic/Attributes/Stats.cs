@@ -398,7 +398,7 @@ public class Stats
     /// </summary>
     public static AttributeDefinition AttackSpeed { get; } = new(new Guid("BACC1115-1E8B-4E62-B952-8F8DDB58A949"), "Attack Speed", string.Empty)
     {
-        MaximumValue = 200,
+        MaximumValue = 500,
     };
 
     /// <summary>
@@ -437,7 +437,7 @@ public class Stats
     /// </summary>
     public static AttributeDefinition MagicSpeed { get; } = new(new Guid("AE32AA45-9C18-43B3-9F7B-648FD7F4B0AD"), "Magic Speed", string.Empty)
     {
-        MaximumValue = 200,
+        MaximumValue = 500,
     };
 
     /// <summary>

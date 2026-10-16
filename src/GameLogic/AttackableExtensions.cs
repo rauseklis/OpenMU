@@ -279,6 +279,11 @@ public static class AttackableExtensions
             }
         }
 
+        if (attacker is Player)
+        {
+            dmg = ApplyTwoHandedWeaponBonus(dmg, attacker.Attributes, damageType);
+        }
+
         if (dmg > 0)
         {
             // To-do: Ice arrow magic effect duration is reduced by 1s for every successful hit (dmg >0)
@@ -304,6 +309,18 @@ public static class AttackableExtensions
         }
 
         return defender.GetHitInfo((uint)dmg, attributes, attacker, (uint)manaToll);
+    }
+
+    internal static int ApplyTwoHandedWeaponBonus(int damage, IAttributeSystem attributes, DamageType damageType)
+    {
+        if (damage > 0
+            && damageType is DamageType.Physical or DamageType.Wizardry or DamageType.Curse
+            && (attributes[Stats.IsTwoHandedWeaponEquipped] > 0 || attributes[Stats.IsTwoHandedStaffEquipped] > 0))
+        {
+            return damage + (int)(damage * 0.15f);
+        }
+
+        return damage;
     }
 
     /// <summary>
