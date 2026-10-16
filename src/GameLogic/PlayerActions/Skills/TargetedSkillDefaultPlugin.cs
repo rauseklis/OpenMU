@@ -125,6 +125,11 @@ public class TargetedSkillDefaultPlugin : TargetedSkillPluginBase
         }
 
         // enough mana, ag etc?
+        if (DarkSideCooldown.IsDarkSide(skillId) && !DarkSideCooldown.TryBegin(player))
+        {
+            return;
+        }
+
         if (!await player.TryConsumeForSkillAsync(skillEntry).ConfigureAwait(false))
         {
             return;

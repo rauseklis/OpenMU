@@ -45,12 +45,17 @@ public class RageSkillAttackAction
                 .OrderBy(t => t.GetDistanceTo(player))
                 .Take(MaximumTargetsPerAttack - targets.Count));
 
-        await player.InvokeViewPlugInAsync<IShowRageAttackRangePlugIn>(p => p.ShowRageAttackRangeAsync(skillId, targets)).ConfigureAwait(false);
-
         if (!targets.Any())
         {
             return;
         }
+
+        if (DarkSideCooldown.IsDarkSide(skillId) && !DarkSideCooldown.TryBegin(player))
+        {
+            return;
+        }
+
+        await player.InvokeViewPlugInAsync<IShowRageAttackRangePlugIn>(p => p.ShowRageAttackRangeAsync(skillId, targets)).ConfigureAwait(false);
 
         if (explicitTarget is null)
         {

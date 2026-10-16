@@ -54,6 +54,11 @@ public class AreaSkillAttackAction
             }
         }
 
+        if (DarkSideCooldown.IsDarkSide(skillId) && !DarkSideCooldown.TryBegin(player))
+        {
+            return;
+        }
+
         if (!await player.TryConsumeForSkillAsync(skillEntry).ConfigureAwait(false))
         {
             return;
