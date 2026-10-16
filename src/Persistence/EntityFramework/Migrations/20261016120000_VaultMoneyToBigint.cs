@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -8,6 +9,8 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
     /// Widens the stored item storage money and the maximum vault money to 64 bit,
     /// so that the vault can hold more than 2.1 billion Zen.
     /// </summary>
+    [DbContext(typeof(EntityDataContext))]
+    [Migration("20261016120000_VaultMoneyToBigint")]
     public partial class VaultMoneyToBigint : Migration
     {
         /// <inheritdoc />
