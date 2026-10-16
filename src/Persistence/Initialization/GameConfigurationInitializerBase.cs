@@ -44,7 +44,7 @@ public abstract class GameConfigurationInitializerBase : InitializerBase
         this.GameConfiguration.InfoRange = 12;
         this.GameConfiguration.AreaSkillHitsPlayer = false;
         this.GameConfiguration.MaximumInventoryMoney = int.MaxValue;
-        this.GameConfiguration.MaximumVaultMoney = int.MaxValue;
+        this.GameConfiguration.MaximumVaultMoney = 1_000_000_000_000L;
         this.GameConfiguration.PreventExperienceOverflow = false;
         this.GameConfiguration.ClampMoneyOnPickup = false;
         this.GameConfiguration.ExcellentItemDropLevelDelta = 25;

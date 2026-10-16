@@ -209,7 +209,7 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     /// <inheritdoc/>
     public int Money
     {
-        get => this.SelectedCharacter?.Inventory?.Money ?? 0;
+        get => (int)Math.Min(this.SelectedCharacter?.Inventory?.Money ?? 0, int.MaxValue);
 
         set
         {

@@ -34,12 +34,12 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the player inventory had space to add money; Otherwise, <c>false</c>.</returns>
     public static bool TryAddMoney(this Player player, int value)
     {
-        if (player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
+        if ((long)player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
         {
             return false;
         }
 
-        if (player.Money + value < 0)
+        if ((long)player.Money + value < 0)
         {
             return false;
         }
@@ -87,7 +87,7 @@ public static class PlayerMoneyExtensions
             return false;
         }
 
-        if (player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
+        if ((long)player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
         {
             return false;
         }

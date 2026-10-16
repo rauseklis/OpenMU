@@ -4749,7 +4749,7 @@ public class PacketStructureTests
     public void VaultMoneyUpdate_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 12;
+        const int expectedLength = 16;
         var actualLength = VaultMoneyUpdateRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -4760,11 +4760,11 @@ public class PacketStructureTests
             "Field 'Success' exceeds packet boundary");
         
         // Validate field 'VaultMoney' boundary
-        Assert.That(4 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(4 + 8, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'VaultMoney' exceeds packet boundary");
         
         // Validate field 'InventoryMoney' boundary
-        Assert.That(8 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(12 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'InventoryMoney' exceeds packet boundary");
     }
 

@@ -22878,7 +22878,7 @@ public readonly struct VaultMoneyUpdate
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 12;
+    public static int Length => 16;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -22897,10 +22897,10 @@ public readonly struct VaultMoneyUpdate
     /// <summary>
     /// Gets or sets the vault money.
     /// </summary>
-    public uint VaultMoney
+    public ulong VaultMoney
     {
-        get => ReadUInt32LittleEndian(this._data.Span[4..]);
-        set => WriteUInt32LittleEndian(this._data.Span[4..], value);
+        get => ReadUInt64LittleEndian(this._data.Span[4..]);
+        set => WriteUInt64LittleEndian(this._data.Span[4..], value);
     }
 
     /// <summary>
@@ -22908,8 +22908,8 @@ public readonly struct VaultMoneyUpdate
     /// </summary>
     public uint InventoryMoney
     {
-        get => ReadUInt32LittleEndian(this._data.Span[8..]);
-        set => WriteUInt32LittleEndian(this._data.Span[8..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[12..]);
+        set => WriteUInt32LittleEndian(this._data.Span[12..], value);
     }
 
     /// <summary>

@@ -13,8 +13,8 @@ The game client updates the money values of vault and inventory.
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
 | 0 | 1 |   Byte   | 0xC1  | [Packet type](PacketTypes.md) |
-| 1 | 1 |    Byte   |   12   | Packet header - length of the packet |
+| 1 | 1 |    Byte   |   16   | Packet header - length of the packet |
 | 2 | 1 |    Byte   | 0x81  | Packet header - packet type identifier |
 | 3 | 1 | Boolean |  | Success |
-| 4 | 4 | IntegerLittleEndian |  | VaultMoney |
-| 8 | 4 | IntegerLittleEndian |  | InventoryMoney |
+| 4 | 8 | LongLittleEndian |  | VaultMoney |
+| 12 | 4 | IntegerLittleEndian |  | InventoryMoney |

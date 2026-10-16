@@ -2095,8 +2095,8 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<int>("MaximumPasswordLength")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MaximumVaultMoney")
-                        .HasColumnType("integer");
+                    b.Property<long>("MaximumVaultMoney")
+                        .HasColumnType("bigint");
 
                     b.Property<byte>("MinimumMonsterLevelForMasterExperience")
                         .HasColumnType("smallint");
@@ -3150,8 +3150,8 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Money")
-                        .HasColumnType("integer");
+                    b.Property<long>("Money")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
