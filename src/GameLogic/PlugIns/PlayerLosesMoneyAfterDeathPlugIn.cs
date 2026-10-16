@@ -35,7 +35,7 @@ public class PlayerLosesMoneyAfterDeathPlugIn : IAttackableGotKilledPlugIn, ISup
             return;
         }
 
-        if (player.CurrentMiniGame is not null)
+        if (player.CurrentMiniGame is not null || attributes[Premium.PremiumBuffStats.DeathProtection] > 0)
         {
             return;
         }

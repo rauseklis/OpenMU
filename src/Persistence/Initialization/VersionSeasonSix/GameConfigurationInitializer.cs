@@ -73,6 +73,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new Misc(this.Context, this.GameConfiguration).Initialize();
         new PackedJewels(this.Context, this.GameConfiguration).Initialize();
         new Jewelery(this.Context, this.GameConfiguration).Initialize();
+        new PremiumBuffs(this.Context, this.GameConfiguration).Initialize();
         new AncientSets(this.Context, this.GameConfiguration).Initialize();
         new BoxOfLuck(this.Context, this.GameConfiguration).Initialize();
         this.CreateJewelMixes();

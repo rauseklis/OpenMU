@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.GameLogic.PlayerActions.ItemConsumeActions;
 
 using MUnique.OpenMU.DataModel.Configuration.Items;
 using MUnique.OpenMU.GameLogic.Attributes;
+using MUnique.OpenMU.GameLogic.Premium;
 
 /// <summary>
 /// <see cref="IItemConsumeHandlerPlugIn"/> for <see cref="Item"/>s which have a defined <see cref="ItemDefinition.ConsumeEffect"/>.
@@ -21,6 +22,21 @@ public class ApplyMagicEffectConsumeHandlerPlugIn : BaseConsumeHandlerPlugIn
         if (item.Definition?.ConsumeEffect is not { } effectDefinition)
         {
             return false;
+        }
+
+        if (PremiumBuffCatalog.Find(item.Definition.Group, item.Definition.Number) is { } premium && effectDefinition.Number == premium.Effect)
+        {
+            if (!this.CheckPreconditions(player, item))
+            {
+                return false;
+            }
+            var duration = TimeSpan.FromSeconds(effectDefinition.Duration?.ConstantValue.Value ?? premium.DefaultSeconds);
+            if (!await PremiumBuffService.ActivateAsync(player, effectDefinition, duration).ConfigureAwait(false))
+            {
+                return false;
+            }
+            await this.ConsumeSourceItemAsync(player, item).ConfigureAwait(false);
+            return true;
         }
 
         return await this.ConsumeItemCoreAsync(player, item, targetItem, fruitUsage, effectDefinition).ConfigureAwait(false);

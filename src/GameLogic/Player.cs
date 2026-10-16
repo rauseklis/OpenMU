@@ -1993,6 +1993,10 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
 
     private async ValueTask DecreaseDefenseItemDurabilityAsync(Item targetItem, HitInfo hitInfo)
     {
+        if (this.Attributes is { } attributes && Premium.PremiumBuffCatalog.ProtectsMount(targetItem, attributes))
+        {
+            return;
+        }
         var itemDurationIncrease = targetItem.IsTrainablePet() ? this.Attributes?[Stats.PetDurationIncrease] : this.Attributes?[Stats.ItemDurationIncrease];
         if (itemDurationIncrease == 0)
         {
@@ -2016,6 +2020,11 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     {
         var targetItem = this.Inventory?.GetRandomOffensiveItem();
         if (targetItem is null || targetItem.Durability == 0)
+        {
+            return;
+        }
+
+        if (this.Attributes is { } attributes && Premium.PremiumBuffCatalog.ProtectsMount(targetItem, attributes))
         {
             return;
         }
