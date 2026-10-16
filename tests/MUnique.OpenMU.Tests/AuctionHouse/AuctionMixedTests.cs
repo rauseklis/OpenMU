@@ -650,6 +650,6 @@ public class AuctionMixedTests
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand("SELECT \"Money\" FROM data.\"ItemStorage\" WHERE \"Id\" = @id", connection);
         command.Parameters.AddWithValue("id", inventory);
-        return (int)(await command.ExecuteScalarAsync())!;
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 }

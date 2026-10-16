@@ -8415,7 +8415,7 @@
       <HeaderType>C1Header</HeaderType>
       <Code>81</Code>
       <Name>VaultMoneyUpdate</Name>
-      <Length>12</Length>
+      <Length>16</Length>
       <Direction>ServerToClient</Direction>
       <SentWhen>After the player requested to move money between the vault and inventory.</SentWhen>
       <CausedReaction>The game client updates the money values of vault and inventory.</CausedReaction>
@@ -8427,11 +8427,11 @@
         </Field>
         <Field>
           <Index>4</Index>
-          <Type>IntegerLittleEndian</Type>
+          <Type>LongLittleEndian</Type>
           <Name>VaultMoney</Name>
         </Field>
         <Field>
-          <Index>8</Index>
+          <Index>12</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>InventoryMoney</Name>
         </Field>

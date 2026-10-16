@@ -226,6 +226,6 @@ public class AuctionBidBuyoutServiceTests
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand("SELECT s.\"Money\" FROM data.\"Character\" c JOIN data.\"ItemStorage\" s ON s.\"Id\" = c.\"InventoryId\" WHERE c.\"Id\" = @id", connection);
         command.Parameters.AddWithValue("id", this._bidderCharacterId);
-        return (int)(await command.ExecuteScalarAsync())!;
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 }

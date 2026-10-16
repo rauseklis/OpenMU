@@ -4658,7 +4658,7 @@ public static class ConnectionExtensions
     /// Is sent by the server when: After the player requested to move money between the vault and inventory.
     /// Causes reaction on client side: The game client updates the money values of vault and inventory.
     /// </remarks>
-    public static async ValueTask SendVaultMoneyUpdateAsync(this IConnection? connection, bool @success, uint @vaultMoney, uint @inventoryMoney)
+    public static async ValueTask SendVaultMoneyUpdateAsync(this IConnection? connection, bool @success, ulong @vaultMoney, uint @inventoryMoney)
     {
         if (connection is null)
         {

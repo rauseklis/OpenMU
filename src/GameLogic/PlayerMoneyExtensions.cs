@@ -34,12 +34,12 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the player inventory had space to add money; Otherwise, <c>false</c>.</returns>
     public static bool TryAddMoney(this Player player, int value)
     {
-        if (player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
+        if ((long)player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
         {
             return false;
         }
 
-        if (player.Money + value < 0)
+        if ((long)player.Money + value < 0)
         {
             return false;
         }
@@ -56,7 +56,7 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the player inventory had enough money to move; Otherwise, <c>false</c>.</returns>
     public static bool TryDepositVaultMoney(this Player player, int value)
     {
-        if (player.Vault is null)
+        if (value < 0 || player.Vault is null)
         {
             return false;
         }
@@ -82,12 +82,12 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the vault had enough money to move and player inventory isn't maximum; Otherwise, <c>false</c>.</returns>
     public static bool TryTakeVaultMoney(this Player player, int value)
     {
-        if (player.Vault is null)
+        if (value < 0 || player.Vault is null)
         {
             return false;
         }
 
-        if (player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
+        if ((long)player.Money + value > player.GameContext?.Configuration?.MaximumInventoryMoney)
         {
             return false;
         }

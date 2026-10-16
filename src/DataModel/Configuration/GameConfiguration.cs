@@ -73,7 +73,7 @@ public partial class GameConfiguration
     /// <summary>
     /// Gets or sets the maximum vault money value.
     /// </summary>
-    public int MaximumVaultMoney { get; set; }
+    public long MaximumVaultMoney { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether money pickup should be clamped to the maximum inventory money limit instead of failing when the limit would be exceeded.

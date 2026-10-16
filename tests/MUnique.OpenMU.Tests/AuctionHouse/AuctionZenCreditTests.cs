@@ -183,7 +183,7 @@ public class AuctionZenCreditTests
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand("SELECT \"Money\" FROM data.\"ItemStorage\" WHERE \"Id\" = @id", connection);
         command.Parameters.AddWithValue("id", this._storageId);
-        return (int)(await command.ExecuteScalarAsync())!;
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
     private async Task SetMoney(int money)

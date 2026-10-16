@@ -32,7 +32,7 @@ public class BackupItemStorage
     /// <summary>
     /// Gets or sets the money.
     /// </summary>
-    public int Money { get; set; }
+    public long Money { get; set; }
 
     /// <summary>
     /// Restores the initial item states.

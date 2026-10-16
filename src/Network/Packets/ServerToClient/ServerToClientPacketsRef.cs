@@ -21729,7 +21729,7 @@ public readonly ref struct VaultMoneyUpdateRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 12;
+    public static int Length => 16;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -21748,10 +21748,10 @@ public readonly ref struct VaultMoneyUpdateRef
     /// <summary>
     /// Gets or sets the vault money.
     /// </summary>
-    public uint VaultMoney
+    public ulong VaultMoney
     {
-        get => ReadUInt32LittleEndian(this._data[4..]);
-        set => WriteUInt32LittleEndian(this._data[4..], value);
+        get => ReadUInt64LittleEndian(this._data[4..]);
+        set => WriteUInt64LittleEndian(this._data[4..], value);
     }
 
     /// <summary>
@@ -21759,8 +21759,8 @@ public readonly ref struct VaultMoneyUpdateRef
     /// </summary>
     public uint InventoryMoney
     {
-        get => ReadUInt32LittleEndian(this._data[8..]);
-        set => WriteUInt32LittleEndian(this._data[8..], value);
+        get => ReadUInt32LittleEndian(this._data[12..]);
+        set => WriteUInt32LittleEndian(this._data[12..], value);
     }
 
     /// <summary>

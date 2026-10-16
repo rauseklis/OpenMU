@@ -232,7 +232,7 @@ public class AuctionZenDebitTests
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand("SELECT \"Money\" FROM data.\"ItemStorage\" WHERE \"Id\" = @id", connection);
         command.Parameters.AddWithValue("id", storage);
-        return (int)(await command.ExecuteScalarAsync())!;
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
     private Task<AuctionBidResult> Bid(Guid account, Guid storage, long amount, Guid operation)
