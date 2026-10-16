@@ -1,4 +1,4 @@
-// <copyright file="VaultMoneyTests.cs" company="MUnique">
+﻿// <copyright file="VaultMoneyTests.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -80,6 +80,22 @@ public class VaultMoneyTests
 
         Assert.That(player.TryTakeVaultMoney(11), Is.False);
         Assert.That(player.Vault.ItemStorage.Money, Is.EqualTo(5_000_000_000L));
+    }
+
+    /// <summary>
+    /// Tests that negative amounts (e.g. from an unsigned client value above int.MaxValue) are rejected.
+    /// </summary>
+    [Test]
+    public async ValueTask NegativeAmountsAreRejectedAsync()
+    {
+        var player = await CreatePlayerWithVaultAsync().ConfigureAwait(false);
+        player.Vault!.ItemStorage.Money = 5_000_000_000L;
+        player.Money = 1000;
+
+        Assert.That(player.TryDepositVaultMoney(-1_000), Is.False);
+        Assert.That(player.TryTakeVaultMoney(-1_000), Is.False);
+        Assert.That(player.Vault.ItemStorage.Money, Is.EqualTo(5_000_000_000L));
+        Assert.That(player.Money, Is.EqualTo(1000));
     }
 
     private static async ValueTask<Player> CreatePlayerWithVaultAsync()
