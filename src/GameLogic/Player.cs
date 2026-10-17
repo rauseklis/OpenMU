@@ -473,6 +473,11 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     }
 
     /// <summary>
+    /// Gets or sets the number of the currently opened vault, starting with 1.
+    /// </summary>
+    public byte ActiveVaultNumber { get; set; } = 1;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the vault of the player is currently locked by a pin.
     /// </summary>
     public bool IsVaultLocked { get; set; }

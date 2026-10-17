@@ -119,6 +119,7 @@
   * [C1 81 - VaultMoneyUpdate (by server)](C1-81-VaultMoneyUpdate_by-server.md)
   * [C1 82 - VaultClosed (by server)](C1-82-VaultClosed_by-server.md)
   * [C1 83 - VaultProtectionInformation (by server)](C1-83-VaultProtectionInformation_by-server.md)
+  * [C1 84 - VaultSwitched (by server)](C1-84-VaultSwitched_by-server.md)
   * [C1 86 - ItemCraftingResult (by server)](C1-86-ItemCraftingResult_by-server.md)
   * [C1 87 - CraftingDialogClosed075 (by server)](C1-87-CraftingDialogClosed075_by-server.md)
   * [C1 90 - DevilSquareEnterResult (by server)](C1-90-DevilSquareEnterResult_by-server.md)

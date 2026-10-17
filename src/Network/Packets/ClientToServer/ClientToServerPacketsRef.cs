@@ -7236,6 +7236,85 @@ public readonly ref struct VaultMoveMoneyRequestRef
 
 
 /// <summary>
+/// Is sent by the client when: The player wants to switch to another vault of the opened vault dialog.
+/// Causes reaction on server side: The requested vault becomes the active one and its items are sent to the player.
+/// </summary>
+public readonly ref struct VaultSwitchRequestRef
+{
+    private readonly Span<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VaultSwitchRequestRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public VaultSwitchRequestRef(Span<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VaultSwitchRequestRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private VaultSwitchRequestRef(Span<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0x84;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 4;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderRef Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the number of the requested vault, starting with 1.
+    /// </summary>
+    public byte VaultNumber
+    {
+        get => this._data[3];
+        set => this._data[3] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Span of bytes to a <see cref="VaultSwitchRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator VaultSwitchRequestRef(Span<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="VaultSwitchRequest"/> to a Span of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Span<byte>(VaultSwitchRequestRef packet) => packet._data; 
+}
+
+
+/// <summary>
 /// Is sent by the client when: When a player has the Lahap npc dialog open and wants to combine or disband jewel stacks.
 /// Causes reaction on server side: If successful, the inventory is updated and the game client gets corresponding responses.
 /// </summary>

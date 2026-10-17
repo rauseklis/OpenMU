@@ -2354,6 +2354,34 @@ public static class ConnectionExtensions
     }
 
     /// <summary>
+    /// Sends a <see cref="VaultSwitchRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="vaultNumber">The number of the requested vault, starting with 1.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player wants to switch to another vault of the opened vault dialog.
+    /// Causes reaction on server side: The requested vault becomes the active one and its items are sent to the player.
+    /// </remarks>
+    public static async ValueTask SendVaultSwitchRequestAsync(this IConnection? connection, byte @vaultNumber)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = VaultSwitchRequestRef.Length;
+            var packet = new VaultSwitchRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.VaultNumber = @vaultNumber;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Sends a <see cref="LahapJewelMixRequest" /> to this connection.
     /// </summary>
     /// <param name="connection">The connection.</param>

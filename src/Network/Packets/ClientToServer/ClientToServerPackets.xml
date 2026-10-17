@@ -1720,6 +1720,23 @@
     </Packet>
     <Packet>
       <HeaderType>C1Header</HeaderType>
+      <Code>84</Code>
+      <Name>VaultSwitchRequest</Name>
+      <Length>4</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>The player wants to switch to another vault of the opened vault dialog.</SentWhen>
+      <CausedReaction>The requested vault becomes the active one and its items are sent to the player.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>3</Index>
+          <Type>Byte</Type>
+          <Name>VaultNumber</Name>
+          <Description>The number of the requested vault, starting with 1.</Description>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C1Header</HeaderType>
       <Code>BC</Code>
       <Name>LahapJewelMixRequest</Name>
       <Caption>Jewel Mix (Lahap)</Caption>
