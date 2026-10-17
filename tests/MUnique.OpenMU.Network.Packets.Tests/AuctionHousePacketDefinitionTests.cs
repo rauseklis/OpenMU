@@ -37,9 +37,9 @@ public class AuctionHousePacketDefinitionTests
         yield return new TestCaseData(
             "AuctionCreateRequest",
             "03",
-            "256",
-            "4:Binary:OperationId[16];20:Byte:InventorySlot;21:Enum:CurrencyMode;" + Amount(22, "Starting") + ";"
-            + Amount(46, "Buyout") + ";70:Byte:DurationHours;71:Byte:NoteLength;72:Binary:Note[80];152:Binary:StartingBasket[52];204:Binary:BuyoutBasket[52]");
+            "257",
+            "5:Binary:OperationId[16];21:Byte:InventorySlot;22:Enum:CurrencyMode;" + Amount(23, "Starting") + ";"
+            + Amount(47, "Buyout") + ";71:Byte:DurationHours;72:Byte:NoteLength;73:Binary:Note[80];153:Binary:StartingBasket[52];205:Binary:BuyoutBasket[52]");
         yield return new TestCaseData(
             "AuctionBidRequest",
             "04",
@@ -83,7 +83,10 @@ public class AuctionHousePacketDefinitionTests
     [TestCaseSource(nameof(ClientRequestCases))]
     public void ClientRequestMatchesDesign(string name, string subCode, string length, string fields)
     {
-        AssertPacketDefinition(ClientPacketDefinitions, name, "C3HeaderWithSubCode", "D5", subCode, length, fields);
+        // A C3 packet stores its length in one byte, so it can be at most 255 bytes long. The 257 byte create request
+        // therefore needs the C4 header, whose length is two bytes.
+        var header = name == "AuctionCreateRequest" ? "C4HeaderWithSubCode" : "C3HeaderWithSubCode";
+        AssertPacketDefinition(ClientPacketDefinitions, name, header, "D5", subCode, length, fields);
     }
 
     /// <summary>
@@ -354,6 +357,27 @@ public class AuctionHousePacketDefinitionTests
                     var name = field.Element(PacketDefinitionNamespace + "Name")!.Value;
                     return $"{index}:{type}:{name}{lengthSuffix}";
                 }));
+
+    /// <summary>
+    /// A C1 or C3 packet stores its length in a single byte. A longer packet is written with a wrapped length (256 becomes 0),
+    /// which the receiving side treats as a broken stream and closes the connection. Every fixed-length packet in both
+    /// directions must therefore use a C2 or C4 header once it is longer than 255 bytes.
+    /// </summary>
+    /// <param name="relativePath">The packet definition file.</param>
+    [TestCase(ClientPacketDefinitions)]
+    [TestCase(ServerPacketDefinitions)]
+    public void FixedLengthPacketsFitTheirHeader(string relativePath)
+    {
+        var tooLong = LoadPacketDefinitions(relativePath)
+            .Descendants(PacketDefinitionNamespace + "Packet")
+            .Where(packet => (packet.Element(PacketDefinitionNamespace + "HeaderType")?.Value ?? string.Empty).StartsWith("C1", StringComparison.Ordinal)
+                || (packet.Element(PacketDefinitionNamespace + "HeaderType")?.Value ?? string.Empty).StartsWith("C3", StringComparison.Ordinal))
+            .Where(packet => int.TryParse(packet.Element(PacketDefinitionNamespace + "Length")?.Value, out var length) && length > 255)
+            .Select(packet => packet.Element(PacketDefinitionNamespace + "Name")!.Value)
+            .ToList();
+
+        Assert.That(tooLong, Is.Empty, "These C1/C3 packets are longer than 255 bytes: " + string.Join(", ", tooLong));
+    }
 
     private static void AssertPacketDefinition(
         string relativePath,

@@ -160,7 +160,7 @@
   * [C3 D5 00 - AuctionOpenRequest (by client)](C3-D5-00-AuctionOpenRequest_by-client.md)
   * [C3 D5 01 - AuctionBrowseRequest (by client)](C3-D5-01-AuctionBrowseRequest_by-client.md)
   * [C3 D5 02 - AuctionDetailRequest (by client)](C3-D5-02-AuctionDetailRequest_by-client.md)
-  * [C3 D5 03 - AuctionCreateRequest (by client)](C3-D5-03-AuctionCreateRequest_by-client.md)
+  * [C4 D5 03 - AuctionCreateRequest (by client)](C4-D5-03-AuctionCreateRequest_by-client.md)
   * [C3 D5 04 - AuctionBidRequest (by client)](C3-D5-04-AuctionBidRequest_by-client.md)
   * [C3 D5 05 - AuctionBuyoutRequest (by client)](C3-D5-05-AuctionBuyoutRequest_by-client.md)
   * [C3 D5 06 - AuctionCancelRequest (by client)](C3-D5-06-AuctionCancelRequest_by-client.md)
