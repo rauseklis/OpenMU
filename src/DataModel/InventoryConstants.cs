@@ -158,6 +158,11 @@ public static class InventoryConstants
     public static readonly byte WarehouseRows = 15;
 
     /// <summary>
+    /// The number of vaults (warehouses) of an account.
+    /// </summary>
+    public const int VaultCount = 10;
+
+    /// <summary>
     /// The number of warehouse item slots.
     /// </summary>
     public static readonly byte WarehouseSize = (byte)(WarehouseRows * RowSize);

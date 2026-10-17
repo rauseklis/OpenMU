@@ -34,6 +34,15 @@ internal partial class Account : MUnique.OpenMU.DataModel.Entities.Account, IIde
     public Guid Id { get; set; }
     
     /// <summary>
+    /// Gets the raw collection of <see cref="ExtraVaults" />.
+    /// </summary>
+    public ICollection<ItemStorage> RawExtraVaults { get; } = new EntityFramework.List<ItemStorage>();
+    
+    /// <inheritdoc/>
+    [NotMapped]
+    public override ICollection<MUnique.OpenMU.DataModel.Entities.ItemStorage> ExtraVaults => base.ExtraVaults ??= new CollectionAdapter<MUnique.OpenMU.DataModel.Entities.ItemStorage, ItemStorage>(this.RawExtraVaults);
+
+    /// <summary>
     /// Gets the raw collection of <see cref="Characters" />.
     /// </summary>
     public ICollection<Character> RawCharacters { get; } = new EntityFramework.List<Character>();

@@ -8439,6 +8439,34 @@
     </Packet>
     <Packet>
       <HeaderType>C1Header</HeaderType>
+      <Code>84</Code>
+      <Name>VaultSwitched</Name>
+      <Length>6</Length>
+      <Direction>ServerToClient</Direction>
+      <SentWhen>After the vault dialog was opened, or after the player requested to switch to another vault.</SentWhen>
+      <CausedReaction>The game client clears the vault window and shows which vault is active. The items of the vault follow in a separate packet.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>3</Index>
+          <Type>Boolean</Type>
+          <Name>Success</Name>
+        </Field>
+        <Field>
+          <Index>4</Index>
+          <Type>Byte</Type>
+          <Name>VaultNumber</Name>
+          <Description>The number of the active vault, starting with 1.</Description>
+        </Field>
+        <Field>
+          <Index>5</Index>
+          <Type>Byte</Type>
+          <Name>VaultCount</Name>
+          <Description>The number of vaults of the account.</Description>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C1Header</HeaderType>
       <Code>82</Code>
       <Name>VaultClosed</Name>
       <Length>3</Length>

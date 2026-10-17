@@ -1673,6 +1673,24 @@ public class PacketStructureTests
     }
 
     /// <summary>
+    /// Tests the packet size calculation for VaultSwitchRequest.
+    /// </summary>
+    [Test]
+    public void VaultSwitchRequest_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 4;
+        var actualLength = VaultSwitchRequestRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+        
+        // Validate field 'VaultNumber' boundary
+        Assert.That(3 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'VaultNumber' exceeds packet boundary");
+    }
+
+    /// <summary>
     /// Tests the packet size calculation for LahapJewelMixRequest.
     /// </summary>
     [Test]

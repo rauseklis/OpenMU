@@ -4680,6 +4680,38 @@ public static class ConnectionExtensions
     }
 
     /// <summary>
+    /// Sends a <see cref="VaultSwitched" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="success">The success.</param>
+    /// <param name="vaultNumber">The number of the active vault, starting with 1.</param>
+    /// <param name="vaultCount">The number of vaults of the account.</param>
+    /// <remarks>
+    /// Is sent by the server when: After the vault dialog was opened, or after the player requested to switch to another vault.
+    /// Causes reaction on client side: The game client clears the vault window and shows which vault is active. The items of the vault follow in a separate packet.
+    /// </remarks>
+    public static async ValueTask SendVaultSwitchedAsync(this IConnection? connection, bool @success, byte @vaultNumber, byte @vaultCount)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = VaultSwitchedRef.Length;
+            var packet = new VaultSwitchedRef(connection.Output.GetSpan(length)[..length]);
+            packet.Success = @success;
+            packet.VaultNumber = @vaultNumber;
+            packet.VaultCount = @vaultCount;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Sends a <see cref="VaultClosed" /> to this connection.
     /// </summary>
     /// <param name="connection">The connection.</param>

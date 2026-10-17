@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.GameLogic;
 
 /// <summary>
 /// Extensions to move money between the inventory and the vault of a <see cref="Player"/>.
+/// The Zen of all vaults of an account is stored in the first vault (<see cref="MUnique.OpenMU.DataModel.Entities.Account.Vault"/>).
 /// </summary>
 public static class PlayerMoneyExtensions
 {
@@ -56,19 +57,21 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the player inventory had enough money to move; Otherwise, <c>false</c>.</returns>
     public static bool TryDepositVaultMoney(this Player player, int value)
     {
-        if (value < 0 || player.Vault is null)
+        var zenStorage = player.Account?.Vault;
+        if (value < 0 || player.Vault is null || zenStorage is null)
         {
             return false;
         }
 
-        if (player.Vault.ItemStorage.Money + value > player.GameContext?.Configuration?.MaximumVaultMoney)
+        if (zenStorage.Money + value > player.GameContext?.Configuration?.MaximumVaultMoney)
         {
             return false;
         }
 
         if (player.TryRemoveMoney(value))
         {
-            return player.Vault.TryAddMoney(value);
+            zenStorage.Money += value;
+            return true;
         }
 
         return false;
@@ -82,7 +85,8 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the vault had enough money to move and player inventory isn't maximum; Otherwise, <c>false</c>.</returns>
     public static bool TryTakeVaultMoney(this Player player, int value)
     {
-        if (value < 0 || player.Vault is null)
+        var zenStorage = player.Account?.Vault;
+        if (value < 0 || player.Vault is null || zenStorage is null)
         {
             return false;
         }
@@ -92,9 +96,15 @@ public static class PlayerMoneyExtensions
             return false;
         }
 
-        if (player.Vault.TryRemoveMoney(value))
+        if (zenStorage.Money < value)
         {
-            return player.TryAddMoney(value);
+            return false;
+        }
+
+        if (player.TryAddMoney(value))
+        {
+            zenStorage.Money -= value;
+            return true;
         }
 
         return false;

@@ -107,6 +107,9 @@ public class VaultMoneyTests
         var itemStorage = new Mock<ItemStorage>();
         itemStorage.SetupAllProperties();
         itemStorage.Setup(i => i.Items).Returns(new List<Item>());
+        var accountMock = Mock.Get(player.Account!);
+        accountMock.Setup(a => a.Vault).Returns(itemStorage.Object);
+        accountMock.Setup(a => a.ExtraVaults).Returns(new List<ItemStorage>());
         player.Vault = new Storage(InventoryConstants.WarehouseSize, itemStorage.Object);
         return player;
     }

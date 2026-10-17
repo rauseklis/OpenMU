@@ -4769,6 +4769,32 @@ public class PacketStructureTests
     }
 
     /// <summary>
+    /// Tests the packet size calculation for VaultSwitched.
+    /// </summary>
+    [Test]
+    public void VaultSwitched_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 6;
+        var actualLength = VaultSwitchedRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+        
+        // Validate field 'Success' boundary
+        Assert.That(3 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Success' exceeds packet boundary");
+        
+        // Validate field 'VaultNumber' boundary
+        Assert.That(4 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'VaultNumber' exceeds packet boundary");
+        
+        // Validate field 'VaultCount' boundary
+        Assert.That(5 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'VaultCount' exceeds packet boundary");
+    }
+
+    /// <summary>
     /// Tests the packet size calculation for VaultClosed.
     /// </summary>
     [Test]

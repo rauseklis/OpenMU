@@ -65,6 +65,7 @@
   * [C1 83 00 - UnlockVault (by client)](C1-83-00-UnlockVault_by-client.md)
   * [C1 83 01 - SetVaultPin (by client)](C1-83-01-SetVaultPin_by-client.md)
   * [C1 83 02 - RemoveVaultPin (by client)](C1-83-02-RemoveVaultPin_by-client.md)
+  * [C1 84 - VaultSwitchRequest (by client)](C1-84-VaultSwitchRequest_by-client.md)
   * [C1 86 - ChaosMachineMixRequest (by client)](C1-86-ChaosMachineMixRequest_by-client.md)
   * [C1 87 - CraftingDialogCloseRequest (by client)](C1-87-CraftingDialogCloseRequest_by-client.md)
   * [C1 8E 02 - WarpCommandRequest (by client)](C1-8E-02-WarpCommandRequest_by-client.md)
