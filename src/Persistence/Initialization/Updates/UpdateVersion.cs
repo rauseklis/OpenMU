@@ -611,4 +611,5 @@ public enum UpdateVersion
     AddLostMapsToLumenStore = 121,
     AddPremiumBuffs = 122,
     AddKingMaces = 123,
+    KingMaceRequirements = 124,
 }

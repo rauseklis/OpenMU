@@ -5,7 +5,9 @@
 namespace MUnique.OpenMU.Tests;
 
 using MUnique.OpenMU.AttributeSystem;
+using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.DataModel.Configuration.Items;
+using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix.Items;
 using MUnique.OpenMU.Persistence.InMemory;
@@ -24,7 +26,8 @@ public class KingMacesTest
         using var context = new InMemoryPersistenceContextProvider().CreateNewContext();
         var config = context.CreateNew<Basic.GameConfiguration>();
         foreach (var attribute in new[] { Stats.MinimumPhysBaseDmgByWeapon, Stats.MaximumPhysBaseDmgByWeapon,
-                     Stats.AttackSpeedByWeapon, Stats.EquippedWeaponCount, Stats.DoubleWieldWeaponCount })
+                     Stats.AttackSpeedByWeapon, Stats.EquippedWeaponCount, Stats.DoubleWieldWeaponCount,
+                     Stats.TotalStrengthRequirementValue, Stats.TotalAgilityRequirementValue })
         {
             config.Attributes.Add(context.CreateNew<AttributeDefinition>(attribute.Id, attribute.Designation!, attribute.Description!));
         }
@@ -54,6 +57,42 @@ public class KingMacesTest
         Assert.That(config.ItemLevelBonusTables.Count, Is.EqualTo(1));
         Assert.That(template.BasePowerUpAttributes, Is.Empty);
         var item = config.Items.Single(i => i.Group == 2 && i.Number == number);
+        Assert.That(item.Skill, Is.Null);
+        var instance = context.CreateNew<Basic.Item>();
+        instance.Definition = item;
+        Assert.That(instance.CanHaveSkill(), Is.False, "Normal, excellent and ancient drops must remain skill-free.");
+        var strength = item.Requirements.Single(r => r.Attribute == Stats.TotalStrengthRequirementValue);
+        var agility = item.Requirements.Single(r => r.Attribute == Stats.TotalAgilityRequirementValue);
+        var strengthCoefficient = number == 22 ? 480 : 968;
+        var agilityCoefficient = number == 22 ? 334 : 675;
+        Assert.That(strength.MinimumValue, Is.EqualTo(strengthCoefficient));
+        Assert.That(agility.MinimumValue, Is.EqualTo(agilityCoefficient));
+        for (byte level = 0; level <= 13; level++)
+        {
+            instance.Level = level;
+            Assert.That(instance.GetRequirement(strength).Value, Is.EqualTo(20 + (strengthCoefficient * (82 + (3 * level)) * 3 / 100)));
+            Assert.That(instance.GetRequirement(agility).Value, Is.EqualTo(20 + (agilityCoefficient * (82 + (3 * level)) * 3 / 100)));
+        }
+
+        instance.Level = 0;
+        var option = context.CreateNew<Basic.ItemOptionLink>();
+        option.ItemOption = context.CreateNew<Basic.IncreasableItemOption>();
+        option.ItemOption.OptionType = ItemOptionTypes.Option;
+        instance.ItemOptions.Add(option);
+        var baseStrength = instance.GetRequirement(strength).Value;
+        var baseAgility = instance.GetRequirement(agility).Value;
+        for (byte optionLevel = 1; optionLevel <= 7; optionLevel++)
+        {
+            option.Level = optionLevel;
+            Assert.That(instance.GetRequirement(strength).Value, Is.EqualTo(baseStrength + (optionLevel * 5)));
+            Assert.That(instance.GetRequirement(agility).Value, Is.EqualTo(baseAgility));
+        }
+
+        strength.MinimumValue = 160;
+        item.Skill = context.CreateNew<Basic.Skill>();
+        new KingMaceRequirements(context, config).Initialize();
+        Assert.That(strength.MinimumValue, Is.EqualTo(strengthCoefficient), "Existing definitions must be upgraded too.");
+        Assert.That(item.Skill, Is.Null);
         Assert.That(item.Width, Is.EqualTo(1));
         Assert.That(item.Height, Is.EqualTo(3));
         Assert.That(item.DropsFromMonsters, Is.False);

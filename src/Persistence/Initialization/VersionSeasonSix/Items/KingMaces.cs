@@ -91,5 +91,7 @@ public sealed class KingMaces : InitializerBase
             item.BasePowerUpAttributes.Add(this.CreateItemBasePowerUpDefinition(Stats.DoubleWieldWeaponCount, 1, AggregateType.AddRaw));
             this.GameConfiguration.Items.Add(item);
         }
+
+        new KingMaceRequirements(this.Context, this.GameConfiguration).Initialize();
     }
 }
