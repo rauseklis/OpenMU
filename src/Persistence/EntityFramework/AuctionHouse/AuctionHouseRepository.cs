@@ -124,6 +124,10 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.GetItemsAsync(context, itemIds, cancellationToken));
 
     /// <inheritdoc />
+    public Task<AuctionInventoryState?> GetInventoryStateAsync(Guid characterId, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.GetInventoryStateAsync(context, characterId, cancellationToken));
+
+    /// <inheritdoc />
     public Task<bool> IsAccountRestrictedAsync(Guid accountId, DateTimeOffset now, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.IsAccountRestrictedAsync(context, accountId, now, cancellationToken));
 
@@ -399,6 +403,35 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             .Where(i => itemIds.Contains(i.Id))
             .ToListAsync(cancellationToken);
         return items.ToDictionary(i => i.Id, i => (MUnique.OpenMU.DataModel.Entities.Item)i);
+    }
+
+    /// <summary>
+    /// Reads the committed inventory state of a character: the items of its inventory storage and the Zen. Read-only.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="characterId">The character.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The state, or <c>null</c> when the character does not exist.</returns>
+    public async Task<AuctionInventoryState?> GetInventoryStateAsync(EntityDataContext context, Guid characterId, CancellationToken cancellationToken = default)
+    {
+        var inventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == characterId)
+            .Select(c => (Guid?)c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (inventoryId is not { } storageId)
+        {
+            return null;
+        }
+
+        var money = await context.Set<ItemStorage>().AsNoTracking()
+            .Where(s => s.Id == storageId)
+            .Select(s => s.Money)
+            .SingleOrDefaultAsync(cancellationToken);
+        var items = await context.Set<Item>().AsNoTracking()
+            .Where(i => i.ItemStorageId == storageId)
+            .Select(i => new AuctionInventoryItemState(i.Id, i.ItemSlot, i.Durability, i.Level))
+            .ToListAsync(cancellationToken);
+        return new AuctionInventoryState(money, items);
     }
 
     /// <summary>

@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameServer.MessageHandler.AuctionHouse;
 
+using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.AuctionHouse;
@@ -19,8 +20,8 @@ using MUnique.OpenMU.Persistence.AuctionHouse;
 /// operation response, and the reload of a player whose inventory or Zen changed.
 /// </summary>
 /// <remarks>
-/// A successful operation which changes the player's inventory or Zen disconnects the player, so the player reloads the
-/// committed state. Until the live synchronization exists, the in-memory copy must not be used for another action.
+/// A successful operation which changes the player's inventory or Zen is followed by an in-place refresh of the live
+/// player, see <see cref="PlayerInventoryRefresh"/>.
 /// </remarks>
 internal static class AuctionHouseMutations
 {
@@ -147,9 +148,32 @@ internal static class AuctionHouseMutations
     }
 
     /// <summary>
-    /// Disconnects the player after a committed change to the inventory or Zen, so the player reloads the committed state.
+    /// Brings the live player up to date after a committed change to the inventory or Zen: the items which left or arrived and the
+    /// Zen are applied to the in-memory player, and the client is sent the new inventory. If that fails, the player is disconnected,
+    /// so the committed state is reloaded when the player comes back.
     /// </summary>
     /// <param name="player">The player whose state changed.</param>
-    /// <returns>A task which completes when the player is disconnected.</returns>
-    public static ValueTask ReloadAfterChangeAsync(Player player) => player.DisconnectAsync();
+    /// <param name="service">The service which committed the change.</param>
+    /// <returns>A task which completes when the player is up to date or disconnected.</returns>
+    public static async ValueTask RefreshAfterChangeAsync(Player player, AuctionHouseService service)
+    {
+        try
+        {
+            await player.RunPersistenceExclusiveAsync(async () =>
+            {
+                var state = GetIdentity(player) is { } who ? await service.GetInventoryStateAsync(who.CharacterId).ConfigureAwait(false) : null;
+                if (state is null)
+                {
+                    throw new InvalidOperationException("The committed inventory state could not be read.");
+                }
+
+                await PlayerInventoryRefresh.ApplyAsync(player, state).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            player.Logger.LogError(ex, "The Auction House could not refresh the inventory of {Player} in place; disconnecting so the committed state is reloaded.", player);
+            await player.DisconnectAsync().ConfigureAwait(false);
+        }
+    }
 }

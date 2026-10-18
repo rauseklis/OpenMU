@@ -223,6 +223,15 @@ public interface IAuctionHouseRepository
     Task<IReadOnlyDictionary<Guid, Item>> GetItemsAsync(IReadOnlyCollection<Guid> itemIds, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Reads the committed inventory state of a character, read-only.
+    /// </summary>
+    /// <param name="characterId">The character.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The state, or <c>null</c> when the repository cannot read it or the character does not exist.</returns>
+    Task<AuctionInventoryState?> GetInventoryStateAsync(Guid characterId, CancellationToken cancellationToken = default)
+        => Task.FromResult<AuctionInventoryState?>(null);
+
+    /// <summary>
     /// Finds the identifier of a listing from its wire number.
     /// </summary>
     /// <param name="listingNumber">The listing number.</param>
