@@ -26,6 +26,19 @@ internal class PlayerContext : CachingEntityFrameworkContext, IPlayerContext
     }
 
     /// <inheritdoc/>
+    public async ValueTask<DataModel.Entities.Item?> GetItemByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (this.RepositoryProvider is not CacheAwareRepositoryProvider provider
+            || provider.GetNonCachingRepository(typeof(DataModel.Entities.Item)) is not { } repository)
+        {
+            return null;
+        }
+
+        using var context = this.RepositoryProvider.ContextStack.UseContext(this);
+        return await repository.GetByIdAsync(id, cancellationToken).ConfigureAwait(false) as DataModel.Entities.Item;
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<DataModel.Entities.LetterBody?> GetLetterBodyByHeaderIdAsync(Guid headerId, CancellationToken cancellationToken = default)
     {
         using var context = this.RepositoryProvider.ContextStack.UseContext(this);

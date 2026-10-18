@@ -36,7 +36,7 @@ public static class PlayerInventoryRefresh
             return false;
         }
 
-        loadItem ??= id => player.PersistenceContext.GetByIdAsync<Item>(id);
+        loadItem ??= async id => await player.PersistenceContext.GetItemByIdAsync(id).ConfigureAwait(false);
         var firstSlot = InventoryConstants.EquippableSlotsCount;
         var committed = state.Items.Where(i => i.Slot >= firstSlot).ToDictionary(i => i.Id);
         var kept = new HashSet<Guid>();
