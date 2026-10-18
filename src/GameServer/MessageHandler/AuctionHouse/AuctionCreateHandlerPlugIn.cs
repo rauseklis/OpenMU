@@ -92,7 +92,7 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
         await AuctionHouseMutations.SendOperationAsync(player, operationId, AuctionOperationType.Create, result.Result, (ulong)result.ListingNumber, 0, 0, result.ServerTime, result.FeeScalar, result.FeeFruits, (byte)request.CurrencyMode).ConfigureAwait(false);
         if (result.Result == AuctionResultCode.Success)
         {
-            await AuctionHouseMutations.ReloadAfterChangeAsync(player).ConfigureAwait(false);
+            await AuctionHouseMutations.RefreshAfterChangeAsync(player, service).ConfigureAwait(false);
         }
     }
 

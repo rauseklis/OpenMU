@@ -4099,90 +4099,90 @@ public class PacketStructureTests
     public void AuctionCreateRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 256;
+        const int expectedLength = 257;
         var actualLength = AuctionCreateRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
             "Packet length mismatch: declared length does not match calculated size");
         
         // Validate field 'OperationId' boundary
-        Assert.That(4 + 16, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(5 + 16, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'OperationId' exceeds packet boundary");
         
         // Validate field 'InventorySlot' boundary
-        Assert.That(20 + 1, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(21 + 1, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'InventorySlot' exceeds packet boundary");
         
         // Validate field 'CurrencyMode' boundary
-        Assert.That(21 + 1, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(22 + 1, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'CurrencyMode' exceeds packet boundary");
         
         // Validate field 'StartingScalar' boundary
-        Assert.That(22 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(23 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'StartingScalar' exceeds packet boundary");
         
         // Validate field 'StartingStrength' boundary
-        Assert.That(26 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(27 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'StartingStrength' exceeds packet boundary");
         
         // Validate field 'StartingAgility' boundary
-        Assert.That(30 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(31 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'StartingAgility' exceeds packet boundary");
         
         // Validate field 'StartingVitality' boundary
-        Assert.That(34 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(35 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'StartingVitality' exceeds packet boundary");
         
         // Validate field 'StartingEnergy' boundary
-        Assert.That(38 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(39 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'StartingEnergy' exceeds packet boundary");
         
         // Validate field 'StartingCommand' boundary
-        Assert.That(42 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(43 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'StartingCommand' exceeds packet boundary");
         
         // Validate field 'BuyoutScalar' boundary
-        Assert.That(46 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(47 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BuyoutScalar' exceeds packet boundary");
         
         // Validate field 'BuyoutStrength' boundary
-        Assert.That(50 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(51 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BuyoutStrength' exceeds packet boundary");
         
         // Validate field 'BuyoutAgility' boundary
-        Assert.That(54 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(55 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BuyoutAgility' exceeds packet boundary");
         
         // Validate field 'BuyoutVitality' boundary
-        Assert.That(58 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(59 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BuyoutVitality' exceeds packet boundary");
         
         // Validate field 'BuyoutEnergy' boundary
-        Assert.That(62 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(63 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BuyoutEnergy' exceeds packet boundary");
         
         // Validate field 'BuyoutCommand' boundary
-        Assert.That(66 + 4, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(67 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BuyoutCommand' exceeds packet boundary");
         
         // Validate field 'DurationHours' boundary
-        Assert.That(70 + 1, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(71 + 1, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'DurationHours' exceeds packet boundary");
         
         // Validate field 'NoteLength' boundary
-        Assert.That(71 + 1, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(72 + 1, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'NoteLength' exceeds packet boundary");
         
         // Validate field 'Note' boundary
-        Assert.That(72 + 80, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(73 + 80, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'Note' exceeds packet boundary");
         
         // Validate field 'StartingBasket' boundary
-        Assert.That(152 + 52, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(153 + 52, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'StartingBasket' exceeds packet boundary");
         
         // Validate field 'BuyoutBasket' boundary
-        Assert.That(204 + 52, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(205 + 52, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BuyoutBasket' exceeds packet boundary");
     }
 

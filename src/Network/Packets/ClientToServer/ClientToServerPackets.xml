@@ -4462,116 +4462,116 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <HeaderType>C4HeaderWithSubCode</HeaderType>
       <Code>D5</Code>
       <SubCode>03</SubCode>
       <Name>AuctionCreateRequest</Name>
-      <Length>256</Length>
+      <Length>257</Length>
       <Direction>ClientToServer</Direction>
       <SentWhen>Auction House request AuctionCreateRequest (sub 03).</SentWhen>
       <CausedReaction>Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.</CausedReaction>
       <Fields>
         <Field>
-          <Index>4</Index>
+          <Index>5</Index>
           <Type>Binary</Type>
           <Name>OperationId</Name>
           <Length>16</Length>
         </Field>
         <Field>
-          <Index>20</Index>
+          <Index>21</Index>
           <Type>Byte</Type>
           <Name>InventorySlot</Name>
         </Field>
         <Field>
-          <Index>21</Index>
+          <Index>22</Index>
           <Type>Enum</Type>
           <TypeName>AuctionCurrencyMode</TypeName>
           <Name>CurrencyMode</Name>
         </Field>
         <Field>
-          <Index>22</Index>
+          <Index>23</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingScalar</Name>
         </Field>
         <Field>
-          <Index>26</Index>
+          <Index>27</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingStrength</Name>
         </Field>
         <Field>
-          <Index>30</Index>
+          <Index>31</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingAgility</Name>
         </Field>
         <Field>
-          <Index>34</Index>
+          <Index>35</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingVitality</Name>
         </Field>
         <Field>
-          <Index>38</Index>
+          <Index>39</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingEnergy</Name>
         </Field>
         <Field>
-          <Index>42</Index>
+          <Index>43</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingCommand</Name>
         </Field>
         <Field>
-          <Index>46</Index>
+          <Index>47</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutScalar</Name>
         </Field>
         <Field>
-          <Index>50</Index>
+          <Index>51</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutStrength</Name>
         </Field>
         <Field>
-          <Index>54</Index>
+          <Index>55</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutAgility</Name>
         </Field>
         <Field>
-          <Index>58</Index>
+          <Index>59</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutVitality</Name>
         </Field>
         <Field>
-          <Index>62</Index>
+          <Index>63</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutEnergy</Name>
         </Field>
         <Field>
-          <Index>66</Index>
+          <Index>67</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutCommand</Name>
         </Field>
         <Field>
-          <Index>70</Index>
+          <Index>71</Index>
           <Type>Byte</Type>
           <Name>DurationHours</Name>
         </Field>
         <Field>
-          <Index>71</Index>
+          <Index>72</Index>
           <Type>Byte</Type>
           <Name>NoteLength</Name>
         </Field>
         <Field>
-          <Index>72</Index>
+          <Index>73</Index>
           <Type>Binary</Type>
           <Name>Note</Name>
           <Length>80</Length>
         </Field>
         <Field>
-          <Index>152</Index>
+          <Index>153</Index>
           <Type>Binary</Type>
           <Name>StartingBasket</Name>
           <Length>52</Length>
         </Field>
         <Field>
-          <Index>204</Index>
+          <Index>205</Index>
           <Type>Binary</Type>
           <Name>BuyoutBasket</Name>
           <Length>52</Length>

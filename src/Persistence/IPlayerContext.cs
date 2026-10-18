@@ -14,6 +14,17 @@ using MUnique.OpenMU.Interfaces;
 public interface IPlayerContext : IContext
 {
     /// <summary>
+    /// Loads an item of a character from the database into this context, together with its dependent data.
+    /// Unlike <see cref="IContext.GetByIdAsync{T}(Guid, CancellationToken)"/>, which finds the items of the cached
+    /// configuration, this finds the items of the players.
+    /// </summary>
+    /// <param name="id">The identifier of the item.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The item, or <c>null</c> when it does not exist or the context cannot load it.</returns>
+    ValueTask<DataModel.Entities.Item?> GetItemByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => ValueTask.FromResult<DataModel.Entities.Item?>(null);
+
+    /// <summary>
     /// Gets the letter body by the id of its header.
     /// </summary>
     /// <param name="headerId">The id of its header.</param>

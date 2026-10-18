@@ -17976,7 +17976,7 @@ public readonly ref struct AuctionCreateRequestRef
             var header = this.Header;
             header.Type = HeaderType;
             header.Code = Code;
-            header.Length = (byte)Math.Min(data.Length, Length);
+            header.Length = (ushort)Math.Min(data.Length, Length);
             header.SubCode = SubCode;
         }
     }
@@ -17984,7 +17984,7 @@ public readonly ref struct AuctionCreateRequestRef
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC3;
+    public static byte HeaderType => 0xC4;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -18000,19 +18000,19 @@ public readonly ref struct AuctionCreateRequestRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 256;
+    public static int Length => 257;
 
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C3HeaderWithSubCodeRef Header => new (this._data);
+    public C4HeaderWithSubCodeRef Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the operation id.
     /// </summary>
     public Span<byte> OperationId
     {
-        get => this._data.Slice(4, 16);
+        get => this._data.Slice(5, 16);
     }
 
     /// <summary>
@@ -18020,8 +18020,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public byte InventorySlot
     {
-        get => this._data[20];
-        set => this._data[20] = value;
+        get => this._data[21];
+        set => this._data[21] = value;
     }
 
     /// <summary>
@@ -18029,8 +18029,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public AuctionCurrencyMode CurrencyMode
     {
-        get => (AuctionCurrencyMode)this._data[21];
-        set => this._data[21] = (byte)value;
+        get => (AuctionCurrencyMode)this._data[22];
+        set => this._data[22] = (byte)value;
     }
 
     /// <summary>
@@ -18038,8 +18038,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint StartingScalar
     {
-        get => ReadUInt32LittleEndian(this._data[22..]);
-        set => WriteUInt32LittleEndian(this._data[22..], value);
+        get => ReadUInt32LittleEndian(this._data[23..]);
+        set => WriteUInt32LittleEndian(this._data[23..], value);
     }
 
     /// <summary>
@@ -18047,8 +18047,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint StartingStrength
     {
-        get => ReadUInt32LittleEndian(this._data[26..]);
-        set => WriteUInt32LittleEndian(this._data[26..], value);
+        get => ReadUInt32LittleEndian(this._data[27..]);
+        set => WriteUInt32LittleEndian(this._data[27..], value);
     }
 
     /// <summary>
@@ -18056,8 +18056,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint StartingAgility
     {
-        get => ReadUInt32LittleEndian(this._data[30..]);
-        set => WriteUInt32LittleEndian(this._data[30..], value);
+        get => ReadUInt32LittleEndian(this._data[31..]);
+        set => WriteUInt32LittleEndian(this._data[31..], value);
     }
 
     /// <summary>
@@ -18065,8 +18065,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint StartingVitality
     {
-        get => ReadUInt32LittleEndian(this._data[34..]);
-        set => WriteUInt32LittleEndian(this._data[34..], value);
+        get => ReadUInt32LittleEndian(this._data[35..]);
+        set => WriteUInt32LittleEndian(this._data[35..], value);
     }
 
     /// <summary>
@@ -18074,8 +18074,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint StartingEnergy
     {
-        get => ReadUInt32LittleEndian(this._data[38..]);
-        set => WriteUInt32LittleEndian(this._data[38..], value);
+        get => ReadUInt32LittleEndian(this._data[39..]);
+        set => WriteUInt32LittleEndian(this._data[39..], value);
     }
 
     /// <summary>
@@ -18083,8 +18083,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint StartingCommand
     {
-        get => ReadUInt32LittleEndian(this._data[42..]);
-        set => WriteUInt32LittleEndian(this._data[42..], value);
+        get => ReadUInt32LittleEndian(this._data[43..]);
+        set => WriteUInt32LittleEndian(this._data[43..], value);
     }
 
     /// <summary>
@@ -18092,8 +18092,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint BuyoutScalar
     {
-        get => ReadUInt32LittleEndian(this._data[46..]);
-        set => WriteUInt32LittleEndian(this._data[46..], value);
+        get => ReadUInt32LittleEndian(this._data[47..]);
+        set => WriteUInt32LittleEndian(this._data[47..], value);
     }
 
     /// <summary>
@@ -18101,8 +18101,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint BuyoutStrength
     {
-        get => ReadUInt32LittleEndian(this._data[50..]);
-        set => WriteUInt32LittleEndian(this._data[50..], value);
+        get => ReadUInt32LittleEndian(this._data[51..]);
+        set => WriteUInt32LittleEndian(this._data[51..], value);
     }
 
     /// <summary>
@@ -18110,8 +18110,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint BuyoutAgility
     {
-        get => ReadUInt32LittleEndian(this._data[54..]);
-        set => WriteUInt32LittleEndian(this._data[54..], value);
+        get => ReadUInt32LittleEndian(this._data[55..]);
+        set => WriteUInt32LittleEndian(this._data[55..], value);
     }
 
     /// <summary>
@@ -18119,8 +18119,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint BuyoutVitality
     {
-        get => ReadUInt32LittleEndian(this._data[58..]);
-        set => WriteUInt32LittleEndian(this._data[58..], value);
+        get => ReadUInt32LittleEndian(this._data[59..]);
+        set => WriteUInt32LittleEndian(this._data[59..], value);
     }
 
     /// <summary>
@@ -18128,8 +18128,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint BuyoutEnergy
     {
-        get => ReadUInt32LittleEndian(this._data[62..]);
-        set => WriteUInt32LittleEndian(this._data[62..], value);
+        get => ReadUInt32LittleEndian(this._data[63..]);
+        set => WriteUInt32LittleEndian(this._data[63..], value);
     }
 
     /// <summary>
@@ -18137,8 +18137,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public uint BuyoutCommand
     {
-        get => ReadUInt32LittleEndian(this._data[66..]);
-        set => WriteUInt32LittleEndian(this._data[66..], value);
+        get => ReadUInt32LittleEndian(this._data[67..]);
+        set => WriteUInt32LittleEndian(this._data[67..], value);
     }
 
     /// <summary>
@@ -18146,8 +18146,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public byte DurationHours
     {
-        get => this._data[70];
-        set => this._data[70] = value;
+        get => this._data[71];
+        set => this._data[71] = value;
     }
 
     /// <summary>
@@ -18155,8 +18155,8 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public byte NoteLength
     {
-        get => this._data[71];
-        set => this._data[71] = value;
+        get => this._data[72];
+        set => this._data[72] = value;
     }
 
     /// <summary>
@@ -18164,7 +18164,7 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public Span<byte> Note
     {
-        get => this._data.Slice(72, 80);
+        get => this._data.Slice(73, 80);
     }
 
     /// <summary>
@@ -18172,7 +18172,7 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public Span<byte> StartingBasket
     {
-        get => this._data.Slice(152, 52);
+        get => this._data.Slice(153, 52);
     }
 
     /// <summary>
@@ -18180,7 +18180,7 @@ public readonly ref struct AuctionCreateRequestRef
     /// </summary>
     public Span<byte> BuyoutBasket
     {
-        get => this._data.Slice(204, 52);
+        get => this._data.Slice(205, 52);
     }
 
     /// <summary>

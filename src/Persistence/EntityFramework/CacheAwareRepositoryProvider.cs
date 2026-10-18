@@ -39,6 +39,15 @@ internal class CacheAwareRepositoryProvider : ICacheAwareRepositoryProvider, ICo
     /// <inheritdoc />
     public IContextStack ContextStack { get; } = new ContextStack();
 
+    /// <summary>
+    /// Gets the repository which loads the data from the database, skipping the repositories of cached configuration data.
+    /// Some types exist in both worlds: the items of the configuration (merchant stores) are cached, whereas the items of the
+    /// players are not.
+    /// </summary>
+    /// <param name="objectType">Type of the object.</param>
+    /// <returns>The repository, or <c>null</c> when there is none.</returns>
+    public IRepository? GetNonCachingRepository(Type objectType) => this._nonCachingRepositoryProvider.GetRepository(objectType);
+
     /// <inheritdoc />
     public IRepository? GetRepository(Type objectType)
     {
