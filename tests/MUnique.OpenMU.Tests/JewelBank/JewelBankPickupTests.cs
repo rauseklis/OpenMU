@@ -42,6 +42,7 @@ public class JewelBankPickupTests
         Assert.That(JewelBankPickup.FindKind(CreateItem(0, 0, 0)), Is.Null, "a sword");
         Assert.That(JewelBankPickup.FindKind(CreateItem(14, 13, 0, durability: 0)), Is.Null, "broken");
         Assert.That(JewelBankPickup.FindKind(CreateItem(14, 13, 0, socketCount: 1)), Is.Null, "socketed");
+        Assert.That(JewelBankPickup.FindKind(CreateItem(14, 13, 0, durability: 3)), Is.Null, "a possible stack");
     }
 
     /// <summary>

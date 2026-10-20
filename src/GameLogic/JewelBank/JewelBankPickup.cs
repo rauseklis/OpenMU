@@ -20,7 +20,7 @@ public static class JewelBankPickup
     /// <returns>The kind, or <c>null</c> when the item is not bankable.</returns>
     public static JewelBankKind? FindKind(Item item)
     {
-        if (item.Definition is not { } definition || item.Durability <= 0 || item.SocketCount > 0 || (item.ItemOptions?.Count ?? 0) > 0)
+        if (item.Definition is not { } definition || item.Durability != 1 || item.SocketCount > 0 || (item.ItemOptions?.Count ?? 0) > 0)
         {
             return null;
         }

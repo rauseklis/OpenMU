@@ -127,11 +127,12 @@ public class JewelBankRepositoryTests
         await this.AddItemAsync(14, 13, 1, First);
         await this.AddItemAsync(13, 15, 5, First + 1);
         await this.AddItemAsync(14, 13, 0, First + 2, socketCount: 1);
+        await this.AddItemAsync(14, 13, 0, First + 3, durability: 5);
 
         var result = await this._repository.DepositFromInventoryAsync(this._accountId, this._characterId, Guid.NewGuid(), null, Cap);
 
         Assert.That(result.Result, Is.EqualTo(JewelBankResultCode.NothingToDeposit));
-        Assert.That(await this.InventoryItemCountAsync(), Is.EqualTo(3));
+        Assert.That(await this.InventoryItemCountAsync(), Is.EqualTo(4), "a possible stack stays too");
     }
 
     /// <summary>
@@ -360,7 +361,7 @@ public class JewelBankRepositoryTests
         return ids.Single();
     }
 
-    private async Task AddItemAsync(int group, int number, int level, int slot, int socketCount = 0)
+    private async Task AddItemAsync(int group, int number, int level, int slot, int socketCount = 0, double durability = 1)
     {
         var definition = await this.DefinitionAsync(group, number);
         await using var context = new EntityDataContext();
@@ -371,7 +372,7 @@ public class JewelBankRepositoryTests
             ItemSlot = (byte)slot,
             DefinitionId = definition,
             Level = (byte)level,
-            Durability = 1,
+            Durability = durability,
             SocketCount = socketCount,
         });
         await context.SaveChangesAsync();

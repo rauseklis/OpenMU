@@ -78,7 +78,8 @@ public sealed class JewelBankRepository : IJewelBankRepository
         var hitCap = false;
         foreach (var item in items)
         {
-            if (item.DefinitionId is not { } definitionId || item.Durability <= 0 || item.SocketCount > 0 || item.RawItemOptions.Count > 0)
+            // Only items of durability 1 are single units. Anything else could be a stack, which would be counted wrongly, so it stays.
+            if (item.DefinitionId is not { } definitionId || item.Durability != 1 || item.SocketCount > 0 || item.RawItemOptions.Count > 0)
             {
                 continue;
             }
