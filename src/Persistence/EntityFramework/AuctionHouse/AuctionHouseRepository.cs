@@ -2041,7 +2041,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
     /// <summary>
     /// Reads the width and height of an item definition; an unknown definition counts as one cell.
     /// </summary>
-    private static async Task<(int Width, int Height)> DefinitionSizeAsync(EntityDataContext context, Guid? definitionId, CancellationToken cancellationToken)
+    internal static async Task<(int Width, int Height)> DefinitionSizeAsync(EntityDataContext context, Guid? definitionId, CancellationToken cancellationToken)
     {
         if (definitionId is not { } id)
         {
@@ -2059,7 +2059,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
     /// cover, so a large item can never end up on top of another one.
     /// </summary>
     /// <returns>The slots, or <c>null</c> when the items do not all fit.</returns>
-    private static async Task<IReadOnlyList<int>?> PlaceAsync(EntityDataContext context, Guid inventoryId, IReadOnlyList<(int Width, int Height)> newItems, CancellationToken cancellationToken)
+    internal static async Task<IReadOnlyList<int>?> PlaceAsync(EntityDataContext context, Guid inventoryId, IReadOnlyList<(int Width, int Height)> newItems, CancellationToken cancellationToken)
     {
         var rows = await context.Database.SqlQuery<OccupiedRow>(
                 $"SELECT i.\"ItemSlot\"::int AS \"Slot\", COALESCE(d.\"Width\", 1)::int AS \"Width\", COALESCE(d.\"Height\", 1)::int AS \"Height\" FROM data.\"Item\" i LEFT JOIN config.\"ItemDefinition\" d ON d.\"Id\" = i.\"DefinitionId\" WHERE i.\"ItemStorageId\" = {inventoryId} AND i.\"ItemSlot\" >= {(int)InventoryConstants.EquippableSlotsCount}")

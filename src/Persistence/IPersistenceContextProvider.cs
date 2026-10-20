@@ -57,6 +57,12 @@ public interface IPersistenceContextProvider
     IAuctionHouseRepository? CreateAuctionHouseRepository() => null;
 
     /// <summary>
+    /// Creates the Jewel Bank repository, or <c>null</c> when the provider has no database to run it against.
+    /// </summary>
+    /// <returns>The repository, or <c>null</c>.</returns>
+    JewelBank.IJewelBankRepository? CreateJewelBankRepository() => null;
+
+    /// <summary>
     /// Creates a new context which is used for accounts.
     /// This context should only care about the objects of a player;
     /// It should not track changes of configuration objects.
