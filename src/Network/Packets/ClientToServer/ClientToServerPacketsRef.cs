@@ -18973,7 +18973,7 @@ public readonly ref struct JewelBankOpenRequestRef
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC1;
+    public static byte HeaderType => 0xC3;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -18994,7 +18994,7 @@ public readonly ref struct JewelBankOpenRequestRef
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C1HeaderWithSubCodeRef Header => new (this._data);
+    public C3HeaderWithSubCodeRef Header => new (this._data);
 
     /// <summary>
     /// Performs an implicit conversion from a Span of bytes to a <see cref="JewelBankOpenRequest"/>.
@@ -19050,7 +19050,7 @@ public readonly ref struct JewelBankDepositRequestRef
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC1;
+    public static byte HeaderType => 0xC3;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -19071,7 +19071,7 @@ public readonly ref struct JewelBankDepositRequestRef
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C1HeaderWithSubCodeRef Header => new (this._data);
+    public C3HeaderWithSubCodeRef Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the operation id.
@@ -19144,7 +19144,7 @@ public readonly ref struct JewelBankWithdrawRequestRef
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC1;
+    public static byte HeaderType => 0xC3;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -19165,7 +19165,7 @@ public readonly ref struct JewelBankWithdrawRequestRef
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C1HeaderWithSubCodeRef Header => new (this._data);
+    public C3HeaderWithSubCodeRef Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the operation id.
@@ -19247,7 +19247,7 @@ public readonly ref struct JewelBankSetAutoDepositRequestRef
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC1;
+    public static byte HeaderType => 0xC3;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -19268,7 +19268,7 @@ public readonly ref struct JewelBankSetAutoDepositRequestRef
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C1HeaderWithSubCodeRef Header => new (this._data);
+    public C3HeaderWithSubCodeRef Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the enabled.

@@ -58,7 +58,8 @@ public class JewelBankPacketDefinitionTests
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "Code"), Is.EqualTo("D6"));
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "SubCode"), Is.EqualTo(subCode));
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "Length"), Is.EqualTo(length));
-        Assert.That((string?)packet.Element(PacketDefinitionNamespace + "HeaderType"), Is.EqualTo("C1HeaderWithSubCode"));
+        // Requests are encrypted (C3), like the Auction House's; the group handler expects that. Responses are plain C1.
+        Assert.That((string?)packet.Element(PacketDefinitionNamespace + "HeaderType"), Is.EqualTo(file == ClientPacketDefinitions ? "C3HeaderWithSubCode" : "C1HeaderWithSubCode"));
         var actual = packet.Descendants(PacketDefinitionNamespace + "Field").Select(f =>
         {
             var fieldLength = (string?)f.Element(PacketDefinitionNamespace + "Length");

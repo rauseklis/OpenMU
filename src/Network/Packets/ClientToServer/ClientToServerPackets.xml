@@ -4811,7 +4811,7 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C1HeaderWithSubCode</HeaderType>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
       <Code>D6</Code>
       <SubCode>00</SubCode>
       <Name>JewelBankOpenRequest</Name>
@@ -4823,7 +4823,7 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C1HeaderWithSubCode</HeaderType>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
       <Code>D6</Code>
       <SubCode>01</SubCode>
       <Name>JewelBankDepositRequest</Name>
@@ -4846,7 +4846,7 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C1HeaderWithSubCode</HeaderType>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
       <Code>D6</Code>
       <SubCode>02</SubCode>
       <Name>JewelBankWithdrawRequest</Name>
@@ -4874,7 +4874,7 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C1HeaderWithSubCode</HeaderType>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
       <Code>D6</Code>
       <SubCode>03</SubCode>
       <Name>JewelBankSetAutoDepositRequest</Name>
