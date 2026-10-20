@@ -3,7 +3,7 @@
 | Item | Group/number | Base damage | Weapon speed |
 | --- | --- | --- | --- |
 | Mace of King | 2/22 | 110-125 | 30 |
-| Royal Mace of King | 2/23 | 150-170 | 40 |
+| Royal Mace of Emberion | 2/23 | 150-170 | 40 |
 
 Both are one-handed physical weapons for Dark Knight and its advancements,
 Magic Gladiator/Duel Master, and Dark Lord/Lord Emperor. They occupy 1x3

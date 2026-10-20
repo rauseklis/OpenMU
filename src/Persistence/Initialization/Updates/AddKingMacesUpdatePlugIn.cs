@@ -17,7 +17,7 @@ using MUnique.OpenMU.PlugIns;
 public sealed class AddKingMacesUpdatePlugIn : UpdatePlugInBase
 {
     public override string Name => "Add staged king mace weapons";
-    public override string Description => "Adds Mace of King and Royal Mace of King with isolated +4 upgrade scaling and disabled drops.";
+    public override string Description => "Adds Mace of King and Royal Mace of Emberion with isolated +4 upgrade scaling and disabled drops.";
     public override UpdateVersion Version => UpdateVersion.AddKingMaces;
     public override string DataInitializationKey => VersionSeasonSix.DataInitialization.Id;
     public override bool IsMandatory => true;
