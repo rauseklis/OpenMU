@@ -76,6 +76,27 @@ public class JewelBankKindsTests
     }
 
     /// <summary>
+    /// A deposit plan takes the largest packs that fit the request first, then loose items, and never exceeds the request.
+    /// </summary>
+    [TestCase(65L, 1_000_000L, 5, new[] { 0, 0, 2 }, 2, 0, 5)]
+    [TestCase(30L, 1_000_000L, 0, new[] { 0, 0, 1 }, 1, 0, 0)]
+    [TestCase(29L, 1_000_000L, 9, new[] { 0, 1, 1 }, 0, 1, 9)]
+    [TestCase(15L, 1_000_000L, 5, new[] { 1, 0, 0 }, 0, 0, 5)]
+    [TestCase(5L, 1_000_000L, 5, new[] { 3, 3, 3 }, 0, 0, 5)]
+    [TestCase(100L, 12L, 20, new[] { 0, 0, 0 }, 0, 0, 12)]
+    [TestCase(0L, 1_000_000L, 5, new[] { 1, 1, 1 }, 0, 0, 0)]
+    [TestCase(10L, 0L, 5, new[] { 1, 1, 1 }, 0, 0, 0)]
+    public void DepositPlanFitsTheRequest(long requested, long room, int loose, int[] packs, int expectedLevel2, int expectedLevel1, int expectedLoose)
+    {
+        var plan = JewelBankKinds.PlanDeposit(requested, room, loose, packs);
+
+        Assert.That(plan.Packs[2], Is.EqualTo(expectedLevel2));
+        Assert.That(plan.Packs[1], Is.EqualTo(expectedLevel1));
+        Assert.That(plan.Loose, Is.EqualTo(expectedLoose));
+        Assert.That(plan.Units, Is.LessThanOrEqualTo(Math.Min(requested, room)));
+    }
+
+    /// <summary>
     /// The split never creates or loses units.
     /// </summary>
     [Test]

@@ -14747,9 +14747,9 @@
       <Code>D6</Code>
       <SubCode>80</SubCode>
       <Name>JewelBankStateResponse</Name>
-      <Length>126</Length>
+      <Length>186</Length>
       <Direction>ServerToClient</Direction>
-      <SentWhen>The stored counts of the account: answer to an open request, and after every change. Count1..Count15 are the kinds with code 1..15.</SentWhen>
+      <SentWhen>The stored counts of the account and the units of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Count1..Count15 and Inventory1..Inventory15 are the kinds with code 1..15.</SentWhen>
       <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
       <Fields>
         <Field>
@@ -14837,6 +14837,81 @@
           <Index>118</Index>
           <Type>LongLittleEndian</Type>
           <Name>Count15</Name>
+        </Field>
+        <Field>
+          <Index>126</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory1</Name>
+        </Field>
+        <Field>
+          <Index>130</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory2</Name>
+        </Field>
+        <Field>
+          <Index>134</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory3</Name>
+        </Field>
+        <Field>
+          <Index>138</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory4</Name>
+        </Field>
+        <Field>
+          <Index>142</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory5</Name>
+        </Field>
+        <Field>
+          <Index>146</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory6</Name>
+        </Field>
+        <Field>
+          <Index>150</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory7</Name>
+        </Field>
+        <Field>
+          <Index>154</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory8</Name>
+        </Field>
+        <Field>
+          <Index>158</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory9</Name>
+        </Field>
+        <Field>
+          <Index>162</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory10</Name>
+        </Field>
+        <Field>
+          <Index>166</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory11</Name>
+        </Field>
+        <Field>
+          <Index>170</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory12</Name>
+        </Field>
+        <Field>
+          <Index>174</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory13</Name>
+        </Field>
+        <Field>
+          <Index>178</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory14</Name>
+        </Field>
+        <Field>
+          <Index>182</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Inventory15</Name>
         </Field>
       </Fields>
     </Packet>

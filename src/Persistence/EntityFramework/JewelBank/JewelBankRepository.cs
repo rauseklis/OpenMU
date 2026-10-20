@@ -43,9 +43,9 @@ public sealed class JewelBankRepository : IJewelBankRepository
     }
 
     /// <inheritdoc />
-    public async Task<JewelBankOperationResult> DepositFromInventoryAsync(Guid accountId, Guid characterId, Guid operationId, byte? kindCode, long maximumPerKind, CancellationToken cancellationToken = default)
+    public async Task<JewelBankOperationResult> DepositFromInventoryAsync(Guid accountId, Guid characterId, Guid operationId, IReadOnlyDictionary<byte, long>? requested, long maximumPerKind, CancellationToken cancellationToken = default)
     {
-        if ((kindCode is { } code && JewelBankKinds.FindByCode(code) is null) || maximumPerKind <= 0)
+        if (maximumPerKind <= 0 || (requested is not null && (requested.Keys.Any(code => JewelBankKinds.FindByCode(code) is null) || requested.Values.Any(amount => amount < 0))))
         {
             return JewelBankOperationResult.Refused(JewelBankResultCode.InvalidRequest);
         }
@@ -71,11 +71,8 @@ public sealed class JewelBankRepository : IJewelBankRepository
             .OrderBy(i => i.ItemSlot)
             .ToListAsync(cancellationToken);
 
-        var current = (await ReadStateAsync(context, accountId, cancellationToken)).Counts.ToDictionary(p => p.Key, p => p.Value);
-        var accepted = new List<(Guid ItemId, byte Kind, long Units)>();
-        var added = new Dictionary<byte, long>();
-        var sawCandidate = false;
-        var hitCap = false;
+        // The deposit candidates of each kind, in slot order: loose items and packs of each level.
+        var candidates = new Dictionary<byte, (List<Guid> Loose, List<Guid>[] Packs)>();
         foreach (var item in items)
         {
             // Only items of durability 1 are single units. Anything else could be a stack, which would be counted wrongly, so it stays.
@@ -85,38 +82,76 @@ public sealed class JewelBankRepository : IJewelBankRepository
             }
 
             var (kind, units) = Classify(definitions, definitionId, item.Level);
-            if (kind is null || (kindCode is { } only && only != kind.Value.Code))
+            if (kind is null)
+            {
+                continue;
+            }
+
+            if (!candidates.TryGetValue(kind.Value.Code, out var entry))
+            {
+                entry = (new List<Guid>(), new[] { new List<Guid>(), new List<Guid>(), new List<Guid>() });
+                candidates[kind.Value.Code] = entry;
+            }
+
+            if (units == 1)
+            {
+                entry.Loose.Add(item.Id);
+            }
+            else
+            {
+                entry.Packs[item.Level].Add(item.Id);
+            }
+        }
+
+        var current = (await ReadStateAsync(context, accountId, cancellationToken)).Counts;
+        var taken = new List<Guid>();
+        var moved = new Dictionary<byte, long>();
+        var sawCandidate = false;
+        var hitCap = false;
+        foreach (var (code, entry) in candidates)
+        {
+            long wanted;
+            if (requested is null)
+            {
+                wanted = long.MaxValue;
+            }
+            else if (!requested.TryGetValue(code, out wanted) || wanted == 0)
             {
                 continue;
             }
 
             sawCandidate = true;
-            current.TryGetValue(kind.Value.Code, out var stored);
-            added.TryGetValue(kind.Value.Code, out var already);
-            if (stored + already + units > maximumPerKind)
+            current.TryGetValue(code, out var stored);
+            var room = Math.Max(0, maximumPerKind - stored);
+            var plan = JewelBankKinds.PlanDeposit(wanted, room, entry.Loose.Count, entry.Packs.Select(p => p.Count).ToList());
+            if (plan.Units == 0)
             {
-                hitCap = true;
+                hitCap |= room == 0;
                 continue;
             }
 
-            accepted.Add((item.Id, kind.Value.Code, units));
-            added[kind.Value.Code] = already + units;
+            for (var level = 0; level < plan.Packs.Length; level++)
+            {
+                taken.AddRange(entry.Packs[level].Take(plan.Packs[level]));
+            }
+
+            taken.AddRange(entry.Loose.Take(plan.Loose));
+            moved[code] = plan.Units;
         }
 
-        if (accepted.Count == 0)
+        if (taken.Count == 0)
         {
             return JewelBankOperationResult.Refused(sawCandidate && hitCap ? JewelBankResultCode.CapReached : JewelBankResultCode.NothingToDeposit);
         }
 
-        var ids = accepted.Select(a => a.ItemId).ToList();
-        var deleted = await context.Set<Item>().Where(i => ids.Contains(i.Id) && i.ItemStorageId == inventoryId).ExecuteDeleteAsync(cancellationToken);
-        if (deleted != ids.Count)
+        var deleted = await context.Set<Item>().Where(i => taken.Contains(i.Id) && i.ItemStorageId == inventoryId).ExecuteDeleteAsync(cancellationToken);
+        if (deleted != taken.Count)
         {
             // An item vanished between the read and the delete (concurrent change): nothing may be credited for it.
             return JewelBankOperationResult.Refused(JewelBankResultCode.InvalidRequest);
         }
 
-        foreach (var (kind, units) in added)
+        foreach (var (kind, units) in moved)
         {
             if (await CreditAsync(context, accountId, characterId, operationId, kind, units, maximumPerKind, DepositReason, now, cancellationToken) is null)
             {
@@ -126,13 +161,16 @@ public sealed class JewelBankRepository : IJewelBankRepository
 
         await FinishOperationAsync(context, accountId, operationId, JewelBankResultCode.Success, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new JewelBankOperationResult(JewelBankResultCode.Success, added, await ReadStateAsync(context, accountId, cancellationToken));
+        return new JewelBankOperationResult(JewelBankResultCode.Success, moved, await ReadStateAsync(context, accountId, cancellationToken));
     }
 
     /// <inheritdoc />
-    public async Task<JewelBankOperationResult> WithdrawToInventoryAsync(Guid accountId, Guid characterId, Guid operationId, byte kindCode, long units, CancellationToken cancellationToken = default)
+    public async Task<JewelBankOperationResult> WithdrawToInventoryAsync(Guid accountId, Guid characterId, Guid operationId, IReadOnlyDictionary<byte, long> units, CancellationToken cancellationToken = default)
     {
-        if (JewelBankKinds.FindByCode(kindCode) is not { } kind || units <= 0 || units > MaximumWithdrawUnits)
+        var wanted = units.Where(p => p.Value != 0).ToList();
+        if (wanted.Count == 0
+            || wanted.Any(p => JewelBankKinds.FindByCode(p.Key) is null || p.Value < 0 || p.Value > MaximumWithdrawUnits)
+            || wanted.Sum(p => p.Value) > MaximumWithdrawUnits)
         {
             return JewelBankOperationResult.Refused(JewelBankResultCode.InvalidRequest);
         }
@@ -152,21 +190,24 @@ public sealed class JewelBankRepository : IJewelBankRepository
         }
 
         var definitions = await LoadDefinitionsAsync(context, cancellationToken);
-        if (!definitions.LooseByKind.TryGetValue(kind.Code, out var looseDefinition))
-        {
-            return JewelBankOperationResult.Refused(JewelBankResultCode.NotConfigured);
-        }
-
-        definitions.PackByKind.TryGetValue(kind.Code, out var packDefinition);
-        var (packLevels, looseCount) = JewelBankKinds.Split(units, packDefinition != Guid.Empty);
         var plan = new List<(Guid Definition, byte Level)>();
-        plan.AddRange(packLevels.Select(level => (packDefinition, level)));
-        plan.AddRange(Enumerable.Repeat((looseDefinition, kind.FruitLevel ?? (byte)0), looseCount));
-
-        var debited = await DebitAsync(context, accountId, characterId, operationId, kind.Code, units, now, cancellationToken);
-        if (!debited)
+        foreach (var (code, amount) in wanted)
         {
-            return JewelBankOperationResult.Refused(JewelBankResultCode.InsufficientBalance);
+            var kind = JewelBankKinds.FindByCode(code)!.Value;
+            if (!definitions.LooseByKind.TryGetValue(code, out var looseDefinition))
+            {
+                return JewelBankOperationResult.Refused(JewelBankResultCode.NotConfigured);
+            }
+
+            definitions.PackByKind.TryGetValue(code, out var packDefinition);
+            var (packLevels, looseCount) = JewelBankKinds.Split(amount, packDefinition != Guid.Empty);
+            plan.AddRange(packLevels.Select(level => (packDefinition, level)));
+            plan.AddRange(Enumerable.Repeat((looseDefinition, kind.FruitLevel ?? (byte)0), looseCount));
+
+            if (!await DebitAsync(context, accountId, characterId, operationId, code, amount, now, cancellationToken))
+            {
+                return JewelBankOperationResult.Refused(JewelBankResultCode.InsufficientBalance);
+            }
         }
 
         var sizes = new List<(int Width, int Height)>();
@@ -199,7 +240,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
         await transaction.CommitAsync(cancellationToken);
         return new JewelBankOperationResult(
             JewelBankResultCode.Success,
-            new Dictionary<byte, long> { [kind.Code] = units },
+            wanted.ToDictionary(p => p.Key, p => p.Value),
             await ReadStateAsync(context, accountId, cancellationToken));
     }
 

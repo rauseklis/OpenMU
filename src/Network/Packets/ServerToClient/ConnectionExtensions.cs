@@ -8263,11 +8263,26 @@ public static class ConnectionExtensions
     /// <param name="count13">The count 1 3.</param>
     /// <param name="count14">The count 1 4.</param>
     /// <param name="count15">The count 1 5.</param>
+    /// <param name="inventory1">The inventory 1.</param>
+    /// <param name="inventory2">The inventory 2.</param>
+    /// <param name="inventory3">The inventory 3.</param>
+    /// <param name="inventory4">The inventory 4.</param>
+    /// <param name="inventory5">The inventory 5.</param>
+    /// <param name="inventory6">The inventory 6.</param>
+    /// <param name="inventory7">The inventory 7.</param>
+    /// <param name="inventory8">The inventory 8.</param>
+    /// <param name="inventory9">The inventory 9.</param>
+    /// <param name="inventory10">The inventory 1 0.</param>
+    /// <param name="inventory11">The inventory 1 1.</param>
+    /// <param name="inventory12">The inventory 1 2.</param>
+    /// <param name="inventory13">The inventory 1 3.</param>
+    /// <param name="inventory14">The inventory 1 4.</param>
+    /// <param name="inventory15">The inventory 1 5.</param>
     /// <remarks>
-    /// Is sent by the server when: The stored counts of the account: answer to an open request, and after every change. Count1..Count15 are the kinds with code 1..15.
+    /// Is sent by the server when: The stored counts of the account and the units of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Count1..Count15 and Inventory1..Inventory15 are the kinds with code 1..15.
     /// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
     /// </remarks>
-    public static async ValueTask SendJewelBankStateResponseAsync(this IConnection? connection, JewelBankResult @result, byte @autoDeposit, ulong @count1, ulong @count2, ulong @count3, ulong @count4, ulong @count5, ulong @count6, ulong @count7, ulong @count8, ulong @count9, ulong @count10, ulong @count11, ulong @count12, ulong @count13, ulong @count14, ulong @count15)
+    public static async ValueTask SendJewelBankStateResponseAsync(this IConnection? connection, JewelBankResult @result, byte @autoDeposit, ulong @count1, ulong @count2, ulong @count3, ulong @count4, ulong @count5, ulong @count6, ulong @count7, ulong @count8, ulong @count9, ulong @count10, ulong @count11, ulong @count12, ulong @count13, ulong @count14, ulong @count15, uint @inventory1, uint @inventory2, uint @inventory3, uint @inventory4, uint @inventory5, uint @inventory6, uint @inventory7, uint @inventory8, uint @inventory9, uint @inventory10, uint @inventory11, uint @inventory12, uint @inventory13, uint @inventory14, uint @inventory15)
     {
         if (connection is null)
         {
@@ -8295,6 +8310,21 @@ public static class ConnectionExtensions
             packet.Count13 = @count13;
             packet.Count14 = @count14;
             packet.Count15 = @count15;
+            packet.Inventory1 = @inventory1;
+            packet.Inventory2 = @inventory2;
+            packet.Inventory3 = @inventory3;
+            packet.Inventory4 = @inventory4;
+            packet.Inventory5 = @inventory5;
+            packet.Inventory6 = @inventory6;
+            packet.Inventory7 = @inventory7;
+            packet.Inventory8 = @inventory8;
+            packet.Inventory9 = @inventory9;
+            packet.Inventory10 = @inventory10;
+            packet.Inventory11 = @inventory11;
+            packet.Inventory12 = @inventory12;
+            packet.Inventory13 = @inventory13;
+            packet.Inventory14 = @inventory14;
+            packet.Inventory15 = @inventory15;
 
             return packet.Header.Length;
         }

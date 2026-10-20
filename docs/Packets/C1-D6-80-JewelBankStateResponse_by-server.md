@@ -2,7 +2,7 @@
 
 ## Is sent when
 
-The stored counts of the account: answer to an open request, and after every change. Count1..Count15 are the kinds with code 1..15.
+The stored counts of the account and the units of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Count1..Count15 and Inventory1..Inventory15 are the kinds with code 1..15.
 
 ## Causes the following actions on the client side
 
@@ -13,7 +13,7 @@ Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 | Index | Length | Data Type | Value | Description |
 |-------|--------|-----------|-------|-------------|
 | 0 | 1 |   Byte   | 0xC1  | [Packet type](PacketTypes.md) |
-| 1 | 1 |    Byte   |   126   | Packet header - length of the packet |
+| 1 | 1 |    Byte   |   186   | Packet header - length of the packet |
 | 2 | 1 |    Byte   | 0xD6  | Packet header - packet type identifier |
 | 3 | 1 |    Byte   | 0x80  | Packet header - sub packet type identifier |
 | 4 | 1 | JewelBankResult |  | Result |
@@ -33,6 +33,21 @@ Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 | 102 | 8 | LongLittleEndian |  | Count13 |
 | 110 | 8 | LongLittleEndian |  | Count14 |
 | 118 | 8 | LongLittleEndian |  | Count15 |
+| 126 | 4 | IntegerLittleEndian |  | Inventory1 |
+| 130 | 4 | IntegerLittleEndian |  | Inventory2 |
+| 134 | 4 | IntegerLittleEndian |  | Inventory3 |
+| 138 | 4 | IntegerLittleEndian |  | Inventory4 |
+| 142 | 4 | IntegerLittleEndian |  | Inventory5 |
+| 146 | 4 | IntegerLittleEndian |  | Inventory6 |
+| 150 | 4 | IntegerLittleEndian |  | Inventory7 |
+| 154 | 4 | IntegerLittleEndian |  | Inventory8 |
+| 158 | 4 | IntegerLittleEndian |  | Inventory9 |
+| 162 | 4 | IntegerLittleEndian |  | Inventory10 |
+| 166 | 4 | IntegerLittleEndian |  | Inventory11 |
+| 170 | 4 | IntegerLittleEndian |  | Inventory12 |
+| 174 | 4 | IntegerLittleEndian |  | Inventory13 |
+| 178 | 4 | IntegerLittleEndian |  | Inventory14 |
+| 182 | 4 | IntegerLittleEndian |  | Inventory15 |
 
 ### JewelBankResult Enum
 

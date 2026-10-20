@@ -38268,7 +38268,7 @@ public readonly ref struct AuctionNotificationRef
 
 
 /// <summary>
-/// Is sent by the server when: The stored counts of the account: answer to an open request, and after every change. Count1..Count15 are the kinds with code 1..15.
+/// Is sent by the server when: The stored counts of the account and the units of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Count1..Count15 and Inventory1..Inventory15 are the kinds with code 1..15.
 /// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 /// </summary>
 public readonly ref struct JewelBankStateResponseRef
@@ -38321,7 +38321,7 @@ public readonly ref struct JewelBankStateResponseRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 126;
+    public static int Length => 186;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -38479,6 +38479,141 @@ public readonly ref struct JewelBankStateResponseRef
     {
         get => ReadUInt64LittleEndian(this._data[118..]);
         set => WriteUInt64LittleEndian(this._data[118..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 1.
+    /// </summary>
+    public uint Inventory1
+    {
+        get => ReadUInt32LittleEndian(this._data[126..]);
+        set => WriteUInt32LittleEndian(this._data[126..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 2.
+    /// </summary>
+    public uint Inventory2
+    {
+        get => ReadUInt32LittleEndian(this._data[130..]);
+        set => WriteUInt32LittleEndian(this._data[130..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 3.
+    /// </summary>
+    public uint Inventory3
+    {
+        get => ReadUInt32LittleEndian(this._data[134..]);
+        set => WriteUInt32LittleEndian(this._data[134..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 4.
+    /// </summary>
+    public uint Inventory4
+    {
+        get => ReadUInt32LittleEndian(this._data[138..]);
+        set => WriteUInt32LittleEndian(this._data[138..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 5.
+    /// </summary>
+    public uint Inventory5
+    {
+        get => ReadUInt32LittleEndian(this._data[142..]);
+        set => WriteUInt32LittleEndian(this._data[142..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 6.
+    /// </summary>
+    public uint Inventory6
+    {
+        get => ReadUInt32LittleEndian(this._data[146..]);
+        set => WriteUInt32LittleEndian(this._data[146..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 7.
+    /// </summary>
+    public uint Inventory7
+    {
+        get => ReadUInt32LittleEndian(this._data[150..]);
+        set => WriteUInt32LittleEndian(this._data[150..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 8.
+    /// </summary>
+    public uint Inventory8
+    {
+        get => ReadUInt32LittleEndian(this._data[154..]);
+        set => WriteUInt32LittleEndian(this._data[154..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 9.
+    /// </summary>
+    public uint Inventory9
+    {
+        get => ReadUInt32LittleEndian(this._data[158..]);
+        set => WriteUInt32LittleEndian(this._data[158..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 1 0.
+    /// </summary>
+    public uint Inventory10
+    {
+        get => ReadUInt32LittleEndian(this._data[162..]);
+        set => WriteUInt32LittleEndian(this._data[162..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 1 1.
+    /// </summary>
+    public uint Inventory11
+    {
+        get => ReadUInt32LittleEndian(this._data[166..]);
+        set => WriteUInt32LittleEndian(this._data[166..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 1 2.
+    /// </summary>
+    public uint Inventory12
+    {
+        get => ReadUInt32LittleEndian(this._data[170..]);
+        set => WriteUInt32LittleEndian(this._data[170..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 1 3.
+    /// </summary>
+    public uint Inventory13
+    {
+        get => ReadUInt32LittleEndian(this._data[174..]);
+        set => WriteUInt32LittleEndian(this._data[174..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 1 4.
+    /// </summary>
+    public uint Inventory14
+    {
+        get => ReadUInt32LittleEndian(this._data[178..]);
+        set => WriteUInt32LittleEndian(this._data[178..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory 1 5.
+    /// </summary>
+    public uint Inventory15
+    {
+        get => ReadUInt32LittleEndian(this._data[182..]);
+        set => WriteUInt32LittleEndian(this._data[182..], value);
     }
 
     /// <summary>

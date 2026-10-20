@@ -99,11 +99,11 @@ public interface IJewelBankRepository
     /// <param name="accountId">The account.</param>
     /// <param name="characterId">The character whose inventory is emptied of bankable items.</param>
     /// <param name="operationId">The client-made identifier which makes a repeated request harmless.</param>
-    /// <param name="kindCode">The only kind to deposit, or <c>null</c> for every kind.</param>
+    /// <param name="requested">The units to deposit, by kind code; a kind which is not listed, or listed with 0, is left alone. <c>null</c> deposits everything the bank accepts.</param>
     /// <param name="maximumPerKind">The most units the bank may hold of one kind.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The outcome.</returns>
-    Task<JewelBankOperationResult> DepositFromInventoryAsync(Guid accountId, Guid characterId, Guid operationId, byte? kindCode, long maximumPerKind, CancellationToken cancellationToken = default);
+    Task<JewelBankOperationResult> DepositFromInventoryAsync(Guid accountId, Guid characterId, Guid operationId, IReadOnlyDictionary<byte, long>? requested, long maximumPerKind, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Takes units out of the bank and creates them as items in a character's inventory, packs first.
@@ -112,11 +112,10 @@ public interface IJewelBankRepository
     /// <param name="accountId">The account.</param>
     /// <param name="characterId">The character who receives the items.</param>
     /// <param name="operationId">The client-made identifier which makes a repeated request harmless.</param>
-    /// <param name="kindCode">The kind to withdraw.</param>
-    /// <param name="units">The amount of units.</param>
+    /// <param name="units">The units to withdraw, by kind code; entries of 0 are ignored.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The outcome.</returns>
-    Task<JewelBankOperationResult> WithdrawToInventoryAsync(Guid accountId, Guid characterId, Guid operationId, byte kindCode, long units, CancellationToken cancellationToken = default);
+    Task<JewelBankOperationResult> WithdrawToInventoryAsync(Guid accountId, Guid characterId, Guid operationId, IReadOnlyDictionary<byte, long> units, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Credits units which have no item rows, because they were picked up from the floor.

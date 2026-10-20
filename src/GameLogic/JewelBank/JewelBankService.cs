@@ -102,13 +102,13 @@ public sealed class JewelBankService
     }
 
     /// <summary>
-    /// Deposits the bankable items of the player's inventory.
+    /// Deposits bankable items of the player's inventory, up to the requested units per kind.
     /// </summary>
     /// <param name="player">The player.</param>
     /// <param name="operationId">The client-made operation identifier.</param>
-    /// <param name="kindCode">The only kind to deposit, or <c>null</c> for every kind.</param>
+    /// <param name="requested">The units to deposit by kind code, or <c>null</c> for everything the bank accepts.</param>
     /// <returns>The outcome.</returns>
-    public async Task<JewelBankOperationResult> DepositAsync(Player player, Guid operationId, byte? kindCode)
+    public async Task<JewelBankOperationResult> DepositAsync(Player player, Guid operationId, IReadOnlyDictionary<byte, long>? requested)
     {
         if (GetIdentity(player) is not { } who)
         {
@@ -123,7 +123,7 @@ public sealed class JewelBankService
             }
 
             await player.SaveProgressAsync().ConfigureAwait(false);
-            return await this._repository.DepositFromInventoryAsync(who.AccountId, who.CharacterId, operationId, kindCode, JewelBankOptions.MaximumPerKind).ConfigureAwait(false);
+            return await this._repository.DepositFromInventoryAsync(who.AccountId, who.CharacterId, operationId, requested, JewelBankOptions.MaximumPerKind).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
         await this.RefreshAfterChangeAsync(player, result).ConfigureAwait(false);
@@ -131,14 +131,13 @@ public sealed class JewelBankService
     }
 
     /// <summary>
-    /// Withdraws units of a kind as items into the player's inventory.
+    /// Withdraws units of one or more kinds as items into the player's inventory.
     /// </summary>
     /// <param name="player">The player.</param>
     /// <param name="operationId">The client-made operation identifier.</param>
-    /// <param name="kindCode">The kind.</param>
-    /// <param name="units">The amount of units.</param>
+    /// <param name="units">The units to withdraw by kind code.</param>
     /// <returns>The outcome.</returns>
-    public async Task<JewelBankOperationResult> WithdrawAsync(Player player, Guid operationId, byte kindCode, long units)
+    public async Task<JewelBankOperationResult> WithdrawAsync(Player player, Guid operationId, IReadOnlyDictionary<byte, long> units)
     {
         if (GetIdentity(player) is not { } who)
         {
@@ -153,7 +152,7 @@ public sealed class JewelBankService
             }
 
             await player.SaveProgressAsync().ConfigureAwait(false);
-            return await this._repository.WithdrawToInventoryAsync(who.AccountId, who.CharacterId, operationId, kindCode, units).ConfigureAwait(false);
+            return await this._repository.WithdrawToInventoryAsync(who.AccountId, who.CharacterId, operationId, units).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
         await this.RefreshAfterChangeAsync(player, result).ConfigureAwait(false);

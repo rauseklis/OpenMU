@@ -46,7 +46,7 @@ internal sealed class JewelBankOpenHandlerPlugIn : ISubPacketHandlerPlugIn
 }
 
 /// <summary>
-/// Handles requests to deposit the bankable items of the inventory.
+/// Handles requests to deposit the chosen amounts of jewels and fruits from the inventory.
 /// </summary>
 [PlugIn]
 [Guid("57911B6F-3F30-4D94-9B6F-171DCF6D5A4E")]
@@ -68,18 +68,20 @@ internal sealed class JewelBankDepositHandlerPlugIn : ISubPacketHandlerPlugIn
         }
 
         var request = new Wire.JewelBankDepositRequest(packet);
-        var kind = request.KindCode == 0 ? (byte?)null : request.KindCode;
+        var requested = JewelBankMessages.ToAmounts(
+            request.Amount1, request.Amount2, request.Amount3, request.Amount4, request.Amount5,
+            request.Amount6, request.Amount7, request.Amount8, request.Amount9, request.Amount10,
+            request.Amount11, request.Amount12, request.Amount13, request.Amount14, request.Amount15);
         await JewelBankMessages.RunAsync(
             player,
             request.OperationId.ToArray(),
             JewelBankMessages.OperationKind.Deposit,
-            request.KindCode,
-            (service, operationId) => service.DepositAsync(player, operationId, kind)).ConfigureAwait(false);
+            (service, operationId) => service.DepositAsync(player, operationId, requested)).ConfigureAwait(false);
     }
 }
 
 /// <summary>
-/// Handles requests to withdraw units as items.
+/// Handles requests to withdraw the chosen amounts as items.
 /// </summary>
 [PlugIn]
 [Guid("FBD8F70E-7C09-4547-9D28-2869CF35762F")]
@@ -101,14 +103,15 @@ internal sealed class JewelBankWithdrawHandlerPlugIn : ISubPacketHandlerPlugIn
         }
 
         var request = new Wire.JewelBankWithdrawRequest(packet);
-        var kind = request.KindCode;
-        var units = request.Units;
+        var units = JewelBankMessages.ToAmounts(
+            request.Amount1, request.Amount2, request.Amount3, request.Amount4, request.Amount5,
+            request.Amount6, request.Amount7, request.Amount8, request.Amount9, request.Amount10,
+            request.Amount11, request.Amount12, request.Amount13, request.Amount14, request.Amount15);
         await JewelBankMessages.RunAsync(
             player,
             request.OperationId.ToArray(),
             JewelBankMessages.OperationKind.Withdraw,
-            kind,
-            (service, operationId) => service.WithdrawAsync(player, operationId, kind, units)).ConfigureAwait(false);
+            (service, operationId) => service.WithdrawAsync(player, operationId, units)).ConfigureAwait(false);
     }
 }
 

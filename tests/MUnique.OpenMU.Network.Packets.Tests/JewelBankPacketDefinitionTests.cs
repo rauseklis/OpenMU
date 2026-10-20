@@ -24,15 +24,16 @@ public class JewelBankPacketDefinitionTests
     public static IEnumerable<TestCaseData> Cases()
     {
         yield return new TestCaseData(ClientPacketDefinitions, "JewelBankOpenRequest", "00", "4", string.Empty);
-        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankDepositRequest", "01", "21", "4:Binary:OperationId[16];20:Byte:KindCode");
-        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankWithdrawRequest", "02", "25", "4:Binary:OperationId[16];20:Byte:KindCode;21:IntegerLittleEndian:Units");
+        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankDepositRequest", "01", "80", "4:Binary:OperationId[16];" + Amounts());
+        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankWithdrawRequest", "02", "80", "4:Binary:OperationId[16];" + Amounts());
         yield return new TestCaseData(ClientPacketDefinitions, "JewelBankSetAutoDepositRequest", "03", "5", "4:Byte:Enabled");
         yield return new TestCaseData(
             ServerPacketDefinitions,
             "JewelBankStateResponse",
             "80",
-            "126",
-            "4:Enum:Result;5:Byte:AutoDeposit;" + string.Join(';', Enumerable.Range(0, 15).Select(i => $"{6 + (8 * i)}:LongLittleEndian:Count{i + 1}")));
+            "186",
+            "4:Enum:Result;5:Byte:AutoDeposit;" + string.Join(';', Enumerable.Range(0, 15).Select(i => $"{6 + (8 * i)}:LongLittleEndian:Count{i + 1}"))
+            + ";" + string.Join(';', Enumerable.Range(0, 15).Select(i => $"{126 + (4 * i)}:IntegerLittleEndian:Inventory{i + 1}")));
         yield return new TestCaseData(
             ServerPacketDefinitions,
             "JewelBankOperationResponse",
@@ -84,6 +85,9 @@ public class JewelBankPacketDefinitionTests
             Assert.That(subCodes, Is.Not.Empty);
         }
     }
+
+    private static string Amounts()
+        => string.Join(';', Enumerable.Range(0, 15).Select(i => $"{20 + (4 * i)}:IntegerLittleEndian:Amount{i + 1}"));
 
     private static XDocument Load(string relativePath)
     {

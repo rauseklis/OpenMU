@@ -45,12 +45,35 @@ internal static class JewelBankMessages
             return;
         }
 
+        var carried = JewelBankInventory.Count(player);
         await connection.SendJewelBankStateResponseAsync(
             ToWire(result),
             state.AutoDeposit ? (byte)1 : (byte)0,
             Count(state, 1), Count(state, 2), Count(state, 3), Count(state, 4), Count(state, 5),
             Count(state, 6), Count(state, 7), Count(state, 8), Count(state, 9), Count(state, 10),
-            Count(state, 11), Count(state, 12), Count(state, 13), Count(state, 14), Count(state, 15)).ConfigureAwait(false);
+            Count(state, 11), Count(state, 12), Count(state, 13), Count(state, 14), Count(state, 15),
+            Carried(carried, 1), Carried(carried, 2), Carried(carried, 3), Carried(carried, 4), Carried(carried, 5),
+            Carried(carried, 6), Carried(carried, 7), Carried(carried, 8), Carried(carried, 9), Carried(carried, 10),
+            Carried(carried, 11), Carried(carried, 12), Carried(carried, 13), Carried(carried, 14), Carried(carried, 15)).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Turns the 15 amounts of a request (kind codes 1 to 15 in order) into a dictionary; kinds with no amount are left out.
+    /// </summary>
+    /// <param name="amounts">The amounts of the kinds with code 1 to 15.</param>
+    /// <returns>The amounts by kind code.</returns>
+    public static Dictionary<byte, long> ToAmounts(params uint[] amounts)
+    {
+        var result = new Dictionary<byte, long>();
+        for (var index = 0; index < amounts.Length; index++)
+        {
+            if (amounts[index] > 0)
+            {
+                result[(byte)(index + 1)] = amounts[index];
+            }
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -60,17 +83,16 @@ internal static class JewelBankMessages
     /// <param name="operationId">The operation identifier of the request.</param>
     /// <param name="operation">The kind of operation.</param>
     /// <param name="result">The outcome.</param>
-    /// <param name="kindCode">The kind which was asked for (0 for every kind).</param>
-    /// <param name="units">The units which moved.</param>
+    /// <param name="units">The units which moved, summed over all kinds.</param>
     /// <returns>A task which completes when the response is sent.</returns>
-    public static async ValueTask SendOperationAsync(Player player, byte[] operationId, OperationKind operation, JewelBankResultCode result, byte kindCode, long units)
+    public static async ValueTask SendOperationAsync(Player player, byte[] operationId, OperationKind operation, JewelBankResultCode result, long units)
     {
         if (player is not RemotePlayer { Connection: { } connection })
         {
             return;
         }
 
-        await connection.SendJewelBankOperationResponseAsync(operationId, (byte)operation, ToWire(result), kindCode, (uint)Math.Clamp(units, 0, uint.MaxValue)).ConfigureAwait(false);
+        await connection.SendJewelBankOperationResponseAsync(operationId, (byte)operation, ToWire(result), 0, (uint)Math.Clamp(units, 0, uint.MaxValue)).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -79,37 +101,38 @@ internal static class JewelBankMessages
     /// <param name="player">The requesting player.</param>
     /// <param name="operationId">The operation identifier of the request.</param>
     /// <param name="operation">The kind of operation.</param>
-    /// <param name="kindCode">The kind which was asked for.</param>
     /// <param name="run">The operation, which receives the service and the client-made operation identifier.</param>
     /// <returns>A task which completes when the response is sent.</returns>
-    public static async ValueTask RunAsync(Player player, byte[] operationId, OperationKind operation, byte kindCode, Func<JewelBankService, Guid, Task<JewelBankOperationResult>> run)
+    public static async ValueTask RunAsync(Player player, byte[] operationId, OperationKind operation, Func<JewelBankService, Guid, Task<JewelBankOperationResult>> run)
     {
         var service = JewelBankService.Create(player);
         if (JewelBankService.GetIdentity(player) is not { } who)
         {
-            await SendOperationAsync(player, operationId, operation, JewelBankResultCode.InvalidRequest, kindCode, 0).ConfigureAwait(false);
+            await SendOperationAsync(player, operationId, operation, JewelBankResultCode.InvalidRequest, 0).ConfigureAwait(false);
             return;
         }
 
         if (service is null)
         {
-            await SendOperationAsync(player, operationId, operation, JewelBankResultCode.ServiceUnavailable, kindCode, 0).ConfigureAwait(false);
+            await SendOperationAsync(player, operationId, operation, JewelBankResultCode.ServiceUnavailable, 0).ConfigureAwait(false);
             return;
         }
 
         if (!JewelBankService.RateLimiter.TryAcquire(who.AccountId))
         {
-            await SendOperationAsync(player, operationId, operation, JewelBankResultCode.RateLimited, kindCode, 0).ConfigureAwait(false);
+            await SendOperationAsync(player, operationId, operation, JewelBankResultCode.RateLimited, 0).ConfigureAwait(false);
             return;
         }
 
         var result = await run(service, new Guid(operationId)).ConfigureAwait(false);
-        await SendOperationAsync(player, operationId, operation, result.Result, kindCode, result.Moved.Values.Sum()).ConfigureAwait(false);
+        await SendOperationAsync(player, operationId, operation, result.Result, result.Moved.Values.Sum()).ConfigureAwait(false);
         var state = result.State ?? await service.GetStateAsync(who.AccountId).ConfigureAwait(false);
-        await SendStateAsync(player, result.Result, state).ConfigureAwait(false);
+        await SendStateAsync(player, JewelBankResultCode.Success, state).ConfigureAwait(false);
     }
 
     private static ulong Count(JewelBankState state, byte code) => (ulong)Math.Max(0, state.CountOf(code));
+
+    private static uint Carried(IReadOnlyDictionary<byte, long> carried, byte code) => (uint)Math.Clamp(carried.GetValueOrDefault(code), 0, uint.MaxValue);
 
     private static JewelBankResult ToWire(JewelBankResultCode result) => (JewelBankResult)(byte)result;
 }
