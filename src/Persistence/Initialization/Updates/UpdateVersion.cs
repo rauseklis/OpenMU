@@ -612,4 +612,5 @@ public enum UpdateVersion
     AddPremiumBuffs = 122,
     AddKingMaces = 123,
     KingMaceRequirements = 124,
+    RenameRoyalMace = 125,
 }

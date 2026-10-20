@@ -29,7 +29,7 @@ public sealed class KingMaces : InitializerBase
     {
         var template = this.GameConfiguration.Items.Single(i => i.Group == 0 && i.Number == 16);
         foreach (var entry in new[] { (Number: (short)22, Name: "Mace of King", Min: 110, Max: 125, Speed: 30),
-                     (Number: (short)23, Name: "Royal Mace of King", Min: 150, Max: 170, Speed: 40) })
+                     (Number: (short)23, Name: "Royal Mace of Emberion", Min: 150, Max: 170, Speed: 40) })
         {
             if (this.GameConfiguration.Items.Any(i => i.Group == 2 && i.Number == entry.Number))
             {
