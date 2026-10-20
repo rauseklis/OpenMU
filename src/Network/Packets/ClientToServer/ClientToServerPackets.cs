@@ -19140,6 +19140,366 @@ public readonly struct AuctionCollectRequest
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Memory<byte>(AuctionCollectRequest packet) => packet._data; 
 }
+
+
+/// <summary>
+/// Is sent by the client when: The player opens the Jewel Bank window (Ctrl+J) or asks for its current state.
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankOpenRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOpenRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankOpenRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOpenRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankOpenRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x00;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 4;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankOpenRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankOpenRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankOpenRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankOpenRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: The player deposits the bankable items of the inventory (KindCode 0 = every kind).
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankDepositRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankDepositRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankDepositRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x01;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 21;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the kind code.
+    /// </summary>
+    public byte KindCode
+    {
+        get => this._data.Span[20];
+        set => this._data.Span[20] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankDepositRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankDepositRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankDepositRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankDepositRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: The player withdraws units of one kind as items.
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankWithdrawRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankWithdrawRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankWithdrawRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankWithdrawRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankWithdrawRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x02;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 25;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the kind code.
+    /// </summary>
+    public byte KindCode
+    {
+        get => this._data.Span[20];
+        set => this._data.Span[20] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the units.
+    /// </summary>
+    public uint Units
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[21..]);
+        set => WriteUInt32LittleEndian(this._data.Span[21..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankWithdrawRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankWithdrawRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankWithdrawRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankWithdrawRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: The player switches the auto-deposit of picked-up jewels and fruits on or off.
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankSetAutoDepositRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankSetAutoDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankSetAutoDepositRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankSetAutoDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankSetAutoDepositRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x03;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 5;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the enabled.
+    /// </summary>
+    public byte Enabled
+    {
+        get => this._data.Span[4];
+        set => this._data.Span[4] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankSetAutoDepositRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankSetAutoDepositRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankSetAutoDepositRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankSetAutoDepositRequest packet) => packet._data; 
+}
     /// <summary>
     /// The state of the trade button.
     /// </summary>

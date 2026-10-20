@@ -8423,4 +8423,146 @@ public class PacketStructureTests
         Assert.That(38 + 2, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'PendingMailboxCount' exceeds packet boundary");
     }
+
+    /// <summary>
+    /// Tests the packet size calculation for JewelBankStateResponse.
+    /// </summary>
+    [Test]
+    public void JewelBankStateResponse_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 126;
+        var actualLength = JewelBankStateResponseRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+        
+        // Validate field 'Result' boundary
+        Assert.That(4 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Result' exceeds packet boundary");
+        
+        // Validate field 'AutoDeposit' boundary
+        Assert.That(5 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'AutoDeposit' exceeds packet boundary");
+        
+        // Validate field 'Count1' boundary
+        Assert.That(6 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count1' exceeds packet boundary");
+        
+        // Validate field 'Count2' boundary
+        Assert.That(14 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count2' exceeds packet boundary");
+        
+        // Validate field 'Count3' boundary
+        Assert.That(22 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count3' exceeds packet boundary");
+        
+        // Validate field 'Count4' boundary
+        Assert.That(30 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count4' exceeds packet boundary");
+        
+        // Validate field 'Count5' boundary
+        Assert.That(38 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count5' exceeds packet boundary");
+        
+        // Validate field 'Count6' boundary
+        Assert.That(46 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count6' exceeds packet boundary");
+        
+        // Validate field 'Count7' boundary
+        Assert.That(54 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count7' exceeds packet boundary");
+        
+        // Validate field 'Count8' boundary
+        Assert.That(62 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count8' exceeds packet boundary");
+        
+        // Validate field 'Count9' boundary
+        Assert.That(70 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count9' exceeds packet boundary");
+        
+        // Validate field 'Count10' boundary
+        Assert.That(78 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count10' exceeds packet boundary");
+        
+        // Validate field 'Count11' boundary
+        Assert.That(86 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count11' exceeds packet boundary");
+        
+        // Validate field 'Count12' boundary
+        Assert.That(94 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count12' exceeds packet boundary");
+        
+        // Validate field 'Count13' boundary
+        Assert.That(102 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count13' exceeds packet boundary");
+        
+        // Validate field 'Count14' boundary
+        Assert.That(110 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count14' exceeds packet boundary");
+        
+        // Validate field 'Count15' boundary
+        Assert.That(118 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Count15' exceeds packet boundary");
+    }
+
+    /// <summary>
+    /// Tests the packet size calculation for JewelBankOperationResponse.
+    /// </summary>
+    [Test]
+    public void JewelBankOperationResponse_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 27;
+        var actualLength = JewelBankOperationResponseRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+        
+        // Validate field 'OperationId' boundary
+        Assert.That(4 + 16, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'OperationId' exceeds packet boundary");
+        
+        // Validate field 'Operation' boundary
+        Assert.That(20 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Operation' exceeds packet boundary");
+        
+        // Validate field 'Result' boundary
+        Assert.That(21 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Result' exceeds packet boundary");
+        
+        // Validate field 'KindCode' boundary
+        Assert.That(22 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'KindCode' exceeds packet boundary");
+        
+        // Validate field 'Units' boundary
+        Assert.That(23 + 4, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Units' exceeds packet boundary");
+    }
+
+    /// <summary>
+    /// Tests the packet size calculation for JewelBankPickupNotification.
+    /// </summary>
+    [Test]
+    public void JewelBankPickupNotification_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 17;
+        var actualLength = JewelBankPickupNotificationRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+        
+        // Validate field 'KindCode' boundary
+        Assert.That(4 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'KindCode' exceeds packet boundary");
+        
+        // Validate field 'Units' boundary
+        Assert.That(5 + 4, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Units' exceeds packet boundary");
+        
+        // Validate field 'NewCount' boundary
+        Assert.That(9 + 8, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'NewCount' exceeds packet boundary");
+    }
 }

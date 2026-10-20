@@ -40350,6 +40350,461 @@ public readonly struct AuctionNotification
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Memory<byte>(AuctionNotification packet) => packet._data; 
 }
+
+
+/// <summary>
+/// Is sent by the server when: The stored counts of the account: answer to an open request, and after every change. Count1..Count15 are the kinds with code 1..15.
+/// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankStateResponse
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankStateResponse"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankStateResponse(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankStateResponse"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankStateResponse(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x80;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 126;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the result.
+    /// </summary>
+    public JewelBankResult Result
+    {
+        get => (JewelBankResult)this._data.Span[4];
+        set => this._data.Span[4] = (byte)value;
+    }
+
+    /// <summary>
+    /// Gets or sets the auto deposit.
+    /// </summary>
+    public byte AutoDeposit
+    {
+        get => this._data.Span[5];
+        set => this._data.Span[5] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the count 1.
+    /// </summary>
+    public ulong Count1
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[6..]);
+        set => WriteUInt64LittleEndian(this._data.Span[6..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 2.
+    /// </summary>
+    public ulong Count2
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[14..]);
+        set => WriteUInt64LittleEndian(this._data.Span[14..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 3.
+    /// </summary>
+    public ulong Count3
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[22..]);
+        set => WriteUInt64LittleEndian(this._data.Span[22..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 4.
+    /// </summary>
+    public ulong Count4
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[30..]);
+        set => WriteUInt64LittleEndian(this._data.Span[30..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 5.
+    /// </summary>
+    public ulong Count5
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[38..]);
+        set => WriteUInt64LittleEndian(this._data.Span[38..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 6.
+    /// </summary>
+    public ulong Count6
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[46..]);
+        set => WriteUInt64LittleEndian(this._data.Span[46..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 7.
+    /// </summary>
+    public ulong Count7
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[54..]);
+        set => WriteUInt64LittleEndian(this._data.Span[54..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 8.
+    /// </summary>
+    public ulong Count8
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[62..]);
+        set => WriteUInt64LittleEndian(this._data.Span[62..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 9.
+    /// </summary>
+    public ulong Count9
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[70..]);
+        set => WriteUInt64LittleEndian(this._data.Span[70..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 1 0.
+    /// </summary>
+    public ulong Count10
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[78..]);
+        set => WriteUInt64LittleEndian(this._data.Span[78..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 1 1.
+    /// </summary>
+    public ulong Count11
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[86..]);
+        set => WriteUInt64LittleEndian(this._data.Span[86..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 1 2.
+    /// </summary>
+    public ulong Count12
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[94..]);
+        set => WriteUInt64LittleEndian(this._data.Span[94..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 1 3.
+    /// </summary>
+    public ulong Count13
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[102..]);
+        set => WriteUInt64LittleEndian(this._data.Span[102..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 1 4.
+    /// </summary>
+    public ulong Count14
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[110..]);
+        set => WriteUInt64LittleEndian(this._data.Span[110..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the count 1 5.
+    /// </summary>
+    public ulong Count15
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[118..]);
+        set => WriteUInt64LittleEndian(this._data.Span[118..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankStateResponse"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankStateResponse(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankStateResponse"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankStateResponse packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the server when: Result of a deposit, withdrawal or setting change.
+/// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankOperationResponse
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOperationResponse"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankOperationResponse(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOperationResponse"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankOperationResponse(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x81;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 27;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the operation.
+    /// </summary>
+    public byte Operation
+    {
+        get => this._data.Span[20];
+        set => this._data.Span[20] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the result.
+    /// </summary>
+    public JewelBankResult Result
+    {
+        get => (JewelBankResult)this._data.Span[21];
+        set => this._data.Span[21] = (byte)value;
+    }
+
+    /// <summary>
+    /// Gets or sets the kind code.
+    /// </summary>
+    public byte KindCode
+    {
+        get => this._data.Span[22];
+        set => this._data.Span[22] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the units.
+    /// </summary>
+    public uint Units
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[23..]);
+        set => WriteUInt32LittleEndian(this._data.Span[23..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankOperationResponse"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankOperationResponse(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankOperationResponse"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankOperationResponse packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the server when: An item picked up by the player went straight into the bank (auto-deposit).
+/// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankPickupNotification
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankPickupNotification"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankPickupNotification(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankPickupNotification"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankPickupNotification(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x82;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 17;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the kind code.
+    /// </summary>
+    public byte KindCode
+    {
+        get => this._data.Span[4];
+        set => this._data.Span[4] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the units.
+    /// </summary>
+    public uint Units
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[5..]);
+        set => WriteUInt32LittleEndian(this._data.Span[5..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the new count.
+    /// </summary>
+    public ulong NewCount
+    {
+        get => ReadUInt64LittleEndian(this._data.Span[9..]);
+        set => WriteUInt64LittleEndian(this._data.Span[9..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankPickupNotification"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankPickupNotification(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankPickupNotification"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankPickupNotification packet) => packet._data; 
+}
     /// <summary>
     /// Defines the role of a guild member.
     /// </summary>

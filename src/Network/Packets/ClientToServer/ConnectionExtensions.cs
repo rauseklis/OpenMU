@@ -6018,4 +6018,119 @@ public static class ConnectionExtensions
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankOpenRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player opens the Jewel Bank window (Ctrl+J) or asks for its current state.
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankOpenRequestAsync(this IConnection? connection)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankOpenRequestRef.Length;
+            var packet = new JewelBankOpenRequestRef(connection.Output.GetSpan(length)[..length]);
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankDepositRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="kindCode">The kind code.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player deposits the bankable items of the inventory (KindCode 0 = every kind).
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankDepositRequestAsync(this IConnection? connection, Memory<byte> @operationId, byte @kindCode)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankDepositRequestRef.Length;
+            var packet = new JewelBankDepositRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.KindCode = @kindCode;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankWithdrawRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="kindCode">The kind code.</param>
+    /// <param name="units">The units.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player withdraws units of one kind as items.
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankWithdrawRequestAsync(this IConnection? connection, Memory<byte> @operationId, byte @kindCode, uint @units)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankWithdrawRequestRef.Length;
+            var packet = new JewelBankWithdrawRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.KindCode = @kindCode;
+            packet.Units = @units;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankSetAutoDepositRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="enabled">The enabled.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player switches the auto-deposit of picked-up jewels and fruits on or off.
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankSetAutoDepositRequestAsync(this IConnection? connection, byte @enabled)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankSetAutoDepositRequestRef.Length;
+            var packet = new JewelBankSetAutoDepositRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.Enabled = @enabled;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }}

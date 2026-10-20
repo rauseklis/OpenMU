@@ -8240,4 +8240,132 @@ public static class ConnectionExtensions
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankStateResponse" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="result">The result.</param>
+    /// <param name="autoDeposit">The auto deposit.</param>
+    /// <param name="count1">The count 1.</param>
+    /// <param name="count2">The count 2.</param>
+    /// <param name="count3">The count 3.</param>
+    /// <param name="count4">The count 4.</param>
+    /// <param name="count5">The count 5.</param>
+    /// <param name="count6">The count 6.</param>
+    /// <param name="count7">The count 7.</param>
+    /// <param name="count8">The count 8.</param>
+    /// <param name="count9">The count 9.</param>
+    /// <param name="count10">The count 1 0.</param>
+    /// <param name="count11">The count 1 1.</param>
+    /// <param name="count12">The count 1 2.</param>
+    /// <param name="count13">The count 1 3.</param>
+    /// <param name="count14">The count 1 4.</param>
+    /// <param name="count15">The count 1 5.</param>
+    /// <remarks>
+    /// Is sent by the server when: The stored counts of the account: answer to an open request, and after every change. Count1..Count15 are the kinds with code 1..15.
+    /// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankStateResponseAsync(this IConnection? connection, JewelBankResult @result, byte @autoDeposit, ulong @count1, ulong @count2, ulong @count3, ulong @count4, ulong @count5, ulong @count6, ulong @count7, ulong @count8, ulong @count9, ulong @count10, ulong @count11, ulong @count12, ulong @count13, ulong @count14, ulong @count15)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankStateResponseRef.Length;
+            var packet = new JewelBankStateResponseRef(connection.Output.GetSpan(length)[..length]);
+            packet.Result = @result;
+            packet.AutoDeposit = @autoDeposit;
+            packet.Count1 = @count1;
+            packet.Count2 = @count2;
+            packet.Count3 = @count3;
+            packet.Count4 = @count4;
+            packet.Count5 = @count5;
+            packet.Count6 = @count6;
+            packet.Count7 = @count7;
+            packet.Count8 = @count8;
+            packet.Count9 = @count9;
+            packet.Count10 = @count10;
+            packet.Count11 = @count11;
+            packet.Count12 = @count12;
+            packet.Count13 = @count13;
+            packet.Count14 = @count14;
+            packet.Count15 = @count15;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankOperationResponse" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="operation">The operation.</param>
+    /// <param name="result">The result.</param>
+    /// <param name="kindCode">The kind code.</param>
+    /// <param name="units">The units.</param>
+    /// <remarks>
+    /// Is sent by the server when: Result of a deposit, withdrawal or setting change.
+    /// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankOperationResponseAsync(this IConnection? connection, Memory<byte> @operationId, byte @operation, JewelBankResult @result, byte @kindCode, uint @units)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankOperationResponseRef.Length;
+            var packet = new JewelBankOperationResponseRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            packet.Operation = @operation;
+            packet.Result = @result;
+            packet.KindCode = @kindCode;
+            packet.Units = @units;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankPickupNotification" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="kindCode">The kind code.</param>
+    /// <param name="units">The units.</param>
+    /// <param name="newCount">The new count.</param>
+    /// <remarks>
+    /// Is sent by the server when: An item picked up by the player went straight into the bank (auto-deposit).
+    /// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankPickupNotificationAsync(this IConnection? connection, byte @kindCode, uint @units, ulong @newCount)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankPickupNotificationRef.Length;
+            var packet = new JewelBankPickupNotificationRef(connection.Output.GetSpan(length)[..length]);
+            packet.KindCode = @kindCode;
+            packet.Units = @units;
+            packet.NewCount = @newCount;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }}
