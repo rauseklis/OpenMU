@@ -10,6 +10,22 @@ source .env
 set +a
 
 mkdir -p backups
+
+# The very first deploy has no database yet: there is nothing to back up. If the data exists but the container is not
+# running (after a crash, say), start the database alone first, so the dump is of the real data.
+if ! docker compose ps --status running --services 2>/dev/null | grep -qx database; then
+    if docker volume ls -q | grep -q 'dbdata$'; then
+        docker compose up -d database
+        for _ in $(seq 1 30); do
+            docker compose exec -T database pg_isready -U "${DB_ADMIN_USER:-postgres}" >/dev/null 2>&1 && break
+            sleep 2
+        done
+    else
+        echo "no database yet (first deploy): nothing to back up"
+        exit 0
+    fi
+fi
+
 file="backups/${DB_NAME:-openmu}-$(date +%Y-%m-%d-%H%M%S).sql.gz"
 
 # A dump that is empty or fails must never look like a backup.
