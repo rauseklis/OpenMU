@@ -38265,3 +38265,339 @@ public readonly ref struct AuctionNotificationRef
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Span<byte>(AuctionNotificationRef packet) => packet._data; 
 }
+
+
+/// <summary>
+/// Is sent by the server when: The stored counts of the account and the number of items of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Counts and Inventory hold 45 little-endian 32-bit values, one per kind with code 1..45.
+/// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly ref struct JewelBankStateResponseRef
+{
+    private readonly Span<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankStateResponseRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankStateResponseRef(Span<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankStateResponseRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankStateResponseRef(Span<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (ushort)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC2;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x80;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 367;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C2HeaderWithSubCodeRef Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the result.
+    /// </summary>
+    public JewelBankResult Result
+    {
+        get => (JewelBankResult)this._data[5];
+        set => this._data[5] = (byte)value;
+    }
+
+    /// <summary>
+    /// Gets or sets the auto deposit.
+    /// </summary>
+    public byte AutoDeposit
+    {
+        get => this._data[6];
+        set => this._data[6] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the counts.
+    /// </summary>
+    public Span<byte> Counts
+    {
+        get => this._data.Slice(7, 180);
+    }
+
+    /// <summary>
+    /// Gets or sets the inventory.
+    /// </summary>
+    public Span<byte> Inventory
+    {
+        get => this._data.Slice(187, 180);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Span of bytes to a <see cref="JewelBankStateResponse"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankStateResponseRef(Span<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankStateResponse"/> to a Span of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Span<byte>(JewelBankStateResponseRef packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the server when: Result of a deposit, withdrawal or setting change.
+/// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly ref struct JewelBankOperationResponseRef
+{
+    private readonly Span<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOperationResponseRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankOperationResponseRef(Span<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOperationResponseRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankOperationResponseRef(Span<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x81;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 27;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCodeRef Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(4, 16);
+    }
+
+    /// <summary>
+    /// Gets or sets the operation.
+    /// </summary>
+    public byte Operation
+    {
+        get => this._data[20];
+        set => this._data[20] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the result.
+    /// </summary>
+    public JewelBankResult Result
+    {
+        get => (JewelBankResult)this._data[21];
+        set => this._data[21] = (byte)value;
+    }
+
+    /// <summary>
+    /// Gets or sets the kind code.
+    /// </summary>
+    public byte KindCode
+    {
+        get => this._data[22];
+        set => this._data[22] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the units.
+    /// </summary>
+    public uint Units
+    {
+        get => ReadUInt32LittleEndian(this._data[23..]);
+        set => WriteUInt32LittleEndian(this._data[23..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Span of bytes to a <see cref="JewelBankOperationResponse"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankOperationResponseRef(Span<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankOperationResponse"/> to a Span of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Span<byte>(JewelBankOperationResponseRef packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the server when: An item picked up by the player went straight into the bank (auto-deposit).
+/// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly ref struct JewelBankPickupNotificationRef
+{
+    private readonly Span<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankPickupNotificationRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankPickupNotificationRef(Span<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankPickupNotificationRef"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankPickupNotificationRef(Span<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x82;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 17;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCodeRef Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the kind code.
+    /// </summary>
+    public byte KindCode
+    {
+        get => this._data[4];
+        set => this._data[4] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the units.
+    /// </summary>
+    public uint Units
+    {
+        get => ReadUInt32LittleEndian(this._data[5..]);
+        set => WriteUInt32LittleEndian(this._data[5..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the new count.
+    /// </summary>
+    public ulong NewCount
+    {
+        get => ReadUInt64LittleEndian(this._data[9..]);
+        set => WriteUInt64LittleEndian(this._data[9..], value);
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Span of bytes to a <see cref="JewelBankPickupNotification"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankPickupNotificationRef(Span<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankPickupNotification"/> to a Span of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Span<byte>(JewelBankPickupNotificationRef packet) => packet._data; 
+}

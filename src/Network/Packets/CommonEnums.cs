@@ -814,3 +814,59 @@ using static System.Buffers.Binary.BinaryPrimitives;    /// <summary>
             AdminAdjusted = 6,
     }
 
+    /// <summary>
+    /// Jewel Bank result codes.
+    /// </summary>
+    public enum JewelBankResult
+    {
+        /// <summary>
+        /// Success.
+        /// </summary>
+            Success = 0,
+
+        /// <summary>
+        /// InvalidRequest.
+        /// </summary>
+            InvalidRequest = 1,
+
+        /// <summary>
+        /// InsufficientBalance.
+        /// </summary>
+            InsufficientBalance = 2,
+
+        /// <summary>
+        /// InventoryFull.
+        /// </summary>
+            InventoryFull = 3,
+
+        /// <summary>
+        /// CapReached.
+        /// </summary>
+            CapReached = 4,
+
+        /// <summary>
+        /// NothingToDeposit.
+        /// </summary>
+            NothingToDeposit = 5,
+
+        /// <summary>
+        /// NotConfigured.
+        /// </summary>
+            NotConfigured = 6,
+
+        /// <summary>
+        /// StateRestricted.
+        /// </summary>
+            StateRestricted = 7,
+
+        /// <summary>
+        /// RateLimited.
+        /// </summary>
+            RateLimited = 8,
+
+        /// <summary>
+        /// ServiceUnavailable.
+        /// </summary>
+            ServiceUnavailable = 9,
+    }
+

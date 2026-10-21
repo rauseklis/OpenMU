@@ -805,5 +805,61 @@
         </EnumValue>
       </Values>
     </Enum>
+    <Enum>
+      <Name>JewelBankResult</Name>
+      <Description>Jewel Bank result codes.</Description>
+      <Values>
+        <EnumValue>
+          <Name>Success</Name>
+          <Description>Success.</Description>
+          <Value>0</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>InvalidRequest</Name>
+          <Description>InvalidRequest.</Description>
+          <Value>1</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>InsufficientBalance</Name>
+          <Description>InsufficientBalance.</Description>
+          <Value>2</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>InventoryFull</Name>
+          <Description>InventoryFull.</Description>
+          <Value>3</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>CapReached</Name>
+          <Description>CapReached.</Description>
+          <Value>4</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>NothingToDeposit</Name>
+          <Description>NothingToDeposit.</Description>
+          <Value>5</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>NotConfigured</Name>
+          <Description>NotConfigured.</Description>
+          <Value>6</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>StateRestricted</Name>
+          <Description>StateRestricted.</Description>
+          <Value>7</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>RateLimited</Name>
+          <Description>RateLimited.</Description>
+          <Value>8</Value>
+        </EnumValue>
+        <EnumValue>
+          <Name>ServiceUnavailable</Name>
+          <Description>ServiceUnavailable.</Description>
+          <Value>9</Value>
+        </EnumValue>
+      </Values>
+    </Enum>
   </Enums>
 </PacketDefinitions>

@@ -35,6 +35,12 @@ public class PickupItemAction
                 break;
             case DroppedItem droppedItem:
                 {
+                    if (CanPickup(player, droppedItem) && await JewelBank.JewelBankPickup.TryDepositAsync(player, droppedItem).ConfigureAwait(false))
+                    {
+                        await player.OnPickedUpItemAsync(droppedItem).ConfigureAwait(false);
+                        break;
+                    }
+
                     var (success, stackTarget) = await TryPickupItemAsync(player, droppedItem).ConfigureAwait(false);
                     if (success)
                     {
