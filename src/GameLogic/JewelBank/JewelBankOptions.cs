@@ -12,7 +12,7 @@ public static class JewelBankOptions
     /// <summary>
     /// The default for <see cref="MaximumPerKind"/>.
     /// </summary>
-    public const long DefaultMaximumPerKind = 1_000_000;
+    public const long DefaultMaximumPerKind = 25_000;
 
     /// <summary>
     /// Gets or sets the most units the bank holds of one kind of jewel or fruit. A deposit or pickup which would exceed it
