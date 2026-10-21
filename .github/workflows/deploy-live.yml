@@ -1,0 +1,72 @@
+# Builds the server image on every change to master and, once the VPS is set up, updates the live server with it.
+# The one-time setup of the VPS and of the secrets below is described in deploy/live/README.md.
+name: Deploy live server
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - 'docs/**'
+      - 'docs-website/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+# One deploy at a time; a second one waits instead of cutting the first one off halfway.
+concurrency:
+  group: deploy-live
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    name: Build the image and update the live server
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/openmu
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build the image
+        run: |
+          set -euo pipefail
+          image="$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE_LC=$image" >> "$GITHUB_ENV"
+          docker build --file src/Startup/Dockerfile --tag "$image:${GITHUB_SHA}" --tag "$image:latest" src
+
+      - name: Push the image
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+          docker push "$IMAGE_LC:${GITHUB_SHA}"
+          docker push "$IMAGE_LC:latest"
+
+      - name: Update the live server
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_HOST" ] || [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "The live server is not configured yet (no DEPLOY_HOST / DEPLOY_SSH_KEY secret): the image was built and pushed, nothing was deployed."
+            exit 0
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh_options="-i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes"
+          target="${DEPLOY_USER:-deploy}@${DEPLOY_HOST}"
+
+          # The compose file and the scripts travel with the code, so changes to them are deployed too.
+          scp $ssh_options deploy/live/docker-compose.yml deploy/live/backup.sh deploy/live/deploy.sh "$target:/opt/openmu/"
+
+          # The server pulls the image with this run's token (valid until the job ends); the token goes through stdin, not the command line.
+          echo "${{ secrets.GITHUB_TOKEN }}" | ssh $ssh_options "$target" "docker login ghcr.io --username '${{ github.actor }}' --password-stdin"
+          ssh $ssh_options "$target" "cd /opt/openmu && chmod +x backup.sh deploy.sh && ./deploy.sh '$IMAGE_LC:${GITHUB_SHA}'"

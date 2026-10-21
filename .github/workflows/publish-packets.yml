@@ -1,0 +1,46 @@
+# Publishes the three packet packages the game client is built from (PlugIns, Network, Network.Packets) to GitHub Packages,
+# so both of us (and the client's CI) can restore them without a folder on one machine. A package version that already exists is
+# skipped: change the <Version> and <PackageVersion> of the three projects when the packets change, and the client's
+# OpenMuPacketsVersion with them.
+name: Publish packet packages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/Network/**'
+      - 'src/PlugIns/**'
+      - '.github/workflows/publish-packets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Pack and push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack
+        run: |
+          set -euo pipefail
+          dotnet pack src/PlugIns/MUnique.OpenMU.PlugIns.csproj -c Release -o packages
+          dotnet pack src/Network/MUnique.OpenMU.Network.csproj -c Release -o packages
+          dotnet pack src/Network/Packets/MUnique.OpenMU.Network.Packets.csproj -c Release -o packages
+          ls -l packages
+
+      - name: Push to GitHub Packages
+        run: |
+          dotnet nuget push "packages/*.nupkg" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate
