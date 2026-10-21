@@ -6,6 +6,8 @@ on:
 jobs:
   publish:
     name: Publish packages to nuget
+    # Only upstream has the nuget.org key; forks publish their packets to GitHub Packages (publish-packets.yml).
+    if: github.repository == 'MUnique/OpenMU'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
