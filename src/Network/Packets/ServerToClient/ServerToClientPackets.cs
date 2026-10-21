@@ -40353,7 +40353,7 @@ public readonly struct AuctionNotification
 
 
 /// <summary>
-/// Is sent by the server when: The stored counts of the account and the units of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Count1..Count15 and Inventory1..Inventory15 are the kinds with code 1..15.
+/// Is sent by the server when: The stored counts of the account and the number of items of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Counts and Inventory hold 45 little-endian 32-bit values, one per kind with code 1..45.
 /// Causes reaction on client side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 /// </summary>
 public readonly struct JewelBankStateResponse
@@ -40382,7 +40382,7 @@ public readonly struct JewelBankStateResponse
             var header = this.Header;
             header.Type = HeaderType;
             header.Code = Code;
-            header.Length = (byte)Math.Min(data.Length, Length);
+            header.Length = (ushort)Math.Min(data.Length, Length);
             header.SubCode = SubCode;
         }
     }
@@ -40390,7 +40390,7 @@ public readonly struct JewelBankStateResponse
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC1;
+    public static byte HeaderType => 0xC2;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -40406,20 +40406,20 @@ public readonly struct JewelBankStateResponse
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 186;
+    public static int Length => 367;
 
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C1HeaderWithSubCode Header => new (this._data);
+    public C2HeaderWithSubCode Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the result.
     /// </summary>
     public JewelBankResult Result
     {
-        get => (JewelBankResult)this._data.Span[4];
-        set => this._data.Span[4] = (byte)value;
+        get => (JewelBankResult)this._data.Span[5];
+        set => this._data.Span[5] = (byte)value;
     }
 
     /// <summary>
@@ -40427,278 +40427,24 @@ public readonly struct JewelBankStateResponse
     /// </summary>
     public byte AutoDeposit
     {
-        get => this._data.Span[5];
-        set => this._data.Span[5] = value;
+        get => this._data.Span[6];
+        set => this._data.Span[6] = value;
     }
 
     /// <summary>
-    /// Gets or sets the count 1.
+    /// Gets or sets the counts.
     /// </summary>
-    public ulong Count1
+    public Span<byte> Counts
     {
-        get => ReadUInt64LittleEndian(this._data.Span[6..]);
-        set => WriteUInt64LittleEndian(this._data.Span[6..], value);
+        get => this._data.Slice(7, 180).Span;
     }
 
     /// <summary>
-    /// Gets or sets the count 2.
+    /// Gets or sets the inventory.
     /// </summary>
-    public ulong Count2
+    public Span<byte> Inventory
     {
-        get => ReadUInt64LittleEndian(this._data.Span[14..]);
-        set => WriteUInt64LittleEndian(this._data.Span[14..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 3.
-    /// </summary>
-    public ulong Count3
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[22..]);
-        set => WriteUInt64LittleEndian(this._data.Span[22..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 4.
-    /// </summary>
-    public ulong Count4
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[30..]);
-        set => WriteUInt64LittleEndian(this._data.Span[30..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 5.
-    /// </summary>
-    public ulong Count5
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[38..]);
-        set => WriteUInt64LittleEndian(this._data.Span[38..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 6.
-    /// </summary>
-    public ulong Count6
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[46..]);
-        set => WriteUInt64LittleEndian(this._data.Span[46..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 7.
-    /// </summary>
-    public ulong Count7
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[54..]);
-        set => WriteUInt64LittleEndian(this._data.Span[54..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 8.
-    /// </summary>
-    public ulong Count8
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[62..]);
-        set => WriteUInt64LittleEndian(this._data.Span[62..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 9.
-    /// </summary>
-    public ulong Count9
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[70..]);
-        set => WriteUInt64LittleEndian(this._data.Span[70..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 1 0.
-    /// </summary>
-    public ulong Count10
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[78..]);
-        set => WriteUInt64LittleEndian(this._data.Span[78..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 1 1.
-    /// </summary>
-    public ulong Count11
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[86..]);
-        set => WriteUInt64LittleEndian(this._data.Span[86..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 1 2.
-    /// </summary>
-    public ulong Count12
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[94..]);
-        set => WriteUInt64LittleEndian(this._data.Span[94..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 1 3.
-    /// </summary>
-    public ulong Count13
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[102..]);
-        set => WriteUInt64LittleEndian(this._data.Span[102..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 1 4.
-    /// </summary>
-    public ulong Count14
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[110..]);
-        set => WriteUInt64LittleEndian(this._data.Span[110..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the count 1 5.
-    /// </summary>
-    public ulong Count15
-    {
-        get => ReadUInt64LittleEndian(this._data.Span[118..]);
-        set => WriteUInt64LittleEndian(this._data.Span[118..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 1.
-    /// </summary>
-    public uint Inventory1
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[126..]);
-        set => WriteUInt32LittleEndian(this._data.Span[126..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 2.
-    /// </summary>
-    public uint Inventory2
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[130..]);
-        set => WriteUInt32LittleEndian(this._data.Span[130..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 3.
-    /// </summary>
-    public uint Inventory3
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[134..]);
-        set => WriteUInt32LittleEndian(this._data.Span[134..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 4.
-    /// </summary>
-    public uint Inventory4
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[138..]);
-        set => WriteUInt32LittleEndian(this._data.Span[138..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 5.
-    /// </summary>
-    public uint Inventory5
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[142..]);
-        set => WriteUInt32LittleEndian(this._data.Span[142..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 6.
-    /// </summary>
-    public uint Inventory6
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[146..]);
-        set => WriteUInt32LittleEndian(this._data.Span[146..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 7.
-    /// </summary>
-    public uint Inventory7
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[150..]);
-        set => WriteUInt32LittleEndian(this._data.Span[150..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 8.
-    /// </summary>
-    public uint Inventory8
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[154..]);
-        set => WriteUInt32LittleEndian(this._data.Span[154..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 9.
-    /// </summary>
-    public uint Inventory9
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[158..]);
-        set => WriteUInt32LittleEndian(this._data.Span[158..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 1 0.
-    /// </summary>
-    public uint Inventory10
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[162..]);
-        set => WriteUInt32LittleEndian(this._data.Span[162..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 1 1.
-    /// </summary>
-    public uint Inventory11
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[166..]);
-        set => WriteUInt32LittleEndian(this._data.Span[166..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 1 2.
-    /// </summary>
-    public uint Inventory12
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[170..]);
-        set => WriteUInt32LittleEndian(this._data.Span[170..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 1 3.
-    /// </summary>
-    public uint Inventory13
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[174..]);
-        set => WriteUInt32LittleEndian(this._data.Span[174..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 1 4.
-    /// </summary>
-    public uint Inventory14
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[178..]);
-        set => WriteUInt32LittleEndian(this._data.Span[178..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the inventory 1 5.
-    /// </summary>
-    public uint Inventory15
-    {
-        get => ReadUInt32LittleEndian(this._data.Span[182..]);
-        set => WriteUInt32LittleEndian(this._data.Span[182..], value);
+        get => this._data.Slice(187, 180).Span;
     }
 
     /// <summary>

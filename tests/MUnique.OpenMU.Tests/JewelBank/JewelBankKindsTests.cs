@@ -21,7 +21,7 @@ public class JewelBankKindsTests
         var codes = JewelBankKinds.All.Select(k => k.Code).ToList();
         Assert.That(codes, Is.Unique);
         Assert.That(codes, Does.Not.Contain((byte)0));
-        Assert.That(codes, Has.Count.EqualTo(15));
+        Assert.That(codes, Has.Count.EqualTo(45));
     }
 
     /// <summary>
@@ -59,53 +59,28 @@ public class JewelBankKindsTests
     }
 
     /// <summary>
-    /// A withdrawal is handed out as the largest packs first, then loose items.
-    /// </summary>
-    [TestCase(65, true, new byte[] { 2, 2 }, 5)]
-    [TestCase(10, true, new byte[] { 0 }, 0)]
-    [TestCase(9, true, new byte[0], 9)]
-    [TestCase(60, true, new byte[] { 2, 2 }, 0)]
-    [TestCase(20, true, new byte[] { 1 }, 0)]
-    [TestCase(65, false, new byte[0], 65)]
-    public void SplitUsesLargestPacksFirst(long units, bool canPack, byte[] packs, int loose)
-    {
-        var (actualPacks, actualLoose) = JewelBankKinds.Split(units, canPack);
-
-        Assert.That(actualPacks, Is.EqualTo(packs));
-        Assert.That(actualLoose, Is.EqualTo(loose));
-    }
-
-    /// <summary>
-    /// A deposit plan takes the largest packs that fit the request first, then loose items, and never exceeds the request.
-    /// </summary>
-    [TestCase(65L, 1_000_000L, 5, new[] { 0, 0, 2 }, 2, 0, 5)]
-    [TestCase(30L, 1_000_000L, 0, new[] { 0, 0, 1 }, 1, 0, 0)]
-    [TestCase(29L, 1_000_000L, 9, new[] { 0, 1, 1 }, 0, 1, 9)]
-    [TestCase(15L, 1_000_000L, 5, new[] { 1, 0, 0 }, 0, 0, 5)]
-    [TestCase(5L, 1_000_000L, 5, new[] { 3, 3, 3 }, 0, 0, 5)]
-    [TestCase(100L, 12L, 20, new[] { 0, 0, 0 }, 0, 0, 12)]
-    [TestCase(0L, 1_000_000L, 5, new[] { 1, 1, 1 }, 0, 0, 0)]
-    [TestCase(10L, 0L, 5, new[] { 1, 1, 1 }, 0, 0, 0)]
-    public void DepositPlanFitsTheRequest(long requested, long room, int loose, int[] packs, int expectedLevel2, int expectedLevel1, int expectedLoose)
-    {
-        var plan = JewelBankKinds.PlanDeposit(requested, room, loose, packs);
-
-        Assert.That(plan.Packs[2], Is.EqualTo(expectedLevel2));
-        Assert.That(plan.Packs[1], Is.EqualTo(expectedLevel1));
-        Assert.That(plan.Loose, Is.EqualTo(expectedLoose));
-        Assert.That(plan.Units, Is.LessThanOrEqualTo(Math.Min(requested, room)));
-    }
-
-    /// <summary>
-    /// The split never creates or loses units.
+    /// Every jewel which has bundles has all three sizes, and the bundle sizes hold 10, 20 and 30 jewels.
     /// </summary>
     [Test]
-    public void SplitPreservesTheTotal()
+    public void EveryJewelHasBundlesOfTenTwentyAndThirty()
     {
-        for (var units = 1; units < 500; units++)
-        {
-            var (packs, loose) = JewelBankKinds.Split(units, true);
-            Assert.That(packs.Sum(p => JewelBankKinds.GetPackUnits(p)) + loose, Is.EqualTo(units));
-        }
+        var packs = JewelBankKinds.All.Where(k => k.IsPack).ToList();
+        Assert.That(packs, Has.Count.EqualTo(JewelBankKinds.JewelCount * 3));
+        Assert.That(packs.Select(k => (k.Number, k.ItemLevel)), Is.Unique);
+        Assert.That(packs.Select(k => k.PackUnits).Distinct().Order(), Is.EqualTo(new[] { 10, 20, 30 }));
+        Assert.That(JewelBankKinds.Find(12, 141, 0)?.Name, Is.EqualTo("Chaos Bundle"));
+        Assert.That(JewelBankKinds.Find(12, 141, 2)?.PackUnits, Is.EqualTo(30));
+        Assert.That(JewelBankKinds.Find(12, 143, 1)?.Name, Is.EqualTo("Higher Refining Bundle"));
+        Assert.That(JewelBankKinds.Find(12, 141, 3), Is.Null);
+    }
+
+    /// <summary>
+    /// Only the bundles are packs; jewels and fruits are single units.
+    /// </summary>
+    [Test]
+    public void JewelsAndFruitsAreNotPacks()
+    {
+        Assert.That(JewelBankKinds.All.Take(15).Any(k => k.IsPack), Is.False);
+        Assert.That(JewelBankKinds.All.Skip(15).All(k => k.IsPack), Is.True);
     }
 }

@@ -22,7 +22,8 @@ public sealed class JewelBankRepository : IJewelBankRepository
     private const short PickupReason = 2;
     private const short DepositType = 0;
     private const short WithdrawType = 1;
-    private const int MaximumWithdrawUnits = 100_000;
+    // Every unit is an item and an inventory holds 64 at most, so a request for more is not a request which can ever fit.
+    private const int MaximumWithdrawItems = 256;
 
     private readonly Func<EntityDataContext> _contextFactory;
 
@@ -71,8 +72,8 @@ public sealed class JewelBankRepository : IJewelBankRepository
             .OrderBy(i => i.ItemSlot)
             .ToListAsync(cancellationToken);
 
-        // The deposit candidates of each kind, in slot order: loose items and packs of each level.
-        var candidates = new Dictionary<byte, (List<Guid> Loose, List<Guid>[] Packs)>();
+        // The deposit candidates of each kind, in slot order. Every item is one unit of its kind: a bundle is a unit of its own kind.
+        var candidates = new Dictionary<byte, List<Guid>>();
         foreach (var item in items)
         {
             // Only items of durability 1 are single units. Anything else could be a stack, which would be counted wrongly, so it stays.
@@ -81,26 +82,18 @@ public sealed class JewelBankRepository : IJewelBankRepository
                 continue;
             }
 
-            var (kind, units) = Classify(definitions, definitionId, item.Level);
-            if (kind is null)
+            if (Classify(definitions, definitionId, item.Level) is not { } kind)
             {
                 continue;
             }
 
-            if (!candidates.TryGetValue(kind.Value.Code, out var entry))
+            if (!candidates.TryGetValue(kind.Code, out var ids))
             {
-                entry = (new List<Guid>(), new[] { new List<Guid>(), new List<Guid>(), new List<Guid>() });
-                candidates[kind.Value.Code] = entry;
+                ids = new List<Guid>();
+                candidates[kind.Code] = ids;
             }
 
-            if (units == 1)
-            {
-                entry.Loose.Add(item.Id);
-            }
-            else
-            {
-                entry.Packs[item.Level].Add(item.Id);
-            }
+            ids.Add(item.Id);
         }
 
         var current = (await ReadStateAsync(context, accountId, cancellationToken)).Counts;
@@ -108,7 +101,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
         var moved = new Dictionary<byte, long>();
         var sawCandidate = false;
         var hitCap = false;
-        foreach (var (code, entry) in candidates)
+        foreach (var (code, ids) in candidates)
         {
             long wanted;
             if (requested is null)
@@ -123,20 +116,15 @@ public sealed class JewelBankRepository : IJewelBankRepository
             sawCandidate = true;
             current.TryGetValue(code, out var stored);
             var room = Math.Max(0, maximumPerKind - stored);
-            var plan = JewelBankKinds.PlanDeposit(wanted, room, entry.Loose.Count, entry.Packs.Select(p => p.Count).ToList());
-            if (plan.Units == 0)
+            var count = (int)Math.Min(Math.Min(wanted, room), ids.Count);
+            if (count == 0)
             {
                 hitCap |= room == 0;
                 continue;
             }
 
-            for (var level = 0; level < plan.Packs.Length; level++)
-            {
-                taken.AddRange(entry.Packs[level].Take(plan.Packs[level]));
-            }
-
-            taken.AddRange(entry.Loose.Take(plan.Loose));
-            moved[code] = plan.Units;
+            taken.AddRange(ids.Take(count));
+            moved[code] = count;
         }
 
         if (taken.Count == 0)
@@ -169,8 +157,8 @@ public sealed class JewelBankRepository : IJewelBankRepository
     {
         var wanted = units.Where(p => p.Value != 0).ToList();
         if (wanted.Count == 0
-            || wanted.Any(p => JewelBankKinds.FindByCode(p.Key) is null || p.Value < 0 || p.Value > MaximumWithdrawUnits)
-            || wanted.Sum(p => p.Value) > MaximumWithdrawUnits)
+            || wanted.Any(p => JewelBankKinds.FindByCode(p.Key) is null || p.Value < 0 || p.Value > MaximumWithdrawItems)
+            || wanted.Sum(p => p.Value) > MaximumWithdrawItems)
         {
             return JewelBankOperationResult.Refused(JewelBankResultCode.InvalidRequest);
         }
@@ -194,16 +182,12 @@ public sealed class JewelBankRepository : IJewelBankRepository
         foreach (var (code, amount) in wanted)
         {
             var kind = JewelBankKinds.FindByCode(code)!.Value;
-            if (!definitions.LooseByKind.TryGetValue(code, out var looseDefinition))
+            if (!definitions.DefinitionByKind.TryGetValue(code, out var definition))
             {
                 return JewelBankOperationResult.Refused(JewelBankResultCode.NotConfigured);
             }
 
-            definitions.PackByKind.TryGetValue(code, out var packDefinition);
-            var (packLevels, looseCount) = JewelBankKinds.Split(amount, packDefinition != Guid.Empty);
-            plan.AddRange(packLevels.Select(level => (packDefinition, level)));
-            plan.AddRange(Enumerable.Repeat((looseDefinition, kind.FruitLevel ?? (byte)0), looseCount));
-
+            plan.AddRange(Enumerable.Repeat((definition, kind.ItemLevel), (int)amount));
             if (!await DebitAsync(context, accountId, characterId, operationId, code, amount, now, cancellationToken))
             {
                 return JewelBankOperationResult.Refused(JewelBankResultCode.InsufficientBalance);
@@ -285,22 +269,8 @@ public sealed class JewelBankRepository : IJewelBankRepository
         return findings;
     }
 
-    private static (JewelBankKind? Kind, long Units) Classify(Definitions definitions, Guid definitionId, int level)
-    {
-        if (definitions.PackToKind.TryGetValue(definitionId, out var packKind))
-        {
-            var units = JewelBankKinds.GetPackUnits(level);
-            return units > 0 && JewelBankKinds.FindByCode(packKind) is { } kind ? (kind, units) : (null, 0);
-        }
-
-        if (definitions.IdToIdentity.TryGetValue(definitionId, out var identity)
-            && JewelBankKinds.Find(identity.Group, identity.Number, level) is { } looseKind)
-        {
-            return (looseKind, 1);
-        }
-
-        return (null, 0);
-    }
+    private static JewelBankKind? Classify(Definitions definitions, Guid definitionId, int level)
+        => definitions.IdToIdentity.TryGetValue(definitionId, out var identity) ? JewelBankKinds.Find(identity.Group, identity.Number, level) : null;
 
     private static async Task<JewelBankState> ReadStateAsync(EntityDataContext context, Guid accountId, CancellationToken cancellationToken)
     {
@@ -325,32 +295,17 @@ public sealed class JewelBankRepository : IJewelBankRepository
                 $"SELECT d.\"Id\" AS \"Id\", d.\"Group\"::int AS \"Group\", d.\"Number\"::int AS \"Number\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" IN (12, 13, 14)")
             .ToListAsync(cancellationToken);
         var idToIdentity = new Dictionary<Guid, (byte Group, short Number)>();
-        var looseByKind = new Dictionary<byte, Guid>();
+        var definitionByKind = new Dictionary<byte, Guid>();
         foreach (var row in rows)
         {
             foreach (var kind in JewelBankKinds.All.Where(k => k.Group == row.Group && k.Number == row.Number))
             {
                 idToIdentity[row.Id] = (kind.Group, kind.Number);
-                looseByKind[kind.Code] = row.Id;
+                definitionByKind[kind.Code] = row.Id;
             }
         }
 
-        var mixes = await context.Database.SqlQuery<MixRow>(
-                $"SELECT jm.\"SingleJewelId\" AS \"SingleId\", jm.\"MixedJewelId\" AS \"MixedId\" FROM config.\"JewelMix\" jm")
-            .ToListAsync(cancellationToken);
-        var packByKind = new Dictionary<byte, Guid>();
-        var packToKind = new Dictionary<Guid, byte>();
-        foreach (var mix in mixes)
-        {
-            var kind = JewelBankKinds.All.FirstOrDefault(k => !k.IsFruit && looseByKind.TryGetValue(k.Code, out var single) && single == mix.SingleId);
-            if (kind.Code != 0)
-            {
-                packByKind[kind.Code] = mix.MixedId;
-                packToKind[mix.MixedId] = kind.Code;
-            }
-        }
-
-        return new Definitions(idToIdentity, looseByKind, packByKind, packToKind);
+        return new Definitions(idToIdentity, definitionByKind);
     }
 
     private static async Task<bool> TryClaimOperationAsync(EntityDataContext context, Guid accountId, Guid operationId, short type, DateTimeOffset now, CancellationToken cancellationToken)
@@ -430,9 +385,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
 
     private sealed record Definitions(
         Dictionary<Guid, (byte Group, short Number)> IdToIdentity,
-        Dictionary<byte, Guid> LooseByKind,
-        Dictionary<byte, Guid> PackByKind,
-        Dictionary<Guid, byte> PackToKind);
+        Dictionary<byte, Guid> DefinitionByKind);
 
     private sealed class BalanceRow
     {
@@ -448,13 +401,6 @@ public sealed class JewelBankRepository : IJewelBankRepository
         public int Group { get; set; }
 
         public int Number { get; set; }
-    }
-
-    private sealed class MixRow
-    {
-        public Guid SingleId { get; set; }
-
-        public Guid MixedId { get; set; }
     }
 
     private sealed class DriftRow

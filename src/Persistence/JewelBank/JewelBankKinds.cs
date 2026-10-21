@@ -5,134 +5,73 @@
 namespace MUnique.OpenMU.Persistence.JewelBank;
 
 /// <summary>
-/// A kind of item which the Jewel Bank stores as a count: a jewel, or one type of stat fruit.
+/// A kind of item which the Jewel Bank stores as a count: a jewel, a stat fruit of one type, or a bundle (pack) of one jewel of one size.
+/// Every kind is exactly one item definition at one item level, so a deposit removes that many items and a withdrawal creates that many.
 /// </summary>
 /// <param name="Code">The kind as its wire and storage value. Codes are never reused.</param>
 /// <param name="Group">The item group of the item definition.</param>
 /// <param name="Number">The item number of the item definition.</param>
-/// <param name="FruitLevel">The item level which selects the fruit type; <c>null</c> for jewels, which are stored at level 0.</param>
+/// <param name="ItemLevel">The item level the item has: 0 for jewels, the fruit type for fruits, the pack size level (0, 1, 2) for bundles.</param>
 /// <param name="Name">The English name, used in logs and messages.</param>
-public readonly record struct JewelBankKind(byte Code, byte Group, short Number, byte? FruitLevel, string Name)
+/// <param name="PackUnits">The number of jewels a bundle holds (10, 20 or 30); 0 for everything which is not a bundle.</param>
+public readonly record struct JewelBankKind(byte Code, byte Group, short Number, byte ItemLevel, string Name, int PackUnits = 0)
 {
     /// <summary>
-    /// Gets a value indicating whether this kind is a stat fruit.
+    /// Gets a value indicating whether this kind is a bundle of jewels.
     /// </summary>
-    public bool IsFruit => this.FruitLevel is not null;
-}
-
-/// <summary>
-/// The items a deposit takes of one kind: whole packs of each level, and loose items.
-/// </summary>
-/// <param name="Packs">The number of packs to take, by pack level (0 = 10 units, 1 = 20, 2 = 30).</param>
-/// <param name="Loose">The number of loose items to take.</param>
-public readonly record struct DepositPlan(int[] Packs, int Loose)
-{
-    /// <summary>
-    /// Gets the units the plan moves into the bank.
-    /// </summary>
-    public long Units
-    {
-        get
-        {
-            var units = (long)this.Loose;
-            for (var level = 0; level < this.Packs.Length; level++)
-            {
-                units += (long)this.Packs[level] * JewelBankKinds.GetPackUnits(level);
-            }
-
-            return units;
-        }
-    }
+    public bool IsPack => this.PackUnits > 0;
 }
 
 /// <summary>
 /// The catalog of the kinds which the Jewel Bank accepts. Anything which is not listed here can never enter the bank.
 /// </summary>
+/// <remarks>
+/// Codes 1 to 10 are the jewels and refining stones, 11 to 15 the fruits, and 16 to 45 the bundles: ten jewels in the order of
+/// codes 1 to 10, first as bundles of 10 (codes 16 to 25), then of 20 (26 to 35), then of 30 (36 to 45).
+/// </remarks>
 public static class JewelBankKinds
 {
     /// <summary>
-    /// The item group of the stat fruits.
+    /// The number of kinds.
     /// </summary>
-    public const byte FruitGroup = 13;
+    public const int Count = 45;
 
     /// <summary>
-    /// The item number of the stat fruits; the fruit type is the item level.
+    /// The number of jewels (and refining stones) which have bundles.
     /// </summary>
-    public const short FruitNumber = 15;
+    public const int JewelCount = 10;
 
     /// <summary>
-    /// The highest item level of a fruit.
+    /// The item group of the bundles.
     /// </summary>
-    public const byte MaximumFruitLevel = 4;
+    public const byte PackGroup = 12;
+
+    private static readonly (byte Group, short Number, string Name, short PackNumber, string PackName)[] Jewels =
+    [
+        (12, 15, "Jewel of Chaos", 141, "Chaos Bundle"),
+        (14, 13, "Jewel of Bless", 30, "Bless Bundle"),
+        (14, 14, "Jewel of Soul", 31, "Soul Bundle"),
+        (14, 16, "Jewel of Life", 136, "Life Bundle"),
+        (14, 22, "Jewel of Creation", 137, "Creation Bundle"),
+        (14, 31, "Jewel of Guardian", 138, "Guardian Bundle"),
+        (14, 42, "Jewel of Harmony", 140, "Harmony Bundle"),
+        (14, 41, "Gemstone", 139, "Gemstone Bundle"),
+        (14, 43, "Lower Refining Stone", 142, "Lower Refining Bundle"),
+        (14, 44, "Higher Refining Stone", 143, "Higher Refining Bundle"),
+    ];
+
+    private static readonly string[] FruitNames = ["Fruit of Energy", "Fruit of Vitality", "Fruit of Agility", "Fruit of Strength", "Fruit of Command"];
 
     /// <summary>
     /// Gets all kinds, ordered by code.
     /// </summary>
-    public static IReadOnlyList<JewelBankKind> All { get; } =
-    [
-        new(1, 12, 15, null, "Jewel of Chaos"),
-        new(2, 14, 13, null, "Jewel of Bless"),
-        new(3, 14, 14, null, "Jewel of Soul"),
-        new(4, 14, 16, null, "Jewel of Life"),
-        new(5, 14, 22, null, "Jewel of Creation"),
-        new(6, 14, 31, null, "Jewel of Guardian"),
-        new(7, 14, 42, null, "Jewel of Harmony"),
-        new(8, 14, 41, null, "Gemstone"),
-        new(9, 14, 43, null, "Lower Refining Stone"),
-        new(10, 14, 44, null, "Higher Refining Stone"),
-        new(11, FruitGroup, FruitNumber, 0, "Fruit of Energy"),
-        new(12, FruitGroup, FruitNumber, 1, "Fruit of Vitality"),
-        new(13, FruitGroup, FruitNumber, 2, "Fruit of Agility"),
-        new(14, FruitGroup, FruitNumber, 3, "Fruit of Strength"),
-        new(15, FruitGroup, FruitNumber, 4, "Fruit of Command"),
-    ];
+    public static IReadOnlyList<JewelBankKind> All { get; } = Create();
 
     /// <summary>
-    /// Finds a kind by its code.
+    /// Gets the number of jewels a bundle of the given item level holds (10, 20 or 30).
     /// </summary>
-    /// <param name="code">The code.</param>
-    /// <returns>The kind, or <c>null</c> when the code is unknown.</returns>
-    public static JewelBankKind? FindByCode(byte code)
-        => All.FirstOrDefault(k => k.Code == code) is { Code: not 0 } kind ? kind : null;
-
-    /// <summary>
-    /// Finds the kind of an item, if the bank accepts it.
-    /// </summary>
-    /// <param name="group">The item group.</param>
-    /// <param name="number">The item number.</param>
-    /// <param name="level">The item level.</param>
-    /// <returns>The kind, or <c>null</c> when the bank does not accept this item.</returns>
-    /// <remarks>Jewels are accepted at level 0 only (a higher level of a loose jewel is not a plain jewel). Fruits use the level as their type.</remarks>
-    public static JewelBankKind? Find(byte group, short number, int level)
-    {
-        foreach (var kind in All)
-        {
-            if (kind.Group != group || kind.Number != number)
-            {
-                continue;
-            }
-
-            if (kind.FruitLevel is { } fruitLevel)
-            {
-                if (level == fruitLevel)
-                {
-                    return kind;
-                }
-            }
-            else if (level == 0)
-            {
-                return kind;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Gets the number of loose units a packed jewel of the given item level represents (10, 20 or 30).
-    /// </summary>
-    /// <param name="packLevel">The item level of the pack.</param>
-    /// <returns>The units, or 0 when the level is not an approved pack level.</returns>
+    /// <param name="packLevel">The item level of the bundle.</param>
+    /// <returns>The units, or 0 when the level is not a bundle size.</returns>
     public static int GetPackUnits(int packLevel) => packLevel switch
     {
         0 => 10,
@@ -142,66 +81,56 @@ public static class JewelBankKinds
     };
 
     /// <summary>
-    /// Gets the pack levels, largest pack first, in the order withdrawals should use them.
+    /// Finds a kind by its code.
     /// </summary>
-    public static IReadOnlyList<byte> PackLevelsLargestFirst { get; } = [2, 1, 0];
+    /// <param name="code">The code.</param>
+    /// <returns>The kind, or <c>null</c> when the code is unknown.</returns>
+    public static JewelBankKind? FindByCode(byte code)
+        => code is >= 1 and <= Count ? All[code - 1] : null;
 
     /// <summary>
-    /// Plans which items a deposit of up to <paramref name="requested"/> units takes. Packs are taken first, the largest which still fits the
-    /// remainder, then loose items fill the rest, so the result is as close to the request as the items allow and never above it.
+    /// Finds the kind of an item, if the bank accepts it.
     /// </summary>
-    /// <param name="requested">The units the player asked for.</param>
-    /// <param name="room">The units the bank can still take of the kind.</param>
-    /// <param name="looseAvailable">The number of loose items the player carries.</param>
-    /// <param name="packsAvailable">The number of packs the player carries, by pack level.</param>
-    /// <returns>The items to take.</returns>
-    public static DepositPlan PlanDeposit(long requested, long room, int looseAvailable, IReadOnlyList<int> packsAvailable)
+    /// <param name="group">The item group.</param>
+    /// <param name="number">The item number.</param>
+    /// <param name="level">The item level.</param>
+    /// <returns>The kind, or <c>null</c> when the bank does not accept this item.</returns>
+    /// <remarks>An upgraded loose jewel is not a plain jewel and not accepted; a fruit's level is its type; a bundle's level is its size.</remarks>
+    public static JewelBankKind? Find(byte group, short number, int level)
     {
-        var remaining = Math.Min(requested, room);
-        var packs = new int[PackLevelsLargestFirst.Count];
-        if (remaining <= 0)
+        foreach (var kind in All)
         {
-            return new DepositPlan(packs, 0);
-        }
-
-        foreach (var level in PackLevelsLargestFirst)
-        {
-            var size = GetPackUnits(level);
-            var available = level < packsAvailable.Count ? packsAvailable[level] : 0;
-            while (packs[level] < available && size <= remaining)
+            if (kind.Group == group && kind.Number == number && kind.ItemLevel == level)
             {
-                packs[level]++;
-                remaining -= size;
+                return kind;
             }
         }
 
-        var loose = (int)Math.Min(remaining, looseAvailable);
-        return new DepositPlan(packs, loose);
+        return null;
     }
 
-    /// <summary>
-    /// Splits an amount of loose units into packs (largest first) and loose items.
-    /// </summary>
-    /// <param name="units">The amount of units to hand out.</param>
-    /// <param name="canPack">Whether the kind has a packed form.</param>
-    /// <returns>The pack levels to create and the number of loose items to create.</returns>
-    public static (IReadOnlyList<byte> PackLevels, int Loose) Split(long units, bool canPack)
+    private static List<JewelBankKind> Create()
     {
-        var packs = new List<byte>();
-        var remaining = units;
-        if (canPack)
+        var kinds = new List<JewelBankKind>(Count);
+        byte code = 1;
+        foreach (var jewel in Jewels)
         {
-            foreach (var level in PackLevelsLargestFirst)
+            kinds.Add(new JewelBankKind(code++, jewel.Group, jewel.Number, 0, jewel.Name));
+        }
+
+        for (byte level = 0; level < FruitNames.Length; level++)
+        {
+            kinds.Add(new JewelBankKind(code++, 13, 15, level, FruitNames[level]));
+        }
+
+        for (byte packLevel = 0; packLevel < 3; packLevel++)
+        {
+            foreach (var jewel in Jewels)
             {
-                var size = GetPackUnits(level);
-                while (remaining >= size)
-                {
-                    packs.Add(level);
-                    remaining -= size;
-                }
+                kinds.Add(new JewelBankKind(code++, PackGroup, jewel.PackNumber, packLevel, jewel.PackName, GetPackUnits(packLevel)));
             }
         }
 
-        return (packs, (int)remaining);
+        return kinds;
     }
 }

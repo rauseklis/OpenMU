@@ -24,6 +24,8 @@ public class JewelBankRepositoryTests
     private const byte Bless = 2;
     private const byte Chaos = 1;
     private const byte FruitStrength = 14;
+    private const byte BlessBundle10 = 17;
+    private const byte BlessBundle30 = 37;
 
     private static readonly int First = InventoryConstants.EquippableSlotsCount;
 
@@ -86,17 +88,22 @@ public class JewelBankRepositoryTests
     }
 
     /// <summary>
-    /// A packed jewel is credited with the units it represents.
+    /// A bundle is its own kind: it is counted as one bundle, not as the jewels it holds.
     /// </summary>
     [Test]
-    public async Task DepositCountsAPackAsItsUnits()
+    public async Task DepositCountsABundleAsItsOwnKind()
     {
-        await this.AddPackAsync(14, 13, 2, First);
+        await this.AddItemAsync(12, 30, 2, First);
+        await this.AddItemAsync(12, 30, 2, First + 1);
+        await this.AddItemAsync(12, 30, 0, First + 2);
 
         var result = await this._repository.DepositFromInventoryAsync(this._accountId, this._characterId, Guid.NewGuid(), null, Cap);
 
         Assert.That(result.IsSuccess, Is.True);
-        Assert.That((await this._repository.GetStateAsync(this._accountId)).CountOf(Bless), Is.EqualTo(30));
+        var state = await this._repository.GetStateAsync(this._accountId);
+        Assert.That(state.CountOf(BlessBundle30), Is.EqualTo(2));
+        Assert.That(state.CountOf(BlessBundle10), Is.EqualTo(1));
+        Assert.That(state.CountOf(Bless), Is.EqualTo(0), "a bundle never becomes loose jewels");
     }
 
     /// <summary>
@@ -172,20 +179,18 @@ public class JewelBankRepositoryTests
     }
 
     /// <summary>
-    /// A withdrawal creates the largest packs first and the rest as loose jewels, and reduces the balance by exactly that.
+    /// Withdrawing a bundle kind creates bundles of that size, and nothing else.
     /// </summary>
     [Test]
-    public async Task WithdrawCreatesPacksFirst()
+    public async Task WithdrawCreatesTheBundlesOfTheKind()
     {
-        await this._repository.CreditPickupAsync(this._accountId, this._characterId, Bless, 65, Cap);
+        await this._repository.CreditPickupAsync(this._accountId, this._characterId, BlessBundle30, 3, Cap);
 
-        var result = await this._repository.WithdrawToInventoryAsync(this._accountId, this._characterId, Guid.NewGuid(), Units(Bless, 65));
+        var result = await this._repository.WithdrawToInventoryAsync(this._accountId, this._characterId, Guid.NewGuid(), Units(BlessBundle30, 2));
 
         Assert.That(result.IsSuccess, Is.True);
-        Assert.That((await this._repository.GetStateAsync(this._accountId)).CountOf(Bless), Is.EqualTo(0));
-        var items = await this.InventoryAsync();
-        Assert.That(items.Count(i => i.Group == 12 && i.Level == 2), Is.EqualTo(2), "two packs of 30");
-        Assert.That(items.Count(i => i.Group == 14 && i.Number == 13 && i.Level == 0), Is.EqualTo(5), "five loose jewels");
+        Assert.That((await this._repository.GetStateAsync(this._accountId)).CountOf(BlessBundle30), Is.EqualTo(1));
+        Assert.That((await this.InventoryAsync()).Select(i => (i.Group, i.Number, i.Level)), Is.EqualTo(new[] { (12, 30, 2), (12, 30, 2) }));
     }
 
     /// <summary>
@@ -253,18 +258,17 @@ public class JewelBankRepositoryTests
     }
 
     /// <summary>
-    /// A pack is only taken whole: asking for fewer units than the pack holds leaves it in the inventory.
+    /// A bundle is only taken as its own kind: asking for loose jewels leaves a bundle in the inventory.
     /// </summary>
     [Test]
-    public async Task DepositNeverSplitsAPack()
+    public async Task DepositOfLooseJewelsLeavesBundles()
     {
-        await this.AddPackAsync(14, 13, 2, First);
+        await this.AddItemAsync(12, 30, 2, First);
 
-        var small = await this._repository.DepositFromInventoryAsync(this._accountId, this._characterId, Guid.NewGuid(), Units(Bless, 20), Cap);
-        var whole = await this._repository.DepositFromInventoryAsync(this._accountId, this._characterId, Guid.NewGuid(), Units(Bless, 30), Cap);
+        var result = await this._repository.DepositFromInventoryAsync(this._accountId, this._characterId, Guid.NewGuid(), Units(Bless, 30), Cap);
 
-        Assert.That(small.Result, Is.EqualTo(JewelBankResultCode.NothingToDeposit));
-        Assert.That(whole.Moved[Bless], Is.EqualTo(30));
+        Assert.That(result.Result, Is.EqualTo(JewelBankResultCode.NothingToDeposit));
+        Assert.That(await this.InventoryItemCountAsync(), Is.EqualTo(1));
     }
 
     /// <summary>
@@ -379,7 +383,7 @@ public class JewelBankRepositoryTests
     [TestCase((byte)200, 1L)]
     [TestCase(Bless, 0L)]
     [TestCase(Bless, -5L)]
-    [TestCase(Bless, 100_001L)]
+    [TestCase(Bless, 257L)]
     public async Task InvalidWithdrawIsRefused(byte kind, long units)
     {
         await this._repository.CreditPickupAsync(this._accountId, this._characterId, Bless, 5, Cap);
@@ -490,23 +494,6 @@ public class JewelBankRepositoryTests
             Level = (byte)level,
             Durability = durability,
             SocketCount = socketCount,
-        });
-        await context.SaveChangesAsync();
-    }
-
-    private async Task AddPackAsync(int group, int number, int level, int slot)
-    {
-        await using var context = new EntityDataContext();
-        var single = await this.DefinitionAsync(group, number);
-        var pack = (await context.Database.SqlQuery<Guid>($"SELECT jm.\"MixedJewelId\" AS \"Value\" FROM config.\"JewelMix\" jm WHERE jm.\"SingleJewelId\" = {single}").ToListAsync()).Single();
-        context.Set<Item>().Add(new Item
-        {
-            Id = Guid.NewGuid(),
-            ItemStorageId = this._inventoryId,
-            ItemSlot = (byte)slot,
-            DefinitionId = pack,
-            Level = (byte)level,
-            Durability = 1,
         });
         await context.SaveChangesAsync();
     }

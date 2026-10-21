@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameServer.MessageHandler.JewelBank;
 
+using System.Buffers.Binary;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.JewelBank;
 using MUnique.OpenMU.GameServer.RemoteView;
@@ -46,30 +47,32 @@ internal static class JewelBankMessages
         }
 
         var carried = JewelBankInventory.Count(player);
-        await connection.SendJewelBankStateResponseAsync(
-            ToWire(result),
-            state.AutoDeposit ? (byte)1 : (byte)0,
-            Count(state, 1), Count(state, 2), Count(state, 3), Count(state, 4), Count(state, 5),
-            Count(state, 6), Count(state, 7), Count(state, 8), Count(state, 9), Count(state, 10),
-            Count(state, 11), Count(state, 12), Count(state, 13), Count(state, 14), Count(state, 15),
-            Carried(carried, 1), Carried(carried, 2), Carried(carried, 3), Carried(carried, 4), Carried(carried, 5),
-            Carried(carried, 6), Carried(carried, 7), Carried(carried, 8), Carried(carried, 9), Carried(carried, 10),
-            Carried(carried, 11), Carried(carried, 12), Carried(carried, 13), Carried(carried, 14), Carried(carried, 15)).ConfigureAwait(false);
+        var counts = new byte[JewelBankKinds.Count * sizeof(uint)];
+        var inventory = new byte[JewelBankKinds.Count * sizeof(uint)];
+        for (var index = 0; index < JewelBankKinds.Count; index++)
+        {
+            var code = (byte)(index + 1);
+            BinaryPrimitives.WriteUInt32LittleEndian(counts.AsSpan(index * sizeof(uint)), (uint)Math.Clamp(state.CountOf(code), 0, uint.MaxValue));
+            BinaryPrimitives.WriteUInt32LittleEndian(inventory.AsSpan(index * sizeof(uint)), (uint)Math.Clamp(carried.GetValueOrDefault(code), 0, uint.MaxValue));
+        }
+
+        await connection.SendJewelBankStateResponseAsync(ToWire(result), state.AutoDeposit ? (byte)1 : (byte)0, counts, inventory).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Turns the 15 amounts of a request (kind codes 1 to 15 in order) into a dictionary; kinds with no amount are left out.
+    /// Turns the amounts of a request (one little-endian 32-bit value per kind, in the order of the kind codes) into a dictionary; kinds with no amount are left out.
     /// </summary>
-    /// <param name="amounts">The amounts of the kinds with code 1 to 15.</param>
+    /// <param name="amounts">The amounts of the kinds with code 1 to 45.</param>
     /// <returns>The amounts by kind code.</returns>
-    public static Dictionary<byte, long> ToAmounts(params uint[] amounts)
+    public static Dictionary<byte, long> ToAmounts(ReadOnlySpan<byte> amounts)
     {
         var result = new Dictionary<byte, long>();
-        for (var index = 0; index < amounts.Length; index++)
+        for (var index = 0; index < JewelBankKinds.Count && (index + 1) * sizeof(uint) <= amounts.Length; index++)
         {
-            if (amounts[index] > 0)
+            var amount = BinaryPrimitives.ReadUInt32LittleEndian(amounts.Slice(index * sizeof(uint)));
+            if (amount > 0)
             {
-                result[(byte)(index + 1)] = amounts[index];
+                result[(byte)(index + 1)] = amount;
             }
         }
 
@@ -129,10 +132,6 @@ internal static class JewelBankMessages
         var state = result.State ?? await service.GetStateAsync(who.AccountId).ConfigureAwait(false);
         await SendStateAsync(player, JewelBankResultCode.Success, state).ConfigureAwait(false);
     }
-
-    private static ulong Count(JewelBankState state, byte code) => (ulong)Math.Max(0, state.CountOf(code));
-
-    private static uint Carried(IReadOnlyDictionary<byte, long> carried, byte code) => (uint)Math.Clamp(carried.GetValueOrDefault(code), 0, uint.MaxValue);
 
     private static JewelBankResult ToWire(JewelBankResultCode result) => (JewelBankResult)(byte)result;
 }

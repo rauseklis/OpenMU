@@ -68,10 +68,7 @@ internal sealed class JewelBankDepositHandlerPlugIn : ISubPacketHandlerPlugIn
         }
 
         var request = new Wire.JewelBankDepositRequest(packet);
-        var requested = JewelBankMessages.ToAmounts(
-            request.Amount1, request.Amount2, request.Amount3, request.Amount4, request.Amount5,
-            request.Amount6, request.Amount7, request.Amount8, request.Amount9, request.Amount10,
-            request.Amount11, request.Amount12, request.Amount13, request.Amount14, request.Amount15);
+        var requested = JewelBankMessages.ToAmounts(request.Amounts);
         await JewelBankMessages.RunAsync(
             player,
             request.OperationId.ToArray(),
@@ -103,10 +100,7 @@ internal sealed class JewelBankWithdrawHandlerPlugIn : ISubPacketHandlerPlugIn
         }
 
         var request = new Wire.JewelBankWithdrawRequest(packet);
-        var units = JewelBankMessages.ToAmounts(
-            request.Amount1, request.Amount2, request.Amount3, request.Amount4, request.Amount5,
-            request.Amount6, request.Amount7, request.Amount8, request.Amount9, request.Amount10,
-            request.Amount11, request.Amount12, request.Amount13, request.Amount14, request.Amount15);
+        var units = JewelBankMessages.ToAmounts(request.Amounts);
         await JewelBankMessages.RunAsync(
             player,
             request.OperationId.ToArray(),

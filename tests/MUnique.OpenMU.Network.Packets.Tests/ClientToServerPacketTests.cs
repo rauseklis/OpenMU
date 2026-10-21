@@ -4415,7 +4415,7 @@ public class PacketStructureTests
     public void JewelBankDepositRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 21;
+        const int expectedLength = 200;
         var actualLength = JewelBankDepositRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -4425,9 +4425,9 @@ public class PacketStructureTests
         Assert.That(4 + 16, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'OperationId' exceeds packet boundary");
         
-        // Validate field 'KindCode' boundary
-        Assert.That(20 + 1, Is.LessThanOrEqualTo(expectedLength), 
-            "Field 'KindCode' exceeds packet boundary");
+        // Validate field 'Amounts' boundary
+        Assert.That(20 + 180, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Amounts' exceeds packet boundary");
     }
 
     /// <summary>
@@ -4437,7 +4437,7 @@ public class PacketStructureTests
     public void JewelBankWithdrawRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 25;
+        const int expectedLength = 200;
         var actualLength = JewelBankWithdrawRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -4447,13 +4447,9 @@ public class PacketStructureTests
         Assert.That(4 + 16, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'OperationId' exceeds packet boundary");
         
-        // Validate field 'KindCode' boundary
-        Assert.That(20 + 1, Is.LessThanOrEqualTo(expectedLength), 
-            "Field 'KindCode' exceeds packet boundary");
-        
-        // Validate field 'Units' boundary
-        Assert.That(21 + 4, Is.LessThanOrEqualTo(expectedLength), 
-            "Field 'Units' exceeds packet boundary");
+        // Validate field 'Amounts' boundary
+        Assert.That(20 + 180, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Amounts' exceeds packet boundary");
     }
 
     /// <summary>

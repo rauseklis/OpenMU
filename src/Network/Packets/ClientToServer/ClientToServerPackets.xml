@@ -4827,9 +4827,9 @@
       <Code>D6</Code>
       <SubCode>01</SubCode>
       <Name>JewelBankDepositRequest</Name>
-      <Length>80</Length>
+      <Length>200</Length>
       <Direction>ClientToServer</Direction>
-      <SentWhen>The player deposits the chosen amount of each kind from the inventory; Amount1..Amount15 are the units for the kinds with code 1..15, and 0 skips a kind.</SentWhen>
+      <SentWhen>The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
       <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
       <Fields>
         <Field>
@@ -4840,78 +4840,9 @@
         </Field>
         <Field>
           <Index>20</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount1</Name>
-        </Field>
-        <Field>
-          <Index>24</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount2</Name>
-        </Field>
-        <Field>
-          <Index>28</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount3</Name>
-        </Field>
-        <Field>
-          <Index>32</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount4</Name>
-        </Field>
-        <Field>
-          <Index>36</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount5</Name>
-        </Field>
-        <Field>
-          <Index>40</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount6</Name>
-        </Field>
-        <Field>
-          <Index>44</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount7</Name>
-        </Field>
-        <Field>
-          <Index>48</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount8</Name>
-        </Field>
-        <Field>
-          <Index>52</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount9</Name>
-        </Field>
-        <Field>
-          <Index>56</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount10</Name>
-        </Field>
-        <Field>
-          <Index>60</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount11</Name>
-        </Field>
-        <Field>
-          <Index>64</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount12</Name>
-        </Field>
-        <Field>
-          <Index>68</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount13</Name>
-        </Field>
-        <Field>
-          <Index>72</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount14</Name>
-        </Field>
-        <Field>
-          <Index>76</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount15</Name>
+          <Type>Binary</Type>
+          <Name>Amounts</Name>
+          <Length>180</Length>
         </Field>
       </Fields>
     </Packet>
@@ -4920,9 +4851,9 @@
       <Code>D6</Code>
       <SubCode>02</SubCode>
       <Name>JewelBankWithdrawRequest</Name>
-      <Length>80</Length>
+      <Length>200</Length>
       <Direction>ClientToServer</Direction>
-      <SentWhen>The player withdraws the chosen amount of each kind as items; Amount1..Amount15 are the units for the kinds with code 1..15, and 0 skips a kind.</SentWhen>
+      <SentWhen>The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
       <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
       <Fields>
         <Field>
@@ -4933,78 +4864,9 @@
         </Field>
         <Field>
           <Index>20</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount1</Name>
-        </Field>
-        <Field>
-          <Index>24</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount2</Name>
-        </Field>
-        <Field>
-          <Index>28</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount3</Name>
-        </Field>
-        <Field>
-          <Index>32</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount4</Name>
-        </Field>
-        <Field>
-          <Index>36</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount5</Name>
-        </Field>
-        <Field>
-          <Index>40</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount6</Name>
-        </Field>
-        <Field>
-          <Index>44</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount7</Name>
-        </Field>
-        <Field>
-          <Index>48</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount8</Name>
-        </Field>
-        <Field>
-          <Index>52</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount9</Name>
-        </Field>
-        <Field>
-          <Index>56</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount10</Name>
-        </Field>
-        <Field>
-          <Index>60</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount11</Name>
-        </Field>
-        <Field>
-          <Index>64</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount12</Name>
-        </Field>
-        <Field>
-          <Index>68</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount13</Name>
-        </Field>
-        <Field>
-          <Index>72</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount14</Name>
-        </Field>
-        <Field>
-          <Index>76</Index>
-          <Type>IntegerLittleEndian</Type>
-          <Name>Amount15</Name>
+          <Type>Binary</Type>
+          <Name>Amounts</Name>
+          <Length>180</Length>
         </Field>
       </Fields>
     </Packet>

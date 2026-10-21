@@ -19013,7 +19013,7 @@ public readonly ref struct JewelBankOpenRequestRef
 
 
 /// <summary>
-/// Is sent by the client when: The player deposits the chosen amount of each kind from the inventory; Amount1..Amount15 are the units for the kinds with code 1..15, and 0 skips a kind.
+/// Is sent by the client when: The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
 /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 /// </summary>
 public readonly ref struct JewelBankDepositRequestRef
@@ -19066,7 +19066,7 @@ public readonly ref struct JewelBankDepositRequestRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 80;
+    public static int Length => 200;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -19082,138 +19082,11 @@ public readonly ref struct JewelBankDepositRequestRef
     }
 
     /// <summary>
-    /// Gets or sets the amount 1.
+    /// Gets or sets the amounts.
     /// </summary>
-    public uint Amount1
+    public Span<byte> Amounts
     {
-        get => ReadUInt32LittleEndian(this._data[20..]);
-        set => WriteUInt32LittleEndian(this._data[20..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 2.
-    /// </summary>
-    public uint Amount2
-    {
-        get => ReadUInt32LittleEndian(this._data[24..]);
-        set => WriteUInt32LittleEndian(this._data[24..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 3.
-    /// </summary>
-    public uint Amount3
-    {
-        get => ReadUInt32LittleEndian(this._data[28..]);
-        set => WriteUInt32LittleEndian(this._data[28..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 4.
-    /// </summary>
-    public uint Amount4
-    {
-        get => ReadUInt32LittleEndian(this._data[32..]);
-        set => WriteUInt32LittleEndian(this._data[32..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 5.
-    /// </summary>
-    public uint Amount5
-    {
-        get => ReadUInt32LittleEndian(this._data[36..]);
-        set => WriteUInt32LittleEndian(this._data[36..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 6.
-    /// </summary>
-    public uint Amount6
-    {
-        get => ReadUInt32LittleEndian(this._data[40..]);
-        set => WriteUInt32LittleEndian(this._data[40..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 7.
-    /// </summary>
-    public uint Amount7
-    {
-        get => ReadUInt32LittleEndian(this._data[44..]);
-        set => WriteUInt32LittleEndian(this._data[44..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 8.
-    /// </summary>
-    public uint Amount8
-    {
-        get => ReadUInt32LittleEndian(this._data[48..]);
-        set => WriteUInt32LittleEndian(this._data[48..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 9.
-    /// </summary>
-    public uint Amount9
-    {
-        get => ReadUInt32LittleEndian(this._data[52..]);
-        set => WriteUInt32LittleEndian(this._data[52..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 0.
-    /// </summary>
-    public uint Amount10
-    {
-        get => ReadUInt32LittleEndian(this._data[56..]);
-        set => WriteUInt32LittleEndian(this._data[56..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 1.
-    /// </summary>
-    public uint Amount11
-    {
-        get => ReadUInt32LittleEndian(this._data[60..]);
-        set => WriteUInt32LittleEndian(this._data[60..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 2.
-    /// </summary>
-    public uint Amount12
-    {
-        get => ReadUInt32LittleEndian(this._data[64..]);
-        set => WriteUInt32LittleEndian(this._data[64..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 3.
-    /// </summary>
-    public uint Amount13
-    {
-        get => ReadUInt32LittleEndian(this._data[68..]);
-        set => WriteUInt32LittleEndian(this._data[68..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 4.
-    /// </summary>
-    public uint Amount14
-    {
-        get => ReadUInt32LittleEndian(this._data[72..]);
-        set => WriteUInt32LittleEndian(this._data[72..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 5.
-    /// </summary>
-    public uint Amount15
-    {
-        get => ReadUInt32LittleEndian(this._data[76..]);
-        set => WriteUInt32LittleEndian(this._data[76..], value);
+        get => this._data.Slice(20, 180);
     }
 
     /// <summary>
@@ -19233,7 +19106,7 @@ public readonly ref struct JewelBankDepositRequestRef
 
 
 /// <summary>
-/// Is sent by the client when: The player withdraws the chosen amount of each kind as items; Amount1..Amount15 are the units for the kinds with code 1..15, and 0 skips a kind.
+/// Is sent by the client when: The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
 /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 /// </summary>
 public readonly ref struct JewelBankWithdrawRequestRef
@@ -19286,7 +19159,7 @@ public readonly ref struct JewelBankWithdrawRequestRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 80;
+    public static int Length => 200;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -19302,138 +19175,11 @@ public readonly ref struct JewelBankWithdrawRequestRef
     }
 
     /// <summary>
-    /// Gets or sets the amount 1.
+    /// Gets or sets the amounts.
     /// </summary>
-    public uint Amount1
+    public Span<byte> Amounts
     {
-        get => ReadUInt32LittleEndian(this._data[20..]);
-        set => WriteUInt32LittleEndian(this._data[20..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 2.
-    /// </summary>
-    public uint Amount2
-    {
-        get => ReadUInt32LittleEndian(this._data[24..]);
-        set => WriteUInt32LittleEndian(this._data[24..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 3.
-    /// </summary>
-    public uint Amount3
-    {
-        get => ReadUInt32LittleEndian(this._data[28..]);
-        set => WriteUInt32LittleEndian(this._data[28..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 4.
-    /// </summary>
-    public uint Amount4
-    {
-        get => ReadUInt32LittleEndian(this._data[32..]);
-        set => WriteUInt32LittleEndian(this._data[32..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 5.
-    /// </summary>
-    public uint Amount5
-    {
-        get => ReadUInt32LittleEndian(this._data[36..]);
-        set => WriteUInt32LittleEndian(this._data[36..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 6.
-    /// </summary>
-    public uint Amount6
-    {
-        get => ReadUInt32LittleEndian(this._data[40..]);
-        set => WriteUInt32LittleEndian(this._data[40..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 7.
-    /// </summary>
-    public uint Amount7
-    {
-        get => ReadUInt32LittleEndian(this._data[44..]);
-        set => WriteUInt32LittleEndian(this._data[44..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 8.
-    /// </summary>
-    public uint Amount8
-    {
-        get => ReadUInt32LittleEndian(this._data[48..]);
-        set => WriteUInt32LittleEndian(this._data[48..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 9.
-    /// </summary>
-    public uint Amount9
-    {
-        get => ReadUInt32LittleEndian(this._data[52..]);
-        set => WriteUInt32LittleEndian(this._data[52..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 0.
-    /// </summary>
-    public uint Amount10
-    {
-        get => ReadUInt32LittleEndian(this._data[56..]);
-        set => WriteUInt32LittleEndian(this._data[56..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 1.
-    /// </summary>
-    public uint Amount11
-    {
-        get => ReadUInt32LittleEndian(this._data[60..]);
-        set => WriteUInt32LittleEndian(this._data[60..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 2.
-    /// </summary>
-    public uint Amount12
-    {
-        get => ReadUInt32LittleEndian(this._data[64..]);
-        set => WriteUInt32LittleEndian(this._data[64..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 3.
-    /// </summary>
-    public uint Amount13
-    {
-        get => ReadUInt32LittleEndian(this._data[68..]);
-        set => WriteUInt32LittleEndian(this._data[68..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 4.
-    /// </summary>
-    public uint Amount14
-    {
-        get => ReadUInt32LittleEndian(this._data[72..]);
-        set => WriteUInt32LittleEndian(this._data[72..], value);
-    }
-
-    /// <summary>
-    /// Gets or sets the amount 1 5.
-    /// </summary>
-    public uint Amount15
-    {
-        get => ReadUInt32LittleEndian(this._data[76..]);
-        set => WriteUInt32LittleEndian(this._data[76..], value);
+        get => this._data.Slice(20, 180);
     }
 
     /// <summary>

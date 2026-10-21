@@ -24,16 +24,15 @@ public class JewelBankPacketDefinitionTests
     public static IEnumerable<TestCaseData> Cases()
     {
         yield return new TestCaseData(ClientPacketDefinitions, "JewelBankOpenRequest", "00", "4", string.Empty);
-        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankDepositRequest", "01", "80", "4:Binary:OperationId[16];" + Amounts());
-        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankWithdrawRequest", "02", "80", "4:Binary:OperationId[16];" + Amounts());
+        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankDepositRequest", "01", "200", "4:Binary:OperationId[16];20:Binary:Amounts[180]");
+        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankWithdrawRequest", "02", "200", "4:Binary:OperationId[16];20:Binary:Amounts[180]");
         yield return new TestCaseData(ClientPacketDefinitions, "JewelBankSetAutoDepositRequest", "03", "5", "4:Byte:Enabled");
         yield return new TestCaseData(
             ServerPacketDefinitions,
             "JewelBankStateResponse",
             "80",
-            "186",
-            "4:Enum:Result;5:Byte:AutoDeposit;" + string.Join(';', Enumerable.Range(0, 15).Select(i => $"{6 + (8 * i)}:LongLittleEndian:Count{i + 1}"))
-            + ";" + string.Join(';', Enumerable.Range(0, 15).Select(i => $"{126 + (4 * i)}:IntegerLittleEndian:Inventory{i + 1}")));
+            "367",
+            "5:Enum:Result;6:Byte:AutoDeposit;7:Binary:Counts[180];187:Binary:Inventory[180]");
         yield return new TestCaseData(
             ServerPacketDefinitions,
             "JewelBankOperationResponse",
@@ -59,8 +58,10 @@ public class JewelBankPacketDefinitionTests
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "Code"), Is.EqualTo("D6"));
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "SubCode"), Is.EqualTo(subCode));
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "Length"), Is.EqualTo(length));
-        // Requests are encrypted (C3), like the Auction House's; the group handler expects that. Responses are plain C1.
-        Assert.That((string?)packet.Element(PacketDefinitionNamespace + "HeaderType"), Is.EqualTo(file == ClientPacketDefinitions ? "C3HeaderWithSubCode" : "C1HeaderWithSubCode"));
+        // Requests are encrypted (C3), like the Auction House's; the group handler expects that. Responses are plain C1 (C2 when longer than 255 bytes).
+        // The state response is longer than 255 bytes and therefore a C2 packet.
+        var expectedHeader = file == ClientPacketDefinitions ? "C3HeaderWithSubCode" : name == "JewelBankStateResponse" ? "C2HeaderWithSubCode" : "C1HeaderWithSubCode";
+        Assert.That((string?)packet.Element(PacketDefinitionNamespace + "HeaderType"), Is.EqualTo(expectedHeader));
         var actual = packet.Descendants(PacketDefinitionNamespace + "Field").Select(f =>
         {
             var fieldLength = (string?)f.Element(PacketDefinitionNamespace + "Length");
@@ -85,9 +86,6 @@ public class JewelBankPacketDefinitionTests
             Assert.That(subCodes, Is.Not.Empty);
         }
     }
-
-    private static string Amounts()
-        => string.Join(';', Enumerable.Range(0, 15).Select(i => $"{20 + (4 * i)}:IntegerLittleEndian:Amount{i + 1}"));
 
     private static XDocument Load(string relativePath)
     {
