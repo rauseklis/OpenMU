@@ -33,9 +33,11 @@ jobs:
       - name: Pack
         run: |
           set -euo pipefail
-          dotnet pack src/PlugIns/MUnique.OpenMU.PlugIns.csproj -c Release -o packages
-          dotnet pack src/Network/MUnique.OpenMU.Network.csproj -c Release -o packages
-          dotnet pack src/Network/Packets/MUnique.OpenMU.Network.Packets.csproj -c Release -o packages
+          # Build first, then pack what was built: packing in one step does not find the build output in this repository.
+          for project in src/PlugIns/MUnique.OpenMU.PlugIns.csproj src/Network/MUnique.OpenMU.Network.csproj src/Network/Packets/MUnique.OpenMU.Network.Packets.csproj; do
+            dotnet build "$project" -c Release -t:Rebuild
+            dotnet pack "$project" -c Release --no-build -o packages
+          done
           ls -l packages
 
       - name: Push to GitHub Packages

@@ -11,3 +11,5 @@
 
 # Generated docs use LF (see GenerateMarkdownDocs.xslt)
 docs/Packets/*.md text eol=lf
+# Shell scripts run on Linux: always LF.
+*.sh text eol=lf
