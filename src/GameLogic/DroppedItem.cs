@@ -139,6 +139,37 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
     }
 
     /// <summary>
+    /// Tries to pick the item up for the Jewel Bank: the same ownership rules as a normal pickup apply, but the item does not
+    /// need inventory space, and it is consumed instead of being added to the inventory.
+    /// </summary>
+    /// <param name="player">The player.</param>
+    /// <param name="creditAsync">Credits the bank. It runs while the drop is locked, so it cannot happen twice for one drop; if it returns <c>false</c>, the drop stays untouched.</param>
+    /// <returns><c>true</c> when the drop was credited and removed.</returns>
+    public async ValueTask<bool> TryPickUpIntoBankAsync(Player player, Func<ValueTask<bool>> creditAsync)
+    {
+        if (!this._availableToPick
+            || (this.Item.Definition!.IsBoundToCharacter && !this.IsPlayerAnOwner(player))
+            || (!this.IsPlayerAnOwner(player) && DateTime.UtcNow < this._dropTimestamp.Add(TimeUntilDropIsFree)))
+        {
+            return false;
+        }
+
+        using (await this._pickupLock.LockAsync())
+        {
+            if (!this._availableToPick || !await creditAsync().ConfigureAwait(false))
+            {
+                return false;
+            }
+
+            this._availableToPick = false;
+        }
+
+        player.Logger.LogInformation("Item '{0}' got picked up by player '{1}' and went into the Jewel Bank.", this, player);
+        this.DisposeAndDelete(null);
+        return true;
+    }
+
+    /// <summary>
     /// Determines whether the specified player is an owner of this dropped item.
     /// </summary>
     /// <param name="player">The player.</param>

@@ -332,11 +332,7 @@ public static class ItemExtensions
             var value = item.CalculateRequirement(requirement.MinimumValue, multiplier);
             if (value > 0 && totalAttribute == Stats.TotalStrength)
             {
-                var itemOption = item.ItemOptions.FirstOrDefault(o => o.ItemOption?.OptionType == ItemOptionTypes.Option);
-                if (itemOption != null)
-                {
-                    value += itemOption.Level * 4;
-                }
+                value += GetAdditionalOptionStrengthRequirement(item);
             }
 
             if (RequirementReductionAttributeMapping.TryGetValue(requirement.Attribute, out var reductionAttribute)
@@ -442,6 +438,17 @@ public static class ItemExtensions
     public static int CalculateDropLevel(this Item item)
     {
         return item.Definition?.CalculateDropLevel(item.IsAncient(), item.IsExcellent(), item.Level) ?? 0;
+    }
+
+    private static int GetAdditionalOptionStrengthRequirement(Item item)
+    {
+        const int OrdinaryStrengthPerOptionLevel = 4;
+        const int KingMaceStrengthPerOptionLevel = 5;
+        var optionLevel = item.ItemOptions.FirstOrDefault(o => o.ItemOption?.OptionType == ItemOptionTypes.Option)?.Level ?? 0;
+        var strengthPerLevel = item.Definition is { Group: 2, Number: 22 or 23 }
+            ? KingMaceStrengthPerOptionLevel
+            : OrdinaryStrengthPerOptionLevel;
+        return optionLevel * strengthPerLevel;
     }
 
     private static int CalculateRequirement(this Item item, int requirementValue, int multiplier)

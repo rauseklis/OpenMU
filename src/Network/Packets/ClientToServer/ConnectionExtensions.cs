@@ -2354,6 +2354,34 @@ public static class ConnectionExtensions
     }
 
     /// <summary>
+    /// Sends a <see cref="VaultSwitchRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="vaultNumber">The number of the requested vault, starting with 1.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player wants to switch to another vault of the opened vault dialog.
+    /// Causes reaction on server side: The requested vault becomes the active one and its items are sent to the player.
+    /// </remarks>
+    public static async ValueTask SendVaultSwitchRequestAsync(this IConnection? connection, byte @vaultNumber)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = VaultSwitchRequestRef.Length;
+            var packet = new VaultSwitchRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.VaultNumber = @vaultNumber;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Sends a <see cref="LahapJewelMixRequest" /> to this connection.
     /// </summary>
     /// <param name="connection">The connection.</param>
@@ -5985,6 +6013,119 @@ public static class ConnectionExtensions
             packet.RequestedVitality = @requestedVitality;
             packet.RequestedEnergy = @requestedEnergy;
             packet.RequestedCommand = @requestedCommand;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankOpenRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player opens the Jewel Bank window (Ctrl+J) or asks for its current state.
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankOpenRequestAsync(this IConnection? connection)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankOpenRequestRef.Length;
+            var packet = new JewelBankOpenRequestRef(connection.Output.GetSpan(length)[..length]);
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankDepositRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="amounts">The amounts.</param>
+    /// <remarks>
+    /// Is sent by the client when: (A C4 packet: the encrypted request is longer than a C3 packet can be.) The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankDepositRequestAsync(this IConnection? connection, Memory<byte> @operationId, Memory<byte> @amounts)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankDepositRequestRef.Length;
+            var packet = new JewelBankDepositRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            @amounts.Span.CopyTo(packet.Amounts);
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankWithdrawRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="operationId">The operation id.</param>
+    /// <param name="amounts">The amounts.</param>
+    /// <remarks>
+    /// Is sent by the client when: (A C4 packet: the encrypted request is longer than a C3 packet can be.) The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankWithdrawRequestAsync(this IConnection? connection, Memory<byte> @operationId, Memory<byte> @amounts)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankWithdrawRequestRef.Length;
+            var packet = new JewelBankWithdrawRequestRef(connection.Output.GetSpan(length)[..length]);
+            @operationId.Span.CopyTo(packet.OperationId);
+            @amounts.Span.CopyTo(packet.Amounts);
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="JewelBankSetAutoDepositRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="enabled">The enabled.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player switches the auto-deposit of picked-up jewels and fruits on or off.
+    /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+    /// </remarks>
+    public static async ValueTask SendJewelBankSetAutoDepositRequestAsync(this IConnection? connection, byte @enabled)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = JewelBankSetAutoDepositRequestRef.Length;
+            var packet = new JewelBankSetAutoDepositRequestRef(connection.Output.GetSpan(length)[..length]);
+            packet.Enabled = @enabled;
 
             return packet.Header.Length;
         }

@@ -120,6 +120,14 @@ public class Account
     public virtual ItemStorage? Vault { get; set; }
 
     /// <summary>
+    /// Gets or sets the additional vaults of the account. The <see cref="Vault"/> is vault number 1,
+    /// these are the vaults with the numbers 2 to <see cref="InventoryConstants.VaultCount"/>.
+    /// </summary>
+    [MemberOfAggregate]
+    [HiddenAtCreation]
+    public virtual ICollection<ItemStorage> ExtraVaults { get; protected set; } = null!;
+
+    /// <summary>
     /// Gets or sets a value indicating whether this instance is vault extended.
     /// </summary>
     public bool IsVaultExtended { get; set; }

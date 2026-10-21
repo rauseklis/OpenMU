@@ -124,6 +124,10 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         => this.WithContextAsync(context => this.GetItemsAsync(context, itemIds, cancellationToken));
 
     /// <inheritdoc />
+    public Task<AuctionInventoryState?> GetInventoryStateAsync(Guid characterId, CancellationToken cancellationToken = default)
+        => this.WithContextAsync(context => this.GetInventoryStateAsync(context, characterId, cancellationToken));
+
+    /// <inheritdoc />
     public Task<bool> IsAccountRestrictedAsync(Guid accountId, DateTimeOffset now, CancellationToken cancellationToken = default)
         => this.WithContextAsync(context => this.IsAccountRestrictedAsync(context, accountId, now, cancellationToken));
 
@@ -399,6 +403,35 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             .Where(i => itemIds.Contains(i.Id))
             .ToListAsync(cancellationToken);
         return items.ToDictionary(i => i.Id, i => (MUnique.OpenMU.DataModel.Entities.Item)i);
+    }
+
+    /// <summary>
+    /// Reads the committed inventory state of a character: the items of its inventory storage and the Zen. Read-only.
+    /// </summary>
+    /// <param name="context">The context to read with.</param>
+    /// <param name="characterId">The character.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The state, or <c>null</c> when the character does not exist.</returns>
+    public async Task<AuctionInventoryState?> GetInventoryStateAsync(EntityDataContext context, Guid characterId, CancellationToken cancellationToken = default)
+    {
+        var inventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == characterId)
+            .Select(c => (Guid?)c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (inventoryId is not { } storageId)
+        {
+            return null;
+        }
+
+        var money = await context.Set<ItemStorage>().AsNoTracking()
+            .Where(s => s.Id == storageId)
+            .Select(s => s.Money)
+            .SingleOrDefaultAsync(cancellationToken);
+        var items = await context.Set<Item>().AsNoTracking()
+            .Where(i => i.ItemStorageId == storageId)
+            .Select(i => new AuctionInventoryItemState(i.Id, i.ItemSlot, i.Durability, i.Level))
+            .ToListAsync(cancellationToken);
+        return new AuctionInventoryState(money, items);
     }
 
     /// <summary>
@@ -1939,14 +1972,23 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
 
         var now = draft.Now;
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        var freeSlot = await context.Database.SqlQuery<int?>(
-            $"SELECT MIN(s.n) AS \"Value\" FROM generate_series({InventoryConstants.EquippableSlotsCount}, {InventoryConstants.EquippableSlotsCount + 63}) AS s(n) WHERE s.n NOT IN (SELECT i.\"ItemSlot\" FROM data.\"Item\" i JOIN data.\"Character\" c ON i.\"ItemStorageId\" = c.\"InventoryId\" WHERE c.\"Id\" = {draft.CharacterId})")
-            .SingleAsync(cancellationToken);
-        if (freeSlot is not { } slot)
+        var lotInventoryId = await context.Set<Character>().AsNoTracking()
+            .Where(c => c.Id == draft.CharacterId)
+            .Select(c => c.InventoryId)
+            .SingleOrDefaultAsync(cancellationToken);
+        var lotDefinitionId = await context.Set<Item>().AsNoTracking()
+            .Where(i => i.Id == itemId)
+            .Select(i => i.DefinitionId)
+            .SingleOrDefaultAsync(cancellationToken);
+        var lotSize = await DefinitionSizeAsync(context, lotDefinitionId, cancellationToken);
+        var lotSlots = lotInventoryId is { } storage ? await PlaceAsync(context, storage, [lotSize], cancellationToken) : null;
+        if (lotSlots is not { Count: 1 })
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionClaimResult(AuctionClaimOutcome.InventoryFull, 0, null, 0);
         }
+
+        var slot = lotSlots[0];
 
         var placed = await context.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE data.\"Item\" i SET \"ItemStorageId\" = c.\"InventoryId\", \"ItemSlot\" = {(short)slot} FROM data.\"Character\" c WHERE c.\"Id\" = {draft.CharacterId} AND c.\"AccountId\" = {draft.AccountId} AND i.\"Id\" = {itemId} AND i.\"ItemStorageId\" IS NULL",
@@ -1994,6 +2036,57 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             context.ChangeTracker.Clear();
             return new AuctionClaimResult(AuctionClaimOutcome.Replayed, 0, null, 0);
         }
+    }
+
+    /// <summary>
+    /// Reads the width and height of an item definition; an unknown definition counts as one cell.
+    /// </summary>
+    internal static async Task<(int Width, int Height)> DefinitionSizeAsync(EntityDataContext context, Guid? definitionId, CancellationToken cancellationToken)
+    {
+        if (definitionId is not { } id)
+        {
+            return (1, 1);
+        }
+
+        var size = await context.Database.SqlQuery<SizeRow>(
+                $"SELECT d.\"Width\"::int AS \"Width\", d.\"Height\"::int AS \"Height\" FROM config.\"ItemDefinition\" d WHERE d.\"Id\" = {id}")
+            .SingleOrDefaultAsync(cancellationToken);
+        return size is null ? (1, 1) : (Math.Max(size.Width, 1), Math.Max(size.Height, 1));
+    }
+
+    /// <summary>
+    /// Finds a slot in the main inventory of a storage for each new item, considering the cells which the items already there
+    /// cover, so a large item can never end up on top of another one.
+    /// </summary>
+    /// <returns>The slots, or <c>null</c> when the items do not all fit.</returns>
+    internal static async Task<IReadOnlyList<int>?> PlaceAsync(EntityDataContext context, Guid inventoryId, IReadOnlyList<(int Width, int Height)> newItems, CancellationToken cancellationToken)
+    {
+        var rows = await context.Database.SqlQuery<OccupiedRow>(
+                $"SELECT i.\"ItemSlot\"::int AS \"Slot\", COALESCE(d.\"Width\", 1)::int AS \"Width\", COALESCE(d.\"Height\", 1)::int AS \"Height\" FROM data.\"Item\" i LEFT JOIN config.\"ItemDefinition\" d ON d.\"Id\" = i.\"DefinitionId\" WHERE i.\"ItemStorageId\" = {inventoryId} AND i.\"ItemSlot\" >= {(int)InventoryConstants.EquippableSlotsCount}")
+            .ToListAsync(cancellationToken);
+        return InventoryPlacement.Place(rows.Select(r => (r.Slot, r.Width, r.Height)), newItems);
+    }
+
+    /// <summary>
+    /// The width and height of an item definition.
+    /// </summary>
+    private sealed class SizeRow
+    {
+        public int Width { get; set; }
+
+        public int Height { get; set; }
+    }
+
+    /// <summary>
+    /// An item of an inventory with the cells it covers.
+    /// </summary>
+    private sealed class OccupiedRow
+    {
+        public int Slot { get; set; }
+
+        public int Width { get; set; }
+
+        public int Height { get; set; }
     }
 
     /// <summary>
@@ -2228,10 +2321,9 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             }
         }
 
-        var freeSlots = await context.Database.SqlQuery<int>(
-            $"SELECT s.n AS \"Value\" FROM generate_series({InventoryConstants.EquippableSlotsCount}, {InventoryConstants.EquippableSlotsCount + 63}) AS s(n) WHERE s.n NOT IN (SELECT i.\"ItemSlot\" FROM data.\"Item\" i WHERE i.\"ItemStorageId\" = {inventoryId}) ORDER BY s.n")
-            .ToListAsync(cancellationToken);
-        if (freeSlots.Count < plan.Count)
+        var fitSize = await DefinitionSizeAsync(context, fruit, cancellationToken);
+        var freeSlots = await PlaceAsync(context, inventoryId.Value, Enumerable.Repeat(fitSize, plan.Count).ToList(), cancellationToken);
+        if (freeSlots is null)
         {
             return JewelMaterialization.InventoryFull;
         }
@@ -2287,10 +2379,9 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
 
         plan.AddRange(Enumerable.Repeat<(Guid? Definition, byte Level)>((single, 0), (int)remaining));
 
-        var freeSlots = await context.Database.SqlQuery<int>(
-            $"SELECT s.n AS \"Value\" FROM generate_series({InventoryConstants.EquippableSlotsCount}, {InventoryConstants.EquippableSlotsCount + 63}) AS s(n) WHERE s.n NOT IN (SELECT i.\"ItemSlot\" FROM data.\"Item\" i WHERE i.\"ItemStorageId\" = {inventoryId}) ORDER BY s.n")
-            .ToListAsync(cancellationToken);
-        if (freeSlots.Count < plan.Count)
+        var fitSize = await DefinitionSizeAsync(context, single, cancellationToken);
+        var freeSlots = await PlaceAsync(context, inventoryId.Value, Enumerable.Repeat(fitSize, plan.Count).ToList(), cancellationToken);
+        if (freeSlots is null)
         {
             return JewelMaterialization.InventoryFull;
         }

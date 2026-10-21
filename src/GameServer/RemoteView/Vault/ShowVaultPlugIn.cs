@@ -36,6 +36,7 @@ public class ShowVaultPlugIn : IShowVaultPlugIn
         }
 
         await this._player.InvokeViewPlugInAsync<IOpenNpcWindowPlugIn>(p => p.OpenNpcWindowAsync(NpcWindow.VaultStorage)).ConfigureAwait(false);
+        await this._player.InvokeViewPlugInAsync<IUpdateVaultNumberPlugIn>(p => p.UpdateVaultNumberAsync(true)).ConfigureAwait(false);
         await this._player.InvokeViewPlugInAsync<IShowMerchantStoreItemListPlugIn>(p => p.ShowMerchantStoreItemListAsync(this._player.Vault.ItemStorage.Items, StoreKind.Normal)).ConfigureAwait(false);
         await this._player.InvokeViewPlugInAsync<IUpdateVaultMoneyPlugIn>(p => p.UpdateVaultMoneyAsync(true)).ConfigureAwait(false);
         await this._player.InvokeViewPlugInAsync<IUpdateVaultStatePlugIn>(p => p.UpdateStateAsync()).ConfigureAwait(false);

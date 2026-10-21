@@ -659,6 +659,15 @@ public sealed class AuctionHouseService
         => await this._repository.GetItemsAsync(itemIds, cancellationToken);
 
     /// <summary>
+    /// Reads the committed inventory state of a character, so a live player can be brought up to date after an operation.
+    /// </summary>
+    /// <param name="characterId">The character.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The state, or <c>null</c> when it cannot be read.</returns>
+    public Task<AuctionInventoryState?> GetInventoryStateAsync(Guid characterId, CancellationToken cancellationToken = default)
+        => this._repository.GetInventoryStateAsync(characterId, cancellationToken);
+
+    /// <summary>
     /// Resolves a listing number from the wire to the listing identifier.
     /// </summary>
     /// <param name="listingNumber">The listing number.</param>

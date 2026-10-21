@@ -610,4 +610,7 @@ public enum UpdateVersion
     /// </summary>
     AddLostMapsToLumenStore = 121,
     AddPremiumBuffs = 122,
+    AddKingMaces = 123,
+    KingMaceRequirements = 124,
+    RenameRoyalMace = 125,
 }

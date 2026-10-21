@@ -19,6 +19,12 @@ public partial class ItemStorage
     public virtual ICollection<Item> Items { get; protected set; } = null!;
 
     /// <summary>
+    /// Gets or sets the number of the vault, if this is one of the additional vaults of an account
+    /// (<see cref="Account.ExtraVaults"/>); Otherwise, 0.
+    /// </summary>
+    public byte VaultNumber { get; set; }
+
+    /// <summary>
     /// Gets or sets the money which is stored.
     /// </summary>
     public long Money { get; set; }

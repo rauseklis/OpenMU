@@ -7268,6 +7268,85 @@ public readonly struct VaultMoveMoneyRequest
 
 
 /// <summary>
+/// Is sent by the client when: The player wants to switch to another vault of the opened vault dialog.
+/// Causes reaction on server side: The requested vault becomes the active one and its items are sent to the player.
+/// </summary>
+public readonly struct VaultSwitchRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VaultSwitchRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public VaultSwitchRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VaultSwitchRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private VaultSwitchRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0x84;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 4;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1Header Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the number of the requested vault, starting with 1.
+    /// </summary>
+    public byte VaultNumber
+    {
+        get => this._data.Span[3];
+        set => this._data.Span[3] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="VaultSwitchRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator VaultSwitchRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="VaultSwitchRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(VaultSwitchRequest packet) => packet._data; 
+}
+
+
+/// <summary>
 /// Is sent by the client when: When a player has the Lahap npc dialog open and wants to combine or disband jewel stacks.
 /// Causes reaction on server side: If successful, the inventory is updated and the game client gets corresponding responses.
 /// </summary>
@@ -18104,7 +18183,7 @@ public readonly struct AuctionCreateRequest
             var header = this.Header;
             header.Type = HeaderType;
             header.Code = Code;
-            header.Length = (byte)Math.Min(data.Length, Length);
+            header.Length = (ushort)Math.Min(data.Length, Length);
             header.SubCode = SubCode;
         }
     }
@@ -18112,7 +18191,7 @@ public readonly struct AuctionCreateRequest
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC3;
+    public static byte HeaderType => 0xC4;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -18128,19 +18207,19 @@ public readonly struct AuctionCreateRequest
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 256;
+    public static int Length => 257;
 
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C3HeaderWithSubCode Header => new (this._data);
+    public C4HeaderWithSubCode Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the operation id.
     /// </summary>
     public Span<byte> OperationId
     {
-        get => this._data.Slice(4, 16).Span;
+        get => this._data.Slice(5, 16).Span;
     }
 
     /// <summary>
@@ -18148,8 +18227,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public byte InventorySlot
     {
-        get => this._data.Span[20];
-        set => this._data.Span[20] = value;
+        get => this._data.Span[21];
+        set => this._data.Span[21] = value;
     }
 
     /// <summary>
@@ -18157,8 +18236,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public AuctionCurrencyMode CurrencyMode
     {
-        get => (AuctionCurrencyMode)this._data.Span[21];
-        set => this._data.Span[21] = (byte)value;
+        get => (AuctionCurrencyMode)this._data.Span[22];
+        set => this._data.Span[22] = (byte)value;
     }
 
     /// <summary>
@@ -18166,8 +18245,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint StartingScalar
     {
-        get => ReadUInt32LittleEndian(this._data.Span[22..]);
-        set => WriteUInt32LittleEndian(this._data.Span[22..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[23..]);
+        set => WriteUInt32LittleEndian(this._data.Span[23..], value);
     }
 
     /// <summary>
@@ -18175,8 +18254,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint StartingStrength
     {
-        get => ReadUInt32LittleEndian(this._data.Span[26..]);
-        set => WriteUInt32LittleEndian(this._data.Span[26..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[27..]);
+        set => WriteUInt32LittleEndian(this._data.Span[27..], value);
     }
 
     /// <summary>
@@ -18184,8 +18263,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint StartingAgility
     {
-        get => ReadUInt32LittleEndian(this._data.Span[30..]);
-        set => WriteUInt32LittleEndian(this._data.Span[30..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[31..]);
+        set => WriteUInt32LittleEndian(this._data.Span[31..], value);
     }
 
     /// <summary>
@@ -18193,8 +18272,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint StartingVitality
     {
-        get => ReadUInt32LittleEndian(this._data.Span[34..]);
-        set => WriteUInt32LittleEndian(this._data.Span[34..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[35..]);
+        set => WriteUInt32LittleEndian(this._data.Span[35..], value);
     }
 
     /// <summary>
@@ -18202,8 +18281,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint StartingEnergy
     {
-        get => ReadUInt32LittleEndian(this._data.Span[38..]);
-        set => WriteUInt32LittleEndian(this._data.Span[38..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[39..]);
+        set => WriteUInt32LittleEndian(this._data.Span[39..], value);
     }
 
     /// <summary>
@@ -18211,8 +18290,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint StartingCommand
     {
-        get => ReadUInt32LittleEndian(this._data.Span[42..]);
-        set => WriteUInt32LittleEndian(this._data.Span[42..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[43..]);
+        set => WriteUInt32LittleEndian(this._data.Span[43..], value);
     }
 
     /// <summary>
@@ -18220,8 +18299,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint BuyoutScalar
     {
-        get => ReadUInt32LittleEndian(this._data.Span[46..]);
-        set => WriteUInt32LittleEndian(this._data.Span[46..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[47..]);
+        set => WriteUInt32LittleEndian(this._data.Span[47..], value);
     }
 
     /// <summary>
@@ -18229,8 +18308,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint BuyoutStrength
     {
-        get => ReadUInt32LittleEndian(this._data.Span[50..]);
-        set => WriteUInt32LittleEndian(this._data.Span[50..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[51..]);
+        set => WriteUInt32LittleEndian(this._data.Span[51..], value);
     }
 
     /// <summary>
@@ -18238,8 +18317,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint BuyoutAgility
     {
-        get => ReadUInt32LittleEndian(this._data.Span[54..]);
-        set => WriteUInt32LittleEndian(this._data.Span[54..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[55..]);
+        set => WriteUInt32LittleEndian(this._data.Span[55..], value);
     }
 
     /// <summary>
@@ -18247,8 +18326,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint BuyoutVitality
     {
-        get => ReadUInt32LittleEndian(this._data.Span[58..]);
-        set => WriteUInt32LittleEndian(this._data.Span[58..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[59..]);
+        set => WriteUInt32LittleEndian(this._data.Span[59..], value);
     }
 
     /// <summary>
@@ -18256,8 +18335,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint BuyoutEnergy
     {
-        get => ReadUInt32LittleEndian(this._data.Span[62..]);
-        set => WriteUInt32LittleEndian(this._data.Span[62..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[63..]);
+        set => WriteUInt32LittleEndian(this._data.Span[63..], value);
     }
 
     /// <summary>
@@ -18265,8 +18344,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public uint BuyoutCommand
     {
-        get => ReadUInt32LittleEndian(this._data.Span[66..]);
-        set => WriteUInt32LittleEndian(this._data.Span[66..], value);
+        get => ReadUInt32LittleEndian(this._data.Span[67..]);
+        set => WriteUInt32LittleEndian(this._data.Span[67..], value);
     }
 
     /// <summary>
@@ -18274,8 +18353,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public byte DurationHours
     {
-        get => this._data.Span[70];
-        set => this._data.Span[70] = value;
+        get => this._data.Span[71];
+        set => this._data.Span[71] = value;
     }
 
     /// <summary>
@@ -18283,8 +18362,8 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public byte NoteLength
     {
-        get => this._data.Span[71];
-        set => this._data.Span[71] = value;
+        get => this._data.Span[72];
+        set => this._data.Span[72] = value;
     }
 
     /// <summary>
@@ -18292,7 +18371,7 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public Span<byte> Note
     {
-        get => this._data.Slice(72, 80).Span;
+        get => this._data.Slice(73, 80).Span;
     }
 
     /// <summary>
@@ -18300,7 +18379,7 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public Span<byte> StartingBasket
     {
-        get => this._data.Slice(152, 52).Span;
+        get => this._data.Slice(153, 52).Span;
     }
 
     /// <summary>
@@ -18308,7 +18387,7 @@ public readonly struct AuctionCreateRequest
     /// </summary>
     public Span<byte> BuyoutBasket
     {
-        get => this._data.Slice(204, 52).Span;
+        get => this._data.Slice(205, 52).Span;
     }
 
     /// <summary>
@@ -19060,6 +19139,355 @@ public readonly struct AuctionCollectRequest
     /// <param name="packet">The packet as struct.</param>
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Memory<byte>(AuctionCollectRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: The player opens the Jewel Bank window (Ctrl+J) or asks for its current state.
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankOpenRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOpenRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankOpenRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankOpenRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankOpenRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x00;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 4;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankOpenRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankOpenRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankOpenRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankOpenRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: (A C4 packet: the encrypted request is longer than a C3 packet can be.) The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankDepositRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankDepositRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankDepositRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (ushort)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC4;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x01;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 201;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C4HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(5, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the amounts.
+    /// </summary>
+    public Span<byte> Amounts
+    {
+        get => this._data.Slice(21, 180).Span;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankDepositRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankDepositRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankDepositRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankDepositRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: (A C4 packet: the encrypted request is longer than a C3 packet can be.) The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankWithdrawRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankWithdrawRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankWithdrawRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankWithdrawRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankWithdrawRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (ushort)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC4;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x02;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 201;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C4HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the operation id.
+    /// </summary>
+    public Span<byte> OperationId
+    {
+        get => this._data.Slice(5, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the amounts.
+    /// </summary>
+    public Span<byte> Amounts
+    {
+        get => this._data.Slice(21, 180).Span;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankWithdrawRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankWithdrawRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankWithdrawRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankWithdrawRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: The player switches the auto-deposit of picked-up jewels and fruits on or off.
+/// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
+/// </summary>
+public readonly struct JewelBankSetAutoDepositRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankSetAutoDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public JewelBankSetAutoDepositRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JewelBankSetAutoDepositRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private JewelBankSetAutoDepositRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD6;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x03;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 5;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the enabled.
+    /// </summary>
+    public byte Enabled
+    {
+        get => this._data.Span[4];
+        set => this._data.Span[4] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="JewelBankSetAutoDepositRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator JewelBankSetAutoDepositRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="JewelBankSetAutoDepositRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(JewelBankSetAutoDepositRequest packet) => packet._data; 
 }
     /// <summary>
     /// The state of the trade button.

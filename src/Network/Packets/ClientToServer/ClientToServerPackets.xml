@@ -1720,6 +1720,23 @@
     </Packet>
     <Packet>
       <HeaderType>C1Header</HeaderType>
+      <Code>84</Code>
+      <Name>VaultSwitchRequest</Name>
+      <Length>4</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>The player wants to switch to another vault of the opened vault dialog.</SentWhen>
+      <CausedReaction>The requested vault becomes the active one and its items are sent to the player.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>3</Index>
+          <Type>Byte</Type>
+          <Name>VaultNumber</Name>
+          <Description>The number of the requested vault, starting with 1.</Description>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C1Header</HeaderType>
       <Code>BC</Code>
       <Name>LahapJewelMixRequest</Name>
       <Caption>Jewel Mix (Lahap)</Caption>
@@ -4445,116 +4462,116 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <HeaderType>C4HeaderWithSubCode</HeaderType>
       <Code>D5</Code>
       <SubCode>03</SubCode>
       <Name>AuctionCreateRequest</Name>
-      <Length>256</Length>
+      <Length>257</Length>
       <Direction>ClientToServer</Direction>
       <SentWhen>Auction House request AuctionCreateRequest (sub 03).</SentWhen>
       <CausedReaction>Auction House service, see docs/superpowers/specs/2026-10-06-auction-house-design.md.</CausedReaction>
       <Fields>
         <Field>
-          <Index>4</Index>
+          <Index>5</Index>
           <Type>Binary</Type>
           <Name>OperationId</Name>
           <Length>16</Length>
         </Field>
         <Field>
-          <Index>20</Index>
+          <Index>21</Index>
           <Type>Byte</Type>
           <Name>InventorySlot</Name>
         </Field>
         <Field>
-          <Index>21</Index>
+          <Index>22</Index>
           <Type>Enum</Type>
           <TypeName>AuctionCurrencyMode</TypeName>
           <Name>CurrencyMode</Name>
         </Field>
         <Field>
-          <Index>22</Index>
+          <Index>23</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingScalar</Name>
         </Field>
         <Field>
-          <Index>26</Index>
+          <Index>27</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingStrength</Name>
         </Field>
         <Field>
-          <Index>30</Index>
+          <Index>31</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingAgility</Name>
         </Field>
         <Field>
-          <Index>34</Index>
+          <Index>35</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingVitality</Name>
         </Field>
         <Field>
-          <Index>38</Index>
+          <Index>39</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingEnergy</Name>
         </Field>
         <Field>
-          <Index>42</Index>
+          <Index>43</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>StartingCommand</Name>
         </Field>
         <Field>
-          <Index>46</Index>
+          <Index>47</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutScalar</Name>
         </Field>
         <Field>
-          <Index>50</Index>
+          <Index>51</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutStrength</Name>
         </Field>
         <Field>
-          <Index>54</Index>
+          <Index>55</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutAgility</Name>
         </Field>
         <Field>
-          <Index>58</Index>
+          <Index>59</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutVitality</Name>
         </Field>
         <Field>
-          <Index>62</Index>
+          <Index>63</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutEnergy</Name>
         </Field>
         <Field>
-          <Index>66</Index>
+          <Index>67</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BuyoutCommand</Name>
         </Field>
         <Field>
-          <Index>70</Index>
+          <Index>71</Index>
           <Type>Byte</Type>
           <Name>DurationHours</Name>
         </Field>
         <Field>
-          <Index>71</Index>
+          <Index>72</Index>
           <Type>Byte</Type>
           <Name>NoteLength</Name>
         </Field>
         <Field>
-          <Index>72</Index>
+          <Index>73</Index>
           <Type>Binary</Type>
           <Name>Note</Name>
           <Length>80</Length>
         </Field>
         <Field>
-          <Index>152</Index>
+          <Index>153</Index>
           <Type>Binary</Type>
           <Name>StartingBasket</Name>
           <Length>52</Length>
         </Field>
         <Field>
-          <Index>204</Index>
+          <Index>205</Index>
           <Type>Binary</Type>
           <Name>BuyoutBasket</Name>
           <Length>52</Length>
@@ -4790,6 +4807,83 @@
           <Index>52</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>RequestedCommand</Name>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <Code>D6</Code>
+      <SubCode>00</SubCode>
+      <Name>JewelBankOpenRequest</Name>
+      <Length>4</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>The player opens the Jewel Bank window (Ctrl+J) or asks for its current state.</SentWhen>
+      <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
+      <Fields>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C4HeaderWithSubCode</HeaderType>
+      <Code>D6</Code>
+      <SubCode>01</SubCode>
+      <Name>JewelBankDepositRequest</Name>
+      <Length>201</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>(A C4 packet: the encrypted request is longer than a C3 packet can be.) The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
+      <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>5</Index>
+          <Type>Binary</Type>
+          <Name>OperationId</Name>
+          <Length>16</Length>
+        </Field>
+        <Field>
+          <Index>21</Index>
+          <Type>Binary</Type>
+          <Name>Amounts</Name>
+          <Length>180</Length>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C4HeaderWithSubCode</HeaderType>
+      <Code>D6</Code>
+      <SubCode>02</SubCode>
+      <Name>JewelBankWithdrawRequest</Name>
+      <Length>201</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>(A C4 packet: the encrypted request is longer than a C3 packet can be.) The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
+      <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>5</Index>
+          <Type>Binary</Type>
+          <Name>OperationId</Name>
+          <Length>16</Length>
+        </Field>
+        <Field>
+          <Index>21</Index>
+          <Type>Binary</Type>
+          <Name>Amounts</Name>
+          <Length>180</Length>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <Code>D6</Code>
+      <SubCode>03</SubCode>
+      <Name>JewelBankSetAutoDepositRequest</Name>
+      <Length>5</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>The player switches the auto-deposit of picked-up jewels and fruits on or off.</SentWhen>
+      <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>4</Index>
+          <Type>Byte</Type>
+          <Name>Enabled</Name>
         </Field>
       </Fields>
     </Packet>

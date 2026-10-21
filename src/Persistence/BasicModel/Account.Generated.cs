@@ -47,6 +47,27 @@ public partial class Account : MUnique.OpenMU.DataModel.Entities.Account, IIdent
     }
 
     /// <summary>
+    /// Gets the raw collection of <see cref="ExtraVaults" />.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("extraVaults")]
+    public ICollection<ItemStorage> RawExtraVaults { get; } = new List<ItemStorage>();
+    
+    /// <inheritdoc/>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public override ICollection<MUnique.OpenMU.DataModel.Entities.ItemStorage> ExtraVaults
+    {
+        get => base.ExtraVaults ??= new CollectionAdapter<MUnique.OpenMU.DataModel.Entities.ItemStorage, ItemStorage>(this.RawExtraVaults);
+        protected set
+        {
+            this.ExtraVaults.Clear();
+            foreach (var item in value)
+            {
+                this.ExtraVaults.Add(item);
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets the raw collection of <see cref="Characters" />.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characters")]

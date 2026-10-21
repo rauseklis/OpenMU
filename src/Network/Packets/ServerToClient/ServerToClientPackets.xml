@@ -8439,6 +8439,34 @@
     </Packet>
     <Packet>
       <HeaderType>C1Header</HeaderType>
+      <Code>84</Code>
+      <Name>VaultSwitched</Name>
+      <Length>6</Length>
+      <Direction>ServerToClient</Direction>
+      <SentWhen>After the vault dialog was opened, or after the player requested to switch to another vault.</SentWhen>
+      <CausedReaction>The game client clears the vault window and shows which vault is active. The items of the vault follow in a separate packet.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>3</Index>
+          <Type>Boolean</Type>
+          <Name>Success</Name>
+        </Field>
+        <Field>
+          <Index>4</Index>
+          <Type>Byte</Type>
+          <Name>VaultNumber</Name>
+          <Description>The number of the active vault, starting with 1.</Description>
+        </Field>
+        <Field>
+          <Index>5</Index>
+          <Type>Byte</Type>
+          <Name>VaultCount</Name>
+          <Description>The number of vaults of the account.</Description>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C1Header</HeaderType>
       <Code>82</Code>
       <Name>VaultClosed</Name>
       <Length>3</Length>
@@ -14711,6 +14739,107 @@
           <Index>38</Index>
           <Type>ShortLittleEndian</Type>
           <Name>PendingMailboxCount</Name>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C2HeaderWithSubCode</HeaderType>
+      <Code>D6</Code>
+      <SubCode>80</SubCode>
+      <Name>JewelBankStateResponse</Name>
+      <Length>367</Length>
+      <Direction>ServerToClient</Direction>
+      <SentWhen>The stored counts of the account and the number of items of each kind the player carries in the inventory (what a deposit could take): answer to an open request, and after every change. Counts and Inventory hold 45 little-endian 32-bit values, one per kind with code 1..45.</SentWhen>
+      <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>5</Index>
+          <Type>Enum</Type>
+          <TypeName>JewelBankResult</TypeName>
+          <Name>Result</Name>
+        </Field>
+        <Field>
+          <Index>6</Index>
+          <Type>Byte</Type>
+          <Name>AutoDeposit</Name>
+        </Field>
+        <Field>
+          <Index>7</Index>
+          <Type>Binary</Type>
+          <Name>Counts</Name>
+          <Length>180</Length>
+        </Field>
+        <Field>
+          <Index>187</Index>
+          <Type>Binary</Type>
+          <Name>Inventory</Name>
+          <Length>180</Length>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C1HeaderWithSubCode</HeaderType>
+      <Code>D6</Code>
+      <SubCode>81</SubCode>
+      <Name>JewelBankOperationResponse</Name>
+      <Length>27</Length>
+      <Direction>ServerToClient</Direction>
+      <SentWhen>Result of a deposit, withdrawal or setting change.</SentWhen>
+      <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>4</Index>
+          <Type>Binary</Type>
+          <Name>OperationId</Name>
+          <Length>16</Length>
+        </Field>
+        <Field>
+          <Index>20</Index>
+          <Type>Byte</Type>
+          <Name>Operation</Name>
+        </Field>
+        <Field>
+          <Index>21</Index>
+          <Type>Enum</Type>
+          <TypeName>JewelBankResult</TypeName>
+          <Name>Result</Name>
+        </Field>
+        <Field>
+          <Index>22</Index>
+          <Type>Byte</Type>
+          <Name>KindCode</Name>
+        </Field>
+        <Field>
+          <Index>23</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Units</Name>
+        </Field>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C1HeaderWithSubCode</HeaderType>
+      <Code>D6</Code>
+      <SubCode>82</SubCode>
+      <Name>JewelBankPickupNotification</Name>
+      <Length>17</Length>
+      <Direction>ServerToClient</Direction>
+      <SentWhen>An item picked up by the player went straight into the bank (auto-deposit).</SentWhen>
+      <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>4</Index>
+          <Type>Byte</Type>
+          <Name>KindCode</Name>
+        </Field>
+        <Field>
+          <Index>5</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>Units</Name>
+        </Field>
+        <Field>
+          <Index>9</Index>
+          <Type>LongLittleEndian</Type>
+          <Name>NewCount</Name>
         </Field>
       </Fields>
     </Packet>
