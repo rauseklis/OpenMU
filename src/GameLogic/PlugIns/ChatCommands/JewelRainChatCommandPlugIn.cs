@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.GameLogic.PlugIns.ChatCommands;
 
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.InteropServices;
+using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.PlugIns.JewelRain;
 using MUnique.OpenMU.PlugIns;
 
@@ -15,6 +16,7 @@ using MUnique.OpenMU.PlugIns;
 [PlugIn]
 [Display(Name = "Jewel Rain Chat Command", Description = "Handles the GM command /jewelrain, which starts the Jewel Rain event immediately.")]
 [Guid("C2A9D5E7-31B4-4F86-A0D3-5E7B9C1F2A48")]
+[ChatCommandHelp(Command, CharacterStatus.GameMaster)]
 public class JewelRainChatCommandPlugIn : IChatCommandPlugIn
 {
     private const string Command = "/jewelrain";
