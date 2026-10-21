@@ -23,15 +23,17 @@ public class JewelRainConfiguration
         StartTimes = [new TimeOnly(21, 0)],
         CountdownMinutes = [5, 4, 3, 2, 1],
         MapNumber = 2,
-        AreaX1 = 0,
-        AreaY1 = 0,
-        AreaX2 = 255,
-        AreaY2 = 255,
+
+        // The Devias town (the large safezone), taken from the shipped terrain file.
+        AreaX1 = 178,
+        AreaY1 = 6,
+        AreaX2 = 244,
+        AreaY2 = 74,
         StepInterval = TimeSpan.FromSeconds(30),
         EndDelay = TimeSpan.FromSeconds(30),
         Steps =
         [
-            new JewelRainStep(14, 15, 0, 15), // Jewel of Chaos
+            new JewelRainStep(12, 15, 0, 15), // Jewel of Chaos
             new JewelRainStep(14, 14, 0, 15), // Jewel of Soul
             new JewelRainStep(14, 13, 0, 15), // Jewel of Bless
             new JewelRainStep(14, 22, 0, 15), // Jewel of Creation
