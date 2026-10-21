@@ -4823,23 +4823,23 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <HeaderType>C4HeaderWithSubCode</HeaderType>
       <Code>D6</Code>
       <SubCode>01</SubCode>
       <Name>JewelBankDepositRequest</Name>
-      <Length>200</Length>
+      <Length>201</Length>
       <Direction>ClientToServer</Direction>
-      <SentWhen>The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
+      <SentWhen>(A C4 packet: the encrypted request is longer than a C3 packet can be.) The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
       <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
       <Fields>
         <Field>
-          <Index>4</Index>
+          <Index>5</Index>
           <Type>Binary</Type>
           <Name>OperationId</Name>
           <Length>16</Length>
         </Field>
         <Field>
-          <Index>20</Index>
+          <Index>21</Index>
           <Type>Binary</Type>
           <Name>Amounts</Name>
           <Length>180</Length>
@@ -4847,23 +4847,23 @@
       </Fields>
     </Packet>
     <Packet>
-      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <HeaderType>C4HeaderWithSubCode</HeaderType>
       <Code>D6</Code>
       <SubCode>02</SubCode>
       <Name>JewelBankWithdrawRequest</Name>
-      <Length>200</Length>
+      <Length>201</Length>
       <Direction>ClientToServer</Direction>
-      <SentWhen>The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
+      <SentWhen>(A C4 packet: the encrypted request is longer than a C3 packet can be.) The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.</SentWhen>
       <CausedReaction>Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.</CausedReaction>
       <Fields>
         <Field>
-          <Index>4</Index>
+          <Index>5</Index>
           <Type>Binary</Type>
           <Name>OperationId</Name>
           <Length>16</Length>
         </Field>
         <Field>
-          <Index>20</Index>
+          <Index>21</Index>
           <Type>Binary</Type>
           <Name>Amounts</Name>
           <Length>180</Length>

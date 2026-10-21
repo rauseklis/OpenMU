@@ -19220,7 +19220,7 @@ public readonly struct JewelBankOpenRequest
 
 
 /// <summary>
-/// Is sent by the client when: The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
+/// Is sent by the client when: (A C4 packet: the encrypted request is longer than a C3 packet can be.) The player deposits the chosen amount of each kind from the inventory. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
 /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 /// </summary>
 public readonly struct JewelBankDepositRequest
@@ -19249,7 +19249,7 @@ public readonly struct JewelBankDepositRequest
             var header = this.Header;
             header.Type = HeaderType;
             header.Code = Code;
-            header.Length = (byte)Math.Min(data.Length, Length);
+            header.Length = (ushort)Math.Min(data.Length, Length);
             header.SubCode = SubCode;
         }
     }
@@ -19257,7 +19257,7 @@ public readonly struct JewelBankDepositRequest
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC3;
+    public static byte HeaderType => 0xC4;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -19273,19 +19273,19 @@ public readonly struct JewelBankDepositRequest
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 200;
+    public static int Length => 201;
 
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C3HeaderWithSubCode Header => new (this._data);
+    public C4HeaderWithSubCode Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the operation id.
     /// </summary>
     public Span<byte> OperationId
     {
-        get => this._data.Slice(4, 16).Span;
+        get => this._data.Slice(5, 16).Span;
     }
 
     /// <summary>
@@ -19293,7 +19293,7 @@ public readonly struct JewelBankDepositRequest
     /// </summary>
     public Span<byte> Amounts
     {
-        get => this._data.Slice(20, 180).Span;
+        get => this._data.Slice(21, 180).Span;
     }
 
     /// <summary>
@@ -19313,7 +19313,7 @@ public readonly struct JewelBankDepositRequest
 
 
 /// <summary>
-/// Is sent by the client when: The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
+/// Is sent by the client when: (A C4 packet: the encrypted request is longer than a C3 packet can be.) The player withdraws the chosen amount of each kind as items. Amounts holds 45 little-endian 32-bit counts, one per kind with code 1..45 (jewels, fruits, then the bundles of 10, 20 and 30); 0 skips a kind.
 /// Causes reaction on server side: Jewel Bank service, see docs/superpowers/specs/2026-10-20-jewel-bank-design.md.
 /// </summary>
 public readonly struct JewelBankWithdrawRequest
@@ -19342,7 +19342,7 @@ public readonly struct JewelBankWithdrawRequest
             var header = this.Header;
             header.Type = HeaderType;
             header.Code = Code;
-            header.Length = (byte)Math.Min(data.Length, Length);
+            header.Length = (ushort)Math.Min(data.Length, Length);
             header.SubCode = SubCode;
         }
     }
@@ -19350,7 +19350,7 @@ public readonly struct JewelBankWithdrawRequest
     /// <summary>
     /// Gets the header type of this data packet.
     /// </summary>
-    public static byte HeaderType => 0xC3;
+    public static byte HeaderType => 0xC4;
 
     /// <summary>
     /// Gets the operation code of this data packet.
@@ -19366,19 +19366,19 @@ public readonly struct JewelBankWithdrawRequest
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 200;
+    public static int Length => 201;
 
     /// <summary>
     /// Gets the header of this packet.
     /// </summary>
-    public C3HeaderWithSubCode Header => new (this._data);
+    public C4HeaderWithSubCode Header => new (this._data);
 
     /// <summary>
     /// Gets or sets the operation id.
     /// </summary>
     public Span<byte> OperationId
     {
-        get => this._data.Slice(4, 16).Span;
+        get => this._data.Slice(5, 16).Span;
     }
 
     /// <summary>
@@ -19386,7 +19386,7 @@ public readonly struct JewelBankWithdrawRequest
     /// </summary>
     public Span<byte> Amounts
     {
-        get => this._data.Slice(20, 180).Span;
+        get => this._data.Slice(21, 180).Span;
     }
 
     /// <summary>

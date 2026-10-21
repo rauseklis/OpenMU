@@ -4415,18 +4415,18 @@ public class PacketStructureTests
     public void JewelBankDepositRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 200;
+        const int expectedLength = 201;
         var actualLength = JewelBankDepositRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
             "Packet length mismatch: declared length does not match calculated size");
         
         // Validate field 'OperationId' boundary
-        Assert.That(4 + 16, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(5 + 16, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'OperationId' exceeds packet boundary");
         
         // Validate field 'Amounts' boundary
-        Assert.That(20 + 180, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(21 + 180, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'Amounts' exceeds packet boundary");
     }
 
@@ -4437,18 +4437,18 @@ public class PacketStructureTests
     public void JewelBankWithdrawRequest_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 200;
+        const int expectedLength = 201;
         var actualLength = JewelBankWithdrawRequestRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
             "Packet length mismatch: declared length does not match calculated size");
         
         // Validate field 'OperationId' boundary
-        Assert.That(4 + 16, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(5 + 16, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'OperationId' exceeds packet boundary");
         
         // Validate field 'Amounts' boundary
-        Assert.That(20 + 180, Is.LessThanOrEqualTo(expectedLength), 
+        Assert.That(21 + 180, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'Amounts' exceeds packet boundary");
     }
 

@@ -24,8 +24,8 @@ public class JewelBankPacketDefinitionTests
     public static IEnumerable<TestCaseData> Cases()
     {
         yield return new TestCaseData(ClientPacketDefinitions, "JewelBankOpenRequest", "00", "4", string.Empty);
-        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankDepositRequest", "01", "200", "4:Binary:OperationId[16];20:Binary:Amounts[180]");
-        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankWithdrawRequest", "02", "200", "4:Binary:OperationId[16];20:Binary:Amounts[180]");
+        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankDepositRequest", "01", "201", "5:Binary:OperationId[16];21:Binary:Amounts[180]");
+        yield return new TestCaseData(ClientPacketDefinitions, "JewelBankWithdrawRequest", "02", "201", "5:Binary:OperationId[16];21:Binary:Amounts[180]");
         yield return new TestCaseData(ClientPacketDefinitions, "JewelBankSetAutoDepositRequest", "03", "5", "4:Byte:Enabled");
         yield return new TestCaseData(
             ServerPacketDefinitions,
@@ -58,9 +58,11 @@ public class JewelBankPacketDefinitionTests
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "Code"), Is.EqualTo("D6"));
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "SubCode"), Is.EqualTo(subCode));
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "Length"), Is.EqualTo(length));
-        // Requests are encrypted (C3), like the Auction House's; the group handler expects that. Responses are plain C1 (C2 when longer than 255 bytes).
+        // Requests are encrypted (C3, or C4 when the encrypted packet would not fit a one-byte length), like the Auction House's; the group handler
+        // expects that. Responses are plain C1 (C2 when longer than 255 bytes).
         // The state response is longer than 255 bytes and therefore a C2 packet.
-        var expectedHeader = file == ClientPacketDefinitions ? "C3HeaderWithSubCode" : name == "JewelBankStateResponse" ? "C2HeaderWithSubCode" : "C1HeaderWithSubCode";
+        var isLongRequest = name is "JewelBankDepositRequest" or "JewelBankWithdrawRequest";
+        var expectedHeader = file == ClientPacketDefinitions ? (isLongRequest ? "C4HeaderWithSubCode" : "C3HeaderWithSubCode") : name == "JewelBankStateResponse" ? "C2HeaderWithSubCode" : "C1HeaderWithSubCode";
         Assert.That((string?)packet.Element(PacketDefinitionNamespace + "HeaderType"), Is.EqualTo(expectedHeader));
         var actual = packet.Descendants(PacketDefinitionNamespace + "Field").Select(f =>
         {
@@ -84,6 +86,24 @@ public class JewelBankPacketDefinitionTests
                 .ToList();
             Assert.That(subCodes, Is.Unique);
             Assert.That(subCodes, Is.Not.Empty);
+        }
+    }
+
+    /// <summary>
+    /// A C3 packet is SimpleModulus-encrypted: every 8 bytes of its content become 11 bytes, and its length is one byte. A request whose
+    /// encrypted form is longer than 255 bytes must therefore be a C4 packet; sent as C3 the server rejects it ("unexpected content size")
+    /// and drops the connection.
+    /// </summary>
+    [Test]
+    public void EncryptedC3RequestsFitTheirOneByteLength()
+    {
+        var packets = Load(ClientPacketDefinitions).Descendants(PacketDefinitionNamespace + "Packet")
+            .Where(p => (string?)p.Element(PacketDefinitionNamespace + "Code") == "D6" && (string?)p.Element(PacketDefinitionNamespace + "HeaderType") == "C3HeaderWithSubCode");
+        foreach (var packet in packets)
+        {
+            var length = int.Parse((string?)packet.Element(PacketDefinitionNamespace + "Length") ?? "0");
+            var encrypted = ((length - 2 + 1 + 7) / 8 * 11) + 2;
+            Assert.That(encrypted, Is.LessThanOrEqualTo(255), (string?)packet.Element(PacketDefinitionNamespace + "Name"));
         }
     }
 
