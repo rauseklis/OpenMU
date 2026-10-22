@@ -34,24 +34,25 @@ public class DeleteCharacterAction
             return CharacterDeleteResult.Unsuccessful;
         }
 
-        var character = player.Account!.Characters.FirstOrDefault(c => c.Name == characterName);
+        var character = player.GetCharactersOfThisServer().FirstOrDefault(c => c.Name == characterName);
+        var account = player.Account!;
 
         if (character is null)
         {
             player.Logger.LogError("Character not found. Hacker maybe tried to delete other players character!" +
-                                   Environment.NewLine + "\tAccName: " + player.Account.LoginName +
+                                   Environment.NewLine + "\tAccName: " + account.LoginName +
                                    Environment.NewLine + "\tTried to delete Character: " + characterName);
 
             return CharacterDeleteResult.Unsuccessful;
         }
 
-        var checkAsPassword = string.IsNullOrEmpty(player.Account.SecurityCode);
-        if (checkAsPassword && !BCrypt.Net.BCrypt.Verify(securityCode, player.Account.PasswordHash))
+        var checkAsPassword = string.IsNullOrEmpty(account.SecurityCode);
+        if (checkAsPassword && !BCrypt.Net.BCrypt.Verify(securityCode, account.PasswordHash))
         {
             return CharacterDeleteResult.WrongSecurityCode;
         }
 
-        if (!checkAsPassword && player.Account.SecurityCode != securityCode)
+        if (!checkAsPassword && account.SecurityCode != securityCode)
         {
             return CharacterDeleteResult.WrongSecurityCode;
         }
@@ -62,7 +63,7 @@ public class DeleteCharacterAction
             return CharacterDeleteResult.Unsuccessful;
         }
 
-        player.Account.Characters.Remove(character);
+        account.Characters.Remove(character);
         player.GameContext.PlugInManager.GetPlugInPoint<ICharacterDeletedPlugIn>()?.CharacterDeleted(player, character);
         await player.PersistenceContext.DeleteAsync(character).ConfigureAwait(false);
         return CharacterDeleteResult.Successful;

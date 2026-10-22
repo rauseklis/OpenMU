@@ -23,7 +23,7 @@ public class FocusCharacterAction
             return;
         }
 
-        var character = player.Account?.Characters.FirstOrDefault(c => c.Name == characterName);
+        var character = player.GetCharactersOfThisServer().FirstOrDefault(c => c.Name == characterName);
         if (character is not null)
         {
             await player.InvokeViewPlugInAsync<ICharacterFocusedPlugIn>(p => p.CharacterFocusedAsync(character)).ConfigureAwait(false);

@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameServer.RemoteView.Character;
 
+using MUnique.OpenMU.GameLogic;
 using System.Runtime.InteropServices;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.Views.Character;
@@ -41,7 +42,7 @@ public class ShowCharacterListPlugIn095 : IShowCharacterListPlugIn
         var appearanceSerializer = this._player.AppearanceSerializer;
 
         // 0.95 doesn't support dark lord (number 16) and newer classes yet
-        var supportedCharacters = this._player.Account.Characters.Where(c => c.CharacterClass?.Number < 16).OrderBy(c => c.CharacterSlot).ToList();
+        var supportedCharacters = this._player.GetCharactersOfThisServer().Where(c => c.CharacterClass?.Number < 16).OrderBy(c => c.CharacterSlot).ToList();
         int Write()
         {
             var size = CharacterList095Ref.GetRequiredSize(supportedCharacters.Count);

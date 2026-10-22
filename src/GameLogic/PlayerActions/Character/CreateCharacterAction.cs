@@ -101,6 +101,7 @@ public class CreateCharacterAction
         character.CharacterClass = characterClass;
         character.Name = name;
         character.CharacterSlot = freeSlot.Value;
+        character.GameServerId = player.GetGameServerId();
         character.CreateDate = DateTime.UtcNow;
         character.KeyConfiguration = CreateDefaultKeyConfiguration();
 
@@ -146,7 +147,7 @@ public class CreateCharacterAction
 
     private byte? GetFreeSlot(Player player)
     {
-        var usedSlots = player.Account!.Characters.Select(c => (int)c.CharacterSlot);
+        var usedSlots = player.GetCharactersOfThisServer().Select(c => (int)c.CharacterSlot);
         var freeSlots = Enumerable.Range(0, player.GameContext.Configuration.MaximumCharactersPerAccount).Except(usedSlots).ToList();
         if (freeSlots.Any())
         {

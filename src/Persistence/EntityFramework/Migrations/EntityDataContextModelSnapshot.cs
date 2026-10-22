@@ -1366,6 +1366,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<long>("Experience")
                         .HasColumnType("bigint");
 
+                    b.Property<byte>("GameServerId")
+                        .HasColumnType("smallint");
+
                     b.Property<int>("InventoryExtensions")
                         .HasColumnType("integer");
 
