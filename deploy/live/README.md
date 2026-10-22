@@ -111,6 +111,46 @@ gunzip -c backups/openmu-<date>.sql.gz | docker compose exec -T database psql -U
 docker compose start openmu
 ```
 
+## Restoring the brother's old gameplay settings
+
+A fresh VPS database does not inherit the old local database's settings or custom
+monster spawns. Updating the client or merging the earlier code fixes does not
+transfer that configuration. Do not import an old player database to recover it.
+
+`restore-gameplay-profile.sql` is an explicit maintenance tool for the final old
+profile: resets enabled with 500 times reset count and a limit of 50; eight
+recovery items stacking to 50; unlimited ranged ammunition; nine farming spots
+with no Arena monster spawns added. It preserves
+SD/complex stacks of three. Blocked Arena arrivals move to the nearest clear 3x3
+floor area, as in the old local installer. EXP, player data, speed formulas and
+terrain stay unchanged. Configuration changes affect all players using this profile;
+existing potion items are not rewritten. The user must verify reset behavior,
+pickup/stack behavior, ammunition and spawn placement in the game.
+
+Show the proposed change to the owner and obtain approval before live use. Back
+up the database first with the existing backup procedure. Use `psql -X` with
+`ON_ERROR_STOP` (also set by the script), passing the exact connected database:
+
+```bash
+# Dry run: validates the complete operation and rolls it back.
+psql -X -d openmu -v expected_database=openmu -f restore-gameplay-profile.sql
+# Only after the owner's approval and a backup:
+psql -X -d openmu -v expected_database=openmu -v apply=true -f restore-gameplay-profile.sql
+```
+
+Use the existing private database connection mechanism; never put credentials in
+this script. The target name is a typo guard, not permission to modify live data.
+The tool refuses missing definitions, blocked/safe spawn locations and conflicting
+existing spawn IDs; it never overwrites those spawns. After a successful apply,
+restart the game server during the agreed maintenance window to reload settings;
+this disconnects players. Check both connect/game greeting ports and verify the
+settings and custom spawn counts. The tool is not run by deployments or migrations.
+
+The integration regression is `tests/maintenance/test_restore_gameplay_profile.py`.
+It requires a freshly seeded disposable Season 6 database named
+`mu_profile_restore_test` on `127.0.0.1:55432`, with test role `muvalidation` and
+`psql` on PATH. It never targets the default PostgreSQL port or production.
+
 ## Notes
 
 - The live database starts empty. It is not your local `openmu` database; copy one over later with `pg_dump` / `psql` if you want existing characters.
