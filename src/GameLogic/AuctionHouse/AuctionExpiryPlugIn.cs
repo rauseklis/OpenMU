@@ -19,7 +19,12 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
 {
     private static readonly TimeSpan IniCheckInterval = TimeSpan.FromSeconds(5);
 
-    private readonly AuctionHouseIniFile _iniFile = new(Path.Combine(AppContext.BaseDirectory, "AuctionHouse.ini"));
+    /// <summary>
+    /// The environment variable which moves <c>AuctionHouse.ini</c> to another place, for example a volume of a container.
+    /// </summary>
+    private const string IniPathVariable = "AUCTION_HOUSE_INI_PATH";
+
+    private readonly AuctionHouseIniFile _iniFile = new(Environment.GetEnvironmentVariable(IniPathVariable) is { Length: > 0 } iniPath ? iniPath : Path.Combine(AppContext.BaseDirectory, "AuctionHouse.ini"));
     private DateTime _nextRunUtc = DateTime.MinValue;
     private DateTime _nextIniCheckUtc = DateTime.MinValue;
 
