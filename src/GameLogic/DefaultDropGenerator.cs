@@ -1,4 +1,4 @@
-// <copyright file="DefaultDropGenerator.cs" company="MUnique">
+﻿// <copyright file="DefaultDropGenerator.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -36,6 +36,7 @@ public class DefaultDropGenerator : IDropGenerator
     /// </summary>
     private readonly List<DropItemGroup> _chanceDropGroups = new(64);
     private readonly List<DropItemGroup> _guaranteedDropGroups = new(16);
+    private readonly List<DropItemGroup> _smallBonusDropGroups = new(16);
 
     private readonly AsyncLock _lock = new();
     private readonly IRandomizer _randomizer;
@@ -81,17 +82,8 @@ public class DefaultDropGenerator : IDropGenerator
         this._guaranteedDropGroups.Clear();
         this._chanceDropGroups.Clear();
 
-        if (monster.ObjectKind == NpcObjectKind.Destructible)
-        {
-            this.PartitionDropGroups(monster.DropItemGroups ?? []);
-        }
-        else
-        {
-            this.PartitionDropGroups(monster.DropItemGroups ?? []);
-            this.PartitionDropGroups(character.DropItemGroups ?? [], monster);
-            this.PartitionDropGroups(map.DropItemGroups ?? [], monster);
-            this.PartitionDropGroups(await GetQuestItemGroupsAsync(player).ConfigureAwait(false) ?? [], monster);
-        }
+        this._smallBonusDropGroups.Clear();
+        await this.CollectDropGroupsAsync(player, monster, map, character.DropItemGroups ?? []).ConfigureAwait(false);
 
         uint money = 0;
         var (droppedItems, moneyResult) = this.GenerateDrops(monster, gainedExperience, player.Attributes?[PremiumBuffStats.ItemDropBonus] ?? 0);
@@ -100,8 +92,15 @@ public class DefaultDropGenerator : IDropGenerator
             money = moneyResult;
         }
 
+        if (this.GenerateSmallBonusDrop(monster) is { } bonus)
+        {
+            droppedItems ??= new List<Item>();
+            droppedItems.Add(bonus);
+        }
+
         this._guaranteedDropGroups.Clear();
         this._chanceDropGroups.Clear();
+        this._smallBonusDropGroups.Clear();
         return (droppedItems ?? Enumerable.Empty<Item>(), money > 0 ? money : null);
     }
 
@@ -359,6 +358,44 @@ public class DefaultDropGenerator : IDropGenerator
         return (droppedItems, money);
     }
 
+    private async ValueTask CollectDropGroupsAsync(Player player, MonsterDefinition monster, GameMapDefinition map, IEnumerable<DropItemGroup> characterGroups)
+    {
+        if (monster.ObjectKind == NpcObjectKind.Destructible)
+        {
+            this.PartitionDropGroups(monster.DropItemGroups ?? []);
+        }
+        else
+        {
+            this.PartitionDropGroups(monster.DropItemGroups ?? []);
+            this.PartitionDropGroups(characterGroups, monster);
+            this.PartitionDropGroups(map.DropItemGroups ?? [], monster);
+            this.PartitionDropGroups(await GetQuestItemGroupsAsync(player).ConfigureAwait(false) ?? [], monster);
+        }
+    }
+
+    private Item? GenerateSmallBonusDrop(MonsterDefinition monster)
+    {
+        if (monster.ObjectKind != NpcObjectKind.Monster || monster.NumberOfMaximumItemDrops <= 0
+            || this._guaranteedDropGroups.Count > 0 || this._smallBonusDropGroups.Count == 0)
+        {
+            return null;
+        }
+
+        // Absolute probabilities: neither ordinary loot weights nor premium bonuses apply.
+        var threshold = this._randomizer.NextDouble();
+        foreach (var group in this._smallBonusDropGroups)
+        {
+            if (threshold < group.Chance)
+            {
+                return this.GenerateItemFromGroup(monster, group);
+            }
+
+            threshold -= group.Chance;
+        }
+
+        return null;
+    }
+
     private void PartitionDropGroups(IEnumerable<DropItemGroup> groups, MonsterDefinition? monster = null)
     {
         foreach (var group in groups)
@@ -368,7 +405,11 @@ public class DefaultDropGenerator : IDropGenerator
                 continue;
             }
 
-            if (group.Chance >= 1.0)
+            if (group.ItemType == SpecialItemType.SmallBonus)
+            {
+                this._smallBonusDropGroups.Add(group);
+            }
+            else if (group.Chance >= 1.0)
             {
                 this._guaranteedDropGroups.Add(group);
             }
