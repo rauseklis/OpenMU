@@ -120,7 +120,7 @@ transfer that configuration. Do not import an old player database to recover it.
 `restore-gameplay-profile.sql` is an explicit maintenance tool for the final old
 profile: resets enabled with 500 times reset count and a limit of 50; eight
 recovery items stacking to 50; unlimited ranged ammunition; nine farming spots
-and six Arena spawn definitions (two groups of twenty monsters). It preserves
+with no Arena monster spawns added. It preserves
 SD/complex stacks of three. Blocked Arena arrivals move to the nearest clear 3x3
 floor area, as in the old local installer. EXP, player data, speed formulas and
 terrain stay unchanged. Configuration changes affect all players using this profile;

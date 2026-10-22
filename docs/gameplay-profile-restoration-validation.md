@@ -12,7 +12,7 @@ profile settings and spawns. A read-only transaction found:
 | Recovery stack capacity (eight items) | 3 | 50 |
 | Unlimited ammunition | 0 of 23 ranged weapons | All 23 |
 | Custom farming definitions | 0 of 9 | 9 of 9 |
-| Custom Arena definitions | 0 of 6 | 6 of 6, two groups of 20 monsters |
+| Custom Arena definitions | 0 of 6 | Excluded by owner; no changes |
 | Completely blocked Arena arrivals | 2 | 0; nearest clear 3x3 floor |
 
 Existing slower Agility formulas and 500 speed caps are present. Arena terrain
@@ -33,6 +33,8 @@ The live audit found 50x/1x/1x. No real local database was accessed.
   `127.0.0.1:55432`: wrong-target refusal, complete dry-run rollback, expected
   restored values, unchanged existing spawns, unchanged unaffected gate fields,
   clear corrected arrivals, repeat-application idempotence, and collision refusal.
+  The revised test first failed against the fifteen-spawn script, then passed
+  after removal of all six Arena definitions. All Arena spawn rows remain identical.
 - Compared fingerprints of every `config` and `data` table before and after.
   Only the five intended configuration tables changed. All player data and other
   configuration tables remained identical.
@@ -53,7 +55,7 @@ placement and teleport behavior have not been tested in gameplay. The user plays
 and reports. The broader existing server suite was not rerun for this SQL-only
 maintenance change; the focused database regression and server startup were run.
 
-Before applying, obtain the owner's approval of the live data changes, take a
+The owner approved the live repair excluding Arena monster spawns. Take a
 backup, apply the reviewed SQL, and restart the server to reload configuration.
 The restart disconnects players. Do not claim gameplay verification from greeting
 or HTTP checks.

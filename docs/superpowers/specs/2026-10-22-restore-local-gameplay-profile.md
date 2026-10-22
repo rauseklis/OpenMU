@@ -10,8 +10,9 @@ The read-only live audit found resets disabled (1500 points, no configured limit
 recovery stacks of three, ammunition consumption enabled, and none of the fifteen
 custom spawn definitions. The repair restores the final old policy: enabled
 resets at 500 times reset count, maximum 50 resets; eight recovery items stacking
-to 50; unlimited ranged ammunition; nine farming spots and six Arena definitions
-(two groups of twenty monsters). SD/complex stacks remain three. Two live Arena
+to 50; unlimited ranged ammunition; and nine farming spots. The owner explicitly
+excluded Arena monster spawns on October 22; leave all existing Arena spawns
+unchanged and add none. SD/complex stacks remain three. Two live Arena
 arrival gates point entirely into walls; restore the old installer's correction
 by moving only blocked arrivals to the nearest clear 3x3 floor area.
 
@@ -34,7 +35,7 @@ idempotence, and test refusal of a conflicting spawn. Verify unaffected gates ar
 identical and corrected arrivals have a clear 3x3 area. Start a disposable server
 on shifted ports and check readiness. Gameplay remains for the user to verify.
 
-Show the final tested SQL and scope to the user and obtain approval before any
-live data change. Take a live backup with the existing approved backup mechanism,
+The owner approved this repair on October 22, excluding Arena monster spawns.
+Apply only that approved scope. Take a live backup with the existing approved backup mechanism,
 apply the script during a maintenance window, restart the game server to reload
 configuration (players disconnect), and check readiness and database values.

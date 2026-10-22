@@ -112,13 +112,7 @@ INSERT INTO restored_spots VALUES
 ('45c1a50f-21d3-58de-8e7b-82332d5520d8',7,48,28,170,28,170,10),
 ('4b62b3d5-5392-5b24-b83c-d597f653bbee',8,60,134,72,134,72,10),
 ('0cb045a1-e83b-5a7c-9b4f-36520dd81877',33,308,115,17,115,17,10),
-('442e5518-aedd-5204-ad14-97520d28b50b',37,351,45,230,45,230,10),
-('f47613a1-014d-4203-a3f4-7bbaf0fe2471',6,62,86,112,90,116,7),
-('b46dc99d-2390-4344-9ec6-568e7efea6cf',6,60,86,112,90,116,7),
-('3e55ddfa-6155-4ddd-861a-9fdfad05aa11',6,57,86,112,90,116,6),
-('33f8fba9-9065-418d-b6e6-d3054c80c168',6,351,59,111,62,115,7),
-('cad49385-8804-470a-9a61-cdef3cf079ee',6,352,59,111,62,115,7),
-('9cd3eb99-e2dc-4f3c-8512-04956ff6e249',6,353,59,111,62,115,6);
+('442e5518-aedd-5204-ad14-97520d28b50b',37,351,45,230,45,230,10);
 
 CREATE TEMP TABLE resolved_spots ON COMMIT DROP AS
 SELECT s.*,g."Id" AS map_id,m."Id" AS monster_id,g."TerrainData" AS terrain
@@ -128,8 +122,8 @@ JOIN config."MonsterDefinition" m ON m."Number" = s.monster_number
   AND m."GameConfigurationId" = g."GameConfigurationId" AND m."ObjectKind" = 0;
 DO $$
 BEGIN
-    IF (SELECT count(*) FROM resolved_spots) <> 15 THEN
-      RAISE EXCEPTION 'Expected exactly fifteen resolved map/monster pairs'; END IF;
+    IF (SELECT count(*) FROM resolved_spots) <> 9 THEN
+      RAISE EXCEPTION 'Expected exactly nine resolved map/monster pairs'; END IF;
     IF EXISTS (SELECT FROM resolved_spots s
       WHERE octet_length(s.terrain) <> 65539 OR NOT EXISTS (
         SELECT FROM config."GameServerConfigurationGameMapDefinition" j
@@ -152,7 +146,7 @@ INSERT INTO config."MonsterSpawnArea"
 SELECT id,monster_id,map_id,x1,y1,x2,y2,0,quantity,0,0,NULL FROM resolved_spots
 ON CONFLICT ("Id") DO NOTHING;
 
-SELECT 'Resets: enabled, 500 x reset count, limit 50; recovery stacks: 50; ranged ammunition: unlimited; custom spawn definitions: 15; Arena arrivals: clear' AS proposed_profile;
+SELECT 'Resets: enabled, 500 x reset count, limit 50; recovery stacks: 50; ranged ammunition: unlimited; farming spawn definitions: 9; Arena monster spawns: unchanged; Arena arrivals: clear' AS proposed_profile;
 \if :apply
 COMMIT;
 \else

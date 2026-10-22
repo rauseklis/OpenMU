@@ -66,6 +66,9 @@ class RestoreGameplayProfileTests(unittest.TestCase):
         before = snapshot()
         original_spawns = query('SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY "Id"),\'[]\') FROM config."MonsterSpawnArea" t')
         old_count = int(query('SELECT count(*) FROM config."MonsterSpawnArea"'))
+        arena_before = query('''SELECT coalesce(jsonb_agg(to_jsonb(s) ORDER BY s."Id"),'[]')
+            FROM config."MonsterSpawnArea" s JOIN config."GameMapDefinition" m ON m."Id"=s."GameMapId"
+            WHERE m."Number"=6''')
         old_gates = json.loads(query('SELECT jsonb_agg(to_jsonb(t)) FROM config."ExitGate" t'))
         blocked_gate_ids = set(json.loads(query('''
             SELECT coalesce(json_agg(g."Id"),'[]') FROM config."ExitGate" g
@@ -92,7 +95,11 @@ class RestoreGameplayProfileTests(unittest.TestCase):
         self.assertEqual(query('SELECT count(*) FROM config."ItemDefinition" WHERE "Group"=14 AND "Number" IN (0,1,2,3,4,5,6,8) AND "Durability"=50'), "8")
         self.assertEqual(query('SELECT count(*) FROM config."ItemDefinition" WHERE "Group"=14 AND "Number" BETWEEN 35 AND 40 AND "Durability"=3'), "6")
         self.assertEqual(query('SELECT count(*) FROM config."ItemBasePowerUpDefinition" p JOIN config."ItemDefinition" i ON i."Id"=p."ItemDefinitionId" WHERE i."Group"=4 AND NOT i."IsAmmunition" AND p."TargetAttributeId"=\'4cd0b1ae-3fe0-499b-b421-4e4078182090\' AND p."BaseValue"<>0'), "0")
-        self.assertEqual(int(query('SELECT count(*) FROM config."MonsterSpawnArea"')), old_count + 15)
+        self.assertEqual(int(query('SELECT count(*) FROM config."MonsterSpawnArea"')), old_count + 9)
+        arena_after = query('''SELECT coalesce(jsonb_agg(to_jsonb(s) ORDER BY s."Id"),'[]')
+            FROM config."MonsterSpawnArea" s JOIN config."GameMapDefinition" m ON m."Id"=s."GameMapId"
+            WHERE m."Number"=6''')
+        self.assertEqual(arena_after, arena_before, "Arena monster spawns must remain completely unchanged")
         current_spawns = json.loads(query('SELECT jsonb_agg(to_jsonb(t)) FROM config."MonsterSpawnArea" t'))
         current_by_id = {spawn["Id"]: spawn for spawn in current_spawns}
         for spawn in json.loads(original_spawns):
