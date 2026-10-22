@@ -32,9 +32,12 @@ services:
       DB_ADMIN_PW: ${DB_ADMIN_PW}
       OPENMU_ADMIN_USER: ${OPENMU_ADMIN_USER:-admin}
       OPENMU_ADMIN_PASSWORD: ${OPENMU_ADMIN_PASSWORD}
+      # AuctionHouse.ini lives in a volume, because /app itself is not writable for the application.
+      AUCTION_HOUSE_INI_PATH: /app/config/AuctionHouse.ini
     volumes:
       - adminpanel-keys:/app/data-protection-keys
       - logs:/app/logs
+      - auctionhouse-config:/app/config
     working_dir: /app/
 
   database:
@@ -52,4 +55,5 @@ services:
 volumes:
   adminpanel-keys:
   logs:
+  auctionhouse-config:
   dbdata:

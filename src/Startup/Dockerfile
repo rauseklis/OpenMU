@@ -48,7 +48,8 @@ COPY --from=publish /app/publish .
 # The container runs as a non-root user, but /app belongs to root. Directories the
 # application writes to have to be created and made writable beforehand - the data
 # protection key ring among them, which protects the admin panel sessions.
-RUN mkdir -p /app/logs /app/data-protection-keys && chmod 777 /app/logs /app/data-protection-keys
+# /app/config holds AuctionHouse.ini (see AUCTION_HOUSE_INI_PATH in deploy/live/docker-compose.yml).
+RUN mkdir -p /app/logs /app/data-protection-keys /app/config && chmod 777 /app/logs /app/data-protection-keys /app/config
 
 ARG APP_UID=1000
 USER ${APP_UID}
