@@ -10,11 +10,12 @@ using MUnique.OpenMU.PlugIns;
 
 /// <summary>
 /// A plugin which shows a message to all players when a player enters the game.
+/// It is disabled by default: this server does not announce joining players.
 /// </summary>
 [PlugIn]
 [Display(Name = nameof(PlugInResources.ShowMessageToAllWhenPlayerEnteredWorldPlugIn_Name), Description = nameof(PlugInResources.ShowMessageToAllWhenPlayerEnteredWorldPlugIn_Description), ResourceType = typeof(PlugInResources))]
 [Guid("12784A17-1085-408E-99CE-5233FDA2B177")]
-public class ShowMessageToAllWhenPlayerEnteredWorldPlugIn : IPlayerStateChangedPlugIn
+public class ShowMessageToAllWhenPlayerEnteredWorldPlugIn : IPlayerStateChangedPlugIn, IDisabledByDefault
 {
     /// <inheritdoc />
     public async ValueTask PlayerStateChangedAsync(Player player, State previousState, State currentState)
