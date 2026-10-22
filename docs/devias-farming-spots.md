@@ -1,33 +1,47 @@
-# Devias farming spots — proposal
+# Custom farming spots: eight monsters per group
 
-Add one concentrated group of ten monsters near each of the Devias 1, 2 and 3
-warp areas. These are three locations on the same Devias map (map number 2).
+The owner requested eight monsters at every custom farming spot on October 22.
+Add the three Devias groups below and reduce the nine groups previously restored
+by PR #14 from ten to eight. These twelve stable IDs are the complete scope;
+standard spawns, including existing ten-monster Elite Yeti groups, stay intact.
 
-| Area | Coordinates | Monster | Added monsters |
+| Area | Coordinates | Monster | Quantity |
 | --- | --- | --- | --- |
-| Devias 1 | 200,84 | Worm | 10 |
-| Devias 2 | 50,42 | Ice Monster | 10 |
-| Devias 3 | 225,200 | Elite Yeti | 10 |
+| Devias 1 | 200,84 | Worm | 8 |
+| Devias 2 | 50,42 | Ice Monster | 8 |
+| Devias 3 | 225,200 | Elite Yeti | 8 |
+| Lost Tower 1 | 193,108 | Shadow | 8 |
+| Lost Tower 3 | 83,213 | Death Cow | 8 |
+| Lost Tower 6 | 30,17 | Death Knight | 8 |
+| Lost Tower 7 | 54,88 | Death Knight | 8 |
+| Atlans 2 | 221,88 | Great Bahamut | 8 |
+| Atlans 3 | 28,170 | Lizard King | 8 |
+| Tarkan | 134,72 | Bloody Wolf | 8 |
+| Aida | 115,17 | Death Tree | 8 |
+| Kanturu | 45,230 | Splinter Wolf | 8 |
 
-Each center has a clear 9x9 hunting area. Read-only checks against the live map
-found a walkable route from its warp area: 75, 42 and 29 cardinal steps,
-respectively. Locations are at least twelve tiles from NPCs or existing point
-spawns and ten tiles from arrival gates. Existing random spawns can still wander
-through these areas. Monsters retain their normal movement and respawn rules.
+Devias 1, 2 and 3 are locations on the same map (number 2). Each new center has
+a clear 9x9 hunting area. Read-only live terrain checks found walkable routes
+from the corresponding warp areas: 75, 42 and 29 cardinal steps. Centers are at
+least twelve tiles from NPCs or existing point spawns and ten from arrival gates.
+Existing random monsters can wander through these areas. Movement and respawn
+rules are unchanged. Arena, EXP, drops, resets and item settings stay unchanged.
 
-The two existing concentrated Elite Yeti spots remain intact. All existing spawns,
-including Arena, stay unchanged. No EXP, drop, reset or item changes are included.
+`deploy/live/add-devias-farming-spots.sql` applies all twelve changes in one
+transaction. It requires `expected_database`, defaults to rollback, checks the
+nine previous definitions (including their identities, coordinates and old counts
+of eight or ten), checks Devias clearance, and refuses conflicting definitions.
+Rerunning is safe. The older restoration tool now creates the nine previous
+spots with eight monsters on fresh fixtures too; it does not convert existing
+ten-monster rows. Use the new tool for that conversion.
 
-`deploy/live/add-devias-farming-spots.sql` is a manual maintenance tool, not a
-startup update. It requires `expected_database`, defaults to rollback, rejects
-blocked terrain and conflicting IDs, and can be rerun without duplicating mobs.
-Show this table to the owner and obtain live-data approval before applying.
-Take a backup and reload the server configuration after application; players
-briefly disconnect. No client update is required.
+The owner explicitly requested this scope. Take a backup before live application
+and reload the server configuration afterward; players briefly disconnect.
+No client update is required. Nothing applies automatically during deployment.
 
-Before release, run `tests/maintenance/test_devias_farming_spots.py` against a
-fresh Season 6 disposable database named `mu_devias_spots_test` at
-`127.0.0.1:55432`, role `muvalidation`, with psql on PATH. Verify rollback,
-wrong-target refusal, safe-zone refusal, preservation of every existing spawn and
-all other tables, idempotence and conflict refusal. Actual in-game reachability,
-farming feel and monster placement remain manual checks for the owner.
+The focused tests use fresh disposable `mu_devias_spots_test` and
+`mu_profile_restore_test` databases at `127.0.0.1:55432`, role `muvalidation`, with
+psql on PATH. They cover ten-to-eight conversion, exactly three insertions,
+preservation of every other spawn and table, rollback, wrong-target refusal,
+blocked terrain, idempotence and conflicting new/previous definitions. Actual
+in-game routes, farming feel and monster placement remain manual user checks.

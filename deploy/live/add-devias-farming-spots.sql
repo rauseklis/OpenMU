@@ -20,9 +20,9 @@ CREATE TEMP TABLE devias_spots (
  x smallint, y smallint, quantity smallint
 ) ON COMMIT DROP;
 INSERT INTO devias_spots VALUES
- ('3be31bf7-2d69-50f4-a4aa-7d79c8a00a5a','Devias 1',24,200,84,10),
- ('11c0cd30-9e1b-5aa6-94bb-a28e3f9bbbf6','Devias 2',22,50,42,10),
- ('40a097b1-69f3-5539-bcc4-39c782efeeaa','Devias 3',20,225,200,10);
+ ('3be31bf7-2d69-50f4-a4aa-7d79c8a00a5a','Devias 1',24,200,84,8),
+ ('11c0cd30-9e1b-5aa6-94bb-a28e3f9bbbf6','Devias 2',22,50,42,8),
+ ('40a097b1-69f3-5539-bcc4-39c782efeeaa','Devias 3',20,225,200,8);
 
 CREATE TEMP TABLE resolved_devias_spots ON COMMIT DROP AS
 SELECT s.*,g."Id" AS map_id,m."Id" AS monster_id,g."TerrainData" AS terrain
@@ -65,11 +65,43 @@ BEGIN
    RAISE EXCEPTION 'An existing Devias spot differs; manual review required'; END IF;
 END $$;
 
+
+-- Change only the nine explicitly identified farming spots restored by PR #14.
+CREATE TEMP TABLE previous_farming_spots (
+ id uuid PRIMARY KEY, map_number integer, monster_number integer, x smallint, y smallint
+) ON COMMIT DROP;
+INSERT INTO previous_farming_spots VALUES
+ ('98b255d9-72d5-5438-ac69-ec0e97115142',4,36,193,108),
+ ('9a20d0f9-cf0c-56b5-92f8-38bf1d4ce9e2',4,41,83,213),
+ ('89a3df7e-c0ac-5f06-b351-c0c8853bb229',4,40,30,17),
+ ('6340180e-4c46-5aaf-9019-c30795a326a3',4,40,54,88),
+ ('d06a3c06-7cc5-50e7-8137-b9742b471935',7,51,221,88),
+ ('45c1a50f-21d3-58de-8e7b-82332d5520d8',7,48,28,170),
+ ('4b62b3d5-5392-5b24-b83c-d597f653bbee',8,60,134,72),
+ ('0cb045a1-e83b-5a7c-9b4f-36520dd81877',33,308,115,17),
+ ('442e5518-aedd-5204-ad14-97520d28b50b',37,351,45,230);
+DO $$
+BEGIN
+ IF (SELECT count(*) FROM previous_farming_spots p
+   JOIN config."MonsterSpawnArea" a ON a."Id"=p.id
+   JOIN config."GameMapDefinition" g ON g."Id"=a."GameMapId"
+   JOIN config."MonsterDefinition" m ON m."Id"=a."MonsterDefinitionId"
+   WHERE g."GameConfigurationId"='00000001-0001-0000-0000-000000000000'
+     AND m."GameConfigurationId"=g."GameConfigurationId"
+     AND (g."Number",m."Number",a."X1",a."Y1",a."X2",a."Y2",a."Direction",a."SpawnTrigger",a."WaveNumber")
+       = (p.map_number,p.monster_number,p.x,p.y,p.x,p.y,0,0,0)
+     AND a."Quantity" IN (8,10) AND a."MaximumHealthOverride" IS NULL) <> 9 THEN
+   RAISE EXCEPTION 'Expected nine unchanged previous farming spots with quantity eight or ten'; END IF;
+END $$;
+UPDATE config."MonsterSpawnArea" a SET "Quantity"=8
+FROM previous_farming_spots p WHERE a."Id"=p.id;
+
 INSERT INTO config."MonsterSpawnArea"
  ("Id","MonsterDefinitionId","GameMapId","X1","Y1","X2","Y2","Direction","Quantity","SpawnTrigger","WaveNumber","MaximumHealthOverride")
 SELECT id,monster_id,map_id,x,y,x,y,0,quantity,0,0,NULL FROM resolved_devias_spots
 ON CONFLICT ("Id") DO NOTHING;
 SELECT label,monster_number,x,y,quantity FROM devias_spots ORDER BY label;
+SELECT 'Nine previous custom farming spots now have eight monsters each' AS previous_spots;
 \if :apply
 COMMIT;
 \else
