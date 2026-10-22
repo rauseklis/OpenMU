@@ -65,3 +65,13 @@ It hashes every configuration/player table, checks preview rollback, rejects a
 wrong database, verifies the exact three changed tables, 19 variants, nine groups,
 5% total, map coverage, idempotence and conflict refusal. Manual gameplay should
 check gift appearance and pickup; automated tests do not log in to the game.
+
+Validated on October 22, 2026: 57 focused loot/premium/jewel tests and all 1,574
+non-PostgreSQL tests passed. The maintenance integration passed on the disposable
+fixture. Startup built with zero errors; the isolated server migrated the fixture,
+loaded its configuration, returned 4/12-byte connect/game greetings and HTTP 200
+on the admin endpoint. Persisted configuration contained nine groups and 19
+variants, with a floating-point sum of 0.05000000000000001. An initial unrestricted
+suite had empty-connection errors in unrelated PostgreSQL fixtures and was stopped;
+it is not counted as passing. Full auction/database integration and gameplay were
+not exercised by this task.
