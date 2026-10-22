@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameServer.RemoteView.Character;
 
+using MUnique.OpenMU.GameLogic;
 using System.Runtime.InteropServices;
 using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.GameLogic.Attributes;
@@ -60,9 +61,10 @@ public class ShowCharacterListPlugIn : IShowCharacterListPlugIn
 
     private async ValueTask SendCharacterListAsync(IConnection connection, Account account, CharacterCreationUnlockFlags unlockFlags)
     {
-        var guildPositions = new GuildPosition?[account.Characters.Count];
+        var characters = this._player.GetCharactersOfThisServer().ToList();
+        var guildPositions = new GuildPosition?[characters.Count];
         int i = 0;
-        foreach (var character in account.Characters)
+        foreach (var character in characters)
         {
             guildPositions[i] = await this._player.GameServerContext.GuildServer.GetGuildPositionAsync(character.Id).ConfigureAwait(false);
             i++;
@@ -71,17 +73,17 @@ public class ShowCharacterListPlugIn : IShowCharacterListPlugIn
         var appearanceSerializer = this._player.AppearanceSerializer;
         int Write()
         {
-            var size = CharacterListRef.GetRequiredSize(account.Characters.Count);
+            var size = CharacterListRef.GetRequiredSize(characters.Count);
             var span = connection.Output.GetSpan(size)[..size];
             var packet = new CharacterListRef(span)
             {
                 UnlockFlags = unlockFlags,
-                CharacterCount = (byte)account.Characters.Count,
+                CharacterCount = (byte)characters.Count,
                 IsVaultExtended = account.IsVaultExtended,
             };
 
             var j = 0;
-            foreach (var character in account.Characters.OrderBy(c => c.CharacterSlot))
+            foreach (var character in characters.OrderBy(c => c.CharacterSlot))
             {
                 var characterData = packet[j];
                 characterData.SlotIndex = character.CharacterSlot;

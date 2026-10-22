@@ -124,6 +124,12 @@ public class Character
     public byte CharacterSlot { get; set; }
 
     /// <summary>
+    /// Gets or sets the identifier of the game server this character lives on. A character is only listed on, and can only
+    /// be played on, this game server. It is the server id of the game server definition (0 is the first server).
+    /// </summary>
+    public byte GameServerId { get; set; }
+
+    /// <summary>
     /// Gets or sets the create date.
     /// </summary>
     public DateTime CreateDate { get; set; } = DateTime.UtcNow;
