@@ -23,6 +23,7 @@ class SmallBonusDropsTests(unittest.TestCase):
         self.assertEqual(query("SELECT inet_server_port()"), "55432")
         self.assertEqual(query('SELECT count(*) FROM config."DropItemGroup" WHERE "ItemType"=7'), "0",
                          "Use a fresh disposable fixture")
+        servers_before = query('SELECT jsonb_agg(to_jsonb(t)-\'SmallBonusDropsEnabled\' ORDER BY "Id") FROM config."GameServerDefinition" t')
         before = snapshot()
         wrong = apply(commit=True, expected="wrong_database")
         self.assertNotEqual(wrong.returncode, 0)
@@ -35,7 +36,7 @@ class SmallBonusDropsTests(unittest.TestCase):
         self.assertEqual(applied.returncode, 0, applied.stderr)
         after = snapshot()
         self.assertEqual({name for name in before if before[name] != after[name]}, {
-            "config.DropItemGroup", "config.DropItemGroupItemDefinition", "config.GameMapDefinitionDropItemGroup"})
+            "config.DropItemGroup", "config.DropItemGroupItemDefinition", "config.GameMapDefinitionDropItemGroup", "config.GameServerDefinition"})
         self.assertEqual(query('SELECT count(*) FROM config."DropItemGroup" WHERE "ItemType"=7'), "9")
         self.assertAlmostEqual(float(query('SELECT sum("Chance") FROM config."DropItemGroup" WHERE "ItemType"=7')), .05)
         self.assertEqual(query('''SELECT count(*) FROM config."DropItemGroupItemDefinition" j
@@ -45,6 +46,9 @@ class SmallBonusDropsTests(unittest.TestCase):
             AND (SELECT count(*) FROM config."GameMapDefinitionDropItemGroup" j
             JOIN config."DropItemGroup" g ON g."Id"=j."DropItemGroupId"
             WHERE j."GameMapDefinitionId"=m."Id" AND g."ItemType"=7) <> 9'''), "0")
+        self.assertEqual(query('SELECT count(*) FROM config."GameServerDefinition" WHERE "ServerID"=0 AND "SmallBonusDropsEnabled"'), "1")
+        self.assertEqual(query('SELECT count(*) FROM config."GameServerDefinition" WHERE "ServerID"<>0 AND "SmallBonusDropsEnabled"'), "0")
+        self.assertEqual(query('SELECT jsonb_agg(to_jsonb(t)-\'SmallBonusDropsEnabled\' ORDER BY "Id") FROM config."GameServerDefinition" t'), servers_before)
         repeated = apply(commit=True)
         self.assertEqual(repeated.returncode, 0, repeated.stderr)
         self.assertEqual(snapshot(), after)

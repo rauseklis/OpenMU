@@ -76,7 +76,7 @@ public sealed class GameServer : IGameServer, IDisposable, IAsyncDisposable, IGa
         try
         {
             var gameConfiguration = gameServerDefinition.GameConfiguration ?? throw Error.NotInitializedProperty(gameServerDefinition, nameof(gameServerDefinition.GameConfiguration));
-            var dropGenerator = new DefaultDropGenerator(gameConfiguration, Rand.GetRandomizer());
+            var dropGenerator = new DefaultDropGenerator(gameConfiguration, Rand.GetRandomizer(), gameServerDefinition.SmallBonusDropsEnabled);
             var mapInitializer = new GameServerMapInitializer(gameServerDefinition, loggerFactory.CreateLogger<GameServerMapInitializer>(), dropGenerator, changeMediator);
             this._gameContext = new GameServerContext(gameServerDefinition, guildServer, eventPublisher, loginServer, friendServer, persistenceContextProvider, mapInitializer, loggerFactory, plugInManager, dropGenerator, changeMediator);
             this._gameContext.GameMapCreated += (_, _) => this.OnPropertyChanged(nameof(this.Context));

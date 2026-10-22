@@ -1,6 +1,9 @@
-# Small gifts: one combined 5% monster roll
+# Server 1: one combined 5% small-gift monster roll
 
-Opt-in configuration for the owner's selected gift pool. Each ordinary monster
+Opt-in configuration for the owner's selected gift pool, enabled only on Server 1
+(internal ID 0). `GameServerDefinition.SmallBonusDropsEnabled` defaults to false;
+the generator receives each server's own flag, so shared map groups do not enable
+bonuses on other servers. Changing this flag requires a server reload. Each ordinary monster
 with at least one loot slot and no applicable guaranteed drop group gets one
 additional roll. Its chance is 5% for **the whole pool**, with at most one extra
 gift. Multiple normal loot slots and premium drop bonuses do not multiply it.
@@ -34,7 +37,7 @@ definitions, which would add another ordinary drop source.
 `deploy/live/small-bonus-drops.sql` links nine stable-ID groups to all maps of
 configuration `00000001-0001-0000-0000-000000000000`. It checks all 19 variants,
 refuses conflicting groups or links and preserves existing loot, spawns, rates
-and player data. Reapplying is idempotent. It defaults to rollback:
+and player data. It additionally enables only Server 1; other servers keep their flags. Reapplying is idempotent. It defaults to rollback:
 
 ```sh
 psql -X -v expected_database=<selected-database> -f deploy/live/small-bonus-drops.sql
@@ -45,7 +48,7 @@ psql -X -v expected_database=<selected-database> -v apply=true -f deploy/live/sm
 Deploy SmallBonus-aware code before applying live configuration; reload the
 server afterward. Keep a pre-change backup without pruning existing backups.
 Deployment does not apply this script automatically. To roll back, unlink and
-remove only the nine groups after approval, then reload. No client update or
+remove only the nine groups and disable the opted-in server after approval, then reload. No client update or
 packet change is required.
 
 ## Validation
@@ -62,12 +65,13 @@ python -m unittest discover -s tests/maintenance -p test_small_bonus_drops.py -v
 ```
 
 It hashes every configuration/player table, checks preview rollback, rejects a
-wrong database, verifies the exact three changed tables, 19 variants, nine groups,
+wrong database, verifies the exact four changed tables, 19 variants, nine groups,
 5% total, map coverage, idempotence and conflict refusal. Manual gameplay should
 check gift appearance and pickup; automated tests do not log in to the game.
 
 Validated on October 22, 2026: 57 focused loot/premium/jewel tests and all 1,574
-non-PostgreSQL tests passed. The maintenance integration passed on the disposable
+non-PostgreSQL tests passed before the per-server opt-in change. All 58 focused tests passed for the final server-scoped implementation, including
+default-disabled behavior and isolated opt-in with shared map groups. The maintenance integration passed on the disposable
 fixture. Startup built with zero errors; the isolated server migrated the fixture,
 loaded its configuration, returned 4/12-byte connect/game greetings and HTTP 200
 on the admin endpoint. Persisted configuration contained nine groups and 19

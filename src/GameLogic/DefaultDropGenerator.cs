@@ -40,6 +40,7 @@ public class DefaultDropGenerator : IDropGenerator
 
     private readonly AsyncLock _lock = new();
     private readonly IRandomizer _randomizer;
+    private readonly bool _smallBonusDropsEnabled;
     private readonly IList<ItemDefinition> _ancientItems;
     private readonly IList<ItemDefinition> _droppableItems;
     private readonly IList<ItemDefinition>?[] _droppableItemsPerMonsterLevel = new IList<ItemDefinition>?[byte.MaxValue + 1];
@@ -53,10 +54,12 @@ public class DefaultDropGenerator : IDropGenerator
     /// </summary>
     /// <param name="config">The configuration.</param>
     /// <param name="randomizer">The randomizer.</param>
-    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer)
+    /// <param name="smallBonusDropsEnabled">Whether this server enables configured small-bonus drops.</param>
+    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer, bool smallBonusDropsEnabled = false)
     {
         this._excellentItemDropLevelDelta = config.ExcellentItemDropLevelDelta;
         this._randomizer = randomizer;
+        this._smallBonusDropsEnabled = smallBonusDropsEnabled;
         this._maxItemOptionLevelDrop = IsValidOptionLevelDrop(config.MaximumItemOptionLevelDrop)
             ? config.MaximumItemOptionLevelDrop
             : DefaultMaxItemOptionLevelDrop;
@@ -375,7 +378,7 @@ public class DefaultDropGenerator : IDropGenerator
 
     private Item? GenerateSmallBonusDrop(MonsterDefinition monster)
     {
-        if (monster.ObjectKind != NpcObjectKind.Monster || monster.NumberOfMaximumItemDrops <= 0
+        if (!this._smallBonusDropsEnabled || monster.ObjectKind != NpcObjectKind.Monster || monster.NumberOfMaximumItemDrops <= 0
             || this._guaranteedDropGroups.Count > 0 || this._smallBonusDropGroups.Count == 0)
         {
             return null;

@@ -76,6 +76,7 @@ public class EntityDataContext : ExtendedTypeContext
         modelBuilder.Entity<GameServerDefinition>(entity =>
         {
             entity.Property(e => e.PvpEnabled).HasDefaultValue(true);
+            entity.Property(e => e.SmallBonusDropsEnabled).HasDefaultValue(false);
         });
         modelBuilder.Entity<ConfigurationUpdate>().Apply();
         modelBuilder.Entity<ConfigurationUpdateState>();

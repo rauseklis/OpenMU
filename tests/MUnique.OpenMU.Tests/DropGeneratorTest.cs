@@ -171,7 +171,7 @@ public class DropGeneratorTest
         var bonus = groups.Add(500, SpecialItemType.SmallBonus, true);
         bonus.ItemLevel = 5;
         bonus.PossibleItems.First().MaximumItemLevel = 15;
-        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer2(0, roll));
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer2(0, roll), true);
 
         var (items, _) = await generator.GenerateItemDropsAsync(this.GetMonster(slots, 70), 1, player).ConfigureAwait(false);
         var result = items.ToList();
@@ -201,7 +201,7 @@ public class DropGeneratorTest
             monster.DropItemGroups.Add(10000, SpecialItemType.None, true);
         }
 
-        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0));
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0), true);
         var (items, _) = await generator.GenerateItemDropsAsync(monster, 1, player).ConfigureAwait(false);
         Assert.That(items.Any(i => i.Definition == bonus.PossibleItems.First()), Is.False);
     }
@@ -216,7 +216,7 @@ public class DropGeneratorTest
         var groups = player.CurrentMap!.Definition.DropItemGroups;
         var bonus = groups.Add(500, SpecialItemType.SmallBonus, true);
         bonus.MinimumMonsterLevel = 50;
-        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0));
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0), true);
         var (lowItems, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 49), 1, player).ConfigureAwait(false);
         Assert.That(lowItems, Is.Empty);
         var (eligibleItems, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 50), 1, player).ConfigureAwait(false);
@@ -243,7 +243,7 @@ public class DropGeneratorTest
         var randomizer = new Mock<IRandomizer>();
         randomizer.Setup(r => r.NextDouble()).Returns(() => roll);
         randomizer.Setup(r => r.NextInt(It.IsAny<int>(), It.IsAny<int>())).Returns(0);
-        var generator = new DefaultDropGenerator(this.GetGameConfig(), randomizer.Object);
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), randomizer.Object, true);
         var monster = this.GetMonster(3, 70);
         var hits = 0;
         var variants = new HashSet<ItemDefinition>();
@@ -262,6 +262,33 @@ public class DropGeneratorTest
 
         Assert.That(hits, Is.EqualTo(500));
         Assert.That(variants.Count, Is.EqualTo(19));
+    }
+
+    /// <summary>
+    /// Tests that shared map groups do not enable bonuses on other servers or by default.
+    /// </summary>
+    [Test]
+    public async Task TestSmallBonusRequiresServerOptInAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var groups = player.CurrentMap!.Definition.DropItemGroups;
+        var ordinary = groups.Add(9000, SpecialItemType.None, true);
+        var bonus = groups.Add(500, SpecialItemType.SmallBonus, true);
+        var config = this.GetGameConfig();
+        foreach (var enabled in new[] { true, false, false })
+        {
+            var server = new GameServerDefinition { SmallBonusDropsEnabled = enabled };
+            var generator = new DefaultDropGenerator(config, this.GetRandomizer(0), server.SmallBonusDropsEnabled);
+            var (items, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+            var result = items.ToList();
+            Assert.That(result.Count(i => i.Definition == ordinary.PossibleItems.First()), Is.EqualTo(1));
+            Assert.That(result.Count(i => i.Definition == bonus.PossibleItems.First()), Is.EqualTo(enabled ? 1 : 0));
+        }
+
+        var defaultGenerator = new DefaultDropGenerator(config, this.GetRandomizer(0));
+        var (defaultItems, _) = await defaultGenerator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+        Assert.That(defaultItems.Any(i => i.Definition == bonus.PossibleItems.First()), Is.False);
+        Assert.That(new GameServerDefinition().SmallBonusDropsEnabled, Is.False);
     }
 
     private MonsterDefinition GetMonster(int numberOfDrops, byte level)

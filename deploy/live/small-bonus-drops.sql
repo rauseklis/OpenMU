@@ -1,4 +1,4 @@
--- Manual opt-in configuration. Defaults to rollback; deploy SmallBonus-aware code first.
+-- Server 1 (internal ID 0) only. Manual opt-in configuration. Defaults to rollback; deploy SmallBonus-aware code first.
 -- psql -X -v expected_database=<database> [-v apply=true] -f small-bonus-drops.sql
 \set ON_ERROR_STOP on
 \if :{?apply}
@@ -12,6 +12,16 @@ SELECT set_config('mu.expected_database', :'expected_database', true);
 DO $$ BEGIN
  IF current_database() <> current_setting('mu.expected_database') THEN
    RAISE EXCEPTION 'Database does not match explicitly selected maintenance target'; END IF;
+END $$;
+
+DO $$ BEGIN
+ IF (SELECT count(*) FROM config."GameServerDefinition"
+ WHERE "GameConfigurationId"='00000001-0001-0000-0000-000000000000' AND "ServerID"=0) <> 1 THEN
+   RAISE EXCEPTION 'Expected exactly one Server 1 (internal ID 0)'; END IF;
+ IF EXISTS (SELECT FROM config."GameServerDefinition"
+ WHERE "GameConfigurationId"='00000001-0001-0000-0000-000000000000'
+ AND "ServerID"<>0 AND "SmallBonusDropsEnabled") THEN
+   RAISE EXCEPTION 'Another server already enables small bonuses; manual review required'; END IF;
 END $$;
 
 CREATE TEMP TABLE bonus_groups (
@@ -73,6 +83,10 @@ INSERT INTO config."GameMapDefinitionDropItemGroup" ("GameMapDefinitionId","Drop
 SELECT m."Id",g.id FROM config."GameMapDefinition" m CROSS JOIN bonus_groups g
 WHERE m."GameConfigurationId"='00000001-0001-0000-0000-000000000000'
 ON CONFLICT DO NOTHING;
+
+UPDATE config."GameServerDefinition" SET "SmallBonusDropsEnabled"=true
+WHERE "GameConfigurationId"='00000001-0001-0000-0000-000000000000' AND "ServerID"=0;
+SELECT "ServerID","Description","SmallBonusDropsEnabled" FROM config."GameServerDefinition" ORDER BY "ServerID";
 
 SELECT count(*) AS groups,sum("Chance") AS combined_chance
 FROM config."DropItemGroup" WHERE "Id" IN (SELECT id FROM bonus_groups);

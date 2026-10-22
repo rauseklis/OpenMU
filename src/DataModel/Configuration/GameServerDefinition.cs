@@ -36,6 +36,12 @@ public partial class GameServerDefinition
     public bool PvpEnabled { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether this server rolls configured small-bonus drops.
+    /// Disabled by default, even when maps share small-bonus groups with another server.
+    /// </summary>
+    public bool SmallBonusDropsEnabled { get; set; }
+
+    /// <summary>
     /// Gets or sets the server configuration.
     /// </summary>
     [Required]

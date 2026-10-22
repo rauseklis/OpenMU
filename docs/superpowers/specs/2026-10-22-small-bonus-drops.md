@@ -40,3 +40,10 @@ rewards, NPC exclusions, level filters and reuse. Apply the configuration twice
 to a disposable database, start the new server on shifted ports, inspect the
 persisted groups and verify handshakes. Back up live without pruning backups,
 then deploy code and the selected configuration. No client update is required.
+
+## Approved server scope
+
+The owner selected only Server 1. Add an opt-in boolean to GameServerDefinition,
+default false through an additive migration. Each server passes its flag to the
+drop generator. The maintenance transaction enables only internal server ID 0;
+shared map tables stay common. No other server is enabled and no EXP rate changes.
