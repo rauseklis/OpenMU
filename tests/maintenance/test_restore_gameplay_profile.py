@@ -102,6 +102,8 @@ class RestoreGameplayProfileTests(unittest.TestCase):
         self.assertEqual(arena_after, arena_before, "Arena monster spawns must remain completely unchanged")
         current_spawns = json.loads(query('SELECT jsonb_agg(to_jsonb(t)) FROM config."MonsterSpawnArea" t'))
         current_by_id = {spawn["Id"]: spawn for spawn in current_spawns}
+        original_ids = {spawn["Id"] for spawn in json.loads(original_spawns)}
+        self.assertEqual({spawn["Quantity"] for spawn in current_spawns if spawn["Id"] not in original_ids}, {8})
         for spawn in json.loads(original_spawns):
             self.assertEqual(current_by_id[spawn["Id"]], spawn, "Existing spawns must remain identical")
         new_gates = {gate["Id"]: gate for gate in json.loads(query('SELECT jsonb_agg(to_jsonb(t)) FROM config."ExitGate" t'))}
@@ -136,7 +138,7 @@ class RestoreGameplayProfileTests(unittest.TestCase):
         self.assertNotEqual(conflict.returncode, 0)
         self.assertIn("existing custom spawn differs", conflict.stderr)
         self.assertEqual(snapshot(), conflict_snapshot, "Collision must roll back the whole operation")
-        query(f'UPDATE config."MonsterSpawnArea" SET "Quantity"=10 WHERE "Id"=\'{spot}\'')
+        query(f'UPDATE config."MonsterSpawnArea" SET "Quantity"=8 WHERE "Id"=\'{spot}\'')
         self.assertEqual(snapshot(), after)
 
 
