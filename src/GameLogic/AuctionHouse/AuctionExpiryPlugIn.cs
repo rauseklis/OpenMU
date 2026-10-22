@@ -104,9 +104,9 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
         var online = new Dictionary<Guid, Player>();
         await gameContext.ForEachPlayerAsync(player =>
         {
-            if (player.Account is MUnique.OpenMU.Persistence.IIdentifiable account)
+            if (player.GetServerScopedAccountId() is { } accountId)
             {
-                online[account.Id] = player;
+                online[accountId] = player;
             }
 
             return Task.CompletedTask;

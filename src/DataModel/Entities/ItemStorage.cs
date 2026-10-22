@@ -25,6 +25,14 @@ public partial class ItemStorage
     public byte VaultNumber { get; set; }
 
     /// <summary>
+    /// Gets or sets the identifier of the game server this storage belongs to, if it is a vault of an account.
+    /// Every game server has its own vaults (and so its own vault Zen). The vaults of the first server (0) are
+    /// <see cref="Account.Vault"/> and the vaults 2 and up of <see cref="Account.ExtraVaults"/>; the vaults of
+    /// the other servers are all in <see cref="Account.ExtraVaults"/>, including their vault number 1.
+    /// </summary>
+    public byte GameServerId { get; set; }
+
+    /// <summary>
     /// Gets or sets the money which is stored.
     /// </summary>
     public long Money { get; set; }

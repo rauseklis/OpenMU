@@ -22,6 +22,12 @@ public class AuctionListing
     public long ListingNumber { get; set; }
 
     /// <summary>
+    /// Gets or sets the identifier of the game server this listing belongs to. Listings are only visible on, and can only
+    /// be bought on, the game server they were created on.
+    /// </summary>
+    public byte GameServerId { get; set; }
+
+    /// <summary>
     /// Gets or sets the identifier of the listed item. The item's identity is preserved.
     /// </summary>
     public Guid ItemId { get; set; }

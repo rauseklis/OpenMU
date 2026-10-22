@@ -68,7 +68,8 @@ internal sealed class AuctionBrowseHandlerPlugIn : ISubPacketHandlerPlugIn
             MaximumFruits: allCurrencies ? null : new FruitBasket(request.MaximumStrength, request.MaximumAgility, request.MaximumVitality, request.MaximumEnergy, request.MaximumCommand),
             MaxRemainingHours: request.MaxRemainingHours,
             ClassMask: request.ClassMask,
-            OptionFlags: (AuctionItemOptionFlags)request.OptionFlags);
+            OptionFlags: (AuctionItemOptionFlags)request.OptionFlags,
+            GameServerId: player.GetGameServerId());
 
         AuctionBrowseResult browse;
         if (identity is null)

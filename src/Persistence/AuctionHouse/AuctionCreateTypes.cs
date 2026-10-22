@@ -61,4 +61,5 @@ public readonly record struct AuctionListingDraft(
     DateTimeOffset CreatedAt,
     DateTimeOffset EndsAt,
     long? BuyoutPrice = null,
-    byte SubCategory = 255);
+    byte SubCategory = 255,
+    byte GameServerId = 0);

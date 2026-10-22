@@ -105,12 +105,13 @@ internal static class AuctionHouseMutations
     /// <returns>The account, character, name, and address; or <c>null</c>.</returns>
     public static (Guid AccountId, Guid CharacterId, string Name, string? Ip)? GetIdentity(Player player)
     {
-        if (player.Account is not MUnique.OpenMU.Persistence.IIdentifiable account || player.SelectedCharacter is not { } character)
+        if (player.GetServerScopedAccountId() is not { } accountId || player.SelectedCharacter is not { } character)
         {
             return null;
         }
 
-        return (account.Id, character.Id, character.Name, (player as IHasIpAddress)?.IpAddress);
+        // The Auction House of each game server is kept under its own account identifier: nothing is shared between servers.
+        return (accountId, character.Id, character.Name, (player as IHasIpAddress)?.IpAddress);
     }
 
     /// <summary>

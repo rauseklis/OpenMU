@@ -85,7 +85,8 @@ public readonly record struct AuctionListingSearch(
     int MaxRemainingHours = 0,
     uint ClassMask = 0,
     AuctionItemOptionFlags OptionFlags = AuctionItemOptionFlags.None,
-    byte? SubCategory = null);
+    byte? SubCategory = null,
+    byte? GameServerId = null);
 
 /// <summary>
 /// The browse-row summary of a listing.

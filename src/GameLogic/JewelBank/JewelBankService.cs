@@ -54,18 +54,19 @@ public sealed class JewelBankService
     }
 
     /// <summary>
-    /// Gets the account and character of the player, or <c>null</c> when no character is entered.
+    /// Gets the (game server specific) account identifier and the character of the player, or <c>null</c> when no character is entered.
     /// </summary>
     /// <param name="player">The player.</param>
     /// <returns>The identifiers, or <c>null</c>.</returns>
     public static (Guid AccountId, Guid CharacterId)? GetIdentity(Player player)
     {
-        if (player.Account is not IIdentifiable account || player.SelectedCharacter is not IIdentifiable character)
+        if (player.GetServerScopedAccountId() is not { } accountId || player.SelectedCharacter is not IIdentifiable character)
         {
             return null;
         }
 
-        return (account.Id, character.Id);
+        // The bank of each game server is kept under its own account identifier: nothing is shared between servers.
+        return (accountId, character.Id);
     }
 
     /// <summary>

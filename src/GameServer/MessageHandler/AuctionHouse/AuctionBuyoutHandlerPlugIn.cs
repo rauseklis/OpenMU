@@ -75,6 +75,7 @@ internal sealed class AuctionBuyoutHandlerPlugIn : ISubPacketHandlerPlugIn
                 OperationId: new Guid(operationId),
                 AccountId: who.AccountId,
                 CharacterId: who.CharacterId,
+                GameServerId: player.GetGameServerId(),
                 ListingId: listing,
                 ExpectedVersion: (int)request.ExpectedVersion,
                 BuyerIp: who.Ip)).ConfigureAwait(false);

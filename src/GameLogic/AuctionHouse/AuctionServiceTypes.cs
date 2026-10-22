@@ -232,7 +232,8 @@ public readonly record struct AuctionListItemRequest(
     FruitBasket? BuyoutFruits = null,
     string? Note = null,
     PriceBasket? StartingBasket = null,
-    PriceBasket? BuyoutBasket = null);
+    PriceBasket? BuyoutBasket = null,
+    byte GameServerId = 0);
 
 /// <summary>
 /// The result of listing an inventory item.
@@ -262,7 +263,8 @@ public readonly record struct AuctionBidRequest(
     long BidAmount,
     string? BidderIp,
     FruitBasket? BidFruits = null,
-    PriceBasket? BidBasket = null);
+    PriceBasket? BidBasket = null,
+    byte GameServerId = 0);
 
 /// <summary>
 /// A request to buy a listing out at its buyout price.
@@ -279,7 +281,8 @@ public readonly record struct AuctionBuyoutRequest(
     Guid CharacterId,
     Guid ListingId,
     int ExpectedVersion,
-    string? BuyerIp);
+    string? BuyerIp,
+    byte GameServerId = 0);
 
 /// <summary>
 /// The result of a bid or a buyout.

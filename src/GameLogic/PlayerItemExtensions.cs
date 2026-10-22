@@ -53,7 +53,7 @@ public static class PlayerItemExtensions
     /// <param name="player">The player.</param>
     internal static void LogInvalidVaultItems(this Player player)
     {
-        var invalidItems = player.Account?.Vault?.Items.Where(i => i.Definition is null);
+        var invalidItems = player.GetMainVault()?.Items.Where(i => i.Definition is null);
         if (invalidItems is null)
         {
             return;
