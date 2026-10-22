@@ -18,11 +18,13 @@ using MUnique.OpenMU.PlugIns;
 [Display(Name = nameof(PlugInResources.LifeJewelConsumeHandlerPlugIn_Name), Description = nameof(PlugInResources.LifeJewelConsumeHandlerPlugIn_Description), ResourceType = typeof(PlugInResources))]
 public class LifeJewelConsumeHandlerPlugIn : ItemUpgradeConsumeHandlerPlugIn
 {
+    private const double DefaultSuccessChance = 0.7;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="LifeJewelConsumeHandlerPlugIn" /> class.
     /// </summary>
     public LifeJewelConsumeHandlerPlugIn()
-        : base(new ItemUpgradeConfiguration(ItemOptionTypes.Option, true, true, 0.5, ItemFailResult.RemoveOption))
+        : base(new ItemUpgradeConfiguration(ItemOptionTypes.Option, true, true, DefaultSuccessChance, ItemFailResult.RemoveOption))
     {
     }
 
