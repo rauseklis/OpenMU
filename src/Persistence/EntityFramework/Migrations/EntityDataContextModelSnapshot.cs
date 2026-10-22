@@ -2241,6 +2241,11 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<byte>("ServerID")
                         .HasColumnType("smallint");
 
+                    b.Property<bool>("SmallBonusDropsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.HasKey("Id");
 
                     b.HasIndex("GameConfigurationId");

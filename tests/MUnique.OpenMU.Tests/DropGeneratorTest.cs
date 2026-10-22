@@ -5,10 +5,12 @@
 namespace MUnique.OpenMU.Tests;
 
 using Moq;
+using MUnique.OpenMU.AttributeSystem;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.DataModel.Configuration.Items;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Attributes;
+using MUnique.OpenMU.GameLogic.Premium;
 
 /// <summary>
 /// Tests the drop generator.
@@ -144,6 +146,149 @@ public class DropGeneratorTest
 
         config.ExcellentItemDropLevelDelta = 50;
         Assert.That(config.ExcellentItemDropLevelDelta, Is.EqualTo(50));
+    }
+
+    /// <summary>
+    /// Tests that the combined bonus chance is independent of ordinary loot weights and slots.
+    /// </summary>
+    /// <param name="roll">The bonus roll.</param>
+    /// <param name="slots">The normal loot slots.</param>
+    /// <param name="expectedBonuses">The expected bonus count.</param>
+    /// <param name="premiumBonus">The active premium drop bonus.</param>
+    [TestCase(0.04999, 1, 1, 0)]
+    [TestCase(0.05, 1, 0, 0)]
+    [TestCase(0.04999, 1, 1, 0.5f)]
+    [TestCase(0.05001, 1, 0, 0.5f)]
+    [TestCase(0.05001, 1, 0, 0)]
+    [TestCase(0.04999, 3, 1, 0)]
+    public async Task TestIndependentSmallBonusAsync(double roll, int slots, int expectedBonuses, float premiumBonus)
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        player.Attributes!.AddElement(new SimpleElement(premiumBonus, AggregateType.AddRaw), PremiumBuffStats.ItemDropBonus);
+        var groups = player.CurrentMap!.Definition.DropItemGroups;
+        groups.Add(9000, SpecialItemType.None, true);
+        groups.Add(9000, SpecialItemType.None, true);
+        var bonus = groups.Add(500, SpecialItemType.SmallBonus, true);
+        bonus.ItemLevel = 5;
+        bonus.PossibleItems.First().MaximumItemLevel = 15;
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer2(0, roll), true);
+
+        var (items, _) = await generator.GenerateItemDropsAsync(this.GetMonster(slots, 70), 1, player).ConfigureAwait(false);
+        var result = items.ToList();
+        Assert.That(result.Count, Is.EqualTo(slots + expectedBonuses));
+        Assert.That(result.Count(i => i.Definition == bonus.PossibleItems.First()), Is.EqualTo(expectedBonuses));
+        Assert.That(result.Where(i => i.Definition == bonus.PossibleItems.First()).All(i => i.Level == 5), Is.True);
+    }
+
+    /// <summary>
+    /// Tests that guaranteed rewards, zero-drop monsters and other NPCs do not receive bonuses.
+    /// </summary>
+    /// <param name="kind">The object kind.</param>
+    /// <param name="slots">The drop slots.</param>
+    /// <param name="guaranteed">Whether a guaranteed reward exists.</param>
+    [TestCase(NpcObjectKind.Monster, 0, false)]
+    [TestCase(NpcObjectKind.Monster, 2, true)]
+    [TestCase(NpcObjectKind.Destructible, 1, false)]
+    [TestCase(NpcObjectKind.Guard, 1, false)]
+    public async Task TestSmallBonusExclusionsAsync(NpcObjectKind kind, int slots, bool guaranteed)
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var bonus = player.CurrentMap!.Definition.DropItemGroups.Add(500, SpecialItemType.SmallBonus, true);
+        var monster = this.GetMonster(slots, 70);
+        monster.ObjectKind = kind;
+        if (guaranteed)
+        {
+            monster.DropItemGroups.Add(10000, SpecialItemType.None, true);
+        }
+
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0), true);
+        var (items, _) = await generator.GenerateItemDropsAsync(monster, 1, player).ConfigureAwait(false);
+        Assert.That(items.Any(i => i.Definition == bonus.PossibleItems.First()), Is.False);
+    }
+
+    /// <summary>
+    /// Tests filtering and clearing the reusable bonus pool between kills and maps.
+    /// </summary>
+    [Test]
+    public async Task TestSmallBonusFiltersAndReuseAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var groups = player.CurrentMap!.Definition.DropItemGroups;
+        var bonus = groups.Add(500, SpecialItemType.SmallBonus, true);
+        bonus.MinimumMonsterLevel = 50;
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0), true);
+        var (lowItems, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 49), 1, player).ConfigureAwait(false);
+        Assert.That(lowItems, Is.Empty);
+        var (eligibleItems, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 50), 1, player).ConfigureAwait(false);
+        Assert.That(eligibleItems.Count(), Is.EqualTo(1));
+        groups.Remove(bonus);
+        var (nextItems, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 50), 1, player).ConfigureAwait(false);
+        Assert.That(nextItems, Is.Empty);
+    }
+
+    /// <summary>
+    /// Tests all nineteen equal shares over a deterministic grid of ten thousand rolls.
+    /// </summary>
+    [Test]
+    public async Task TestSmallBonusCombinedFivePercentAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var groups = player.CurrentMap!.Definition.DropItemGroups;
+        for (var i = 0; i < 19; i++)
+        {
+            groups.Add(1, SpecialItemType.SmallBonus, true).Chance = 0.05 / 19;
+        }
+
+        double roll = 0;
+        var randomizer = new Mock<IRandomizer>();
+        randomizer.Setup(r => r.NextDouble()).Returns(() => roll);
+        randomizer.Setup(r => r.NextInt(It.IsAny<int>(), It.IsAny<int>())).Returns(0);
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), randomizer.Object, true);
+        var monster = this.GetMonster(3, 70);
+        var hits = 0;
+        var variants = new HashSet<ItemDefinition>();
+        for (var i = 0; i < 10000; i++)
+        {
+            roll = (i + 0.5) / 10000;
+            var (items, _) = await generator.GenerateItemDropsAsync(monster, 1, player).ConfigureAwait(false);
+            var result = items.ToList();
+            Assert.That(result.Count, Is.LessThanOrEqualTo(1));
+            hits += result.Count;
+            foreach (var item in result)
+            {
+                variants.Add(item.Definition!);
+            }
+        }
+
+        Assert.That(hits, Is.EqualTo(500));
+        Assert.That(variants.Count, Is.EqualTo(19));
+    }
+
+    /// <summary>
+    /// Tests that shared map groups do not enable bonuses on other servers or by default.
+    /// </summary>
+    [Test]
+    public async Task TestSmallBonusRequiresServerOptInAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var groups = player.CurrentMap!.Definition.DropItemGroups;
+        var ordinary = groups.Add(9000, SpecialItemType.None, true);
+        var bonus = groups.Add(500, SpecialItemType.SmallBonus, true);
+        var config = this.GetGameConfig();
+        foreach (var enabled in new[] { true, false, false })
+        {
+            var server = new GameServerDefinition { SmallBonusDropsEnabled = enabled };
+            var generator = new DefaultDropGenerator(config, this.GetRandomizer(0), server.SmallBonusDropsEnabled);
+            var (items, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+            var result = items.ToList();
+            Assert.That(result.Count(i => i.Definition == ordinary.PossibleItems.First()), Is.EqualTo(1));
+            Assert.That(result.Count(i => i.Definition == bonus.PossibleItems.First()), Is.EqualTo(enabled ? 1 : 0));
+        }
+
+        var defaultGenerator = new DefaultDropGenerator(config, this.GetRandomizer(0));
+        var (defaultItems, _) = await defaultGenerator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+        Assert.That(defaultItems.Any(i => i.Definition == bonus.PossibleItems.First()), Is.False);
+        Assert.That(new GameServerDefinition().SmallBonusDropsEnabled, Is.False);
     }
 
     private MonsterDefinition GetMonster(int numberOfDrops, byte level)

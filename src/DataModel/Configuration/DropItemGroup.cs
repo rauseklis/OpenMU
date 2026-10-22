@@ -46,6 +46,11 @@ public enum SpecialItemType
     /// The jewel special item type.
     /// </summary>
     Jewel,
+
+    /// <summary>
+    /// An independent small-gift roll, separate from ordinary loot and premium bonuses.
+    /// </summary>
+    SmallBonus,
 }
 
 /// <summary>
