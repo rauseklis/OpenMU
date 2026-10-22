@@ -8379,7 +8379,7 @@ public readonly ref struct DeleteCharacterRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 24;
+    public static int Length => 34;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -8396,7 +8396,7 @@ public readonly ref struct DeleteCharacterRef
     }
 
     /// <summary>
-    /// Gets or sets a security code (7 bytes long). Some game clients/servers also expect to transmit the account password (up to 20 bytes long) here. In OpenMU, we work with the security here, but are not limiting to a length of 7 bytes.
+    /// Gets or sets a security code (7 bytes long) or, when the account has no security code, the account password (up to 20 bytes long). The packet has room for 20 bytes; the server reads whatever the client sent, so shorter packets of older clients still work.
     /// </summary>
     public string SecurityCode
     {

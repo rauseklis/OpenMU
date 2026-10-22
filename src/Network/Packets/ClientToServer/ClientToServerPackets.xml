@@ -2101,7 +2101,7 @@
       <Code>F3</Code>
       <SubCode>02</SubCode>
       <Name>DeleteCharacter</Name>
-      <Length>24</Length>
+      <Length>34</Length>
       <Direction>ClientToServer</Direction>
       <SentWhen>The game client is at the character selection screen and the player requests to delete an existing character.</SentWhen>
       <CausedReaction>The server checks if the player transmitted the correct security code and if the character actually exists. If all is valid, it deletes the character from the account. It then sends a response with a result code back to the game client.</CausedReaction>
@@ -2117,7 +2117,7 @@
           <Index>14</Index>
           <Type>String</Type>
           <Name>SecurityCode</Name>
-          <Description>A security code (7 bytes long). Some game clients/servers also expect to transmit the account password (up to 20 bytes long) here. In OpenMU, we work with the security here, but are not limiting to a length of 7 bytes.</Description>
+          <Description>A security code (7 bytes long) or, when the account has no security code, the account password (up to 20 bytes long). The packet has room for 20 bytes; the server reads whatever the client sent, so shorter packets of older clients still work.</Description>
         </Field>
       </Fields>
     </Packet>
