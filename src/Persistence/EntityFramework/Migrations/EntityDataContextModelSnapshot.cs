@@ -493,7 +493,7 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
                     b.HasIndex("ItemId")
                         .IsUnique()
-                        .HasFilter("\"ItemId\" IS NOT NULL");
+                        .HasFilter("\"ItemId\" IS NOT NULL AND \"Status\" IN (0, 1)");
 
                     b.HasIndex("AccountId", "Status");
 

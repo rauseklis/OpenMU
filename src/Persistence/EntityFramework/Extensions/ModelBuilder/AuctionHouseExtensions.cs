@@ -54,10 +54,11 @@ internal static class AuctionHouseExtensions
         builder.Property(collection => collection.CollectionNumber).ValueGeneratedOnAdd();
         builder.HasIndex(collection => collection.CollectionNumber).IsUnique();
 
-        // A pending lot item can appear in only one collection.
+        // A pending lot item can appear in only one unclaimed collection. A claimed collection (status 2) is history:
+        // the new owner may list the same item again and sell it on.
         builder.HasIndex(collection => collection.ItemId)
             .IsUnique()
-            .HasFilter("\"ItemId\" IS NOT NULL");
+            .HasFilter("\"ItemId\" IS NOT NULL AND \"Status\" IN (0, 1)");
         builder.HasIndex(collection => new { collection.AccountId, collection.Status });
     }
 
