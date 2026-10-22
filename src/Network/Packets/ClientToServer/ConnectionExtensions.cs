@@ -2721,7 +2721,7 @@ public static class ConnectionExtensions
     /// </summary>
     /// <param name="connection">The connection.</param>
     /// <param name="name">The name of the character which should be deleted.</param>
-    /// <param name="securityCode">A security code (7 bytes long). Some game clients/servers also expect to transmit the account password (up to 20 bytes long) here. In OpenMU, we work with the security here, but are not limiting to a length of 7 bytes.</param>
+    /// <param name="securityCode">A security code (7 bytes long) or, when the account has no security code, the account password (up to 20 bytes long). The packet has room for 20 bytes; the server reads whatever the client sent, so shorter packets of older clients still work.</param>
     /// <remarks>
     /// Is sent by the client when: The game client is at the character selection screen and the player requests to delete an existing character.
     /// Causes reaction on server side: The server checks if the player transmitted the correct security code and if the character actually exists. If all is valid, it deletes the character from the account. It then sends a response with a result code back to the game client.
