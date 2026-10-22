@@ -43,10 +43,10 @@ public class PlayerLosesMoneyAfterDeathPlugIn : IAttackableGotKilledPlugIn, ISup
         this.Configuration ??= CreateDefaultConfiguration();
         var losses = this.GetLossPercentage((int)attributes[Stats.Level], characterClass.IsMasterClass);
         var inventoryLoss = (int)(player.Money * losses.InventoryLoss / 100.0);
-        var vaultLoss = (int)Math.Min((long)((player.Account?.Vault?.Money ?? 0) * losses.VaultLoss / 100.0), int.MaxValue);
+        var vaultLoss = (int)Math.Min((long)((player.GetMainVault()?.Money ?? 0) * losses.VaultLoss / 100.0), int.MaxValue);
 
         inventoryLoss = Math.Min(inventoryLoss, player.Money);
-        vaultLoss = (int)Math.Min(vaultLoss, player.Account?.Vault?.Money ?? 0);
+        vaultLoss = (int)Math.Min(vaultLoss, player.GetMainVault()?.Money ?? 0);
         player.TryRemoveMoney(inventoryLoss);
         player.TryTakeVaultMoney(vaultLoss);
     }

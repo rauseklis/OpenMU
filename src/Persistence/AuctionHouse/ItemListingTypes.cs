@@ -113,4 +113,5 @@ public readonly record struct ItemListingDraft(
     string? Note = null,
     long SaleFee = 0,
     PriceBasket? StartingBasket = null,
-    PriceBasket? BuyoutBasket = null);
+    PriceBasket? BuyoutBasket = null,
+    byte GameServerId = 0);

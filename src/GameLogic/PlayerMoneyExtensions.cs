@@ -57,7 +57,7 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the player inventory had enough money to move; Otherwise, <c>false</c>.</returns>
     public static bool TryDepositVaultMoney(this Player player, int value)
     {
-        var zenStorage = player.Account?.Vault;
+        var zenStorage = player.GetMainVault();
         if (value < 0 || player.Vault is null || zenStorage is null)
         {
             return false;
@@ -85,7 +85,7 @@ public static class PlayerMoneyExtensions
     /// <returns><c>True</c>, if the vault had enough money to move and player inventory isn't maximum; Otherwise, <c>false</c>.</returns>
     public static bool TryTakeVaultMoney(this Player player, int value)
     {
-        var zenStorage = player.Account?.Vault;
+        var zenStorage = player.GetMainVault();
         if (value < 0 || player.Vault is null || zenStorage is null)
         {
             return false;

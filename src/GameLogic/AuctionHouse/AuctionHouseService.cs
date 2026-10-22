@@ -144,7 +144,8 @@ public sealed class AuctionHouseService
             feeFruits,
             isFruits ? request.BuyoutFruits : null,
             request.Note,
-            this._options.SaleFee.Currency == SaleFeeCurrency.Zen ? Math.Max(0, this._options.SaleFee.Amount) : 0);
+            this._options.SaleFee.Currency == SaleFeeCurrency.Zen ? Math.Max(0, this._options.SaleFee.Amount) : 0,
+            GameServerId: request.GameServerId);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
         AuctionHouseMetrics.RecordOperation("create", result.Outcome.ToString());
         LogOperation("create", result.Outcome.ToString(), request.AccountId, result.ListingId, started);
@@ -198,7 +199,8 @@ public sealed class AuctionHouseService
             Note: request.Note,
             SaleFee: this._options.SaleFee.Currency == SaleFeeCurrency.Zen ? Math.Max(0, this._options.SaleFee.Amount) : 0,
             StartingBasket: starting.IsEmpty ? null : starting,
-            BuyoutBasket: buyout.IsEmpty ? null : buyout);
+            BuyoutBasket: buyout.IsEmpty ? null : buyout,
+            GameServerId: request.GameServerId);
         var result = await this._repository.ListItemAsync(draft, IsEligible, cancellationToken);
         AuctionHouseMetrics.RecordOperation("create", result.Outcome.ToString());
         LogOperation("create", result.Outcome.ToString(), request.AccountId, result.ListingId, started);
@@ -248,8 +250,9 @@ public sealed class AuctionHouseService
         }
 
         var listing = await this._repository.GetListingAsync(request.ListingId, cancellationToken);
-        if (listing is null)
+        if (listing is null || listing.GameServerId != request.GameServerId)
         {
+            // A listing of another game server does not exist for this one.
             return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
         }
 
@@ -333,8 +336,9 @@ public sealed class AuctionHouseService
         }
 
         var listing = await this._repository.GetListingAsync(request.ListingId, cancellationToken);
-        if (listing is null)
+        if (listing is null || listing.GameServerId != request.GameServerId)
         {
+            // A listing of another game server does not exist for this one.
             return new AuctionMutationResult(AuctionResultCode.ListingNotFound, now);
         }
 
@@ -691,11 +695,11 @@ public sealed class AuctionHouseService
     /// <param name="listingId">The listing to read.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The detail result.</returns>
-    public async Task<AuctionDetailResult> DetailAsync(Guid listingId, CancellationToken cancellationToken = default)
+    public async Task<AuctionDetailResult> DetailAsync(Guid listingId, byte gameServerId = 0, CancellationToken cancellationToken = default)
     {
         var now = this._clock();
         var listing = await this._repository.GetListingAsync(listingId, cancellationToken);
-        return listing is null
+        return listing is null || listing.GameServerId != gameServerId
             ? new AuctionDetailResult(AuctionResultCode.ListingNotFound, null, now)
             : new AuctionDetailResult(AuctionResultCode.Success, listing, now);
     }

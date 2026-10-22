@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameServer.RemoteView.Vault;
 
 using System.Runtime.InteropServices;
+using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Views.Vault;
 using MUnique.OpenMU.Network.Packets.ServerToClient;
 using MUnique.OpenMU.PlugIns;
@@ -30,7 +31,7 @@ public class UpdateVaultMoneyPlugIn : IUpdateVaultMoneyPlugIn
     {
         await this._player.Connection.SendVaultMoneyUpdateAsync(
             success,
-            success ? (ulong)this._player.Account!.Vault!.Money : 0,
+            success ? (ulong)this._player.GetMainVault()!.Money : 0,
             success ? (uint)this._player.Money : 0)
             .ConfigureAwait(false);
     }

@@ -32,6 +32,23 @@ public class PlayerCharacterExtensionsTest
         Assert.That(listed, Is.EquivalentTo(new[] { "OnServer0" }));
     }
 
+    /// <summary>
+    /// Tests that the first game server keeps the plain account id, so existing data stays, and that every other
+    /// game server gets its own, stable identifier.
+    /// </summary>
+    [Test]
+    public void AccountIdIsScopedPerGameServer()
+    {
+        var accountId = Guid.NewGuid();
+
+        Assert.That(PlayerCharacterExtensions.ScopeAccountId(accountId, 0), Is.EqualTo(accountId));
+        var second = PlayerCharacterExtensions.ScopeAccountId(accountId, 1);
+        Assert.That(second, Is.Not.EqualTo(accountId));
+        Assert.That(PlayerCharacterExtensions.ScopeAccountId(accountId, 1), Is.EqualTo(second));
+        Assert.That(PlayerCharacterExtensions.ScopeAccountId(accountId, 2), Is.Not.EqualTo(second));
+        Assert.That(PlayerCharacterExtensions.ScopeAccountId(Guid.NewGuid(), 1), Is.Not.EqualTo(second));
+    }
+
     private static Character CreateCharacter(string name, byte serverId)
     {
         var character = new Mock<Character>();

@@ -677,6 +677,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             Id = Guid.NewGuid(),
             ItemId = draft.ItemId,
             SellerAccountId = draft.AccountId,
+            GameServerId = draft.GameServerId,
             SellerCharacterId = draft.SellerCharacterId,
             SellerName = draft.SellerName,
             SellerIp = draft.SellerIp,
@@ -2475,6 +2476,11 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         }
 
         var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.Status == 0);
+        if (search.GameServerId is { } gameServerId)
+        {
+            query = query.Where(l => l.GameServerId == gameServerId);
+        }
+
         if (search.Currency is { } currency)
         {
             if (currency == MixedCurrency)
@@ -2746,6 +2752,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             Id = listingId,
             ItemId = item.Id,
             SellerAccountId = draft.AccountId,
+            GameServerId = draft.GameServerId,
             SellerCharacterId = draft.CharacterId,
             SellerName = draft.SellerName,
             SellerIp = draft.SellerIp,
@@ -2929,7 +2936,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
     {
         return context.Set<AuctionListing>().AsNoTracking()
             .Where(l => l.Id == listingId)
-            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.OriginalEndsAt, l.BidCount, l.SellerName, l.Note, l.StartingStrength, l.StartingAgility, l.StartingVitality, l.StartingEnergy, l.StartingCommand, l.CurrentBidStrength, l.CurrentBidAgility, l.CurrentBidVitality, l.CurrentBidEnergy, l.CurrentBidCommand, l.BuyoutStrength, l.BuyoutAgility, l.BuyoutVitality, l.BuyoutEnergy, l.BuyoutCommand, l.PriceVector, l.BuyoutVector, l.CurrentBidVector))
+            .Select(l => new AuctionListingDetail(l.Id, l.Version, l.Status, l.Currency, l.Category, l.ItemId, l.StartingPrice, l.BuyoutPrice, l.CurrentBid, l.EndsAt, l.OriginalEndsAt, l.BidCount, l.SellerName, l.Note, l.StartingStrength, l.StartingAgility, l.StartingVitality, l.StartingEnergy, l.StartingCommand, l.CurrentBidStrength, l.CurrentBidAgility, l.CurrentBidVitality, l.CurrentBidEnergy, l.CurrentBidCommand, l.BuyoutStrength, l.BuyoutAgility, l.BuyoutVitality, l.BuyoutEnergy, l.BuyoutCommand, l.PriceVector, l.BuyoutVector, l.CurrentBidVector, l.GameServerId))
             .FirstOrDefaultAsync(cancellationToken);
     }
 

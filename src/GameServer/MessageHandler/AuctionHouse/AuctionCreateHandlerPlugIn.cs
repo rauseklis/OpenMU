@@ -70,6 +70,7 @@ internal sealed class AuctionCreateHandlerPlugIn : ISubPacketHandlerPlugIn
                 OperationId: new Guid(operationId),
                 AccountId: who.AccountId,
                 CharacterId: who.CharacterId,
+                GameServerId: player.GetGameServerId(),
                 SellerName: who.Name,
                 SellerIp: who.Ip,
                 InventorySlot: request.InventorySlot,

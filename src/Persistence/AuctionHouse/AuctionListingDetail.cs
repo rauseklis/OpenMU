@@ -55,7 +55,8 @@ public sealed record AuctionListingDetail(
     long? BuyoutCommand,
     string? PriceVector = null,
     string? BuyoutVector = null,
-    string? CurrentBidVector = null)
+    string? CurrentBidVector = null,
+    byte GameServerId = 0)
 {
     /// <summary>The starting basket of a fruit listing.</summary>
     public FruitBasket? StartingFruits => Basket(StartingStrength, StartingAgility, StartingVitality, StartingEnergy, StartingCommand);

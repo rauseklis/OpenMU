@@ -63,7 +63,7 @@ internal sealed class AuctionDetailHandlerPlugIn : ISubPacketHandlerPlugIn
         }
         else
         {
-            detail = await service.DetailAsync(listing).ConfigureAwait(false);
+            detail = await service.DetailAsync(listing, player.GetGameServerId()).ConfigureAwait(false);
         }
 
         IReadOnlyDictionary<Guid, MUnique.OpenMU.DataModel.Entities.Item> items = detail.Listing is { } view && service is not null

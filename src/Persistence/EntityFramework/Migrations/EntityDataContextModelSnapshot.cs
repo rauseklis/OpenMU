@@ -626,6 +626,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<DateTimeOffset?>("FinalizedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<byte>("GameServerId")
+                        .HasColumnType("smallint");
+
                     b.Property<Guid?>("ItemDefinitionId")
                         .HasColumnType("uuid");
 
@@ -3155,6 +3158,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
                     b.Property<Guid?>("AccountId")
                         .HasColumnType("uuid");
+
+                    b.Property<byte>("GameServerId")
+                        .HasColumnType("smallint");
 
                     b.Property<long>("Money")
                         .HasColumnType("bigint");

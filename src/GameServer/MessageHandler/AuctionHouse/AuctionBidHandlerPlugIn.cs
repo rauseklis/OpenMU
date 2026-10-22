@@ -75,6 +75,7 @@ internal sealed class AuctionBidHandlerPlugIn : ISubPacketHandlerPlugIn
                 OperationId: new Guid(operationId),
                 AccountId: who.AccountId,
                 CharacterId: who.CharacterId,
+                GameServerId: player.GetGameServerId(),
                 ListingId: listing,
                 ExpectedVersion: (int)request.ExpectedVersion,
                 BidAmount: request.BidScalar,
