@@ -392,6 +392,17 @@ public class ItemConsumptionTest
         Assert.That(player.Attributes!.GetValueOfAttribute(Stats.CurrentMana), Is.GreaterThan(0.0f));
     }
 
+    /// <summary>
+    /// The live Jewel of Life rule uses a seventy percent chance for adding and upgrading options.
+    /// </summary>
+    [Test]
+    public void JewelOfLifeUsesSeventyPercentSuccessChance()
+    {
+        var consumeHandler = new LifeJewelConsumeHandlerPlugIn();
+
+        Assert.That(consumeHandler.Configuration.SuccessChance, Is.EqualTo(0.7));
+    }
+
     private Item GetItem()
     {
         return new()
