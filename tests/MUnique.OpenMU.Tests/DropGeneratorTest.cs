@@ -78,6 +78,41 @@ public class DropGeneratorTest
     }
 
     /// <summary>
+    /// Tests that potions and the apple never drop above level 0, while other items keep the group's level.
+    /// </summary>
+    /// <param name="number">The item number in group 14.</param>
+    /// <param name="expectedLevel">The expected level of the dropped item.</param>
+    [TestCase(0, 0)]
+    [TestCase(1, 0)]
+    [TestCase(6, 0)]
+    [TestCase(35, 0)]
+    [TestCase(40, 0)]
+    [TestCase(15, 1)]
+    public async ValueTask TestPotionsDropWithoutLevelAsync(short number, byte expectedLevel)
+    {
+        var config = this.GetGameConfig();
+        var definition = this.CreateItemDefinition(14, number, 1);
+        definition.MaximumItemLevel = 4;
+
+        var dropGroup = new Mock<DropItemGroup>();
+        dropGroup.SetupAllProperties();
+        dropGroup.Object.Chance = 1.0;
+        dropGroup.Object.ItemType = SpecialItemType.Jewel;
+        dropGroup.Object.ItemLevel = 1;
+        dropGroup.Setup(g => g.PossibleItems).Returns(new List<ItemDefinition> { definition });
+
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        player.CurrentMap!.Definition.DropItemGroups.Add(dropGroup.Object);
+
+        var generator = new DefaultDropGenerator(config, this.GetRandomizer(0));
+        var (items, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+        var item = items.FirstOrDefault();
+
+        Assert.That(item, Is.Not.Null);
+        Assert.That(item!.Level, Is.EqualTo(expectedLevel));
+    }
+
+    /// <summary>
     /// Tests the drops defined by a player are getting considered.
     /// </summary>
     public void TestItemDropItemByPlayer()

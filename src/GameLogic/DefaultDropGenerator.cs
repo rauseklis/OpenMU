@@ -25,6 +25,12 @@ public class DefaultDropGenerator : IDropGenerator
     private const byte MinItemOptionLevelDrop = 1;
     private const byte MaxItemOptionLevelDrop = 4;
 
+    private const byte PotionGroup = 14;
+    private const short FirstHealingOrManaPotionNumber = 0; // the apple is number 0
+    private const short LastHealingOrManaPotionNumber = 6;
+    private const short FirstShieldOrComplexPotionNumber = 35;
+    private const short LastShieldOrComplexPotionNumber = 40;
+
     /// <summary>
     /// A re-usable list of drop item groups.
     /// </summary>
@@ -143,7 +149,7 @@ public class DefaultDropGenerator : IDropGenerator
             return null;
         }
 
-        item.Level = GetItemLevelByMonsterLevel(item.Definition!, monsterLevel);
+        item.Level = GetDroppedItemLevel(item.Definition!, GetItemLevelByMonsterLevel(item.Definition!, monsterLevel));
         item.Durability = item.GetMaximumDurabilityOfOnePiece();
         return item;
     }
@@ -216,6 +222,25 @@ public class DefaultDropGenerator : IDropGenerator
         this.ApplyRandomAncientOption(item);
         item.Durability = item.GetMaximumDurabilityOfOnePiece();
         return item;
+    }
+
+    /// <summary>
+    /// Gets the level a dropped item gets. Potions and the apple are never dropped with a level
+    /// above +0, even though their definitions allow a maximum level of 1.
+    /// </summary>
+    /// <param name="itemDefinition">The item definition.</param>
+    /// <param name="level">The level the drop rules came up with.</param>
+    /// <returns>The level of the dropped item.</returns>
+    private static byte GetDroppedItemLevel(ItemDefinition itemDefinition, byte level)
+    {
+        return IsPotionOrApple(itemDefinition) ? (byte)0 : level;
+    }
+
+    private static bool IsPotionOrApple(ItemDefinition itemDefinition)
+    {
+        return itemDefinition.Group == PotionGroup
+            && itemDefinition.Number is (>= FirstHealingOrManaPotionNumber and <= LastHealingOrManaPotionNumber)
+                or (>= FirstShieldOrComplexPotionNumber and <= LastShieldOrComplexPotionNumber);
     }
 
     private static byte GetItemLevelByMonsterLevel(ItemDefinition itemDefinition, int monsterLevel)
@@ -386,7 +411,7 @@ public class DefaultDropGenerator : IDropGenerator
             // no level defined, so it stays at 0.
         }
 
-        item.Level = Math.Min(item.Level, item.Definition!.MaximumItemLevel);
+        item.Level = GetDroppedItemLevel(item.Definition!, Math.Min(item.Level, item.Definition!.MaximumItemLevel));
 
         return item;
     }
