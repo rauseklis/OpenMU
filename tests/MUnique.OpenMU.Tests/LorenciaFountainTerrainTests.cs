@@ -95,12 +95,12 @@ public class LorenciaFountainTerrainTests
     {
         var terrain = await this.ApplyUpdateAsync();
 
-        foreach (var (x, y) in new (byte X, byte Y)[] { (130, 121), (134, 134) })
+        foreach (var (x, y) in new (byte X, byte Y)[] { (131, 120), (134, 134) })
         {
             Assert.That(terrain.WalkMap[x, y], Is.False, $"tile {x},{y} must be blocked");
         }
 
-        foreach (var (x, y) in new (byte X, byte Y)[] { (134, 121), (135, 122), (136, 124), (135, 131), (136, 133), (135, 127) })
+        foreach (var (x, y) in new (byte X, byte Y)[] { (130, 121), (134, 121), (135, 122), (136, 124), (135, 131), (136, 133), (135, 127) })
         {
             Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
         }
