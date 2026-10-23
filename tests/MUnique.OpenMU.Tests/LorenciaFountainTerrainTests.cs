@@ -70,6 +70,23 @@ public class LorenciaFountainTerrainTests
         Assert.That(new GameMapTerrain(map.TerrainData).WalkMap[141, 128], Is.False);
     }
 
+    /// <summary>
+    /// Tests that the two grass planters east of the fountain are gone, so their tiles can be walked on.
+    /// </summary>
+    [Test]
+    public async Task UpdatedTerrainFreesTheRemovedPlanterTiles()
+    {
+        var terrain = await this.ApplyUpdateAsync();
+
+        for (byte x = 145; x <= 151; x++)
+        {
+            foreach (var y in new byte[] { 124, 125, 126, 130, 131, 132 })
+            {
+                Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
+            }
+        }
+    }
+
     private async Task<GameMapTerrain> ApplyUpdateAsync()
     {
         using var context = new InMemoryPersistenceContextProvider().CreateNewContext();
