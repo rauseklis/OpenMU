@@ -614,4 +614,5 @@ public enum UpdateVersion
     KingMaceRequirements = 124,
     RenameRoyalMace = 125,
     LorenciaMarketFountain = 126,
+    AddFruitDrops = 127,
 }

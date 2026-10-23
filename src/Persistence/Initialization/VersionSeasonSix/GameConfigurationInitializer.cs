@@ -83,6 +83,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new GameMapsInitializer(this.Context, this.GameConfiguration).Initialize();
         this.AssignCharacterClassHomeMaps();
         this.WireRenaDropToEventMaps();
+        FruitDropGroups.EnsureFor(this.Context, this.GameConfiguration);
         new SocketSystem(this.Context, this.GameConfiguration).Initialize();
         new ChaosMixes(this.Context, this.GameConfiguration).Initialize();
         new Gates(this.Context, this.GameConfiguration).Initialize();
