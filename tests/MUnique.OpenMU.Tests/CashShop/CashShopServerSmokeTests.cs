@@ -6,8 +6,8 @@ namespace MUnique.OpenMU.Tests.CashShop;
 
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Net.Sockets;
+using System.Threading;
 using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;

@@ -4,6 +4,29 @@ This repository is the **server** of a private MU Online project (a fork of `MUn
 [`rauseklis/MuMain`](https://github.com/rauseklis/MuMain). This file is the entry point for AI coding assistants (Claude Code, Codex, ...) and
 applies to people too.
 
+## Binding rules for every session (apply even if nobody pasted a prompt)
+
+This is a private MU Online project of two brothers: this server repository (`rauseklis/OpenMU`, branch `master`) and the client repository
+(`rauseklis/MuMain`, branch `main`). The server runs live on a VPS and a merge to `master` deploys it within minutes.
+
+1. **If something is blocked, fails or is unclear: stop, say exactly what happened (the real error text) and ask the user. Do not try a different
+   approach on your own.** Never state something as fact that you did not verify (for example "Actions is disabled"): say what you checked.
+2. **Do only what the user asked.** No extra builds, branches, worktrees, cleanups or "improvements". Never delete, discard or overwrite anything
+   (files, branches, worktrees, databases, backups) without asking first.
+3. **Never change GitHub settings, Actions, secrets or permissions, and never change the live server's configuration** (firewall, SSH, accounts, `.env`,
+   compose files). You may read the live server (logs, read-only database queries). Show the user first, and wait for a yes.
+4. **Never touch a real local server or database of the user's.** Test with a throwaway database and a second server on shifted ports.
+5. **Do not control the game window** (no automated clicks or keys) and do not log in to the game. The user plays and reports.
+6. **Never put passwords, keys or tokens in chat, commits or files.** Do not read or print the server's `.env` or the admin password.
+7. **Never work directly on `main` or `master`.** Use a branch and a pull request. You may merge your own pull request (that deploys a server change),
+   but only after testing it, and say honestly what you did not test. Merge server and client changes that share packets together, server first.
+8. **Install the client only with `scripts/update-live-client.ps1`; never copy game files by hand.** If the finished GitHub build is not there yet,
+   wait for it (the script does) or ask. Build locally only for your own code changes, as described in that document, never as a workaround
+   for a slow install.
+9. **At the start of a session:** `git fetch origin`, read `docs/OPERATIONS.md` (short) from `origin/main` of the client repository, do not change anything, then ask the user
+   "What are we working on today?" and wait. The full guide is `docs/CODEX_GUIDE.md` there.
+10. **At the end of every task** report in a few lines: what changed, what you tested, what you did not test, what the user should check.
+
 **Read the project guide first:**
 [`docs/OPERATIONS.md` in the client repository](https://github.com/rauseklis/MuMain/blob/main/docs/OPERATIONS.md). It explains how the two
 repositories fit together (the packets in `src/Network/Packets`), the live server and how a merge to `master` deploys to it, how to test
