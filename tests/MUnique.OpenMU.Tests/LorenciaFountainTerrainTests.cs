@@ -88,20 +88,19 @@ public class LorenciaFountainTerrainTests
     }
 
     /// <summary>
-    /// Tests that the Loren Market lamp planters, which replaced the two small grass planters west of the
-    /// fountain, block their tiles while the ground between them stays walkable.
+    /// Tests that the two Loren Market lanterns west of the fountain block only the tile they stand on.
     /// </summary>
     [Test]
-    public async Task UpdatedTerrainBlocksTheLampPlanters()
+    public async Task UpdatedTerrainBlocksOnlyTheLanternTiles()
     {
         var terrain = await this.ApplyUpdateAsync();
 
-        foreach (var (x, y) in new (byte X, byte Y)[] { (135, 124), (136, 124), (135, 131), (136, 131) })
+        foreach (var (x, y) in new (byte X, byte Y)[] { (134, 121), (134, 134) })
         {
             Assert.That(terrain.WalkMap[x, y], Is.False, $"tile {x},{y} must be blocked");
         }
 
-        foreach (var (x, y) in new (byte X, byte Y)[] { (135, 127), (136, 128), (139, 122), (139, 133) })
+        foreach (var (x, y) in new (byte X, byte Y)[] { (135, 122), (136, 124), (135, 131), (136, 133), (135, 127) })
         {
             Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
         }
