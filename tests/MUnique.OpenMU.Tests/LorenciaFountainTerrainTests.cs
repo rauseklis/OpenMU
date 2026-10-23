@@ -108,7 +108,7 @@ public class LorenciaFountainTerrainTests
 
     /// <summary>
     /// Tests that the four Loren Market lantern planters around the fountain block their tiles, while the
-    /// ground between them and the fountain stays walkable.
+    /// ground between them and the fountain, so that a player can walk around it, stays walkable.
     /// </summary>
     [Test]
     public async Task UpdatedTerrainBlocksTheFourPlantersAroundTheFountain()
@@ -120,7 +120,7 @@ public class LorenciaFountainTerrainTests
             Assert.That(terrain.WalkMap[x, y], Is.False, $"tile {x},{y} must be blocked");
         }
 
-        foreach (var (x, y) in new (byte X, byte Y)[] { (141, 121), (141, 135), (134, 128), (148, 128) })
+        foreach (var (x, y) in new (byte X, byte Y)[] { (141, 121), (141, 135), (134, 128), (148, 128), (139, 125), (138, 126), (142, 125), (143, 126), (138, 130), (143, 130) })
         {
             Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
         }
