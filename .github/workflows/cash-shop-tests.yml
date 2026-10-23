@@ -1,0 +1,93 @@
+name: Cash Shop isolated tests
+
+on:
+  push:
+    branches: ['codex/cash-shop-account-balances', master]
+    paths:
+      - '**/CashShop/**'
+      - '**/CashShop*.cs'
+      - '**/*AddCashShopBalances.cs'
+      - '**/IPersistenceContextProvider.cs'
+      - '**/PersistenceContextProvider.cs'
+      - '.github/workflows/cash-shop-tests.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - '**/CashShop/**'
+      - '**/CashShop*.cs'
+      - '**/*AddCashShopBalances.cs'
+      - '**/IPersistenceContextProvider.cs'
+      - '**/PersistenceContextProvider.cs'
+      - '.github/workflows/cash-shop-tests.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cash-shop-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: cash_shop_ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - '127.0.0.1:55432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AUCTION_TEST_CONNECTION_STRING: 'Host=127.0.0.1;Port=55432;Database=cash_shop_ci;User Id=postgres;Command Timeout=120'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build server
+        run: dotnet publish src/Startup/MUnique.OpenMU.Startup.csproj -c Release -p:ci=true
+      - name: Run protocol and real PostgreSQL credit tests
+        run: >-
+          dotnet test tests/MUnique.OpenMU.Tests/MUnique.OpenMU.Tests.csproj -c Release -p:ci=true
+          --filter 'FullyQualifiedName~CashShop&FullyQualifiedName!~CashShopServerSmokeTests'
+          --logger 'trx;LogFileName=cash-shop.trx'
+      - name: Isolate every runtime database connection
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          runtime = Path('src/Startup/bin/Release').resolve()
+          path = runtime / 'ConnectionSettings.xml'
+          tree = ET.parse(path)
+          found = 0
+          for element in tree.iter():
+              if element.tag.split('}')[-1] == 'ConnectionString':
+                  element.text = os.environ['AUCTION_TEST_CONNECTION_STRING'] + ';'
+                  found += 1
+          assert found >= 7, 'All runtime database contexts must be isolated'
+          tree.write(path, encoding='utf-8', xml_declaration=True)
+          for element in tree.iter():
+              if element.tag.split('}')[-1] == 'ConnectionString':
+                  assert 'Database=cash_shop_ci;' in element.text
+                  assert 'Port=55432;' in element.text
+                  assert 'Host=127.0.0.1;' in element.text
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('CASH_SHOP_SMOKE_RUNTIME=' + str(runtime) + '\n')
+      - name: Start a second server on shifted ports against the disposable database
+        run: >-
+          dotnet test tests/MUnique.OpenMU.Tests/MUnique.OpenMU.Tests.csproj -c Release --no-build
+          --filter FullyQualifiedName~CashShopServerSmokeTests
+          --logger 'trx;LogFileName=cash-shop-smoke.trx'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cash-shop-test-results
+          path: '**/TestResults/*.trx'

@@ -62,6 +62,10 @@ public interface IPersistenceContextProvider
     /// <returns>The repository, or <c>null</c>.</returns>
     JewelBank.IJewelBankRepository? CreateJewelBankRepository() => null;
 
+    /// <summary>Creates the Cash Shop repository, or null when persistence is unavailable.</summary>
+    /// <returns>The persistent wallet repository, or null.</returns>
+    CashShop.ICashShopRepository? CreateCashShopRepository() => null;
+
     /// <summary>
     /// Creates a new context which is used for accounts.
     /// This context should only care about the objects of a player;
