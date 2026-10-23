@@ -123,3 +123,43 @@ Do not confuse usage capacity with GitHub Actions permissions. User specifically
 requested autonomous continuation after usage reset; resume in this same chat.
 Latest usage check: primary99%, reset 2026-10-23 04:29:11 UTC
 (05:29:11 Africa/Casablanca), secondary31%.
+
+## Continuation update at 2026-10-23 07:00–07:10 UTC
+
+Usage has already reset: primary6%, ordinaryUsageAllowed=true; no reset credit
+was consumed. The earlier automation create call failed with
+"targetThreadId: Missing targetThreadId or destination=thread." No automation was
+created; this chat resumed directly once the user returned after the reset.
+
+User confirmed: "Tagad varu ieiet spēlē" (can log in now). No server/client
+change or restart was used to recover login. Root cause remains unestablished.
+Live still c0460a5, up seven hours. New server master 5671a2450326bff44e451065f77941ec307adcb8
+only adds binding AGENTS.md rules; read them before further work.
+A game Main.exe process PID15508 exists but path query was blank; no memory/input
+operations were attempted against an unverified path.
+
+Saved draft PR: https://github.com/rauseklis/OpenMU/pull/24.
+Feature head before this note: b724bafa4fb080d89587674d498752b3ec31cfae.
+This merges the new server AGENTS rules and starts the intended test commit
+without skip-ci; repeated gh run/check-runs queries showed no runs/checks
+for this head. Do not claim Cash Shop tests ran; there is no test evidence yet.
+
+Client current main270d8c3 differs from921c968f only in CI, AGENTS and the
+workflow contract test. Read current AGENTS. It explicitly says to stop/report/
+ask on a blocker and not try another approach autonomously.
+The finished921c968f Windows artifact is verified; workflow39848758627 has
+Windows/Linux/Quality success and macOS failure. PR51 andPR52 remain unmerged.
+
+CRITICAL current contradiction: gh api actions/workflows/ci.yml and workflow
+listing both report active. However the newly authorized existing workflow
+dispatch attempt
+  gh workflow run fork-ci.yml --repo rauseklis/MuMain --ref codex/atlans-boid-shadow-crash
+failed at 2026-10-23 about07:10 UTC with exact output:
+  could not create workflow dispatch event: HTTP 422: Actions has been disabled for this repository.
+  (https://api.github.com/repos/rauseklis/MuMain/actions/workflows/369988849/dispatches)
+Do not say a403 proves Actions disabled. Do not claim owner's admin check is false.
+Do not change settings, permissions or try alternative launch/build workarounds.
+Show this exact contradictory result and ask the user/owner to resolve it,
+per current binding AGENTS rule1. User's owner message had reported enabled
+Actions and available artifact; new dispatch still fails. Existing finished
+artifact installation and new PR validation are distinct operations.
