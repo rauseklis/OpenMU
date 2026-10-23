@@ -70,6 +70,62 @@ public class LorenciaFountainTerrainTests
         Assert.That(new GameMapTerrain(map.TerrainData).WalkMap[141, 128], Is.False);
     }
 
+    /// <summary>
+    /// Tests that the two grass planters east of the fountain are gone, so their tiles can be walked on.
+    /// </summary>
+    [Test]
+    public async Task UpdatedTerrainFreesTheRemovedPlanterTiles()
+    {
+        var terrain = await this.ApplyUpdateAsync();
+
+        for (byte x = 148; x <= 151; x++)
+        {
+            foreach (var y in new byte[] { 124, 125, 126, 130, 131, 132 })
+            {
+                Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tests that the two Loren Market lanterns west of the fountain block only the tile they stand on.
+    /// </summary>
+    [Test]
+    public async Task UpdatedTerrainBlocksOnlyTheLanternTiles()
+    {
+        var terrain = await this.ApplyUpdateAsync();
+
+        foreach (var (x, y) in new (byte X, byte Y)[] { (130, 121), (130, 134) })
+        {
+            Assert.That(terrain.WalkMap[x, y], Is.False, $"tile {x},{y} must be blocked");
+        }
+
+        foreach (var (x, y) in new (byte X, byte Y)[] { (131, 120), (134, 134), (134, 121), (135, 122), (135, 127), (133, 131), (134, 128) })
+        {
+            Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
+        }
+    }
+
+    /// <summary>
+    /// Tests that the four Loren Market lantern planters around the fountain block their tiles, while the
+    /// ground between them and the fountain stays walkable.
+    /// </summary>
+    [Test]
+    public async Task UpdatedTerrainBlocksTheFourPlantersAroundTheFountain()
+    {
+        var terrain = await this.ApplyUpdateAsync();
+
+        foreach (var (x, y) in new (byte X, byte Y)[] { (137, 124), (137, 131), (144, 124), (144, 131) })
+        {
+            Assert.That(terrain.WalkMap[x, y], Is.False, $"tile {x},{y} must be blocked");
+        }
+
+        foreach (var (x, y) in new (byte X, byte Y)[] { (141, 121), (141, 135), (134, 128), (148, 128) })
+        {
+            Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
+        }
+    }
+
     private async Task<GameMapTerrain> ApplyUpdateAsync()
     {
         using var context = new InMemoryPersistenceContextProvider().CreateNewContext();
