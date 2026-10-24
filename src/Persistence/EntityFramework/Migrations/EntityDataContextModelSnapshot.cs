@@ -2246,6 +2246,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<double?>("SmallBonusDropChance")
+                        .HasColumnType("double precision");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GameConfigurationId");
@@ -2826,6 +2829,15 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
                     b.Property<short>("RequiredCharacterLevel")
                         .HasColumnType("smallint");
+
+                    b.Property<double?>("ExcellentSecondOptionChance")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("SkillChance")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("GuaranteeJewelryOption")
+                        .HasColumnType("boolean");
 
                     b.Property<byte>("SourceItemLevel")
                         .HasColumnType("smallint");

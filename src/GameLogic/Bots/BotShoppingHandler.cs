@@ -511,7 +511,7 @@ internal static class BotShoppingHandler
     {
         return store.Items
             .Where(i => Matches(i, identifier))
-            .Where(i => PriceCalculator.CalculateFinalBuyingPrice(i) + reserve <= player.Money)
+            .Where(i => PriceCalculator.CalculateMerchantBuyingPrice(i) + reserve <= player.Money)
             .OrderByDescending(i => i.Durability)
             .FirstOrDefault();
     }

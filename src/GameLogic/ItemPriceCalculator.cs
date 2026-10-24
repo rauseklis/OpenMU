@@ -392,6 +392,13 @@ public class ItemPriceCalculator
     public long CalculateFinalBuyingPrice(Item item) => RoundPrice(CalculateBuyingPrice(item));
 
     /// <summary>
+    /// Calculates the NPC purchase price, honoring an explicit price on the merchant's listing.
+    /// </summary>
+    /// <param name="item">The merchant's item template.</param>
+    /// <returns>The purchase price before castle taxes.</returns>
+    public long CalculateMerchantBuyingPrice(Item item) => item.StorePrice is >= 0 ? item.StorePrice.Value : this.CalculateFinalBuyingPrice(item);
+
+    /// <summary>
     /// Calculates the final "old" buying price of the item.
     /// Supposedly in earlier versions jewel reference prices were different, and those were used since for Chaos Weapon and First Wings craftings rate calculations.
     /// </summary>

@@ -1,0 +1,708 @@
+{
+  "totalBonusChance": 0.05,
+  "eligibleMonsters": [
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 2,
+      "monster": 20,
+      "name": "Elite Yeti",
+      "level": 36
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 5,
+      "name": "Hell Hound",
+      "level": 38
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 13,
+      "name": "Hell Spider",
+      "level": 40
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 16,
+      "name": "Elite Skeleton",
+      "level": 42
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 9,
+      "name": "Thunder Lich",
+      "level": 44
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 8,
+      "name": "Poison Bull",
+      "level": 46
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 10,
+      "name": "Dark Knight",
+      "level": 48
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 2,
+      "monster": 24,
+      "name": "Worm",
+      "level": 20
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 2,
+      "monster": 22,
+      "name": "Ice Monster",
+      "level": 22
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 2,
+      "monster": 23,
+      "name": "Hommerd",
+      "level": 24
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 2,
+      "monster": 21,
+      "name": "Assassin",
+      "level": 26
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 2,
+      "monster": 19,
+      "name": "Yeti",
+      "level": 30
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 2,
+      "monster": 20,
+      "name": "Elite Yeti",
+      "level": 36
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 12,
+      "name": "Larva",
+      "level": 25
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 17,
+      "name": "Cyclops",
+      "level": 28
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 11,
+      "name": "Ghost",
+      "level": 32
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 5,
+      "name": "Hell Hound",
+      "level": 38
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 13,
+      "name": "Hell Spider",
+      "level": 40
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 16,
+      "name": "Elite Skeleton",
+      "level": 42
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 9,
+      "name": "Thunder Lich",
+      "level": 44
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 8,
+      "name": "Poison Bull",
+      "level": 46
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 10,
+      "name": "Dark Knight",
+      "level": 48
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 1,
+      "monster": 18,
+      "name": "Gorgon",
+      "level": 55
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 36,
+      "name": "Shadow",
+      "level": 47
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 39,
+      "name": "Poison Shadow",
+      "level": 50
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 34,
+      "name": "Cursed Wizard",
+      "level": 54
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 41,
+      "name": "Death Cow",
+      "level": 57
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 37,
+      "name": "Devil",
+      "level": 60
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 40,
+      "name": "Death Knight",
+      "level": 62
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 35,
+      "name": "Death Gorgon",
+      "level": 64
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 4,
+      "monster": 38,
+      "name": "Balrog",
+      "level": 66
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 7,
+      "monster": 45,
+      "name": "Bahamut",
+      "level": 43
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 7,
+      "monster": 46,
+      "name": "Vepar",
+      "level": 45
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 7,
+      "monster": 47,
+      "name": "Valkyrie",
+      "level": 46
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 7,
+      "monster": 51,
+      "name": "Great Bahamut",
+      "level": 66
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 7,
+      "monster": 52,
+      "name": "Silver Valkyrie",
+      "level": 68
+    },
+    {
+      "bonus": "BOX OF HEAVEN",
+      "map": 7,
+      "monster": 48,
+      "name": "Lizard King",
+      "level": 70
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 37,
+      "name": "Devil",
+      "level": 60
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 40,
+      "name": "Death Knight",
+      "level": 62
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 35,
+      "name": "Death Gorgon",
+      "level": 64
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 38,
+      "name": "Balrog",
+      "level": 66
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 7,
+      "monster": 51,
+      "name": "Great Bahamut",
+      "level": 66
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 7,
+      "monster": 52,
+      "name": "Silver Valkyrie",
+      "level": 68
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 7,
+      "monster": 48,
+      "name": "Lizard King",
+      "level": 70
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 4,
+      "monster": 40,
+      "name": "Death Knight",
+      "level": 62
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 4,
+      "monster": 35,
+      "name": "Death Gorgon",
+      "level": 64
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 4,
+      "monster": 38,
+      "name": "Balrog",
+      "level": 66
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 7,
+      "monster": 51,
+      "name": "Great Bahamut",
+      "level": 66
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 7,
+      "monster": 52,
+      "name": "Silver Valkyrie",
+      "level": 68
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 7,
+      "monster": 48,
+      "name": "Lizard King",
+      "level": 70
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 7,
+      "monster": 49,
+      "name": "Hydra",
+      "level": 74
+    },
+    {
+      "bonus": "FIRECRACKER",
+      "map": 8,
+      "monster": 57,
+      "name": "Iron Wheel",
+      "level": 80
+    },
+    {
+      "bonus": "FIRECRACKER",
+      "map": 8,
+      "monster": 58,
+      "name": "Tantallos",
+      "level": 83
+    },
+    {
+      "bonus": "FIRECRACKER",
+      "map": 8,
+      "monster": 61,
+      "name": "Beam Knight",
+      "level": 84
+    },
+    {
+      "bonus": "FIRECRACKER",
+      "map": 10,
+      "monster": 71,
+      "name": "Mega Crust",
+      "level": 78
+    },
+    {
+      "bonus": "FIRECRACKER",
+      "map": 10,
+      "monster": 70,
+      "name": "Queen Rainer",
+      "level": 82
+    },
+    {
+      "bonus": "FIRECRACKER",
+      "map": 10,
+      "monster": 73,
+      "name": "Drakan",
+      "level": 86
+    }
+  ],
+  "jewels": {
+    "SILVER MEDAL": [
+      [
+        14,
+        13
+      ],
+      [
+        14,
+        14
+      ],
+      [
+        12,
+        15
+      ]
+    ],
+    "GOLD MEDAL": [
+      [
+        14,
+        13
+      ],
+      [
+        14,
+        14
+      ],
+      [
+        12,
+        15
+      ],
+      [
+        14,
+        16
+      ]
+    ],
+    "HEART OF LOVE": [
+      [
+        14,
+        13
+      ],
+      [
+        14,
+        14
+      ],
+      [
+        14,
+        16
+      ],
+      [
+        14,
+        22
+      ]
+    ],
+    "FIRECRACKER": [
+      [
+        14,
+        13
+      ],
+      [
+        14,
+        14
+      ],
+      [
+        14,
+        16
+      ],
+      [
+        14,
+        22
+      ],
+      [
+        14,
+        41
+      ]
+    ]
+  },
+  "zen": {
+    "SILVER MEDAL": 10000,
+    "GOLD MEDAL": 20000,
+    "HEART OF LOVE": 30000,
+    "FIRECRACKER": 50000,
+    "BOX OF HEAVEN": 100000
+  },
+  "weights": {
+    "SILVER MEDAL": {
+      "armor": 0.3,
+      "weapons": 0.2,
+      "shields": 0.05,
+      "jewels": 0.2,
+      "rings": 0.05,
+      "zen": 0.2
+    },
+    "GOLD MEDAL": {
+      "armor": 0.35,
+      "weapons": 0.3,
+      "shields": 0.05,
+      "jewels": 0.15,
+      "rings": 0.05,
+      "zen": 0.1
+    },
+    "HEART OF LOVE": {
+      "weapons": 0.5,
+      "shields": 0.1,
+      "jewels": 0.3,
+      "zen": 0.1
+    },
+    "FIRECRACKER": {
+      "armor": 0.2,
+      "weapons": 0.2,
+      "jewels": 0.35,
+      "zen": 0.25
+    },
+    "BOX OF HEAVEN": {
+      "zen": 0.2,
+      "jewels": 0.4,
+      "fruits": 0.1,
+      "pets": 0.25,
+      "rarePets": 0.05
+    }
+  },
+  "excludedItems": [
+    [
+      12,
+      32
+    ],
+    [
+      12,
+      33
+    ],
+    [
+      12,
+      34
+    ],
+    [
+      13,
+      157
+    ],
+    [
+      13,
+      159
+    ],
+    [
+      13,
+      160
+    ],
+    [
+      13,
+      161
+    ],
+    [
+      13,
+      174
+    ],
+    [
+      14,
+      21
+    ],
+    [
+      14,
+      32
+    ],
+    [
+      14,
+      33
+    ],
+    [
+      14,
+      34
+    ],
+    [
+      14,
+      45
+    ],
+    [
+      14,
+      54
+    ],
+    [
+      14,
+      55
+    ],
+    [
+      14,
+      56
+    ],
+    [
+      14,
+      57
+    ],
+    [
+      14,
+      63
+    ],
+    [
+      14,
+      84
+    ],
+    [
+      14,
+      88
+    ],
+    [
+      14,
+      89
+    ],
+    [
+      14,
+      90
+    ],
+    [
+      14,
+      92
+    ],
+    [
+      14,
+      93
+    ],
+    [
+      14,
+      95
+    ],
+    [
+      14,
+      99
+    ],
+    [
+      14,
+      100
+    ],
+    [
+      14,
+      121
+    ],
+    [
+      14,
+      122
+    ],
+    [
+      14,
+      123
+    ],
+    [
+      14,
+      124
+    ],
+    [
+      14,
+      125
+    ],
+    [
+      14,
+      134
+    ],
+    [
+      14,
+      135
+    ],
+    [
+      14,
+      136
+    ],
+    [
+      14,
+      137
+    ],
+    [
+      14,
+      138
+    ],
+    [
+      14,
+      139
+    ],
+    [
+      14,
+      157
+    ],
+    [
+      14,
+      158
+    ],
+    [
+      14,
+      159
+    ],
+    [
+      14,
+      400
+    ],
+    [
+      14,
+      401
+    ],
+    [
+      14,
+      402
+    ]
+  ],
+  "excludedWrapperLevels": [
+    0,
+    1,
+    4,
+    13,
+    14,
+    15
+  ]
+}

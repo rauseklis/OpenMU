@@ -58,7 +58,7 @@ public partial class Item
     public int SocketCount { get; set; }
 
     /// <summary>
-    /// Gets or sets the price which was set by the player for his personal store.
+    /// Gets or sets the personal store price, or the explicit NPC purchase price on a merchant's item template.
     /// </summary>
     public int? StorePrice { get; set; }
 
