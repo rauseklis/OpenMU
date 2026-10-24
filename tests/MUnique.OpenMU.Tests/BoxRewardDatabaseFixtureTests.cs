@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.DataModel.Configuration.Items;
@@ -44,7 +45,8 @@ public class BoxRewardDatabaseFixtureTests
         ConnectionConfigurator.Initialize(new FixtureConnectionSettings());
         JsonConverterRegistry.RegisterConverter(new LocalizedStringJsonConverter());
         JsonConverterRegistry.RegisterConverter(new BinaryAsHexJsonConverter());
-        var provider = new PersistenceContextProvider(NullLoggerFactory.Instance, null);
+        var notifications = new Mock<IConfigurationChangeListener>();
+        var provider = new PersistenceContextProvider(NullLoggerFactory.Instance, notifications.Object);
         await provider.ApplyAllPendingUpdatesAsync().ConfigureAwait(false);
         using (var context = provider.CreateNewContext())
         {
@@ -55,6 +57,7 @@ public class BoxRewardDatabaseFixtureTests
             var existingStock = store.Items.Select(item => (Id: item.GetId(), Slot: item.ItemSlot)).ToArray();
             Assert.That(await AncientTierBoxUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
             Assert.That(await AncientTierBoxUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+            notifications.VerifyNoOtherCalls();
             using var verified = provider.CreateNewContext();
             var updated = (await verified.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
             var updatedStore = updated.Monsters.Single(monster => monster.Number == 255).MerchantStore!;

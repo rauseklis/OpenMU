@@ -19,6 +19,8 @@ public static class AncientTierBoxUpdateInstaller
     public static async ValueTask<bool> ApplyIfNeededAsync(IPersistenceContextProvider provider)
     {
         using var context = provider.CreateNewContext();
+        // Startup is still constructing the provider; live callbacks would resolve it recursively.
+        using var notifications = context.SuspendChangeNotifications();
         var state = (await context.GetAsync<ConfigurationUpdateState>().ConfigureAwait(false)).FirstOrDefault();
         if (state?.InitializationKey != VersionSeasonSix.DataInitialization.Id)
         {
