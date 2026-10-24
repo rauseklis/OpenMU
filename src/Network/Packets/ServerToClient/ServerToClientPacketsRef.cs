@@ -38604,7 +38604,7 @@ public readonly ref struct JewelBankPickupNotificationRef
 
 
 /// <summary>
-/// Is sent by the server when: The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached.
+/// Is sent by the server when: The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached, bit 4 = nothing is worn (or the equipment rule does not apply), bit 5 = the reset requires that nothing is worn. WornItems is the number of items the character wears.
 /// Causes reaction on client side: The client shows or updates the window of the reset NPC.
 /// </summary>
 public readonly ref struct ResetNpcStateResponseRef
@@ -38657,7 +38657,7 @@ public readonly ref struct ResetNpcStateResponseRef
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 30;
+    public static int Length => 31;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -38752,6 +38752,15 @@ public readonly ref struct ResetNpcStateResponseRef
     {
         get => ReadUInt32LittleEndian(this._data[26..]);
         set => WriteUInt32LittleEndian(this._data[26..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the worn items.
+    /// </summary>
+    public byte WornItems
+    {
+        get => this._data[30];
+        set => this._data[30] = value;
     }
 
     /// <summary>

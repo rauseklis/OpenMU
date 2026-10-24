@@ -66,7 +66,9 @@ public class ResetCharacterAction
             progression.RequiredZen,
             this._player.Money,
             progression.RequiredItemAmount,
-            bankFruits);
+            bankFruits,
+            this.CountWornItems(),
+            configuration.RequireNoEquipment);
     }
 
     /// <summary>
@@ -115,6 +117,12 @@ public class ResetCharacterAction
             return ResetNpcOutcome.LimitReached;
         }
 
+        if (configuration.RequireNoEquipment && this.CountWornItems() > 0)
+        {
+            await this.ShowMessageAsync(nameof(PlayerMessage.ResetEquipmentWorn)).ConfigureAwait(false);
+            return ResetNpcOutcome.RequirementsNotMet;
+        }
+
         if (!await this.TryConsumeResetCostsAsync(configuration, resetProgression).ConfigureAwait(false))
         {
             return ResetNpcOutcome.RequirementsNotMet;
@@ -158,6 +166,8 @@ public class ResetCharacterAction
 
         await this._player.InvokeViewPlugInAsync<IShowMessageOfObjectPlugIn>(p => p.ShowMessageOfObjectAsync(message, this._npc)).ConfigureAwait(false);
     }
+
+    private int CountWornItems() => this._player.Inventory?.EquippedItems.Count() ?? 0;
 
     private int GetResetCount()
     {

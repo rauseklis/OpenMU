@@ -8521,7 +8521,7 @@ public class PacketStructureTests
     public void ResetNpcStateResponse_PacketSizeValidation()
     {
         // Fixed-length packet validation
-        const int expectedLength = 30;
+        const int expectedLength = 31;
         var actualLength = ResetNpcStateResponseRef.Length;
         
         Assert.That(actualLength, Is.EqualTo(expectedLength), 
@@ -8566,5 +8566,9 @@ public class PacketStructureTests
         // Validate field 'BankFruits' boundary
         Assert.That(26 + 4, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'BankFruits' exceeds packet boundary");
+        
+        // Validate field 'WornItems' boundary
+        Assert.That(30 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'WornItems' exceeds packet boundary");
     }
 }

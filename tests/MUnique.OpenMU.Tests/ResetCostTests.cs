@@ -136,7 +136,18 @@ public class ResetCostTests
 
         var notEnoughFruits = enough with { BankFruits = 199 };
         Assert.That(notEnoughFruits.CanReset, Is.False);
-        Assert.That(notEnoughFruits.Flags, Is.EqualTo((byte)(ResetNpcStatus.LevelEnough | ResetNpcStatus.ZenEnough)));
+        Assert.That(notEnoughFruits.Flags, Is.EqualTo((byte)(ResetNpcStatus.LevelEnough | ResetNpcStatus.ZenEnough | ResetNpcStatus.GearOk)));
+
+        var wearing = enough with { WornItems = 3, GearRuleActive = true };
+        Assert.That(wearing.CanReset, Is.False);
+        Assert.That(wearing.Flags & ResetNpcStatus.GearRule, Is.Not.EqualTo(0));
+        Assert.That(wearing.Flags & ResetNpcStatus.GearOk, Is.EqualTo(0));
+
+        var naked = wearing with { WornItems = 0 };
+        Assert.That(naked.CanReset, Is.True);
+
+        var gearRuleOff = enough with { WornItems = 3, GearRuleActive = false };
+        Assert.That(gearRuleOff.CanReset, Is.True);
 
         var limit = enough with { NextResetNumber = 51 };
         Assert.That(limit.Flags & ResetNpcStatus.LimitReachedFlag, Is.Not.EqualTo(0));

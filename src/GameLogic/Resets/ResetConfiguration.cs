@@ -74,6 +74,13 @@ public class ResetConfiguration
     public ICollection<ResetItemCostTier> ItemCostTiers { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets a value indicating whether a character must wear nothing to reset: all equipment slots have to be empty
+    /// (the items may stay in the inventory).
+    /// </summary>
+    [Display(Name = "Require that no equipment is worn")]
+    public bool RequireNoEquipment { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether a reset sets the stat points back to the initial values.
     /// </summary>
     [Display(ResourceType = typeof(PlugInResources), Name = nameof(PlugInResources.ResetConfiguration_ResetStats_Name))]

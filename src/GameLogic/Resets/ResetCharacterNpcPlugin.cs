@@ -33,6 +33,10 @@ public class ResetCharacterNpcPlugin : IPlayerTalkToNpcPlugIn
 
         eventArgs.HasBeenHandled = true;
 
+        // The window of the NPC stays open until the player closes it: the server keeps the NPC as the opened one, so that
+        // the requests of the window (information, reset) are accepted.
+        eventArgs.LeavesDialogOpen = true;
+
         // The player decides in the window of the NPC: it shows the requirements and the current values, and the reset is
         // done when the player presses the button.
         var status = await new ResetCharacterAction(player, npc).GetStatusAsync().ConfigureAwait(false)

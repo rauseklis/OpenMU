@@ -8358,11 +8358,12 @@ public static class ConnectionExtensions
     /// <param name="currentZen">The current zen.</param>
     /// <param name="requiredFruits">The required fruits.</param>
     /// <param name="bankFruits">The bank fruits.</param>
+    /// <param name="wornItems">The worn items.</param>
     /// <remarks>
-    /// Is sent by the server when: The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached.
+    /// Is sent by the server when: The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached, bit 4 = nothing is worn (or the equipment rule does not apply), bit 5 = the reset requires that nothing is worn. WornItems is the number of items the character wears.
     /// Causes reaction on client side: The client shows or updates the window of the reset NPC.
     /// </remarks>
-    public static async ValueTask SendResetNpcStateResponseAsync(this IConnection? connection, byte @outcome, byte @flags, ushort @nextResetNumber, ushort @maximumResets, ushort @requiredLevel, ushort @currentLevel, uint @requiredZen, uint @currentZen, uint @requiredFruits, uint @bankFruits)
+    public static async ValueTask SendResetNpcStateResponseAsync(this IConnection? connection, byte @outcome, byte @flags, ushort @nextResetNumber, ushort @maximumResets, ushort @requiredLevel, ushort @currentLevel, uint @requiredZen, uint @currentZen, uint @requiredFruits, uint @bankFruits, byte @wornItems)
     {
         if (connection is null)
         {
@@ -8383,6 +8384,7 @@ public static class ConnectionExtensions
             packet.CurrentZen = @currentZen;
             packet.RequiredFruits = @requiredFruits;
             packet.BankFruits = @bankFruits;
+            packet.WornItems = @wornItems;
 
             return packet.Header.Length;
         }

@@ -37,6 +37,8 @@ public enum ResetNpcOutcome : byte
 /// <param name="CurrentZen">The Zen of the player.</param>
 /// <param name="RequiredFruits">The fruits which are required (of any type, taken from the Jewel Bank).</param>
 /// <param name="BankFruits">The fruits in the Jewel Bank of the player.</param>
+/// <param name="WornItems">The number of items the character wears.</param>
+/// <param name="GearRuleActive">Whether the reset requires that nothing is worn.</param>
 public readonly record struct ResetNpcStatus(
     ResetNpcOutcome Outcome,
     int NextResetNumber,
@@ -46,7 +48,9 @@ public readonly record struct ResetNpcStatus(
     int RequiredZen,
     int CurrentZen,
     int RequiredFruits,
-    long BankFruits)
+    long BankFruits,
+    int WornItems = 0,
+    bool GearRuleActive = false)
 {
     /// <summary>The flag of <see cref="Flags"/> which tells that the level is enough.</summary>
     public const byte LevelEnough = 1;
@@ -59,6 +63,12 @@ public readonly record struct ResetNpcStatus(
 
     /// <summary>The flag of <see cref="Flags"/> which tells that the reset limit is reached.</summary>
     public const byte LimitReachedFlag = 8;
+
+    /// <summary>The flag of <see cref="Flags"/> which tells that the equipment requirement is met (or does not apply).</summary>
+    public const byte GearOk = 16;
+
+    /// <summary>The flag of <see cref="Flags"/> which tells that the reset requires that nothing is worn.</summary>
+    public const byte GearRule = 32;
 
     /// <summary>
     /// Gets the flags of the wire format: which requirements are met.
@@ -88,6 +98,16 @@ public readonly record struct ResetNpcStatus(
                 flags |= LimitReachedFlag;
             }
 
+            if (!this.GearRuleActive || this.WornItems == 0)
+            {
+                flags |= GearOk;
+            }
+
+            if (this.GearRuleActive)
+            {
+                flags |= GearRule;
+            }
+
             return flags;
         }
     }
@@ -95,7 +115,7 @@ public readonly record struct ResetNpcStatus(
     /// <summary>
     /// Gets a value indicating whether every requirement is met and the limit is not reached.
     /// </summary>
-    public bool CanReset => this.Flags == (LevelEnough | ZenEnough | FruitsEnough);
+    public bool CanReset => (this.Flags & (LevelEnough | ZenEnough | FruitsEnough | LimitReachedFlag | GearOk)) == (LevelEnough | ZenEnough | FruitsEnough | GearOk);
 
     /// <summary>
     /// Creates the same status with another outcome.

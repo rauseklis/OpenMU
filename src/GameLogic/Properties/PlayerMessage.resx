@@ -654,6 +654,9 @@
   <data name="SelfDefenseDiminishesFormat" xml:space="preserve">
     <value>Self defense of {0} against {1} diminishes.</value>
   </data>
+  <data name="ResetEquipmentWorn" xml:space="preserve">
+    <value>Take off everything you wear before you reset. The items may stay in your inventory.</value>
+  </data>
   <data name="ResetNotEnabled" xml:space="preserve">
     <value>Reset is not enabled.</value>
   </data>

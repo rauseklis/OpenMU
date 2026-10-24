@@ -40,6 +40,7 @@ public class ShowResetNpcPlugIn : IShowResetNpcPlugIn
             (uint)Math.Max(0, status.RequiredZen),
             (uint)Math.Max(0, status.CurrentZen),
             (uint)Math.Max(0, status.RequiredFruits),
-            (uint)Math.Clamp(status.BankFruits, 0, uint.MaxValue)).ConfigureAwait(false);
+            (uint)Math.Clamp(status.BankFruits, 0, uint.MaxValue),
+            (byte)Math.Clamp(status.WornItems, 0, byte.MaxValue)).ConfigureAwait(false);
     }
 }

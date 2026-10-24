@@ -14848,9 +14848,9 @@
       <Code>DC</Code>
       <SubCode>80</SubCode>
       <Name>ResetNpcStateResponse</Name>
-      <Length>30</Length>
+      <Length>31</Length>
       <Direction>ServerToClient</Direction>
-      <SentWhen>The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached.</SentWhen>
+      <SentWhen>The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached, bit 4 = nothing is worn (or the equipment rule does not apply), bit 5 = the reset requires that nothing is worn. WornItems is the number of items the character wears.</SentWhen>
       <CausedReaction>The client shows or updates the window of the reset NPC.</CausedReaction>
       <Fields>
         <Field>
@@ -14902,6 +14902,11 @@
           <Index>26</Index>
           <Type>IntegerLittleEndian</Type>
           <Name>BankFruits</Name>
+        </Field>
+        <Field>
+          <Index>30</Index>
+          <Type>Byte</Type>
+          <Name>WornItems</Name>
         </Field>
       </Fields>
     </Packet>
