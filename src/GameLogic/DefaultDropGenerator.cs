@@ -218,10 +218,19 @@ public class DefaultDropGenerator : IDropGenerator
     /// <summary>
     /// Gets a random ancient item.
     /// </summary>
+    /// <param name="possibleItems">An optional restricted item pool.</param>
+    /// <param name="requiredSet">The required Ancient set, if configured.</param>
+    /// <param name="bonusLevelTwoChance">The optional chance for the +10 Ancient stat bonus.</param>
     /// <returns>A random ancient item.</returns>
-    protected Item? GenerateRandomAncient()
+    protected Item? GenerateRandomAncient(ICollection<ItemDefinition>? possibleItems = null, ItemSetGroup? requiredSet = null, double? bonusLevelTwoChance = null)
     {
-        var item = this.GenerateRandomItem(this._ancientItems);
+        var candidates = possibleItems ?? this._ancientItems;
+        if (requiredSet is not null)
+        {
+            candidates = candidates.Where(definition => requiredSet.Items.Any(member => member.ItemDefinition == definition)).ToList();
+        }
+
+        var item = this.GenerateRandomItem(candidates);
         if (item is null)
         {
             return null;
@@ -229,7 +238,7 @@ public class DefaultDropGenerator : IDropGenerator
 
         item.HasSkill = item.CanHaveSkill(); // every ancient item got skill
 
-        this.ApplyRandomAncientOption(item);
+        this.ApplyRandomAncientOption(item, requiredSet, bonusLevelTwoChance);
         item.Durability = item.GetMaximumDurabilityOfOnePiece();
         return item;
     }
@@ -449,7 +458,10 @@ public class DefaultDropGenerator : IDropGenerator
     {
         var item = selectedGroup.ItemType switch
         {
-            SpecialItemType.Ancient => this.GenerateRandomAncient(),
+            SpecialItemType.Ancient => this.GenerateRandomAncient(
+                possibleItems.Count > 0 ? possibleItems : null,
+                (selectedGroup as ItemDropItemGroup)?.AncientSet,
+                (selectedGroup as ItemDropItemGroup)?.AncientBonusLevelTwoChance),
             SpecialItemType.Excellent => this.GenerateRandomExcellentItem(possibleItems: possibleItems),
             _ => this.GenerateRandomItem(possibleItems),
         };
@@ -534,9 +546,9 @@ public class DefaultDropGenerator : IDropGenerator
         return item;
     }
 
-    private void ApplyRandomAncientOption(Item item)
+    private void ApplyRandomAncientOption(Item item, ItemSetGroup? requiredSet, double? bonusLevelTwoChance)
     {
-        var ancientSet = item.Definition?.PossibleItemSetGroups
+        var ancientSet = requiredSet ?? item.Definition?.PossibleItemSetGroups
             .Where(g => g!.Options?.PossibleOptions.Any(o => object.Equals(o.OptionType, ItemOptionTypes.AncientOption)) ?? false)
             .SelectRandom(this._randomizer);
         if (ancientSet is null)
@@ -552,7 +564,9 @@ public class DefaultDropGenerator : IDropGenerator
         {
             var bonusOptionLink = new ItemOptionLink();
             bonusOptionLink.ItemOption = bonusOption;
-            bonusOptionLink.Level = bonusOption.LevelDependentOptions.Select(o => o.Level).SelectRandom();
+            bonusOptionLink.Level = bonusLevelTwoChance is { } chance
+                ? (byte)(this._randomizer.NextDouble() < chance ? 2 : 1)
+                : bonusOption.LevelDependentOptions.Select(o => o.Level).SelectRandom();
             item.ItemOptions.Add(bonusOptionLink);
         }
     }

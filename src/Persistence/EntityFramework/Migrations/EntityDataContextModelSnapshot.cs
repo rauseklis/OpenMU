@@ -2790,6 +2790,12 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<double?>("AncientBonusLevelTwoChance")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid?>("AncientSetId")
+                        .HasColumnType("uuid");
+
                     b.Property<double>("Chance")
                         .HasColumnType("double precision");
 
@@ -2843,6 +2849,8 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                         .HasColumnType("smallint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AncientSetId");
 
                     b.HasIndex("ItemDefinitionId");
 
@@ -5481,6 +5489,10 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
 
             modelBuilder.Entity("MUnique.OpenMU.Persistence.EntityFramework.Model.ItemDropItemGroup", b =>
                 {
+                    b.HasOne("MUnique.OpenMU.Persistence.EntityFramework.Model.ItemSetGroup", "RawAncientSet")
+                        .WithMany()
+                        .HasForeignKey("AncientSetId");
+
                     b.HasOne("MUnique.OpenMU.Persistence.EntityFramework.Model.ItemDefinition", null)
                         .WithMany("RawDropItems")
                         .HasForeignKey("ItemDefinitionId")
@@ -5489,6 +5501,8 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.HasOne("MUnique.OpenMU.Persistence.EntityFramework.Model.MonsterDefinition", "RawMonster")
                         .WithMany()
                         .HasForeignKey("MonsterId");
+
+                    b.Navigation("RawAncientSet");
 
                     b.Navigation("RawMonster");
                 });

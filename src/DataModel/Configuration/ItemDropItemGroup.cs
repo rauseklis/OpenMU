@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.DataModel.Configuration;
 
 using MUnique.OpenMU.Annotations;
+using MUnique.OpenMU.DataModel.Configuration.Items;
 using MUnique.OpenMU.DataModel.Entities;
 
 /// <summary>
@@ -91,4 +92,14 @@ public partial class ItemDropItemGroup : DropItemGroup
     /// maximum-mana option at an equally selected level from one through three.
     /// </summary>
     public bool GuaranteeJewelryOption { get; set; }
+
+    /// <summary>
+    /// Gets or sets the required Ancient set of this reward group. Null preserves random set selection.
+    /// </summary>
+    public virtual ItemSetGroup? AncientSet { get; set; }
+
+    /// <summary>
+    /// Gets or sets the chance for the +10 Ancient stat bonus instead of +5. Null preserves shared rules.
+    /// </summary>
+    public double? AncientBonusLevelTwoChance { get; set; }
 }

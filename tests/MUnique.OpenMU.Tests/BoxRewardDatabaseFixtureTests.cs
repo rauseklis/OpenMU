@@ -13,9 +13,11 @@ using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.DataModel.Configuration.Items;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.Interfaces;
+using MUnique.OpenMU.Persistence;
 using MUnique.OpenMU.Persistence.EntityFramework;
 using MUnique.OpenMU.Persistence.EntityFramework.Json;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix;
+using MUnique.OpenMU.Persistence.Initialization.Updates;
 using MUnique.OpenMU.PlugIns;
 using Npgsql;
 
@@ -28,6 +30,64 @@ public class BoxRewardDatabaseFixtureTests
     private static string DatabaseName => Environment.GetEnvironmentVariable("BOX_REWARD_FIXTURE_DATABASE") ?? "mu_box_rewards_20261024";
 
     private static string ConnectionString => $"Host=127.0.0.1;Port=55443;Database={DatabaseName};User Id=boxvalidation;";
+
+    /// <summary>
+    /// Upgrades a copy of the earlier disposable reward fixture and verifies reloaded Ancient rewards.
+    /// </summary>
+    [Test]
+    [Explicit("Requires a disposable fixture copy and BOX_REWARD_FIXTURE=upgrade-ancient-disposable.")]
+    public async Task UpgradeAncientBoxesAndReloadAsync()
+    {
+        Assert.That(Environment.GetEnvironmentVariable("BOX_REWARD_FIXTURE"), Is.EqualTo("upgrade-ancient-disposable"));
+        Assert.That(Regex.IsMatch(DatabaseName, "^mu_box_rewards_ancient_[a-z0-9_]+$"), Is.True);
+        Assert.That(ConnectionConfigurator.IsInitialized, Is.False);
+        ConnectionConfigurator.Initialize(new FixtureConnectionSettings());
+        JsonConverterRegistry.RegisterConverter(new LocalizedStringJsonConverter());
+        JsonConverterRegistry.RegisterConverter(new BinaryAsHexJsonConverter());
+        var provider = new PersistenceContextProvider(NullLoggerFactory.Instance, null);
+        await provider.ApplyAllPendingUpdatesAsync().ConfigureAwait(false);
+        using (var context = provider.CreateNewContext())
+        {
+            var config = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+            var existingRewards = config.Items.Single(item => item.Group == 14 && item.Number == 11)
+                .DropItems.Where(group => group.SourceItemLevel != 0).Select(group => group.GetId()).ToArray();
+            var store = config.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
+            var existingStock = store.Items.Select(item => (Id: item.GetId(), Slot: item.ItemSlot)).ToArray();
+            await new AddAncientTierBoxesUpdatePlugIn().ApplyUpdateAsync(context, config).ConfigureAwait(false);
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            Assert.That(existingStock.All(previous => store.Items.Any(item => item.GetId() == previous.Id && item.ItemSlot == previous.Slot)), Is.True);
+            Assert.That(config.Items.Single(item => item.Group == 14 && item.Number == 11)
+                .DropItems.Where(group => group.SourceItemLevel != 0).Select(group => group.GetId()), Is.EquivalentTo(existingRewards));
+        }
+
+        using var reloaded = provider.CreateNewConfigurationContext();
+        var persisted = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        var generator = new DefaultDropGenerator(persisted, Rand.GetRandomizer());
+        foreach (var number in new short[] { 11, 124, 123 })
+        {
+            var store = persisted.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
+            var listing = store.Items.Single(item => item.Definition is { Group: 14 } definition && definition.Number == number && item.Level == 0);
+            Assert.That(new ItemPriceCalculator().CalculateMerchantBuyingPrice(listing), Is.EqualTo(1000));
+            var groups = persisted.Items.Single(item => item.Group == 14 && item.Number == number).DropItems.Where(group => group.SourceItemLevel == 0).ToList();
+            Assert.That(groups.Sum(group => group.Chance), Is.EqualTo(1).Within(0.000000001));
+            foreach (var group in groups)
+            {
+                Assert.That(group.AncientSet, Is.Not.Null);
+                Assert.That(group.AncientBonusLevelTwoChance, Is.EqualTo(0.30));
+                for (var draw = 0; draw < 100; draw++)
+                {
+                    var item = generator.GenerateItemDrop(group);
+                    Assert.That(item, Is.Not.Null);
+                    Assert.That(item!.Level, Is.Zero);
+                    Assert.That(item.ItemSetGroups.Single().ItemSetGroup, Is.EqualTo(group.AncientSet));
+                    Assert.That(group.PossibleItems, Does.Contain(item.Definition));
+                }
+            }
+        }
+
+        await using var database = new EntityDataContext();
+        Assert.That(database.Database.HasPendingModelChanges(), Is.False);
+    }
 
     /// <summary>
     /// Migrates and seeds a fresh fixture after explicit local opt-in.

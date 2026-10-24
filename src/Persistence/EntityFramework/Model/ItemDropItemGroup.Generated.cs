@@ -34,6 +34,32 @@ internal partial class ItemDropItemGroup : MUnique.OpenMU.DataModel.Configuratio
     public Guid Id { get; set; }
     
     /// <summary>
+    /// Gets or sets the identifier of <see cref="AncientSet"/>.
+    /// </summary>
+    public Guid? AncientSetId { get; set; }
+
+    /// <summary>
+    /// Gets the raw object of <see cref="AncientSet" />.
+    /// </summary>
+    [ForeignKey(nameof(AncientSetId))]
+    public ItemSetGroup RawAncientSet
+    {
+        get => base.AncientSet as ItemSetGroup;
+        set => base.AncientSet = value;
+    }
+
+    /// <inheritdoc/>
+    [NotMapped]
+    public override MUnique.OpenMU.DataModel.Configuration.Items.ItemSetGroup AncientSet
+    {
+        get => base.AncientSet;set
+        {
+            base.AncientSet = value;
+            this.AncientSetId = this.RawAncientSet?.Id;
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the identifier of <see cref="Monster"/>.
     /// </summary>
     public Guid? MonsterId { get; set; }
