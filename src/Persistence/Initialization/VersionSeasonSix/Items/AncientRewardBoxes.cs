@@ -27,8 +27,16 @@ public sealed class AncientRewardBoxes : InitializerBase
     public override void Initialize()
     {
         this.ConfigureBox(11, "Box of Luck", ["Hyperion", "Barnake", "Fase", "Cloud"]);
-        this.ConfigureBox(124, "Silver Box", ["Garuda", "Heras", "Gaia", "Eplete", "Semeden", "Chamer"]);
+        this.InitializeSilverBox();
         this.ConfigureBox(123, "Golden Box", ["Hyon", "Anubis", "Aruan", "Gaion", "Agnis", "Chrono", "Trite"]);
+    }
+
+    /// <summary>
+    /// Configures only the current Silver Box rewards without changing other boxes.
+    /// </summary>
+    public void InitializeSilverBox()
+    {
+        this.ConfigureBox(124, "Silver Box", ["Garuda", "Heras", "Argo", "Eplete", "Semeden", "Chamer"]);
     }
 
     private void ConfigureBox(short number, string name, string[] setNames)

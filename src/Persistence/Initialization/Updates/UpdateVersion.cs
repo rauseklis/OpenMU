@@ -619,5 +619,17 @@ public enum UpdateVersion
     LowerFruitDropChance = 129,
     AncientTierBoxes = 130,
     TierOneAncientStats = 131,
-    PetsAndQuestItemsNotDroppable = 132,
+    TierTwoAncientStats = 132,
+    ArgoSpiritTierTwo = 133,
+
+    /// <summary>
+    /// Adds ribbon boxes to Lumen's shop.
+    /// </summary>
+    RibbonBoxShop = 134,
+
+    /// <summary>
+    /// Configures the approved ribbon box contents.
+    /// </summary>
+    RibbonBoxRewards = 135,
+    PetsAndQuestItemsNotDroppable = 136,
 }

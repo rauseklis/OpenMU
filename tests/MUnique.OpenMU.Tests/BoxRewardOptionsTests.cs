@@ -19,6 +19,35 @@ using MUnique.OpenMU.GameLogic.Attributes;
 public class BoxRewardOptionsTests
 {
     /// <summary>
+    /// Exactly a quarter of red-box rolls have luck while equipment ADD stays unchanged.
+    /// </summary>
+    [Test]
+    public void BoxLuckUsesExactQuarterWithoutChangingAdd()
+    {
+        var item = CreateItem();
+        var luck = CreateOptions(ItemOptionTypes.Luck, 1);
+        item.Definition!.PossibleItemOptions.Add(luck);
+        var add = new ItemOptionLink { ItemOption = new IncreasableItemOption { OptionType = ItemOptionTypes.Option }, Level = 2 };
+        item.ItemOptions.Add(add);
+        var randomizer = new Mock<IRandomizer>();
+        double roll = 0;
+        randomizer.Setup(random => random.NextDouble()).Returns(() => roll);
+        var group = new ItemDropItemGroup { LuckChance = 0.25 };
+        var lucky = 0;
+        const int samples = 1000;
+        for (var index = 0; index < samples; index++)
+        {
+            roll = (index + 0.5) / samples;
+            BoxRewardOptions.Apply(item, group, randomizer.Object);
+            lucky += item.ItemOptions.Count(link => link.ItemOption?.OptionType == ItemOptionTypes.Luck);
+            Assert.That(item.ItemOptions, Does.Contain(add));
+            Assert.That(add.Level, Is.EqualTo(2));
+        }
+
+        Assert.That(lucky, Is.EqualTo(250));
+    }
+
+    /// <summary>
     /// Verifies each tier's exact one/two-option proportions over a deterministic grid.
     /// </summary>
     /// <param name="chance">The second-option chance.</param>

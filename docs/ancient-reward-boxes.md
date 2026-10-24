@@ -12,13 +12,13 @@ sockets.
 | --- | --- | --- | --- |
 | Dark Knight | Hyperion | Garuda | Hyon |
 | Dark Wizard | Barnake | Heras | Anubis |
-| Elf | Fase | Gaia | Aruan |
+| Elf | Fase | Argo | Aruan |
 | Magic Gladiator | Hyperion | Garuda | Gaion |
 | Dark Lord | Hyperion | Eplete | Agnis |
 | Summoner | Unassigned | Semeden | Chrono |
 | Rage Fighter | Cloud | Chamer | Trite |
 
-The low pool contains 11 pieces, the mid pool 29, and the high pool 28.
+The low pool contains 11 pieces, the mid pool 27, and the high pool 28.
 Weapons, shields and jewelry required by these sets are included, with the
 matching Ancient variant. A box gives a single piece, not an entire set.
 
@@ -41,7 +41,7 @@ using inactive styling until all required pieces are equipped. Both players
 need the matching client update to see these options.
 
 Rave is excluded from these three reward pools. Summoner's low tier remains
-unassigned. The mid and high tiers receive no new all-stat bonus.
+unassigned. The six Tier 2 sets (Garuda, Heras, Argo, Eplete, Semeden and Chamer) additionally grant +50 Strength, +50 Agility, +50 Vitality and +50 Energy once per complete, unbroken set. All existing options remain; Command is unchanged. Tier 3 receives no new all-stat bonus.
 
 These are the unlocked Silver and Golden Boxes. Keys and sealed boxes are not
 used by these opening rules. Box of Luck is item **14/11, level 0**; Silver Box
@@ -68,3 +68,5 @@ rules. Close Main.exe and run `scripts/update-live-client.ps1 -Target
 "C:\OpenMU Live Client"` from the current client clone to install the merged
 GitHub build, then start Main.exe. The developer can install the local x64
 Release build using the same script's `-LocalBuild` option.
+
+Argo Spirit replaces Gaia Silk in Silver Box rewards. Argo requires Spirit Armor, Pants and Gloves. Its original Maximum Damage +20, Skill Damage +25, Maximum AG +50 and Double Damage Chance +5% remain, with an additional +50 Strength, Agility, Vitality and Energy once per complete set. Gaia is no longer rewarded by Silver Boxes; existing Gaia equipment keeps its original options and loses only the additional Tier 2 +50 stats.

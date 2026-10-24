@@ -30,7 +30,7 @@ public class AncientBoxRewardTests
         await new DataInitialization(provider, NullLoggerFactory.Instance).CreateInitialDataAsync(1, false).ConfigureAwait(false);
         using var context = provider.CreateNewConfigurationContext();
         var config = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
-        foreach (var tier in new[] { (Number: 11, Pieces: 11), (Number: 124, Pieces: 29), (Number: 123, Pieces: 28) })
+        foreach (var tier in new[] { (Number: 11, Pieces: 11), (Number: 124, Pieces: 27), (Number: 123, Pieces: 28) })
         {
             var box = config.Items.Single(item => item.Group == 14 && item.Number == tier.Number);
             var groups = box.DropItems.Where(group => group.SourceItemLevel == 0).ToList();
@@ -41,6 +41,10 @@ public class AncientBoxRewardTests
                 Assert.That(group.Chance / group.PossibleItems.Count, Is.EqualTo(1d / tier.Pieces).Within(0.000000001));
                 Assert.That(group.AncientSet, Is.Not.Null);
                 Assert.That(group.AncientSet!.Name.ToString(), Is.Not.EqualTo("Rave"));
+                if (tier.Number == 124)
+                {
+                    Assert.That(group.AncientSet.Name.ToString(), Is.Not.EqualTo("Gaia"));
+                }
                 foreach (var member in group.AncientSet.Items)
                 {
                     foreach (var roll in new[] { 0.299999, 0.30, 0.99 })
