@@ -4469,4 +4469,32 @@ public class PacketStructureTests
         Assert.That(4 + 1, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'Enabled' exceeds packet boundary");
     }
+
+    /// <summary>
+    /// Tests the packet size calculation for ResetNpcResetRequest.
+    /// </summary>
+    [Test]
+    public void ResetNpcResetRequest_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 4;
+        var actualLength = ResetNpcResetRequestRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+    }
+
+    /// <summary>
+    /// Tests the packet size calculation for ResetNpcInfoRequest.
+    /// </summary>
+    [Test]
+    public void ResetNpcInfoRequest_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 4;
+        var actualLength = ResetNpcInfoRequestRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+    }
 }

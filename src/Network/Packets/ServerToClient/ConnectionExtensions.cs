@@ -8342,4 +8342,50 @@ public static class ConnectionExtensions
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="ResetNpcStateResponse" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="outcome">The outcome.</param>
+    /// <param name="flags">The flags.</param>
+    /// <param name="nextResetNumber">The next reset number.</param>
+    /// <param name="maximumResets">The maximum resets.</param>
+    /// <param name="requiredLevel">The required level.</param>
+    /// <param name="currentLevel">The current level.</param>
+    /// <param name="requiredZen">The required zen.</param>
+    /// <param name="currentZen">The current zen.</param>
+    /// <param name="requiredFruits">The required fruits.</param>
+    /// <param name="bankFruits">The bank fruits.</param>
+    /// <remarks>
+    /// Is sent by the server when: The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached.
+    /// Causes reaction on client side: The client shows or updates the window of the reset NPC.
+    /// </remarks>
+    public static async ValueTask SendResetNpcStateResponseAsync(this IConnection? connection, byte @outcome, byte @flags, ushort @nextResetNumber, ushort @maximumResets, ushort @requiredLevel, ushort @currentLevel, uint @requiredZen, uint @currentZen, uint @requiredFruits, uint @bankFruits)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = ResetNpcStateResponseRef.Length;
+            var packet = new ResetNpcStateResponseRef(connection.Output.GetSpan(length)[..length]);
+            packet.Outcome = @outcome;
+            packet.Flags = @flags;
+            packet.NextResetNumber = @nextResetNumber;
+            packet.MaximumResets = @maximumResets;
+            packet.RequiredLevel = @requiredLevel;
+            packet.CurrentLevel = @currentLevel;
+            packet.RequiredZen = @requiredZen;
+            packet.CurrentZen = @currentZen;
+            packet.RequiredFruits = @requiredFruits;
+            packet.BankFruits = @bankFruits;
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }}

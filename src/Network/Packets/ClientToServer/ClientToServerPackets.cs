@@ -19489,6 +19489,160 @@ public readonly struct JewelBankSetAutoDepositRequest
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Memory<byte>(JewelBankSetAutoDepositRequest packet) => packet._data; 
 }
+
+
+/// <summary>
+/// Is sent by the client when: The player presses the Reset button in the window of the reset NPC (Raymond the Reset Master).
+/// Causes reaction on server side: The server checks the costs again and, when they are met, takes them and resets the character; the answer is a ResetNpcStateResponse.
+/// </summary>
+public readonly struct ResetNpcResetRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResetNpcResetRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public ResetNpcResetRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResetNpcResetRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private ResetNpcResetRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD7;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x00;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 4;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="ResetNpcResetRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator ResetNpcResetRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="ResetNpcResetRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(ResetNpcResetRequest packet) => packet._data; 
+}
+
+
+/// <summary>
+/// Is sent by the client when: The window of the reset NPC asks for the current requirements and the character's current values again.
+/// Causes reaction on server side: The server answers with a ResetNpcStateResponse.
+/// </summary>
+public readonly struct ResetNpcInfoRequest
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResetNpcInfoRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public ResetNpcInfoRequest(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResetNpcInfoRequest"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private ResetNpcInfoRequest(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC3;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xD7;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x01;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 4;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C3HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="ResetNpcInfoRequest"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator ResetNpcInfoRequest(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="ResetNpcInfoRequest"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(ResetNpcInfoRequest packet) => packet._data; 
+}
     /// <summary>
     /// The state of the trade button.
     /// </summary>

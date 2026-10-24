@@ -106,6 +106,18 @@ public interface IJewelBankRepository
     Task<JewelBankOperationResult> DepositFromInventoryAsync(Guid accountId, Guid characterId, Guid operationId, IReadOnlyDictionary<byte, long>? requested, long maximumPerKind, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Takes units out of the bank and uses them up (they are not turned into items), for example as the price of a reset.
+    /// Either everything is taken or nothing changes.
+    /// </summary>
+    /// <param name="accountId">The account.</param>
+    /// <param name="characterId">The character who pays.</param>
+    /// <param name="operationId">The identifier which makes a repeated request harmless.</param>
+    /// <param name="units">The units to take, by kind code.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The outcome; <see cref="JewelBankResultCode.InsufficientBalance"/> when a balance is too low.</returns>
+    Task<JewelBankOperationResult> SpendAsync(Guid accountId, Guid characterId, Guid operationId, IReadOnlyDictionary<byte, long> units, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Takes units out of the bank and creates them as items in a character's inventory, packs first.
     /// Either everything is placed or nothing changes.
     /// </summary>

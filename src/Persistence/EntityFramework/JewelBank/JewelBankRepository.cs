@@ -20,8 +20,10 @@ public sealed class JewelBankRepository : IJewelBankRepository
     private const short DepositReason = 0;
     private const short WithdrawReason = 1;
     private const short PickupReason = 2;
+    private const short SpendReason = 3;
     private const short DepositType = 0;
     private const short WithdrawType = 1;
+    private const short SpendType = 2;
     // Every unit is an item and an inventory holds 64 at most, so a request for more is not a request which can ever fit.
     private const int MaximumWithdrawItems = 256;
 
@@ -229,6 +231,40 @@ public sealed class JewelBankRepository : IJewelBankRepository
     }
 
     /// <inheritdoc />
+    public async Task<JewelBankOperationResult> SpendAsync(Guid accountId, Guid characterId, Guid operationId, IReadOnlyDictionary<byte, long> units, CancellationToken cancellationToken = default)
+    {
+        var wanted = units.Where(p => p.Value != 0).ToList();
+        if (wanted.Count == 0 || wanted.Any(p => JewelBankKinds.FindByCode(p.Key) is null || p.Value < 0))
+        {
+            return JewelBankOperationResult.Refused(JewelBankResultCode.InvalidRequest);
+        }
+
+        await using var context = this._contextFactory();
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var now = DateTimeOffset.UtcNow;
+        if (!await TryClaimOperationAsync(context, accountId, operationId, SpendType, now, cancellationToken))
+        {
+            return await ReplayAsync(context, accountId, operationId, cancellationToken);
+        }
+
+        foreach (var (code, amount) in wanted)
+        {
+            if (!await DebitAsync(context, accountId, characterId, operationId, code, amount, now, cancellationToken, SpendReason))
+            {
+                // Nothing is committed: the transaction is rolled back when it is disposed.
+                return JewelBankOperationResult.Refused(JewelBankResultCode.InsufficientBalance);
+            }
+        }
+
+        await FinishOperationAsync(context, accountId, operationId, JewelBankResultCode.Success, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return new JewelBankOperationResult(
+            JewelBankResultCode.Success,
+            wanted.ToDictionary(p => p.Key, p => p.Value),
+            await ReadStateAsync(context, accountId, cancellationToken));
+    }
+
+    /// <inheritdoc />
     public async Task<long?> CreditPickupAsync(Guid accountId, Guid characterId, byte kindCode, long units, long maximumPerKind, CancellationToken cancellationToken = default)
     {
         if (JewelBankKinds.FindByCode(kindCode) is null || units <= 0 || maximumPerKind <= 0)
@@ -354,7 +390,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
         return balance;
     }
 
-    private static async Task<bool> DebitAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, byte kind, long units, DateTimeOffset now, CancellationToken cancellationToken)
+    private static async Task<bool> DebitAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, byte kind, long units, DateTimeOffset now, CancellationToken cancellationToken, short reason = WithdrawReason)
     {
         var kindValue = (short)kind;
         var changed = await context.Database.ExecuteSqlInterpolatedAsync(
@@ -366,7 +402,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
         }
 
         var balance = await ReadCountAsync(context, accountId, kindValue, cancellationToken);
-        await AddMovementAsync(context, accountId, characterId, operationId, kind, -units, balance, WithdrawReason, now, cancellationToken);
+        await AddMovementAsync(context, accountId, characterId, operationId, kind, -units, balance, reason, now, cancellationToken);
         return true;
     }
 

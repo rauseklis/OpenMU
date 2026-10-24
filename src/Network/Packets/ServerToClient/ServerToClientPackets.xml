@@ -14843,6 +14843,68 @@
         </Field>
       </Fields>
     </Packet>
+    <Packet>
+      <HeaderType>C1HeaderWithSubCode</HeaderType>
+      <Code>D7</Code>
+      <SubCode>80</SubCode>
+      <Name>ResetNpcStateResponse</Name>
+      <Length>30</Length>
+      <Direction>ServerToClient</Direction>
+      <SentWhen>The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached.</SentWhen>
+      <CausedReaction>The client shows or updates the window of the reset NPC.</CausedReaction>
+      <Fields>
+        <Field>
+          <Index>4</Index>
+          <Type>Byte</Type>
+          <Name>Outcome</Name>
+        </Field>
+        <Field>
+          <Index>5</Index>
+          <Type>Byte</Type>
+          <Name>Flags</Name>
+        </Field>
+        <Field>
+          <Index>6</Index>
+          <Type>ShortLittleEndian</Type>
+          <Name>NextResetNumber</Name>
+        </Field>
+        <Field>
+          <Index>8</Index>
+          <Type>ShortLittleEndian</Type>
+          <Name>MaximumResets</Name>
+        </Field>
+        <Field>
+          <Index>10</Index>
+          <Type>ShortLittleEndian</Type>
+          <Name>RequiredLevel</Name>
+        </Field>
+        <Field>
+          <Index>12</Index>
+          <Type>ShortLittleEndian</Type>
+          <Name>CurrentLevel</Name>
+        </Field>
+        <Field>
+          <Index>14</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>RequiredZen</Name>
+        </Field>
+        <Field>
+          <Index>18</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>CurrentZen</Name>
+        </Field>
+        <Field>
+          <Index>22</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>RequiredFruits</Name>
+        </Field>
+        <Field>
+          <Index>26</Index>
+          <Type>IntegerLittleEndian</Type>
+          <Name>BankFruits</Name>
+        </Field>
+      </Fields>
+    </Packet>
   </Packets>
   <Enums>
     <Enum>
