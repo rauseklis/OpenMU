@@ -42,6 +42,16 @@ public static class JewelBankKinds
     public const int JewelCount = 10;
 
     /// <summary>
+    /// The code of the first fruit kind (Fruit of Energy). The five fruits have the codes 11 to 15.
+    /// </summary>
+    public const byte FirstFruitCode = 11;
+
+    /// <summary>
+    /// The code of the last fruit kind (Fruit of Command).
+    /// </summary>
+    public const byte LastFruitCode = 15;
+
+    /// <summary>
     /// The item group of the bundles.
     /// </summary>
     public const byte PackGroup = 12;

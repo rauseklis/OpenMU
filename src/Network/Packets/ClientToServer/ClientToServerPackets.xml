@@ -4887,6 +4887,30 @@
         </Field>
       </Fields>
     </Packet>
+    <Packet>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <Code>DC</Code>
+      <SubCode>00</SubCode>
+      <Name>ResetNpcResetRequest</Name>
+      <Length>4</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>The player presses the Reset button in the window of the reset NPC (Raymond the Reset Master).</SentWhen>
+      <CausedReaction>The server checks the costs again and, when they are met, takes them and resets the character; the answer is a ResetNpcStateResponse.</CausedReaction>
+      <Fields>
+      </Fields>
+    </Packet>
+    <Packet>
+      <HeaderType>C3HeaderWithSubCode</HeaderType>
+      <Code>DC</Code>
+      <SubCode>01</SubCode>
+      <Name>ResetNpcInfoRequest</Name>
+      <Length>4</Length>
+      <Direction>ClientToServer</Direction>
+      <SentWhen>The window of the reset NPC asks for the current requirements and the character's current values again.</SentWhen>
+      <CausedReaction>The server answers with a ResetNpcStateResponse.</CausedReaction>
+      <Fields>
+      </Fields>
+    </Packet>
   </Packets>
   <Enums>
     <Enum>

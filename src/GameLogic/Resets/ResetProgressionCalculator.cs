@@ -19,17 +19,36 @@ public static class ResetProgressionCalculator
     public static ResetProgression Calculate(int currentResetCount, int pointsPerResetOverride, ResetConfiguration configuration)
     {
         var nextResetCount = currentResetCount + 1;
-        var requiredZen = Math.Max(0, configuration.RequiredMoney);
-        if (configuration.MultiplyRequiredMoneyByResetCount)
-        {
-            requiredZen *= nextResetCount;
-        }
+        var requiredZen = GetRequiredZen(configuration, nextResetCount);
 
         var pointsForReset = GetPointsForReset(configuration, pointsPerResetOverride, nextResetCount);
         var totalPointsAfterReset = GetTotalPointsAfterReset(configuration, pointsPerResetOverride, nextResetCount, pointsForReset);
         var requiredItemAmount = GetRequiredItemAmount(configuration, nextResetCount);
 
         return new ResetProgression(nextResetCount, requiredZen, requiredItemAmount, pointsForReset, totalPointsAfterReset);
+    }
+
+    private static int GetRequiredZen(ResetConfiguration configuration, int nextResetCount)
+    {
+        long requiredZen;
+        if (GetMatchingTier(configuration.MoneyCostTiers, nextResetCount, tier => tier.MinimumResetCount) is { } tier)
+        {
+            requiredZen = Math.Max(0, tier.RequiredMoney);
+            if (tier.MultiplyByResetCount)
+            {
+                requiredZen *= nextResetCount;
+            }
+        }
+        else
+        {
+            requiredZen = Math.Max(0, configuration.RequiredMoney);
+            if (configuration.MultiplyRequiredMoneyByResetCount)
+            {
+                requiredZen *= nextResetCount;
+            }
+        }
+
+        return (int)Math.Min(requiredZen, int.MaxValue);
     }
 
     private static int GetPointsForReset(ResetConfiguration configuration, int pointsPerResetOverride, int nextResetCount)
@@ -50,7 +69,7 @@ public static class ResetProgressionCalculator
 
     private static int GetRequiredItemAmount(ResetConfiguration configuration, int nextResetCount)
     {
-        if (configuration.RequiredResetItem is null)
+        if (configuration.RequiredResetItem is null && !configuration.PayItemCostsWithJewelBankFruits)
         {
             return 0;
         }
@@ -60,7 +79,8 @@ public static class ResetProgressionCalculator
             return 0;
         }
 
-        return Math.Max(0, tier.RequiredItemAmount);
+        var amount = (long)tier.RequiredItemAmount + ((long)tier.AdditionalItemAmountPerReset * (nextResetCount - tier.MinimumResetCount));
+        return (int)Math.Clamp(amount, 0, int.MaxValue);
     }
 
     private static int GetTotalPointsAfterReset(ResetConfiguration configuration, int pointsPerResetOverride, int nextResetCount, int pointsForReset)

@@ -6131,4 +6131,54 @@ public static class ConnectionExtensions
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="ResetNpcResetRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <remarks>
+    /// Is sent by the client when: The player presses the Reset button in the window of the reset NPC (Raymond the Reset Master).
+    /// Causes reaction on server side: The server checks the costs again and, when they are met, takes them and resets the character; the answer is a ResetNpcStateResponse.
+    /// </remarks>
+    public static async ValueTask SendResetNpcResetRequestAsync(this IConnection? connection)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = ResetNpcResetRequestRef.Length;
+            var packet = new ResetNpcResetRequestRef(connection.Output.GetSpan(length)[..length]);
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="ResetNpcInfoRequest" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <remarks>
+    /// Is sent by the client when: The window of the reset NPC asks for the current requirements and the character's current values again.
+    /// Causes reaction on server side: The server answers with a ResetNpcStateResponse.
+    /// </remarks>
+    public static async ValueTask SendResetNpcInfoRequestAsync(this IConnection? connection)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = ResetNpcInfoRequestRef.Length;
+            var packet = new ResetNpcInfoRequestRef(connection.Output.GetSpan(length)[..length]);
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }}

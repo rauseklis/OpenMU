@@ -161,6 +161,79 @@ public sealed class JewelBankService
     }
 
     /// <summary>
+    /// Plans how an amount of fruits is paid from the stored counts: the fruit type of which the account holds most is used
+    /// first, so no type is emptied while another is plentiful.
+    /// </summary>
+    /// <param name="state">The stored counts.</param>
+    /// <param name="amount">The number of fruits, of any type.</param>
+    /// <returns>The units to take by kind code, or <c>null</c> when the account holds fewer fruits than that.</returns>
+    public static IReadOnlyDictionary<byte, long>? PlanFruitSpend(JewelBankState state, long amount)
+    {
+        if (amount <= 0)
+        {
+            return null;
+        }
+
+        var plan = new Dictionary<byte, long>();
+        var remaining = amount;
+        foreach (var code in Enumerable.Range(JewelBankKinds.FirstFruitCode, JewelBankKinds.LastFruitCode - JewelBankKinds.FirstFruitCode + 1)
+                     .Select(code => (byte)code)
+                     .OrderByDescending(state.CountOf)
+                     .ThenBy(code => code))
+        {
+            var take = Math.Min(remaining, state.CountOf(code));
+            if (take <= 0)
+            {
+                continue;
+            }
+
+            plan[code] = take;
+            remaining -= take;
+            if (remaining == 0)
+            {
+                return plan;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Counts the fruits (of any type) which an account holds in the bank.
+    /// </summary>
+    /// <param name="accountId">The account.</param>
+    /// <returns>The number of fruits.</returns>
+    public async Task<long> GetFruitCountAsync(Guid accountId)
+    {
+        var state = await this.GetStateAsync(accountId).ConfigureAwait(false);
+        return Enumerable.Range(JewelBankKinds.FirstFruitCode, JewelBankKinds.LastFruitCode - JewelBankKinds.FirstFruitCode + 1)
+            .Sum(code => state.CountOf((byte)code));
+    }
+
+    /// <summary>
+    /// Uses up fruits (of any type) from the bank of the player, for example as the price of a reset.
+    /// </summary>
+    /// <param name="player">The player.</param>
+    /// <param name="operationId">The operation identifier.</param>
+    /// <param name="amount">The number of fruits.</param>
+    /// <returns>The outcome; <see cref="JewelBankResultCode.InsufficientBalance"/> when the bank holds fewer fruits.</returns>
+    public async Task<JewelBankOperationResult> SpendFruitsAsync(Player player, Guid operationId, long amount)
+    {
+        if (GetIdentity(player) is not { } who)
+        {
+            return JewelBankOperationResult.Refused(JewelBankResultCode.InvalidRequest);
+        }
+
+        var plan = PlanFruitSpend(await this.GetStateAsync(who.AccountId).ConfigureAwait(false), amount);
+        if (plan is null)
+        {
+            return JewelBankOperationResult.Refused(amount <= 0 ? JewelBankResultCode.InvalidRequest : JewelBankResultCode.InsufficientBalance);
+        }
+
+        return await this._repository.SpendAsync(who.AccountId, who.CharacterId, operationId, plan).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Stores the auto-deposit choice of an account.
     /// </summary>
     /// <param name="accountId">The account.</param>

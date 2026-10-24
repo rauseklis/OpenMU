@@ -7,10 +7,11 @@ namespace MUnique.OpenMU.GameLogic.Resets;
 using System.Runtime.InteropServices;
 using MUnique.OpenMU.GameLogic.NPC;
 using MUnique.OpenMU.GameLogic.PlugIns;
+using MUnique.OpenMU.GameLogic.Views.Reset;
 using MUnique.OpenMU.PlugIns;
 
 /// <summary>
-/// Action to reset a character.
+/// Opens the window of the reset NPC, in which the player sees the requirements of the next reset and does it.
 /// </summary>
 [Guid("08953BE6-DABF-49CC-A500-FDB9DC2C4D80")]
 [PlugIn]
@@ -18,7 +19,7 @@ using MUnique.OpenMU.PlugIns;
 public class ResetCharacterNpcPlugin : IPlayerTalkToNpcPlugIn
 {
     /// <summary>
-    /// Gets the reset NPC number of 'Leo the Helper'.
+    /// Gets the reset NPC number of 'Raymond the Reset Master'.
     /// </summary>
     public static short ResetNpcNumber => 371;
 
@@ -31,7 +32,15 @@ public class ResetCharacterNpcPlugin : IPlayerTalkToNpcPlugIn
         }
 
         eventArgs.HasBeenHandled = true;
-        var resetAction = new ResetCharacterAction(player, npc);
-        await resetAction.ResetCharacterAsync().ConfigureAwait(false);
+
+        // The window of the NPC stays open until the player closes it: the server keeps the NPC as the opened one, so that
+        // the requests of the window (information, reset) are accepted.
+        eventArgs.LeavesDialogOpen = true;
+
+        // The player decides in the window of the NPC: it shows the requirements and the current values, and the reset is
+        // done when the player presses the button.
+        var status = await new ResetCharacterAction(player, npc).GetStatusAsync().ConfigureAwait(false)
+                     ?? new ResetNpcStatus(ResetNpcOutcome.Refused, 0, 0, 0, 0, 0, 0, 0, 0);
+        await player.InvokeViewPlugInAsync<IShowResetNpcPlugIn>(p => p.ShowResetNpcAsync(status)).ConfigureAwait(false);
     }
 }

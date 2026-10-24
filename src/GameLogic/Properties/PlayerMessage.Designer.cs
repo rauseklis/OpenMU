@@ -1465,6 +1465,15 @@ namespace MUnique.OpenMU.GameLogic.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Take off everything you wear before you reset. The items may stay in your inventory..
+        /// </summary>
+        public static string ResetEquipmentWorn {
+            get {
+                return ResourceManager.GetString("ResetEquipmentWorn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You don&apos;t have enough required items for reset, required {0} x {1}..
         /// </summary>
         public static string NotEnoughItemsForReset {

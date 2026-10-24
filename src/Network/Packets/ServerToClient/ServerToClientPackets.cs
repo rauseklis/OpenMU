@@ -40686,6 +40686,182 @@ public readonly struct JewelBankPickupNotification
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Memory<byte>(JewelBankPickupNotification packet) => packet._data; 
 }
+
+
+/// <summary>
+/// Is sent by the server when: The player talks to the reset NPC (Raymond the Reset Master), asks for the information again or presses Reset. Outcome: 0 = the information for the window, 1 = the reset was done, 2 = the requirements are not met, 3 = the reset limit is reached, 4 = the request was refused (state, rate limit or the NPC is not open). Flags: bit 0 = the level is enough, bit 1 = the Zen is enough, bit 2 = the fruits are enough, bit 3 = the reset limit is reached, bit 4 = nothing is worn (or the equipment rule does not apply), bit 5 = the reset requires that nothing is worn. WornItems is the number of items the character wears.
+/// Causes reaction on client side: The client shows or updates the window of the reset NPC.
+/// </summary>
+public readonly struct ResetNpcStateResponse
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResetNpcStateResponse"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public ResetNpcStateResponse(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResetNpcStateResponse"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private ResetNpcStateResponse(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+            header.SubCode = SubCode;
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xDC;
+
+    /// <summary>
+    /// Gets the operation sub-code of this data packet.
+    /// The <see cref="Code" /> is used as a grouping key.
+    /// </summary>
+    public static byte SubCode => 0x80;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 31;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1HeaderWithSubCode Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the outcome.
+    /// </summary>
+    public byte Outcome
+    {
+        get => this._data.Span[4];
+        set => this._data.Span[4] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the flags.
+    /// </summary>
+    public byte Flags
+    {
+        get => this._data.Span[5];
+        set => this._data.Span[5] = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the next reset number.
+    /// </summary>
+    public ushort NextResetNumber
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[6..]);
+        set => WriteUInt16LittleEndian(this._data.Span[6..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum resets.
+    /// </summary>
+    public ushort MaximumResets
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[8..]);
+        set => WriteUInt16LittleEndian(this._data.Span[8..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the required level.
+    /// </summary>
+    public ushort RequiredLevel
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[10..]);
+        set => WriteUInt16LittleEndian(this._data.Span[10..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the current level.
+    /// </summary>
+    public ushort CurrentLevel
+    {
+        get => ReadUInt16LittleEndian(this._data.Span[12..]);
+        set => WriteUInt16LittleEndian(this._data.Span[12..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the required zen.
+    /// </summary>
+    public uint RequiredZen
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[14..]);
+        set => WriteUInt32LittleEndian(this._data.Span[14..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the current zen.
+    /// </summary>
+    public uint CurrentZen
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[18..]);
+        set => WriteUInt32LittleEndian(this._data.Span[18..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the required fruits.
+    /// </summary>
+    public uint RequiredFruits
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[22..]);
+        set => WriteUInt32LittleEndian(this._data.Span[22..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the bank fruits.
+    /// </summary>
+    public uint BankFruits
+    {
+        get => ReadUInt32LittleEndian(this._data.Span[26..]);
+        set => WriteUInt32LittleEndian(this._data.Span[26..], value);
+    }
+
+    /// <summary>
+    /// Gets or sets the worn items.
+    /// </summary>
+    public byte WornItems
+    {
+        get => this._data.Span[30];
+        set => this._data.Span[30] = value;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="ResetNpcStateResponse"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator ResetNpcStateResponse(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="ResetNpcStateResponse"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(ResetNpcStateResponse packet) => packet._data; 
+}
     /// <summary>
     /// Defines the role of a guild member.
     /// </summary>

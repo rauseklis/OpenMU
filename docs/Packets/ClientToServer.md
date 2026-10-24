@@ -172,6 +172,8 @@
   * [C4 D6 02 - JewelBankWithdrawRequest (by client)](C4-D6-02-JewelBankWithdrawRequest_by-client.md)
   * [C3 D6 03 - JewelBankSetAutoDepositRequest (by client)](C3-D6-03-JewelBankSetAutoDepositRequest_by-client.md)
   * [C3 DB - AreaSkillHit (by client)](C3-DB-AreaSkillHit_by-client.md)
+  * [C3 DC 00 - ResetNpcResetRequest (by client)](C3-DC-00-ResetNpcResetRequest_by-client.md)
+  * [C3 DC 01 - ResetNpcInfoRequest (by client)](C3-DC-01-ResetNpcInfoRequest_by-client.md)
   * [C1 E1 - GuildRoleAssignRequest (by client)](C1-E1-GuildRoleAssignRequest_by-client.md)
   * [C1 E2 - GuildTypeChangeRequest (by client)](C1-E2-GuildTypeChangeRequest_by-client.md)
   * [C1 E5 - GuildRelationshipChangeRequest (by client)](C1-E5-GuildRelationshipChangeRequest_by-client.md)

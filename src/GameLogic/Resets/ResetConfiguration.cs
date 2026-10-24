@@ -44,6 +44,22 @@ public class ResetConfiguration
     public bool MultiplyRequiredMoneyByResetCount { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the money costs per reset range. When there are tiers, the one with the highest
+    /// <see cref="ResetMoneyCostTier.MinimumResetCount"/> which the next reset reaches replaces <see cref="RequiredMoney"/>.
+    /// </summary>
+    [Display(Name = "Money cost tiers")]
+    [MemberOfAggregate]
+    [ScaffoldColumn(true)]
+    public ICollection<ResetMoneyCostTier> MoneyCostTiers { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the item costs (<see cref="ItemCostTiers"/>) are paid with the fruits (of any
+    /// type) in the Jewel Bank of the player instead of items of <see cref="RequiredResetItem"/> from the inventory.
+    /// </summary>
+    [Display(Name = "Pay item costs with Jewel Bank fruits")]
+    public bool PayItemCostsWithJewelBankFruits { get; set; }
+
+    /// <summary>
     /// Gets or sets the required item for a reset.
     /// </summary>
     [Display(Name = "Required reset item")]
@@ -56,6 +72,13 @@ public class ResetConfiguration
     [MemberOfAggregate]
     [ScaffoldColumn(true)]
     public ICollection<ResetItemCostTier> ItemCostTiers { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a character must wear nothing to reset: all equipment slots have to be empty
+    /// (the items may stay in the inventory).
+    /// </summary>
+    [Display(Name = "Require that no equipment is worn")]
+    public bool RequireNoEquipment { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether a reset sets the stat points back to the initial values.
@@ -139,5 +162,35 @@ public class ResetConfiguration
         /// </summary>
         [Display(Name = "Required item amount")]
         public int RequiredItemAmount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the amount which is added for each reset after the first one of this tier.
+        /// </summary>
+        [Display(Name = "Additional amount per reset")]
+        public int AdditionalItemAmountPerReset { get; set; }
+    }
+
+    /// <summary>
+    /// Tier definition for the required money of a reset.
+    /// </summary>
+    public class ResetMoneyCostTier
+    {
+        /// <summary>
+        /// Gets or sets the minimum reset count at which this tier applies.
+        /// </summary>
+        [Display(Name = "Minimum reset count")]
+        public int MinimumResetCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the required money for this tier.
+        /// </summary>
+        [Display(Name = "Required money")]
+        public int RequiredMoney { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the required money is multiplied with the number of the reset.
+        /// </summary>
+        [Display(Name = "Multiply by reset count")]
+        public bool MultiplyByResetCount { get; set; }
     }
 }

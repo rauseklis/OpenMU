@@ -8513,4 +8513,62 @@ public class PacketStructureTests
         Assert.That(9 + 8, Is.LessThanOrEqualTo(expectedLength), 
             "Field 'NewCount' exceeds packet boundary");
     }
+
+    /// <summary>
+    /// Tests the packet size calculation for ResetNpcStateResponse.
+    /// </summary>
+    [Test]
+    public void ResetNpcStateResponse_PacketSizeValidation()
+    {
+        // Fixed-length packet validation
+        const int expectedLength = 31;
+        var actualLength = ResetNpcStateResponseRef.Length;
+        
+        Assert.That(actualLength, Is.EqualTo(expectedLength), 
+            "Packet length mismatch: declared length does not match calculated size");
+        
+        // Validate field 'Outcome' boundary
+        Assert.That(4 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Outcome' exceeds packet boundary");
+        
+        // Validate field 'Flags' boundary
+        Assert.That(5 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'Flags' exceeds packet boundary");
+        
+        // Validate field 'NextResetNumber' boundary
+        Assert.That(6 + 2, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'NextResetNumber' exceeds packet boundary");
+        
+        // Validate field 'MaximumResets' boundary
+        Assert.That(8 + 2, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'MaximumResets' exceeds packet boundary");
+        
+        // Validate field 'RequiredLevel' boundary
+        Assert.That(10 + 2, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'RequiredLevel' exceeds packet boundary");
+        
+        // Validate field 'CurrentLevel' boundary
+        Assert.That(12 + 2, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'CurrentLevel' exceeds packet boundary");
+        
+        // Validate field 'RequiredZen' boundary
+        Assert.That(14 + 4, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'RequiredZen' exceeds packet boundary");
+        
+        // Validate field 'CurrentZen' boundary
+        Assert.That(18 + 4, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'CurrentZen' exceeds packet boundary");
+        
+        // Validate field 'RequiredFruits' boundary
+        Assert.That(22 + 4, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'RequiredFruits' exceeds packet boundary");
+        
+        // Validate field 'BankFruits' boundary
+        Assert.That(26 + 4, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'BankFruits' exceeds packet boundary");
+        
+        // Validate field 'WornItems' boundary
+        Assert.That(30 + 1, Is.LessThanOrEqualTo(expectedLength), 
+            "Field 'WornItems' exceeds packet boundary");
+    }
 }
