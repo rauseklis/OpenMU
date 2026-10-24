@@ -52,10 +52,9 @@ Chaos with equal chances, so repeats are possible. Items go to inventory, with
 the existing ground-drop fallback if inventory is full. BC +8, experience and
 scoring are unchanged.
 
-Only first place receives Devil Square item rewards: +1 through +4 give
-1 through 4 random single jewels from the same pool as BC; +5 gives one Green
-Ribbon Box; +6 gives one Blue Ribbon Box. These go to inventory with the same
-ground-drop fallback if full. DS +7 gives no Red Ribbon Box.
+Devil Square completion rewards contain only the Zen and EXP payouts below.
+No rank receives completion jewels, ribbon boxes or other items. This does not
+change ordinary monster drops or Blood Castle item rewards.
 
 Devil Square completion rewards apply to ranks one through four. Zen payouts
 are fifty times the original amounts:
@@ -74,13 +73,13 @@ The fixed completion EXP table is:
 
 | Level | 1st | 2nd | 3rd | 4th |
 | --- | --- | --- | --- | --- |
-| +1 | 8,000,000 | 7,000,000 | 6,000,000 | 5,000,000 |
-| +2 | 13,000,000 | 11,000,000 | 10,000,000 | 8,000,000 |
-| +3 | 19,000,000 | 17,000,000 | 15,000,000 | 12,000,000 |
-| +4 | 28,000,000 | 24,000,000 | 21,000,000 | 17,000,000 |
-| +5 | 38,000,000 | 34,000,000 | 29,000,000 | 23,000,000 |
-| +6 | 54,000,000 | 48,000,000 | 42,000,000 | 33,000,000 |
-| +7 | 78,000,000 | 69,000,000 | 60,000,000 | 47,000,000 |
+| +1 | 10,000,000 | 8,000,000 | 6,000,000 | 4,000,000 |
+| +2 | 15,000,000 | 12,000,000 | 10,000,000 | 8,000,000 |
+| +3 | 20,000,000 | 18,000,000 | 15,000,000 | 12,000,000 |
+| +4 | 30,000,000 | 25,000,000 | 22,000,000 | 18,000,000 |
+| +5 | 40,000,000 | 35,000,000 | 30,000,000 | 25,000,000 |
+| +6 | 55,000,000 | 50,000,000 | 45,000,000 | 40,000,000 |
+| +7 | 80,000,000 | 70,000,000 | 60,000,000 | 50,000,000 |
 
 DS +7 grants Master EXP only to promoted Master-class characters at the normal
 level cap. Below that cap, its reward remains normal EXP. DS +1 through +6

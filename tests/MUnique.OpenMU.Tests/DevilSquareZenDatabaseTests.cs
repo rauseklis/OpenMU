@@ -73,7 +73,7 @@ public class DevilSquareZenDatabaseTests
                 reward.RewardAmount = 1;
             }
 
-            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(update => update.Version == (int)UpdateVersion.DevilSquareCompletionRewards).ToArray())
+            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(update => update.Version >= (int)UpdateVersion.DevilSquareCompletionRewards).ToArray())
             {
                 await context.DeleteAsync(update).ConfigureAwait(false);
             }
@@ -83,31 +83,41 @@ public class DevilSquareZenDatabaseTests
 
         Assert.That(await DevilSquareRewardsUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
         Assert.That(await DevilSquareRewardsUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        using (var deployed = provider.CreateNewContext())
+        {
+            var configuration = (await deployed.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+            var squares = configuration.MiniGameDefinitions.Where(game => game.Type == MiniGameType.DevilSquare).ToArray();
+            Assert.That(squares.SelectMany(game => game.Rewards).Count(reward => reward.RewardType == MiniGameRewardType.Item), Is.EqualTo(6));
+            foreach (var reward in squares.SelectMany(game => game.Rewards).Where(reward => reward.RewardType == MiniGameRewardType.Experience))
+            {
+                reward.RewardAmount = 1;
+            }
+
+            await deployed.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        Assert.That(await DevilSquareFinalRewardsInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await DevilSquareFinalRewardsInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
         using var reloaded = provider.CreateNewContext();
         var persisted = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
         foreach (var game in persisted.MiniGameDefinitions.Where(game => game.Type == MiniGameType.DevilSquare))
         {
             var items = game.Rewards.Where(reward => reward.RewardType is MiniGameRewardType.Item or MiniGameRewardType.ItemDrop).ToArray();
-            if (game.GameLevel == 7)
-            {
-                Assert.That(items, Is.Empty);
-            }
-            else
-            {
-                var castle = persisted.MiniGameDefinitions.Single(other => other.Type == MiniGameType.BloodCastle && other.GameLevel == game.GameLevel);
-                var castleItems = castle.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Item);
-                Assert.That(items, Has.Length.EqualTo(1));
-                Assert.That(items[0].Rank, Is.EqualTo(1));
-                Assert.That(items[0].RewardType, Is.EqualTo(MiniGameRewardType.Item));
-                Assert.That(items[0].RewardAmount, Is.EqualTo(castleItems.RewardAmount));
-                Assert.That(items[0].ItemReward, Is.SameAs(castleItems.ItemReward));
-            }
+            Assert.That(items, Is.Empty);
 
             foreach (var reward in game.Rewards.Where(reward => reward.RewardType is MiniGameRewardType.Money or MiniGameRewardType.Experience))
             {
                 var expected = reward.RewardType == MiniGameRewardType.Money ? expectedZen : expectedExperience;
                 Assert.That(reward.RewardAmount, Is.EqualTo(expected[(game.GameLevel, reward.Rank)]));
             }
+        }
+
+        foreach (var castle in persisted.MiniGameDefinitions.Where(game => game.Type == MiniGameType.BloodCastle && game.GameLevel <= 7))
+        {
+            var items = castle.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Item);
+            Assert.That(items.ItemReward, Is.Not.Null);
+            Assert.That(items.ItemReward!.PossibleItems, Is.Not.Empty);
+            Assert.That(items.RewardAmount, Is.EqualTo(castle.GameLevel <= 4 ? castle.GameLevel : 1));
         }
 
         await using var database = new EntityDataContext();

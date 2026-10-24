@@ -1,4 +1,4 @@
-﻿// <copyright file="Program.cs" company="MUnique">
+// <copyright file="Program.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -644,6 +644,11 @@ internal sealed class Program : IDisposable
         if (await DevilSquareRewardsUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
         {
             this._logger.Information("Installed the reviewed Devil Square completion rewards.");
+        }
+
+        if (await DevilSquareFinalRewardsInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed final Devil Square EXP and removed completion items; Zen payouts are unchanged.");
         }
     }
 

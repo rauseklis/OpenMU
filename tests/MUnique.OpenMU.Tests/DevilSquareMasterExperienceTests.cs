@@ -24,10 +24,10 @@ public class DevilSquareMasterExperienceTests
     /// DS seven grants the full fixed amount across Master level-ups without rate multiplication.
     /// </summary>
     /// <param name="amount">The proposed rank reward.</param>
-    [TestCase(78_000_000)]
-    [TestCase(69_000_000)]
+    [TestCase(80_000_000)]
+    [TestCase(70_000_000)]
     [TestCase(60_000_000)]
-    [TestCase(47_000_000)]
+    [TestCase(50_000_000)]
     public async Task SevenGrantsFullMasterRewardAsync(int amount)
     {
         var player = await CreatePlayerAsync(true, 400).ConfigureAwait(false);
@@ -79,7 +79,7 @@ public class DevilSquareMasterExperienceTests
     {
         var player = await CreatePlayerAsync(true, 400).ConfigureAwait(false);
         player.Attributes!.AddElement(new SimpleElement(1, AggregateType.AddRaw), PremiumBuffStats.ExperienceBlocked);
-        await GiveRewardAsync(player, MiniGameType.DevilSquare, 7, 78_000_000).ConfigureAwait(false);
+        await GiveRewardAsync(player, MiniGameType.DevilSquare, 7, 80_000_000).ConfigureAwait(false);
         Assert.That(player.SelectedCharacter!.MasterExperience, Is.Zero);
     }
 
@@ -93,7 +93,7 @@ public class DevilSquareMasterExperienceTests
         player.Attributes![Stats.MasterLevel] = player.GameContext.Configuration.MaximumMasterLevel;
         var before = player.GameContext.MasterExperienceTable[player.GameContext.Configuration.MaximumMasterLevel];
         player.SelectedCharacter!.MasterExperience = before;
-        await GiveRewardAsync(player, MiniGameType.DevilSquare, 7, 78_000_000).ConfigureAwait(false);
+        await GiveRewardAsync(player, MiniGameType.DevilSquare, 7, 80_000_000).ConfigureAwait(false);
         Assert.That(player.SelectedCharacter.MasterExperience, Is.EqualTo(before));
     }
 
@@ -116,7 +116,7 @@ public class DevilSquareMasterExperienceTests
     {
         var player = await CreatePlayerAsync(true, 400).ConfigureAwait(false);
         player.GameContext.Configuration.PreventExperienceOverflow = true;
-        await GiveRewardAsync(player, MiniGameType.DevilSquare, 7, 78_000_000).ConfigureAwait(false);
+        await GiveRewardAsync(player, MiniGameType.DevilSquare, 7, 80_000_000).ConfigureAwait(false);
         Assert.That(player.SelectedCharacter!.MasterExperience, Is.EqualTo(player.GameContext.MasterExperienceTable[1]));
     }
 

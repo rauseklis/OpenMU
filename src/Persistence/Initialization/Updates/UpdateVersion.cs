@@ -642,4 +642,9 @@ public enum UpdateVersion
     /// Configures the reviewed Devil Square Zen and EXP completion rewards.
     /// </summary>
     DevilSquareCompletionRewards = 138,
+
+    /// <summary>
+    /// Applies the final Devil Square EXP table and removes completion item rewards.
+    /// </summary>
+    DevilSquareZenAndExperienceOnly = 139,
 }

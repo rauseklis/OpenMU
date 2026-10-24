@@ -99,7 +99,6 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         this.InitializeDevilSquareRewards();
         new BloodCastleInitializer(this.Context, this.GameConfiguration).Initialize();
         new BloodCastleCompletionRewards(this.Context, this.GameConfiguration).Initialize();
-        new DevilSquareFirstPlaceItems(this.Context, this.GameConfiguration).Initialize();
         new ChaosCastleInitializer(this.Context, this.GameConfiguration).Initialize();
         new CastleSiegeInitializer(this.Context, this.GameConfiguration).Initialize();
         new KanturuInitializer(this.Context, this.GameConfiguration).Initialize();
