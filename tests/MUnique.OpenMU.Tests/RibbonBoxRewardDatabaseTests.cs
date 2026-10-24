@@ -25,8 +25,8 @@ using Npgsql;
 [TestFixture]
 public class RibbonBoxRewardDatabaseTests
 {
-    private const string FixtureDatabase = "mu_ribbon_odds_bc_20261024";
-    private const string FixtureConnection = "Host=127.0.0.1;Port=55483;Database=" + FixtureDatabase + ";User Id=ribbonvalidation;Command Timeout=120;";
+    private static readonly string FixtureDatabase = $"mu_ribbon_odds_bc_{Guid.NewGuid():N}";
+    private static readonly string FixtureConnection = "Host=127.0.0.1;Port=55483;Database=" + FixtureDatabase + ";User Id=ribbonvalidation;Command Timeout=120;";
 
     /// <summary>
     /// Seeds a disposable database and upgrades existing shop stock without changing it.
