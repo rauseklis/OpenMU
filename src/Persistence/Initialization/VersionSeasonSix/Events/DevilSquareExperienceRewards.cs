@@ -15,13 +15,13 @@ public sealed class DevilSquareExperienceRewards : InitializerBase
 
     private static readonly int[][] RewardMillions =
     [
-        [8, 7, 6, 5],
-        [13, 11, 10, 8],
-        [19, 17, 15, 12],
-        [28, 24, 21, 17],
-        [38, 34, 29, 23],
-        [54, 48, 42, 33],
-        [78, 69, 60, 47],
+        [10, 8, 6, 4],
+        [15, 12, 10, 8],
+        [20, 18, 15, 12],
+        [30, 25, 22, 18],
+        [40, 35, 30, 25],
+        [55, 50, 45, 40],
+        [80, 70, 60, 50],
     ];
 
     /// <summary>
