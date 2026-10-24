@@ -616,4 +616,5 @@ public enum UpdateVersion
     LorenciaMarketFountain = 126,
     AddFruitDrops = 127,
     CrustRespawnDelay = 128,
+    LowerFruitDropChance = 129,
 }

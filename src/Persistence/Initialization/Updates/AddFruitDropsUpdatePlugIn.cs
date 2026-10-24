@@ -19,7 +19,7 @@ public sealed class AddFruitDropsUpdatePlugIn : UpdatePlugInBase
     public override string Name => "Fruit drops in Arena, Icarus, Aida and Kanturu";
 
     /// <inheritdoc />
-    public override string Description => "Gives every monster of Arena, Icarus, Aida and the three Kanturu maps a 3 % chance per item drop for each of the five fruits (Energy, Vitality, Agility, Strength, Command).";
+    public override string Description => "Gives every monster of Arena, Icarus, Aida and the three Kanturu maps a chance per item drop for each of the five fruits (Energy, Vitality, Agility, Strength, Command).";
 
     /// <inheritdoc />
     public override UpdateVersion Version => UpdateVersion.AddFruitDrops;
