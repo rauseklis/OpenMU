@@ -619,4 +619,5 @@ public enum UpdateVersion
     LowerFruitDropChance = 129,
     AncientTierBoxes = 130,
     TierOneAncientStats = 131,
+    PetsAndQuestItemsNotDroppable = 132,
 }
