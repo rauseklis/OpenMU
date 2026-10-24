@@ -14,10 +14,10 @@ using MUnique.OpenMU.DataModel.Configuration.Items;
 public static class FruitDropGroups
 {
     /// <summary>
-    /// The chance of each single fruit type per item drop of a monster (3 %), so all five fruits together make 15 %.
+    /// The chance of each single fruit type per item drop of a monster (1 %), so all five fruits together make 5 %.
     /// The default drop groups of a map add up to 80.11 %, so the total stays below 100 % and nothing else is diluted.
     /// </summary>
-    public const double ChancePerFruit = 0.03;
+    public const double ChancePerFruit = 0.01;
 
     /// <summary>
     /// The item group of the fruits.

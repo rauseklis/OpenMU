@@ -71,6 +71,29 @@ public class FruitDropsTests
     }
 
     /// <summary>
+    /// Tests that the update lowers fruit drops which were created with the first, three times higher chance.
+    /// </summary>
+    [Test]
+    public async Task LowerChanceUpdateReplacesTheFirstChanceAndAddsNothing()
+    {
+        using var context = new InMemoryPersistenceContextProvider().CreateNewContext();
+        var configuration = CreateConfiguration(context);
+        FruitDropGroups.EnsureFor(context, configuration);
+        foreach (var group in configuration.DropItemGroups)
+        {
+            group.Chance = 0.03;
+            group.Description = $"Fruit of {group.ItemLevel} (3 % drop chance)";
+        }
+
+        await new LowerFruitDropChanceUpdatePlugIn().ApplyUpdateAsync(context, configuration);
+
+        Assert.That(configuration.DropItemGroups.Count, Is.EqualTo(5));
+        Assert.That(configuration.DropItemGroups.All(g => g.Chance == 0.01), Is.True);
+        Assert.That(configuration.DropItemGroups.All(g => (g.Description.ToString() ?? string.Empty).Contains("(1 % drop chance)")), Is.True);
+        Assert.That(configuration.Maps.Single(m => m.Number == 10).DropItemGroups.Count, Is.EqualTo(5));
+    }
+
+    /// <summary>
     /// Tests that a brand-new Season 6 database already has the fruit drops on exactly those six maps.
     /// </summary>
     [Test]
@@ -100,11 +123,11 @@ public class FruitDropsTests
     /// </summary>
     /// <param name="level">The fruit level: 0 Energy, 1 Vitality, 2 Agility, 3 Strength, 4 Command.</param>
     /// <param name="roll">A random roll which falls into that fruit's slice of the drop chance.</param>
-    [TestCase(0, 0.01)]
-    [TestCase(1, 0.045)]
-    [TestCase(2, 0.075)]
-    [TestCase(3, 0.105)]
-    [TestCase(4, 0.135)]
+    [TestCase(0, 0.005)]
+    [TestCase(1, 0.015)]
+    [TestCase(2, 0.025)]
+    [TestCase(3, 0.035)]
+    [TestCase(4, 0.045)]
     public async Task MonsterDropsTheFruitOfTheRolledType(byte level, double roll)
     {
         using var context = new InMemoryPersistenceContextProvider().CreateNewContext();
@@ -127,7 +150,7 @@ public class FruitDropsTests
     }
 
     /// <summary>
-    /// Tests that a roll above the fruit chances drops nothing, so only 15 % of the drops are fruits.
+    /// Tests that a roll above the fruit chances drops nothing, so only 5 % of the drops are fruits.
     /// </summary>
     [Test]
     public async Task MonsterDropsNoFruitAboveTheTotalChance()
