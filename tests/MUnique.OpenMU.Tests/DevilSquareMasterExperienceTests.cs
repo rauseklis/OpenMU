@@ -24,10 +24,10 @@ public class DevilSquareMasterExperienceTests
     /// DS seven grants the full fixed amount across Master level-ups without rate multiplication.
     /// </summary>
     /// <param name="amount">The proposed rank reward.</param>
-    [TestCase(80_000_000)]
-    [TestCase(70_000_000)]
     [TestCase(60_000_000)]
+    [TestCase(55_000_000)]
     [TestCase(50_000_000)]
+    [TestCase(45_000_000)]
     public async Task SevenGrantsFullMasterRewardAsync(int amount)
     {
         var player = await CreatePlayerAsync(true, 400).ConfigureAwait(false);

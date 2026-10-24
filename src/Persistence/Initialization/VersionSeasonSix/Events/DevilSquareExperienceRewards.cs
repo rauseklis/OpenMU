@@ -21,7 +21,7 @@ public sealed class DevilSquareExperienceRewards : InitializerBase
         [30, 25, 22, 18],
         [40, 35, 30, 25],
         [55, 50, 45, 40],
-        [80, 70, 60, 50],
+        [60, 55, 50, 45],
     ];
 
     /// <summary>
@@ -36,8 +36,18 @@ public sealed class DevilSquareExperienceRewards : InitializerBase
 
     /// <inheritdoc />
     public override void Initialize()
+        => this.ApplyToLevel(null);
+
+    /// <summary>
+    /// Applies the reviewed amounts only to the requested level.
+    /// </summary>
+    /// <param name="level">The DS level to update.</param>
+    public void InitializeLevel(byte level)
+        => this.ApplyToLevel(level);
+
+    private void ApplyToLevel(byte? level)
     {
-        foreach (var game in this.GameConfiguration.MiniGameDefinitions.Where(game => game.Type == MiniGameType.DevilSquare && game.GameLevel >= 1 && game.GameLevel <= RewardMillions.Length))
+        foreach (var game in this.GameConfiguration.MiniGameDefinitions.Where(game => game.Type == MiniGameType.DevilSquare && game.GameLevel >= 1 && game.GameLevel <= RewardMillions.Length && (level is null || game.GameLevel == level)))
         {
             var ranks = RewardMillions[game.GameLevel - 1];
             foreach (var reward in game.Rewards.Where(reward => reward.RewardType == MiniGameRewardType.Experience && reward.Rank >= 1 && reward.Rank <= ranks.Length))

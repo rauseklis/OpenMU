@@ -79,7 +79,7 @@ The fixed completion EXP table is:
 | +4 | 30,000,000 | 25,000,000 | 22,000,000 | 18,000,000 |
 | +5 | 40,000,000 | 35,000,000 | 30,000,000 | 25,000,000 |
 | +6 | 55,000,000 | 50,000,000 | 45,000,000 | 40,000,000 |
-| +7 | 80,000,000 | 70,000,000 | 60,000,000 | 50,000,000 |
+| +7 | 60,000,000 | 55,000,000 | 50,000,000 | 45,000,000 |
 
 DS +7 grants Master EXP only to promoted Master-class characters at the normal
 level cap. Below that cap, its reward remains normal EXP. DS +1 through +6

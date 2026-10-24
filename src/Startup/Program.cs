@@ -650,6 +650,11 @@ internal sealed class Program : IDisposable
         {
             this._logger.Information("Installed final Devil Square EXP and removed completion items; Zen payouts are unchanged.");
         }
+
+        if (await DevilSquareSevenExperienceInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed revised Devil Square seven completion EXP.");
+        }
     }
 
     private async Task InstallAncientUpdatesAsync(IPersistenceContextProvider contextProvider)

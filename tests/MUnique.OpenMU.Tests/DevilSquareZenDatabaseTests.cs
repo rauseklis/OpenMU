@@ -98,6 +98,7 @@ public class DevilSquareZenDatabaseTests
 
         Assert.That(await DevilSquareFinalRewardsInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
         Assert.That(await DevilSquareFinalRewardsInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        await ApplySevenUpdateAndCheckIsolationAsync(provider, expectedExperience).ConfigureAwait(false);
         using var reloaded = provider.CreateNewContext();
         var persisted = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
         foreach (var game in persisted.MiniGameDefinitions.Where(game => game.Type == MiniGameType.DevilSquare))
@@ -127,6 +128,28 @@ public class DevilSquareZenDatabaseTests
             UPDATE config."GameServerEndpoint" SET "NetworkPort"="NetworkPort"-20000;
             UPDATE config."ChatServerEndpoint" SET "NetworkPort"="NetworkPort"-20000;
             """).ConfigureAwait(false);
+    }
+
+    private static async Task ApplySevenUpdateAndCheckIsolationAsync(IPersistenceContextProvider provider, Dictionary<(byte Level, int? Rank), int> expectedExperience)
+    {
+        using (var context = provider.CreateNewContext())
+        {
+            var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+            var seven = configuration.MiniGameDefinitions.Single(game => game.Type == MiniGameType.DevilSquare && game.GameLevel == 7);
+            int[] previous = [80_000_000, 70_000_000, 60_000_000, 50_000_000];
+            foreach (var reward in seven.Rewards.Where(reward => reward.RewardType == MiniGameRewardType.Experience))
+            {
+                reward.RewardAmount = previous[reward.Rank!.Value - 1];
+            }
+
+            var one = configuration.MiniGameDefinitions.Single(game => game.Type == MiniGameType.DevilSquare && game.GameLevel == 1);
+            one.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Experience && reward.Rank == 1).RewardAmount = 123;
+            expectedExperience[(1, 1)] = 123;
+            await context.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        Assert.That(await DevilSquareSevenExperienceInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await DevilSquareSevenExperienceInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
     }
 
     private sealed class FixtureConnectionSettings : IDatabaseConnectionSettingProvider
