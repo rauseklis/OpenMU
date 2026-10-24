@@ -632,4 +632,9 @@ public enum UpdateVersion
     /// </summary>
     RibbonBoxRewards = 135,
     PetsAndQuestItemsNotDroppable = 136,
+
+    /// <summary>
+    /// Corrects ribbon opening odds and Blood Castle completion payouts.
+    /// </summary>
+    RibbonOpeningOddsAndBloodCastle = 137,
 }

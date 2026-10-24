@@ -40,8 +40,11 @@ public class RibbonBoxRewardTests
         {
             var box = configuration.Items.Single(item => item.Group == 12 && item.Number == entry.Key);
             var groups = box.DropItems.Where(group => group.SourceItemLevel == 0).ToArray();
-            Assert.That(groups, Has.Length.EqualTo(1));
-            var group = groups.Single();
+            Assert.That(groups, Has.Length.EqualTo(2));
+            var group = groups.Single(group => group.ItemType != SpecialItemType.Money);
+            var zen = groups.Single(group => group.ItemType == SpecialItemType.Money);
+            Assert.That(zen.Chance + group.Chance, Is.EqualTo(1).Within(0.000000001));
+            Assert.That(zen.MoneyAmount, Is.EqualTo(entry.Key switch { 32 => 10_000_000, 34 => 7_500_000, _ => 5_000_000 }));
             var randomizer = new Mock<IRandomizer>();
             randomizer.Setup(random => random.NextInt(It.IsAny<int>(), It.IsAny<int>())).Returns((int minimum, int maximum) => minimum);
             randomizer.Setup(random => random.NextDouble()).Returns(0.99);
@@ -49,10 +52,17 @@ public class RibbonBoxRewardTests
             Assert.That(generated, Is.Not.Null);
             Assert.That(generated!.Level, Is.Zero);
             Assert.That(generated.HasSkill, Is.EqualTo(entry.Key == 32 && generated.CanHaveSkill()));
-            Assert.That(group.Chance, Is.EqualTo(1));
+            Assert.That(group.Chance, Is.EqualTo(entry.Key switch { 32 => 0.10, 34 => 0.15, _ => 0.20 }));
             Assert.That(group.MinimumLevel, Is.Zero);
             Assert.That(group.MaximumLevel, Is.Zero);
             Assert.That(group.PossibleItems.Select(item => ((int)item.Group, (int)item.Number)), Is.EquivalentTo(entry.Value));
+            foreach (var roll in new[] { group.Chance / 2, group.Chance + 0.000001, 0.99 })
+            {
+                randomizer.Setup(random => random.NextDouble()).Returns(roll);
+                var outcome = new DefaultDropGenerator(configuration, randomizer.Object).GenerateItemDrop(groups);
+                Assert.That(outcome.Item is not null, Is.EqualTo(roll < group.Chance));
+                Assert.That(outcome.Money, roll < group.Chance ? Is.Null : Is.EqualTo((uint)zen.MoneyAmount));
+            }
             if (entry.Key == 34)
             {
                 Assert.That(group.ItemType, Is.EqualTo(SpecialItemType.Excellent));

@@ -25,8 +25,8 @@ using Npgsql;
 [TestFixture]
 public class RibbonBoxRewardDatabaseTests
 {
-    private const string FixtureDatabase = "mu_ribbon_contents_20261024";
-    private const string FixtureConnection = "Host=127.0.0.1;Port=55483;Database=" + FixtureDatabase + ";User Id=ribbonvalidation;Command Timeout=120;";
+    private static readonly string FixtureDatabase = $"mu_ribbon_odds_bc_{Guid.NewGuid():N}";
+    private static readonly string FixtureConnection = "Host=127.0.0.1;Port=55483;Database=" + FixtureDatabase + ";User Id=ribbonvalidation;Command Timeout=120;";
 
     /// <summary>
     /// Seeds a disposable database and upgrades existing shop stock without changing it.
@@ -64,7 +64,7 @@ public class RibbonBoxRewardDatabaseTests
                 box.DropItems.Add(oldReward);
             }
 
-            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(update => update.Version == (int)UpdateVersion.RibbonBoxRewards))
+            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(update => update.Version == (int)UpdateVersion.RibbonOpeningOddsAndBloodCastle))
             {
                 await context.DeleteAsync(update).ConfigureAwait(false);
             }
@@ -72,8 +72,8 @@ public class RibbonBoxRewardDatabaseTests
             await context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        Assert.That(await RibbonBoxRewardsUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
-        Assert.That(await RibbonBoxRewardsUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        Assert.That(await RibbonOpeningOddsAndBloodCastleUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await RibbonOpeningOddsAndBloodCastleUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
         using var reloaded = provider.CreateNewContext();
         var persisted = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
         var persistedStore = persisted.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
@@ -81,8 +81,10 @@ public class RibbonBoxRewardDatabaseTests
         {
             var listing = persistedStore.Items.Single(item => item.Definition is { Group: 12 } definition && definition.Number == number);
             Assert.That(new ItemPriceCalculator().CalculateMerchantBuyingPrice(listing), Is.EqualTo(1000));
-            var group = listing.Definition!.DropItems.Single();
-            Assert.That(group.Chance, Is.EqualTo(1));
+            var group = listing.Definition!.DropItems.Single(group => group.ItemType != SpecialItemType.Money);
+            var zen = listing.Definition.DropItems.Single(group => group.ItemType == SpecialItemType.Money);
+            Assert.That(group.Chance, Is.EqualTo(number switch { 32 => 0.10, 34 => 0.15, _ => 0.20 }));
+            Assert.That(zen.MoneyAmount, Is.EqualTo(number switch { 32 => 10_000_000, 34 => 7_500_000, _ => 5_000_000 }));
             Assert.That(group.ItemType, Is.Not.EqualTo(SpecialItemType.Money));
             Assert.That(group.MinimumLevel, Is.Zero);
             Assert.That(group.MaximumLevel, Is.Zero);
@@ -92,6 +94,12 @@ public class RibbonBoxRewardDatabaseTests
                 Assert.That(group.SkillChance, Is.EqualTo(1));
             }
         }
+
+        var castleSeven = persisted.MiniGameDefinitions.Single(game => game.Type == MiniGameType.BloodCastle && game.GameLevel == 7);
+        var castleReward = castleSeven.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Item);
+        Assert.That(castleReward.RewardAmount, Is.EqualTo(1));
+        Assert.That(castleReward.ItemReward!.Chance, Is.EqualTo(1));
+        Assert.That(castleReward.ItemReward.PossibleItems.Single().Number, Is.EqualTo(32));
 
         await using var database = new EntityDataContext();
         Assert.That(database.Database.HasPendingModelChanges(), Is.False);

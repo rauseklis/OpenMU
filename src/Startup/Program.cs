@@ -627,6 +627,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Made the pets, mounts and quest items undroppable.");
         }
 
+        if (await RibbonOpeningOddsAndBloodCastleUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed corrected ribbon opening odds and Blood Castle completion payouts.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

@@ -16,10 +16,17 @@ After the owner confirms deployment is finished:
 
 Lumen also sells Red Ribbon Box, Green Ribbon Box and Blue Ribbon Box at +0
 for 1,000 Zen each before castle tax. These listings are added to existing
-servers automatically without replacing other stock. This shop update does
-not change Blood Castle and Devil Square rewards.
+servers automatically without replacing other stock.
 
-Ribbon box contents (one guaranteed reward per box):
+Opening a ribbon box gives either Zen or one item reward, never both:
+
+| Box | Zen outcome | Item outcome |
+| --- | --- | --- |
+| Red | 90%: 10,000,000 Zen | 10%: Archangel weapon |
+| Blue | 85%: 7,500,000 Zen | 15%: Excellent jewelry |
+| Green | 80%: 5,000,000 Zen | 20%: pack of ten jewels |
+
+Item outcomes keep these rules:
 
 - Red: one of the five Archangel weapons at +0, 25% luck, and a guaranteed skill
   on weapons that support a skill. Shared equipment ADD odds still apply.
@@ -27,6 +34,23 @@ Ribbon box contents (one guaranteed reward per box):
   two distinct options 15% of the time, plus 1–3% HP recovery. Only HP-recovery
   jewelry is eligible; Ring of Magic and Pendant of Ability are excluded.
 - Green: one random pack of ten Chaos, Bless, Soul or Life jewels.
+
+Blood Castle completion rewards for the surviving winner and winning party:
+
+| Level | Reward |
+| --- | --- |
+| +1 | 1,000,000 Zen and 1 random jewel |
+| +2 | 2,000,000 Zen and 2 random jewels |
+| +3 | 3,000,000 Zen and 3 random jewels |
+| +4 | 4,000,000 Zen and 4 random jewels |
+| +5 | Always one Green Ribbon Box |
+| +6 | Always one Blue Ribbon Box |
+| +7 | Always one Red Ribbon Box |
+
+Each lower-level jewel is selected independently from Bless, Soul, Life and
+Chaos with equal chances, so repeats are possible. Items go to inventory, with
+the existing ground-drop fallback if inventory is full. BC +8, experience,
+scoring and Devil Square rewards are unchanged by this update.
 
 Kundun one-option/two-option probabilities are +1: 70/30%, +2: 75/25%,
 +3: 80/20%, +4: 85/15%, +5: 90/10%. All Kundun equipment remains Excellent +0
