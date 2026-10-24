@@ -615,4 +615,5 @@ public enum UpdateVersion
     RenameRoyalMace = 125,
     LorenciaMarketFountain = 126,
     AddFruitDrops = 127,
+    CrustRespawnDelay = 128,
 }
