@@ -633,6 +633,11 @@ internal sealed class Program : IDisposable
         {
             this._logger.Information("Installed the approved Tier 2 Ancient full-set stat bonuses.");
         }
+
+        if (await ArgoSpiritTierTwoUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Replaced Gaia with Argo Spirit in the approved Tier 2 Ancient rewards.");
+        }
     }
 
     private async Task<IMigratableDatabaseContextProvider> PrepareRepositoryProviderAsync(bool reinit, string version, ILoggerFactory loggerFactory, IConfigurationChangeListener changeListener)

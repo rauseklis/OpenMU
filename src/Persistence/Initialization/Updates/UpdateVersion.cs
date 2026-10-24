@@ -620,4 +620,5 @@ public enum UpdateVersion
     AncientTierBoxes = 130,
     TierOneAncientStats = 131,
     TierTwoAncientStats = 132,
+    ArgoSpiritTierTwo = 133,
 }

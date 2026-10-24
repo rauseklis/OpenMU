@@ -28,7 +28,7 @@ public class TierTwoAncientStatsTests
     /// <param name="originalCount">The original option count.</param>
     [TestCase("Garuda", 50, 6)]
     [TestCase("Heras", 50, 9)]
-    [TestCase("Gaia", 50, 7)]
+    [TestCase("Argo", 50, 4)]
     [TestCase("Eplete", 50, 7)]
     [TestCase("Semeden", 50, 6)]
     [TestCase("Chamer", 50, 7)]
