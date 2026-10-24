@@ -79,6 +79,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new BoxOfLuck(this.Context, this.GameConfiguration).Initialize();
         new TriteArmors(this.Context, this.GameConfiguration).Initialize();
         new RageFighterAncientSets(this.Context, this.GameConfiguration).Initialize();
+        new TierOneAncientStats(this.Context, this.GameConfiguration).Initialize();
         new AncientRewardBoxes(this.Context, this.GameConfiguration).Initialize();
         this.CreateJewelMixes();
         new NpcInitialization(this.Context, this.GameConfiguration).Initialize();

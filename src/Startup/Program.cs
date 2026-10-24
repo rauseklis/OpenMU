@@ -615,6 +615,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed the approved Ancient box rewards and Lorencia shop listings.");
         }
 
+        if (await TierOneAncientStatsUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the approved Tier 1 Ancient full-set stat bonuses.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
