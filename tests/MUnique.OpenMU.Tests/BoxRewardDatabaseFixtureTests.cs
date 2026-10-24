@@ -53,10 +53,13 @@ public class BoxRewardDatabaseFixtureTests
                 .DropItems.Where(group => group.SourceItemLevel != 0).Select(group => group.GetId()).ToArray();
             var store = config.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
             var existingStock = store.Items.Select(item => (Id: item.GetId(), Slot: item.ItemSlot)).ToArray();
-            await new AddAncientTierBoxesUpdatePlugIn().ApplyUpdateAsync(context, config).ConfigureAwait(false);
-            await context.SaveChangesAsync().ConfigureAwait(false);
-            Assert.That(existingStock.All(previous => store.Items.Any(item => item.GetId() == previous.Id && item.ItemSlot == previous.Slot)), Is.True);
-            Assert.That(config.Items.Single(item => item.Group == 14 && item.Number == 11)
+            Assert.That(await AncientTierBoxUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+            Assert.That(await AncientTierBoxUpdateInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+            using var verified = provider.CreateNewContext();
+            var updated = (await verified.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+            var updatedStore = updated.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
+            Assert.That(existingStock.All(previous => updatedStore.Items.Any(item => item.GetId() == previous.Id && item.ItemSlot == previous.Slot)), Is.True);
+            Assert.That(updated.Items.Single(item => item.Group == 14 && item.Number == 11)
                 .DropItems.Where(group => group.SourceItemLevel != 0).Select(group => group.GetId()), Is.EquivalentTo(existingRewards));
         }
 

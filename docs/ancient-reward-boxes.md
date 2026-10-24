@@ -38,6 +38,11 @@ is **14/124, level 0**; Golden Box is **14/123, level 0**. Other levels of item
 14/11 (medals, Kundun boxes and other bonuses) retain their existing rewards.
 This update changes no monster drop rates or ribbon-box rewards.
 
+On an existing Season 6 database, startup installs this approved reward and
+shop update once, before loading game configuration. Other pending game-data
+updates remain available through the admin panel and are not applied by this
+step. Subsequent restarts preserve later administrator changes.
+
 All three boxes are sold by **Lumen the Barmaid in the Lorencia bar**, at a
 base purchase price of **1,000 Zen each**. Any active castle shop tax is
 additional. Existing shop stock is kept and the boxes occupy free cells.
