@@ -49,8 +49,47 @@ Blood Castle completion rewards for the surviving winner and winning party:
 
 Each lower-level jewel is selected independently from Bless, Soul, Life and
 Chaos with equal chances, so repeats are possible. Items go to inventory, with
-the existing ground-drop fallback if inventory is full. BC +8, experience,
-scoring and Devil Square rewards are unchanged by this update.
+the existing ground-drop fallback if inventory is full. BC +8, experience and
+scoring are unchanged.
+
+Only first place receives Devil Square item rewards: +1 through +4 give
+1 through 4 random single jewels from the same pool as BC; +5 gives one Green
+Ribbon Box; +6 gives one Blue Ribbon Box. These go to inventory with the same
+ground-drop fallback if full. DS +7 gives no Red Ribbon Box.
+
+Devil Square completion rewards apply to ranks one through four. Zen payouts
+are fifty times the original amounts:
+
+| Level | 1st | 2nd | 3rd | 4th |
+| --- | --- | --- | --- | --- |
+| +1 | 1,500,000 | 1,250,000 | 1,000,000 | 750,000 |
+| +2 | 2,000,000 | 1,750,000 | 1,500,000 | 1,250,000 |
+| +3 | 2,500,000 | 2,250,000 | 2,000,000 | 1,750,000 |
+| +4 | 3,000,000 | 2,750,000 | 2,500,000 | 2,250,000 |
+| +5 | 3,500,000 | 3,250,000 | 3,000,000 | 2,750,000 |
+| +6 | 4,000,000 | 3,750,000 | 3,500,000 | 3,250,000 |
+| +7 | 7,500,000 | 7,000,000 | 6,000,000 | 4,500,000 |
+
+The fixed completion EXP table is:
+
+| Level | 1st | 2nd | 3rd | 4th |
+| --- | --- | --- | --- | --- |
+| +1 | 8,000,000 | 7,000,000 | 6,000,000 | 5,000,000 |
+| +2 | 13,000,000 | 11,000,000 | 10,000,000 | 8,000,000 |
+| +3 | 19,000,000 | 17,000,000 | 15,000,000 | 12,000,000 |
+| +4 | 28,000,000 | 24,000,000 | 21,000,000 | 17,000,000 |
+| +5 | 38,000,000 | 34,000,000 | 29,000,000 | 23,000,000 |
+| +6 | 54,000,000 | 48,000,000 | 42,000,000 | 33,000,000 |
+| +7 | 78,000,000 | 69,000,000 | 60,000,000 | 47,000,000 |
+
+DS +7 grants Master EXP only to promoted Master-class characters at the normal
+level cap. Below that cap, its reward remains normal EXP. DS +1 through +6
+and other events keep normal completion EXP. Completion rewards are fixed;
+server, map and premium monster-EXP multipliers do not multiply them. Master
+rewards can carry across Master level-ups unless experience overflow is
+disabled. The maximum Master level and EXP-block setting still apply.
+
+These are event completion payouts in addition to ordinary monster EXP and loot.
 
 Kundun one-option/two-option probabilities are +1: 70/30%, +2: 75/25%,
 +3: 80/20%, +4: 85/15%, +5: 90/10%. All Kundun equipment remains Excellent +0
