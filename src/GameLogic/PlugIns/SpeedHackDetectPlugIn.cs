@@ -100,7 +100,7 @@ public class SpeedHackDetectPlugIn : IFeaturePlugIn, ISupportCustomConfiguration
 
                     if (cumulativeTiles > 0)
                     {
-                        double stepDelayMs = player.StepDelay.TotalMilliseconds;
+                        double stepDelayMs = player.UnslowedStepDelay.TotalMilliseconds;
                         double scalingFactor = stepDelayMs / NormalStepDelayMs;
 
                         const double BaseStepDelayMarginMs = 50.0;

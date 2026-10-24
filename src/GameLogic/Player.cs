@@ -185,6 +185,11 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     /// <inheritdoc />
     public TimeSpan StepDelay => this._movement.StepDelay;
 
+    /// <summary>
+    /// Gets the delay between two steps, ignoring slowing effects. Used by the speed hack detection.
+    /// </summary>
+    public TimeSpan UnslowedStepDelay => this._movement.UnslowedStepDelay;
+
     /// <inheritdoc />
     public Point WalkTarget => this._movement.WalkTarget;
 

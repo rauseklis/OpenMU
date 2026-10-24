@@ -54,6 +54,14 @@ internal sealed class PlayerMovement : IDisposable
     public TimeSpan StepDelay => this.GetStepDelay(null);
 
     /// <summary>
+    /// Gets the delay between two steps as if no slowing effect (iced, cold) were active.
+    /// The anti-cheat uses it: the game client only slows its own movement while it shows the matching
+    /// effect, and that does not always happen at the same moment as the server's effect starts and ends.
+    /// A slowed player may therefore still walk at full speed, but never faster than that.
+    /// </summary>
+    public TimeSpan UnslowedStepDelay => this.GetStepDelay(null, ignoreSlowdown: true);
+
+    /// <summary>
     /// Moves the player instantly to the specified coordinate.
     /// </summary>
     /// <param name="target">The target.</param>
@@ -246,23 +254,25 @@ internal sealed class PlayerMovement : IDisposable
     /// </summary>
     /// <param name="step">The walking step for which the delay is calculated.</param>
     /// <returns>The current step delay, depending on equipped items.</returns>
-    private TimeSpan GetStepDelay(WalkingStep? step)
+    private TimeSpan GetStepDelay(WalkingStep? step) => this.GetStepDelay(step, false);
+
+    private TimeSpan GetStepDelay(WalkingStep? step, bool ignoreSlowdown)
     {
         const double referenceFrameTimeMilliseconds = 40.0;
         const double terrainScale = 100.0;
 
-        var speed = this.GetClientMovementSpeed(step?.From);
+        var speed = this.GetClientMovementSpeed(step?.From, ignoreSlowdown);
         var tileDistance = step is { } walkingStep ? walkingStep.From.EuclideanDistanceTo(walkingStep.To) : 1.0;
         var movementMilliseconds = terrainScale * Math.Max(1.0, tileDistance) / speed * referenceFrameTimeMilliseconds;
 
         return TimeSpan.FromMilliseconds(movementMilliseconds);
     }
 
-    private double GetClientMovementSpeed(Point? position = null)
+    private double GetClientMovementSpeed(Point? position = null, bool ignoreSlowdown = false)
     {
         if (this.IsInClientSafezone(position))
         {
-            return this.ApplyMovementSpeedFactor(WalkMovementSpeed);
+            return this.ApplyMovementSpeedFactor(WalkMovementSpeed, ignoreSlowdown);
         }
 
         var speedAttribute = this._player.Attributes?[Stats.IsUnderwater] > 0
@@ -270,12 +280,16 @@ internal sealed class PlayerMovement : IDisposable
             : Stats.MovementSpeed;
         var speed = this._player.Attributes?[speedAttribute] ?? 0;
 
-        return this.ApplyMovementSpeedFactor(Math.Max(WalkMovementSpeed, speed));
+        return this.ApplyMovementSpeedFactor(Math.Max(WalkMovementSpeed, speed), ignoreSlowdown);
     }
 
-    private double ApplyMovementSpeedFactor(double speed)
+    private double ApplyMovementSpeedFactor(double speed, bool ignoreSlowdown = false)
     {
         var movementSpeedFactor = this._player.Attributes?[Stats.MovementSpeedFactor] ?? 1.0;
+        if (ignoreSlowdown)
+        {
+            movementSpeedFactor = Math.Max(1.0, movementSpeedFactor);
+        }
 
         return speed * (movementSpeedFactor > 0 ? movementSpeedFactor : 1.0);
     }
