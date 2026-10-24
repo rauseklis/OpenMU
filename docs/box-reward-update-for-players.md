@@ -14,6 +14,11 @@ After the owner confirms deployment is finished:
 5. Open the rewards and report the box name, reward, item level, Excellent option
    count, skill flag and any unexpected behavior to the owner.
 
+Lumen also sells Red Ribbon Box, Green Ribbon Box and Blue Ribbon Box at +0
+for 1,000 Zen each before castle tax. These listings are added to existing
+servers automatically without replacing other stock. This shop update does
+not change their contents or Blood Castle and Devil Square rewards.
+
 Kundun one-option/two-option probabilities are +1: 70/30%, +2: 75/25%,
 +3: 80/20%, +4: 85/15%, +5: 90/10%. All Kundun equipment remains Excellent +0
 without sockets. Luck and equipment ADD changes are deferred.

@@ -621,4 +621,9 @@ public enum UpdateVersion
     TierOneAncientStats = 131,
     TierTwoAncientStats = 132,
     ArgoSpiritTierTwo = 133,
+
+    /// <summary>
+    /// Adds ribbon boxes to Lumen's shop.
+    /// </summary>
+    RibbonBoxShop = 134,
 }

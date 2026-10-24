@@ -612,6 +612,11 @@ internal sealed class Program : IDisposable
 
         await this.InstallAncientUpdatesAsync(contextProvider).ConfigureAwait(false);
 
+        if (await RibbonBoxShopUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Added ribbon boxes to the Lorencia bar for 1,000 Zen each.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
