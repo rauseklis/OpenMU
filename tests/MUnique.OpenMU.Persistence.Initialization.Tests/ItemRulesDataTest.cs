@@ -85,6 +85,41 @@ internal class ItemRulesDataTest
     }
 
     /// <summary>
+    /// Tests that the server start installs the drop rules once, and only on a database which is not yet up to date.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task StartupInstallerMakesPetsUndroppableOnceAsync()
+    {
+        var contextProvider = new InMemoryPersistenceContextProvider();
+        var dataInitialization = new VersionSeasonSix.DataInitialization(contextProvider, new NullLoggerFactory());
+        await dataInitialization.CreateInitialDataAsync(1, true).ConfigureAwait(false);
+        using (var context = contextProvider.CreateNewContext())
+        {
+            var gameConfiguration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
+            foreach (var item in gameConfiguration.Items)
+            {
+                item.IsDroppable = true;
+            }
+
+            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(u => u.Version == (int)UpdateVersion.PetsAndQuestItemsNotDroppable).ToList())
+            {
+                await context.DeleteAsync(update).ConfigureAwait(false);
+            }
+
+            await context.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        Assert.That(await PetsAndQuestItemsNotDroppableUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false), Is.True);
+        Assert.That(await PetsAndQuestItemsNotDroppableUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false), Is.False);
+
+        using var reloaded = contextProvider.CreateNewContext();
+        var persisted = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
+        Assert.That(GetItem(persisted, 13, 1).IsDroppable, Is.False);
+        Assert.That(GetItem(persisted, 0, 0).IsDroppable, Is.True);
+    }
+
+    /// <summary>
     /// Tests that a new season 6 database contains the item rules.
     /// </summary>
     [Test]
