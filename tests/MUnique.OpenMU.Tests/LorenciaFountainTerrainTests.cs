@@ -107,20 +107,21 @@ public class LorenciaFountainTerrainTests
     }
 
     /// <summary>
-    /// Tests that the four Loren Market lantern planters around the fountain block their tiles, while the
-    /// ground between them and the fountain, so that a player can walk around it, stays walkable.
+    /// Tests that the four Loren Market corner planters around the fountain block only their L-shaped outer
+    /// walls, exactly like in the Loren Market: the ground inside each L, on the fountain side, and the ground
+    /// between the planters and the fountain stay walkable.
     /// </summary>
     [Test]
-    public async Task UpdatedTerrainBlocksTheFourPlantersAroundTheFountain()
+    public async Task UpdatedTerrainBlocksOnlyTheOuterWallsOfTheFourPlanters()
     {
         var terrain = await this.ApplyUpdateAsync();
 
-        foreach (var (x, y) in new (byte X, byte Y)[] { (137, 124), (137, 131), (144, 124), (144, 131) })
+        foreach (var (x, y) in new (byte X, byte Y)[] { (138, 122), (135, 125), (143, 122), (146, 125), (138, 133), (135, 130), (143, 133), (146, 130) })
         {
             Assert.That(terrain.WalkMap[x, y], Is.False, $"tile {x},{y} must be blocked");
         }
 
-        foreach (var (x, y) in new (byte X, byte Y)[] { (141, 121), (141, 135), (134, 128), (148, 128), (139, 125), (138, 126), (142, 125), (143, 126), (138, 130), (143, 130) })
+        foreach (var (x, y) in new (byte X, byte Y)[] { (137, 124), (144, 124), (137, 131), (144, 131), (139, 125), (138, 126), (142, 125), (143, 126), (138, 130), (143, 130), (141, 121), (141, 135), (134, 128), (148, 128) })
         {
             Assert.That(terrain.WalkMap[x, y], Is.True, $"tile {x},{y} must be walkable");
         }
