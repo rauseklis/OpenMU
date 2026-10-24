@@ -61,8 +61,8 @@ public class TierTwoAncientStatsDatabaseTests
                 DELETE FROM config."IncreasableItemOption" o USING config."ItemSetGroup" s
                 WHERE o."ItemOptionDefinitionId"=s."OptionsId" AND
                   ((s."Name" IN ('Garuda','Semeden') AND o."Number">6) OR
-                   (s."Name" IN ('Gaia','Eplete','Chamer') AND o."Number">7) OR
-                   (s."Name"='Heras' AND o."Number">9));
+                   (s."Name" IN ('Eplete','Chamer') AND o."Number">7) OR
+                   (s."Name"='Heras' AND o."Number">9) OR (s."Name"='Argo' AND o."Number">4));
                 """).ConfigureAwait(false);
         }
 
@@ -81,7 +81,7 @@ public class TierTwoAncientStatsDatabaseTests
         var allOptions = persisted.ItemSetGroups.SelectMany(set => set.Options?.PossibleOptions ?? []).Select(option => option.GetId()).ToArray();
         Assert.That(originals.All(allOptions.Contains), Is.True);
         Assert.That(allOptions.Length, Is.EqualTo(originals.Length + 24));
-        foreach (var entry in new[] { (Name: "Garuda", Count: 10), (Name: "Heras", Count: 13), (Name: "Gaia", Count: 11), (Name: "Eplete", Count: 11), (Name: "Semeden", Count: 10), (Name: "Chamer", Count: 11) })
+        foreach (var entry in new[] { (Name: "Garuda", Count: 10), (Name: "Heras", Count: 13), (Name: "Argo", Count: 8), (Name: "Eplete", Count: 11), (Name: "Semeden", Count: 10), (Name: "Chamer", Count: 11) })
         {
             Assert.That(persisted.ItemSetGroups.Single(set => set.Name == entry.Name).Options!.PossibleOptions.Count, Is.EqualTo(entry.Count));
         }

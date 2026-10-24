@@ -26,7 +26,7 @@ public sealed class TierTwoAncientStats : InitializerBase
     {
         AncientFullSetStats.AddFullSetStats(this.Context, this.GameConfiguration, "Garuda", StandardBonus);
         AncientFullSetStats.AddFullSetStats(this.Context, this.GameConfiguration, "Heras", StandardBonus);
-        AncientFullSetStats.AddFullSetStats(this.Context, this.GameConfiguration, "Gaia", StandardBonus);
+        AncientFullSetStats.AddFullSetStats(this.Context, this.GameConfiguration, "Argo", StandardBonus);
         AncientFullSetStats.AddFullSetStats(this.Context, this.GameConfiguration, "Eplete", StandardBonus);
         AncientFullSetStats.AddFullSetStats(this.Context, this.GameConfiguration, "Semeden", StandardBonus);
         AncientFullSetStats.AddFullSetStats(this.Context, this.GameConfiguration, "Chamer", StandardBonus);

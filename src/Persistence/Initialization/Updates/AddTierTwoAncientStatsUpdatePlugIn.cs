@@ -20,7 +20,7 @@ public sealed class AddTierTwoAncientStatsUpdatePlugIn : UpdatePlugInBase
     public override string Name => "Tier 2 Ancient full-set stats";
 
     /// <inheritdoc />
-    public override string Description => "Complete Garuda, Heras, Gaia, Eplete, Semeden and Chamer sets add 50 Strength, Agility, Vitality and Energy; Command is unchanged.";
+    public override string Description => "Complete Garuda, Heras, Argo, Eplete, Semeden and Chamer sets add 50 Strength, Agility, Vitality and Energy; Command is unchanged.";
 
     /// <inheritdoc />
     public override UpdateVersion Version => UpdateVersion.TierTwoAncientStats;
