@@ -77,8 +77,12 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new PremiumBuffs(this.Context, this.GameConfiguration).Initialize();
         new AncientSets(this.Context, this.GameConfiguration).Initialize();
         new BoxOfLuck(this.Context, this.GameConfiguration).Initialize();
+        new TriteArmors(this.Context, this.GameConfiguration).Initialize();
+        new RageFighterAncientSets(this.Context, this.GameConfiguration).Initialize();
+        new AncientRewardBoxes(this.Context, this.GameConfiguration).Initialize();
         this.CreateJewelMixes();
         new NpcInitialization(this.Context, this.GameConfiguration).Initialize();
+        new AncientBoxShop(this.Context, this.GameConfiguration).Initialize();
         new InvasionMobsInitialization(this.Context, this.GameConfiguration).Initialize();
         new GameMapsInitializer(this.Context, this.GameConfiguration).Initialize();
         this.AssignCharacterClassHomeMaps();

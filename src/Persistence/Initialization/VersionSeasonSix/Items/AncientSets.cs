@@ -649,7 +649,7 @@ public class AncientSets : InitializerBase
             (40, ItemGroups.Helm, Stats.TotalVitality, 2));
     }
 
-    private void AddItems(ItemSetGroup set, params (short Number, ItemGroups Group, AttributeDefinition? BonusOption, int Discriminator)[] items)
+    private protected void AddItems(ItemSetGroup set, params (short Number, ItemGroups Group, AttributeDefinition? BonusOption, int Discriminator)[] items)
     {
         foreach (var itemTuple in items)
         {
@@ -665,12 +665,12 @@ public class AncientSets : InitializerBase
         }
     }
 
-    private ItemSetGroup AddAncientSet(string name, short setNumber, params (AttributeDefinition Attribute, float Value)[] ancientOptions)
+    protected ItemSetGroup AddAncientSet(string name, short setNumber, params (AttributeDefinition Attribute, float Value)[] ancientOptions)
     {
         return this.AddAncientSet(name, setNumber, ancientOptions.Select(ancOpt => (ancOpt.Attribute, ancOpt.Value, AggregateType.AddRaw)).ToArray());
     }
 
-    private ItemSetGroup AddAncientSet(string name, short setNumber, params (AttributeDefinition Attribute, float Value, AggregateType AggregateType)[] ancientOptions)
+    protected ItemSetGroup AddAncientSet(string name, short setNumber, params (AttributeDefinition Attribute, float Value, AggregateType AggregateType)[] ancientOptions)
     {
         var set = this.Context.CreateNew<ItemSetGroup>();
         set.SetGuid(setNumber);
@@ -711,6 +711,15 @@ public class AncientSets : InitializerBase
         if (this._bonusOptions.TryGetValue(attribute, out var option))
         {
             return option;
+        }
+
+        var existing = this.GameConfiguration.ItemOptions.SelectMany(definition => definition.PossibleOptions)
+            .FirstOrDefault(candidate => candidate.OptionType == this._ancientBonusOptionType
+                && candidate.PowerUpDefinition?.TargetAttribute == attribute);
+        if (existing is not null)
+        {
+            this._bonusOptions.Add(attribute, existing);
+            return existing;
         }
 
         var optionDefinition = this.Context.CreateNew<ItemOptionDefinition>();

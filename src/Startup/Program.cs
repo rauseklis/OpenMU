@@ -32,6 +32,7 @@ using MUnique.OpenMU.Persistence.AdminAuth;
 using MUnique.OpenMU.Persistence.EntityFramework;
 using MUnique.OpenMU.Persistence.EntityFramework.AdminAuth;
 using MUnique.OpenMU.Persistence.EntityFramework.Json;
+using MUnique.OpenMU.Persistence.Initialization.Updates;
 using MUnique.OpenMU.Persistence.Initialization.Version075;
 using MUnique.OpenMU.Persistence.InMemory;
 using MUnique.OpenMU.PlugIns;
@@ -607,6 +608,11 @@ internal sealed class Program : IDisposable
         else
         {
             contextProvider = await this.PrepareRepositoryProviderAsync(args.Contains("-reinit"), version, loggerFactory, changeListener).ConfigureAwait(false);
+        }
+
+        if (await AncientTierBoxUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the approved Ancient box rewards and Lorencia shop listings.");
         }
 
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);

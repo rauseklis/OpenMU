@@ -47,6 +47,24 @@ public partial class ItemDropItemGroup : MUnique.OpenMU.DataModel.Configuration.
     }
 
     /// <summary>
+    /// Gets the raw object of <see cref="AncientSet" />.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ancientSet")]
+    public ItemSetGroup RawAncientSet
+    {
+        get => base.AncientSet as ItemSetGroup;
+        set => base.AncientSet = value;
+    }
+
+    /// <inheritdoc/>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public override MUnique.OpenMU.DataModel.Configuration.Items.ItemSetGroup AncientSet
+    {
+        get => base.AncientSet;
+        set => base.AncientSet = value;
+    }
+
+    /// <summary>
     /// Gets the raw object of <see cref="Monster" />.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("monster")]
