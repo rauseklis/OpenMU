@@ -95,10 +95,12 @@ public class ItemRules : InitializerBase
         Rule(12, 17, Blocked.Repair), // Orb of Penetration
         Rule(12, 18, Blocked.Repair), // Orb of Ice Arrow
         Rule(12, 19, Blocked.Repair), // Orb of Death Stab
-        Rule(13, 0, Blocked.Repair), // Guardian Angel
-        Rule(13, 1, Blocked.Repair), // Imp
-        Rule(13, 2, Blocked.Repair), // Horn of Uniria
-        Rule(13, 3, Blocked.Repair), // Horn of Dinorant
+        Rule(13, 0, Blocked.Drop, Blocked.Repair), // Guardian Angel
+        Rule(13, 1, Blocked.Drop, Blocked.Repair), // Imp
+        Rule(13, 2, Blocked.Drop, Blocked.Repair), // Horn of Uniria
+        Rule(13, 3, Blocked.Drop, Blocked.Repair), // Horn of Dinorant
+        Rule(13, 4, Blocked.Drop), // Dark Horse (stays repairable, see the class remarks)
+        Rule(13, 5, Blocked.Drop), // Dark Raven (stays repairable, see the class remarks)
         Rule(13, 10, Blocked.Repair), // Transformation Ring
         Rule(13, 11, Blocked.Repair), // Order (Guardian/Life Stone)
         Rule(13, 14, Blocked.Repair), // Loch's Feather
@@ -114,7 +116,7 @@ public class ItemRules : InitializerBase
         Rule(13, 34, Blocked.Repair), // Claw of Beast
         Rule(13, 35, Blocked.Repair), // Fragment of Horn
         Rule(13, 36, Blocked.Repair), // Broken Horn
-        Rule(13, 37, Blocked.Repair), // Horn of Fenrir
+        Rule(13, 37, Blocked.Drop, Blocked.Repair), // Horn of Fenrir
         Rule(13, 38, Blocked.Trade, Blocked.PersonalStore, Blocked.Repair), // Moonstone Pendant
         Rule(13, 39, Blocked.Trade, Blocked.PersonalStore, Blocked.Repair), // Eilte Transfer Skeleton Ring
         Rule(13, 40, Blocked.Repair), // Jack Olantern Ring
@@ -123,15 +125,15 @@ public class ItemRules : InitializerBase
         Rule(13, 49, Blocked.Repair), // Old Scroll
         Rule(13, 50, Blocked.Repair), // Illusion Sorcerer Covenant
         Rule(13, 51, Blocked.Repair), // Scroll of Blood
-        Rule(13, 64, Blocked.Trade, Blocked.SellToNpc, Blocked.Repair), // Demon
-        Rule(13, 65, Blocked.Trade, Blocked.SellToNpc, Blocked.Repair), // Spirit of Guardian
-        Rule(13, 67, Blocked.Repair), // Pet Rudolf
+        Rule(13, 64, Blocked.Trade, Blocked.Drop, Blocked.SellToNpc, Blocked.Repair), // Demon
+        Rule(13, 65, Blocked.Trade, Blocked.Drop, Blocked.SellToNpc, Blocked.Repair), // Spirit of Guardian
+        Rule(13, 67, Blocked.Drop, Blocked.Repair), // Pet Rudolf
         Rule(13, 68, Blocked.Repair), // Snowman Transformation Ring
         Rule(13, 76, Blocked.Trade, Blocked.SellToNpc, Blocked.Repair), // Panda Ring
-        Rule(13, 80, Blocked.Trade, Blocked.SellToNpc, Blocked.Repair), // Pet Panda
+        Rule(13, 80, Blocked.Trade, Blocked.Drop, Blocked.SellToNpc, Blocked.Repair), // Pet Panda
         Rule(13, 106, Blocked.Trade, Blocked.Drop, Blocked.SellToNpc, Blocked.PersonalStore, Blocked.Repair), // Pet Unicorn
         Rule(13, 122, Blocked.Trade, Blocked.SellToNpc, Blocked.Repair), // Skeleton Transformation Ring
-        Rule(13, 123, Blocked.Trade, Blocked.SellToNpc, Blocked.Repair), // Pet Skeleton
+        Rule(13, 123, Blocked.Trade, Blocked.Drop, Blocked.SellToNpc, Blocked.Repair), // Pet Skeleton
         Rule(14, 0, Blocked.Repair), // Apple
         Rule(14, 1, Blocked.Repair), // Small Healing Potion
         Rule(14, 2, Blocked.Repair), // Healing Potion
@@ -191,15 +193,17 @@ public class ItemRules : InitializerBase
         Rule(14, 87, Blocked.Repair), // Cherry Blossom Flower Petal
         Rule(14, 90, Blocked.Repair), // Golden Cherry Blossom Branch
         Rule(14, 99, Blocked.Repair), // Christmas Firecracker
-        Rule(14, 101, Blocked.Repair), // Suspicious Scrap of Paper
-        Rule(14, 102, Blocked.Repair), // Gaion's Order
-        Rule(14, 103, Blocked.Repair), // First Secromicon Fragment
-        Rule(14, 104, Blocked.Repair), // Second Secromicon Fragment
-        Rule(14, 105, Blocked.Repair), // Third Secromicon Fragment
-        Rule(14, 106, Blocked.Repair), // Fourth Secromicon Fragment
-        Rule(14, 107, Blocked.Repair), // Fifth Secromicon Fragment
-        Rule(14, 108, Blocked.Repair), // Sixth Secromicon Fragment
-        Rule(14, 109, Blocked.Repair), // Complete Secromicon
+        Rule(14, 101, Blocked.Drop, Blocked.Repair), // Suspicious Scrap of Paper
+        Rule(14, 102, Blocked.Drop, Blocked.Repair), // Gaion's Order
+        Rule(14, 103, Blocked.Drop, Blocked.Repair), // First Secromicon Fragment
+        Rule(14, 104, Blocked.Drop, Blocked.Repair), // Second Secromicon Fragment
+        Rule(14, 105, Blocked.Drop, Blocked.Repair), // Third Secromicon Fragment
+        Rule(14, 106, Blocked.Drop, Blocked.Repair), // Fourth Secromicon Fragment
+        Rule(14, 107, Blocked.Drop, Blocked.Repair), // Fifth Secromicon Fragment
+        Rule(14, 108, Blocked.Drop, Blocked.Repair), // Sixth Secromicon Fragment
+        Rule(14, 109, Blocked.Drop, Blocked.Repair), // Complete Secromicon
+        Rule(14, 110, Blocked.Drop, Blocked.Repair), // Sign of Dimensions
+        Rule(14, 111, Blocked.Drop, Blocked.Repair), // Mirror of Dimensions
         Rule(15, 0, Blocked.Repair), // Scroll of Poison
         Rule(15, 1, Blocked.Repair), // Scroll of Meteorite
         Rule(15, 2, Blocked.Repair), // Scroll of Lighting
