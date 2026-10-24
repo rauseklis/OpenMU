@@ -44,6 +44,82 @@ internal class ItemRulesDataTest
     }
 
     /// <summary>
+    /// Tests that pets, mounts and quest items can't be dropped, while normal items still can.
+    /// </summary>
+    /// <param name="group">The item group.</param>
+    /// <param name="number">The item number.</param>
+    [TestCase((byte)13, (short)0)] // Guardian Angel
+    [TestCase((byte)13, (short)1)] // Imp
+    [TestCase((byte)13, (short)2)] // Horn of Uniria
+    [TestCase((byte)13, (short)4)] // Dark Horse
+    [TestCase((byte)13, (short)37)] // Horn of Fenrir
+    [TestCase((byte)13, (short)123)] // Pet Skeleton
+    [TestCase((byte)14, (short)102)] // Gaion's Order
+    [TestCase((byte)14, (short)109)] // Complete Secromicon
+    public void PetsAndQuestItemsCanNotBeDropped(byte group, short number)
+    {
+        Assert.That(GetItem(this._season6, group, number).IsDroppable, Is.False);
+    }
+
+    /// <summary>
+    /// Tests that the update makes the pets undroppable in an existing database.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task UpdateMakesPetsUndroppableAsync()
+    {
+        var contextProvider = new InMemoryPersistenceContextProvider();
+        var dataInitialization = new VersionSeasonSix.DataInitialization(contextProvider, new NullLoggerFactory());
+        await dataInitialization.CreateInitialDataAsync(1, true).ConfigureAwait(false);
+        using var context = contextProvider.CreateNewContext();
+        var gameConfiguration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
+        foreach (var item in gameConfiguration.Items)
+        {
+            item.IsDroppable = true;
+        }
+
+        await new PetsAndQuestItemsNotDroppableUpdatePlugIn().ApplyUpdateAsync(context, gameConfiguration).ConfigureAwait(false);
+
+        Assert.That(GetItem(gameConfiguration, 13, 1).IsDroppable, Is.False);
+        Assert.That(GetItem(gameConfiguration, 0, 0).IsDroppable, Is.True);
+    }
+
+    /// <summary>
+    /// Tests that the server start installs the drop rules once, and only on a database which is not yet up to date.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task StartupInstallerMakesPetsUndroppableOnceAsync()
+    {
+        var contextProvider = new InMemoryPersistenceContextProvider();
+        var dataInitialization = new VersionSeasonSix.DataInitialization(contextProvider, new NullLoggerFactory());
+        await dataInitialization.CreateInitialDataAsync(1, true).ConfigureAwait(false);
+        using (var context = contextProvider.CreateNewContext())
+        {
+            var gameConfiguration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
+            foreach (var item in gameConfiguration.Items)
+            {
+                item.IsDroppable = true;
+            }
+
+            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(u => u.Version == (int)UpdateVersion.PetsAndQuestItemsNotDroppable).ToList())
+            {
+                await context.DeleteAsync(update).ConfigureAwait(false);
+            }
+
+            await context.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        Assert.That(await PetsAndQuestItemsNotDroppableUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false), Is.True);
+        Assert.That(await PetsAndQuestItemsNotDroppableUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false), Is.False);
+
+        using var reloaded = contextProvider.CreateNewContext();
+        var persisted = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
+        Assert.That(GetItem(persisted, 13, 1).IsDroppable, Is.False);
+        Assert.That(GetItem(persisted, 0, 0).IsDroppable, Is.True);
+    }
+
+    /// <summary>
     /// Tests that a new season 6 database contains the item rules.
     /// </summary>
     [Test]
