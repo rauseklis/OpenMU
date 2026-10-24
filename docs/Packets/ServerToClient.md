@@ -244,7 +244,7 @@
   * [C2 D6 80 - JewelBankStateResponse (by server)](C2-D6-80-JewelBankStateResponse_by-server.md)
   * [C1 D6 81 - JewelBankOperationResponse (by server)](C1-D6-81-JewelBankOperationResponse_by-server.md)
   * [C1 D6 82 - JewelBankPickupNotification (by server)](C1-D6-82-JewelBankPickupNotification_by-server.md)
-  * [C1 D7 80 - ResetNpcStateResponse (by server)](C1-D7-80-ResetNpcStateResponse_by-server.md)
+  * [C1 DC 80 - ResetNpcStateResponse (by server)](C1-DC-80-ResetNpcStateResponse_by-server.md)
   * [C1 DE 00 - CharacterClassCreationUnlock (by server)](C1-DE-00-CharacterClassCreationUnlock_by-server.md)
   * [C1 E5 - GuildRelationshipRequest (by server)](C1-E5-GuildRelationshipRequest_by-server.md)
   * [C1 E6 - GuildRelationshipChangeResult (by server)](C1-E6-GuildRelationshipChangeResult_by-server.md)

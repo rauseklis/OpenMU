@@ -1,4 +1,4 @@
-# C1 D7 80 - ResetNpcStateResponse (by server)
+# C1 DC 80 - ResetNpcStateResponse (by server)
 
 ## Is sent when
 
@@ -14,7 +14,7 @@ The client shows or updates the window of the reset NPC.
 |-------|--------|-----------|-------|-------------|
 | 0 | 1 |   Byte   | 0xC1  | [Packet type](PacketTypes.md) |
 | 1 | 1 |    Byte   |   30   | Packet header - length of the packet |
-| 2 | 1 |    Byte   | 0xD7  | Packet header - packet type identifier |
+| 2 | 1 |    Byte   | 0xDC  | Packet header - packet type identifier |
 | 3 | 1 |    Byte   | 0x80  | Packet header - sub packet type identifier |
 | 4 | 1 | Byte |  | Outcome |
 | 5 | 1 | Byte |  | Flags |

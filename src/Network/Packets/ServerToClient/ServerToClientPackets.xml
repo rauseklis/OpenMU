@@ -14845,7 +14845,7 @@
     </Packet>
     <Packet>
       <HeaderType>C1HeaderWithSubCode</HeaderType>
-      <Code>D7</Code>
+      <Code>DC</Code>
       <SubCode>80</SubCode>
       <Name>ResetNpcStateResponse</Name>
       <Length>30</Length>

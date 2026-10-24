@@ -14,7 +14,7 @@ using MUnique.OpenMU.PlugIns;
 using Wire = MUnique.OpenMU.Network.Packets.ClientToServer;
 
 /// <summary>
-/// Packet handler for the packets of the reset NPC window, with the 0xD7 identifier.
+/// Packet handler for the packets of the reset NPC window, with the 0xDC identifier.
 /// </summary>
 [PlugIn]
 [Guid("D2F4A6C8-0B1D-4E3F-8A59-7C6B5D4E3F21")]
@@ -23,7 +23,7 @@ internal class ResetNpcGroupHandlerPlugIn : GroupPacketHandlerPlugIn
     /// <summary>
     /// The group key.
     /// </summary>
-    internal const byte GroupKey = 0xD7;
+    internal const byte GroupKey = 0xDC;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResetNpcGroupHandlerPlugIn"/> class.

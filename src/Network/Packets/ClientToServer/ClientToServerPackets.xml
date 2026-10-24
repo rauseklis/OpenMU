@@ -4889,7 +4889,7 @@
     </Packet>
     <Packet>
       <HeaderType>C3HeaderWithSubCode</HeaderType>
-      <Code>D7</Code>
+      <Code>DC</Code>
       <SubCode>00</SubCode>
       <Name>ResetNpcResetRequest</Name>
       <Length>4</Length>
@@ -4901,7 +4901,7 @@
     </Packet>
     <Packet>
       <HeaderType>C3HeaderWithSubCode</HeaderType>
-      <Code>D7</Code>
+      <Code>DC</Code>
       <SubCode>01</SubCode>
       <Name>ResetNpcInfoRequest</Name>
       <Length>4</Length>

@@ -19534,7 +19534,7 @@ public readonly struct ResetNpcResetRequest
     /// <summary>
     /// Gets the operation code of this data packet.
     /// </summary>
-    public static byte Code => 0xD7;
+    public static byte Code => 0xDC;
 
     /// <summary>
     /// Gets the operation sub-code of this data packet.
@@ -19611,7 +19611,7 @@ public readonly struct ResetNpcInfoRequest
     /// <summary>
     /// Gets the operation code of this data packet.
     /// </summary>
-    public static byte Code => 0xD7;
+    public static byte Code => 0xDC;
 
     /// <summary>
     /// Gets the operation sub-code of this data packet.
