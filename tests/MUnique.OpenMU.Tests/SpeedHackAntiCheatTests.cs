@@ -325,6 +325,36 @@ public class SpeedHackAntiCheatTests
     }
 
     /// <summary>
+    /// Tests that a player who is iced on the server but moves at full speed (the game client may already have
+    /// dropped its own slowdown) is not warned.
+    /// </summary>
+    [Test]
+    public async Task TestIcedPlayerWalkingAtFullSpeedIsNotWarnedAsync()
+    {
+        var player = await CreatePlayerWithSpeedAttributesAsync().ConfigureAwait(false);
+        player.Attributes![Stats.MovementSpeed] = 17;
+        player.Attributes![Stats.MovementSpeedFactor] = 0.5f;
+        var fullSpeedDelay = TimeSpan.FromMilliseconds(4000.0 / 17.0);
+        Assert.That(player.StepDelay.TotalMilliseconds, Is.EqualTo(fullSpeedDelay.TotalMilliseconds * 2).Within(1.0));
+
+        for (int i = 0; i < 12; i++)
+        {
+            var nextFrom = new Point((byte)(StartPoint.X + i * 2), StartPoint.Y);
+            var nextTo = new Point((byte)(StartPoint.X + i * 2 + 2), StartPoint.Y);
+            player.Position = nextFrom;
+            player.GameContext.FeaturePlugIns.GetPlugIn<SpeedHackDetectPlugIn>()!.SetLastAlertTime(player, DateTime.MinValue);
+
+            WalkingStep[] steps = [new() { From = nextFrom, To = nextTo, Direction = Direction.East }];
+
+            // Two tiles at the full-speed step delay.
+            await Task.Delay(fullSpeedDelay * 2).ConfigureAwait(false);
+            await player.WalkToAsync(nextTo, steps).ConfigureAwait(false);
+        }
+
+        Assert.That(player.GameContext.FeaturePlugIns.GetPlugIn<SpeedHackDetectPlugIn>()!.GetWarningCount(player), Is.EqualTo(0));
+    }
+
+    /// <summary>
     /// Tests that the speed check is bypassed when the plugin is disabled.
     /// </summary>
     [Test]
