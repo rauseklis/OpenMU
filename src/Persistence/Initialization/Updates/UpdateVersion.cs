@@ -647,4 +647,9 @@ public enum UpdateVersion
     /// Applies the final Devil Square EXP table and removes completion item rewards.
     /// </summary>
     DevilSquareZenAndExperienceOnly = 139,
+
+    /// <summary>
+    /// Sets DS seven completion EXP to 60, 55, 50 and 45 million.
+    /// </summary>
+    DevilSquareSevenExperience = 140,
 }
