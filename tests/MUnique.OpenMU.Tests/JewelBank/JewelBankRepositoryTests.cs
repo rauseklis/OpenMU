@@ -194,6 +194,57 @@ public class JewelBankRepositoryTests
     }
 
     /// <summary>
+    /// Spending uses units up: the balance drops and no item is created.
+    /// </summary>
+    [Test]
+    public async Task SpendUsesUnitsUpWithoutCreatingItems()
+    {
+        await this._repository.CreditPickupAsync(this._accountId, this._characterId, FruitStrength, 10, Cap);
+
+        var result = await this._repository.SpendAsync(this._accountId, this._characterId, Guid.NewGuid(), Units(FruitStrength, 4));
+
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That((await this._repository.GetStateAsync(this._accountId)).CountOf(FruitStrength), Is.EqualTo(6));
+        Assert.That(await this.InventoryItemCountAsync(), Is.EqualTo(0));
+    }
+
+    /// <summary>
+    /// Spending more than one balance holds changes nothing, not even the kinds which would have been enough.
+    /// </summary>
+    [Test]
+    public async Task SpendIsAllOrNothing()
+    {
+        await this._repository.CreditPickupAsync(this._accountId, this._characterId, FruitStrength, 10, Cap);
+        await this._repository.CreditPickupAsync(this._accountId, this._characterId, Bless, 1, Cap);
+
+        var result = await this._repository.SpendAsync(
+            this._accountId,
+            this._characterId,
+            Guid.NewGuid(),
+            new Dictionary<byte, long> { [FruitStrength] = 5, [Bless] = 2 });
+
+        Assert.That(result.Result, Is.EqualTo(JewelBankResultCode.InsufficientBalance));
+        var state = await this._repository.GetStateAsync(this._accountId);
+        Assert.That(state.CountOf(FruitStrength), Is.EqualTo(10));
+        Assert.That(state.CountOf(Bless), Is.EqualTo(1));
+    }
+
+    /// <summary>
+    /// A repeated operation identifier spends only once.
+    /// </summary>
+    [Test]
+    public async Task SpendWithTheSameOperationIdentifierAppliesOnce()
+    {
+        await this._repository.CreditPickupAsync(this._accountId, this._characterId, FruitStrength, 10, Cap);
+        var operation = Guid.NewGuid();
+
+        await this._repository.SpendAsync(this._accountId, this._characterId, operation, Units(FruitStrength, 3));
+        await this._repository.SpendAsync(this._accountId, this._characterId, operation, Units(FruitStrength, 3));
+
+        Assert.That((await this._repository.GetStateAsync(this._accountId)).CountOf(FruitStrength), Is.EqualTo(7));
+    }
+
+    /// <summary>
     /// A deposit takes only the requested amount of a kind and leaves the rest in the inventory.
     /// </summary>
     [Test]
