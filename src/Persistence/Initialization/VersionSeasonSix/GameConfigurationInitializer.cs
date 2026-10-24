@@ -96,9 +96,10 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new Gates(this.Context, this.GameConfiguration).Initialize();
         new Quest(this.Context, this.GameConfiguration).Initialize();
         new Quests(this.Context, this.GameConfiguration).Initialize();
-        new DevilSquareInitializer(this.Context, this.GameConfiguration).Initialize();
+        this.InitializeDevilSquareRewards();
         new BloodCastleInitializer(this.Context, this.GameConfiguration).Initialize();
         new BloodCastleCompletionRewards(this.Context, this.GameConfiguration).Initialize();
+        new DevilSquareFirstPlaceItems(this.Context, this.GameConfiguration).Initialize();
         new ChaosCastleInitializer(this.Context, this.GameConfiguration).Initialize();
         new CastleSiegeInitializer(this.Context, this.GameConfiguration).Initialize();
         new KanturuInitializer(this.Context, this.GameConfiguration).Initialize();
@@ -157,6 +158,14 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         jewelMix.MixedJewel = packedJewel;
         this.GameConfiguration.JewelMixes.Add(jewelMix);
     }
+
+    private void InitializeDevilSquareRewards()
+    {
+        new DevilSquareInitializer(this.Context, this.GameConfiguration).Initialize();
+        new DevilSquareZenRewards(this.Context, this.GameConfiguration).Initialize();
+        new DevilSquareExperienceRewards(this.Context, this.GameConfiguration).Initialize();
+    }
+
     private void InitializeAncientFullSetStats()
     {
         new TierOneAncientStats(this.Context, this.GameConfiguration).Initialize();

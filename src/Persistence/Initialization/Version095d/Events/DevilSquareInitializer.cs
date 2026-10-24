@@ -152,6 +152,15 @@ internal class DevilSquareInitializer : InitializerBase
         return devilSquare;
     }
 
+    /// <summary>
+    /// Gets the base Zen payout shared by the Devil Square reward initializers.
+    /// </summary>
+    /// <param name="level">The event level.</param>
+    /// <param name="rank">The player's rank.</param>
+    /// <returns>The original Zen payout.</returns>
+    internal static int GetBaseZenReward(int level, int rank)
+        => RewardTable.Single(entry => entry.GameLevel == level && entry.Rank == rank).Money;
+
     private void CreateRewards(byte level, MiniGameDefinition devilSquare)
     {
         for (int rank = 1; rank <= 4; rank++)

@@ -637,4 +637,9 @@ public enum UpdateVersion
     /// Corrects ribbon opening odds and Blood Castle completion payouts.
     /// </summary>
     RibbonOpeningOddsAndBloodCastle = 137,
+
+    /// <summary>
+    /// Configures the reviewed Devil Square Zen and EXP completion rewards.
+    /// </summary>
+    DevilSquareCompletionRewards = 138,
 }

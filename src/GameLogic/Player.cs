@@ -888,6 +888,13 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     public ValueTask AddMasterExperienceAsync(int experience, IAttackable? killedObject) => this._experience.AddMasterExperienceAsync(experience, killedObject);
 
     /// <summary>
+    /// Adds a fixed event Master EXP reward with configured overflow handling.
+    /// </summary>
+    /// <param name="experience">The configured reward.</param>
+    /// <returns>The asynchronous operation.</returns>
+    public ValueTask AddMasterExperienceRewardAsync(int experience) => this._experience.AddMasterExperienceRewardAsync(experience);
+
+    /// <summary>
     /// Adds the experience to the current character.
     /// </summary>
     /// <param name="experience">The experience that should be added.</param>

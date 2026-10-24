@@ -632,9 +632,19 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed corrected ribbon opening odds and Blood Castle completion payouts.");
         }
 
+        await this.InstallDevilSquareRewardsAsync(contextProvider).ConfigureAwait(false);
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
+    }
+
+    private async Task InstallDevilSquareRewardsAsync(IPersistenceContextProvider contextProvider)
+    {
+        if (await DevilSquareRewardsUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the reviewed Devil Square completion rewards.");
+        }
     }
 
     private async Task InstallAncientUpdatesAsync(IPersistenceContextProvider contextProvider)

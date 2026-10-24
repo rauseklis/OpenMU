@@ -143,6 +143,22 @@ internal sealed class PlayerExperience
     }
 
     /// <summary>
+    /// Grants a fixed event reward under the experience lock across Master level-ups.
+    /// </summary>
+    /// <param name="experience">The configured reward.</param>
+    /// <returns>The asynchronous operation.</returns>
+    public async ValueTask AddMasterExperienceRewardAsync(int experience)
+    {
+        if (this._player.Attributes?[PremiumBuffStats.ExperienceBlocked] > 0)
+        {
+            return;
+        }
+
+        using var guard = await this._lock.LockAsync().ConfigureAwait(false);
+        await this.AddMasterRewardCoreAsync(experience).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Determines whether the player gains master experience instead of normal experience.
     /// </summary>
     /// <param name="isMasterExperience">If set to <c>true</c>, master experience is gained.</param>
@@ -160,6 +176,28 @@ internal sealed class PlayerExperience
         var isMaxLevel = currentLevel == this._player.GameContext.Configuration.MaximumLevel;
         isMasterExperience = characterClass.IsMasterClass && isMaxLevel;
         return true;
+    }
+
+    private async ValueTask AddMasterRewardCoreAsync(int experience)
+    {
+        var player = this._player;
+        var character = player.SelectedCharacter!;
+        var attributes = player.Attributes!;
+        var configuration = player.GameContext.Configuration;
+        var remaining = experience;
+        while (remaining > 0 && attributes[Stats.MasterLevel] < configuration.MaximumMasterLevel)
+        {
+            var previousExperience = character.MasterExperience;
+            var previousLevel = attributes[Stats.MasterLevel];
+            await this.AddMasterExperienceCoreAsync(remaining, null).ConfigureAwait(false);
+            var gained = (int)(character.MasterExperience - previousExperience);
+            remaining -= gained;
+            if (configuration.PreventExperienceOverflow
+                || (gained == 0 && attributes[Stats.MasterLevel] == previousLevel))
+            {
+                return;
+            }
+        }
     }
 
     private async ValueTask AddMasterExperienceCoreAsync(int experience, IAttackable? killedObject)

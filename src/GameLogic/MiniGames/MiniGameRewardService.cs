@@ -133,7 +133,7 @@ internal sealed class MiniGameRewardService
         switch (reward.RewardType)
         {
             case MiniGameRewardType.Experience:
-                await player.AddExperienceAsync(reward.RewardAmount, null).ConfigureAwait(false);
+                await MiniGameExperienceRewards.GiveAsync(this._definition, player, reward.RewardAmount).ConfigureAwait(false);
                 break;
             case MiniGameRewardType.ExperiencePerRemainingSeconds:
                 var seconds = (int)this._remainingTimeProvider().TotalSeconds;
