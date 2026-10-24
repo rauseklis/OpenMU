@@ -77,6 +77,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new PremiumBuffs(this.Context, this.GameConfiguration).Initialize();
         new AncientSets(this.Context, this.GameConfiguration).Initialize();
         new BoxOfLuck(this.Context, this.GameConfiguration).Initialize();
+        new RibbonBoxRewards(this.Context, this.GameConfiguration).Initialize();
         new TriteArmors(this.Context, this.GameConfiguration).Initialize();
         new RageFighterAncientSets(this.Context, this.GameConfiguration).Initialize();
         this.InitializeAncientFullSetStats();

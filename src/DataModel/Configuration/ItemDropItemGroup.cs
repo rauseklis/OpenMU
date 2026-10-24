@@ -88,6 +88,11 @@ public partial class ItemDropItemGroup : DropItemGroup
     public double? SkillChance { get; set; }
 
     /// <summary>
+    /// Gets or sets the luck chance for this box reward. Null preserves shared rules.
+    /// </summary>
+    public double? LuckChance { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether jewelry rewards always receive a supported HP recovery or
     /// maximum-mana option at an equally selected level from one through three.
     /// </summary>

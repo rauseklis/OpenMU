@@ -626,4 +626,9 @@ public enum UpdateVersion
     /// Adds ribbon boxes to Lumen's shop.
     /// </summary>
     RibbonBoxShop = 134,
+
+    /// <summary>
+    /// Configures the approved ribbon box contents.
+    /// </summary>
+    RibbonBoxRewards = 135,
 }
