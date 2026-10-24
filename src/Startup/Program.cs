@@ -610,6 +610,15 @@ internal sealed class Program : IDisposable
             contextProvider = await this.PrepareRepositoryProviderAsync(args.Contains("-reinit"), version, loggerFactory, changeListener).ConfigureAwait(false);
         }
 
+        await this.InstallAncientUpdatesAsync(contextProvider).ConfigureAwait(false);
+
+        await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
+
+        return contextProvider;
+    }
+
+    private async Task InstallAncientUpdatesAsync(IPersistenceContextProvider contextProvider)
+    {
         if (await AncientTierBoxUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
         {
             this._logger.Information("Installed the approved Ancient box rewards and Lorencia shop listings.");
@@ -620,9 +629,10 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed the approved Tier 1 Ancient full-set stat bonuses.");
         }
 
-        await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
-
-        return contextProvider;
+        if (await TierTwoAncientStatsUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the approved Tier 2 Ancient full-set stat bonuses.");
+        }
     }
 
     private async Task<IMigratableDatabaseContextProvider> PrepareRepositoryProviderAsync(bool reinit, string version, ILoggerFactory loggerFactory, IConfigurationChangeListener changeListener)

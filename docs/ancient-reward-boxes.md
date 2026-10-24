@@ -41,7 +41,7 @@ using inactive styling until all required pieces are equipped. Both players
 need the matching client update to see these options.
 
 Rave is excluded from these three reward pools. Summoner's low tier remains
-unassigned. The mid and high tiers receive no new all-stat bonus.
+unassigned. The six Tier 2 sets (Garuda, Heras, Gaia, Eplete, Semeden and Chamer) additionally grant +50 Strength, +50 Agility, +50 Vitality and +50 Energy once per complete, unbroken set. All existing options remain; Command is unchanged. Tier 3 receives no new all-stat bonus.
 
 These are the unlocked Silver and Golden Boxes. Keys and sealed boxes are not
 used by these opening rules. Box of Luck is item **14/11, level 0**; Silver Box
