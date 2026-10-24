@@ -42,6 +42,12 @@ public partial class GameServerDefinition
     public bool SmallBonusDropsEnabled { get; set; }
 
     /// <summary>
+    /// Gets or sets the combined bonus chance, split equally between eligible groups.
+    /// Null preserves legacy absolute group chances. Reload the server after changing it.
+    /// </summary>
+    public double? SmallBonusDropChance { get; set; }
+
+    /// <summary>
     /// Gets or sets the server configuration.
     /// </summary>
     [Required]

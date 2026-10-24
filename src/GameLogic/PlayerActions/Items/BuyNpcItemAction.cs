@@ -94,7 +94,7 @@ public class BuyNpcItemAction
 
     private ValueTask<bool> CheckMoneyAsync(Player player, Item item)
     {
-        var price = this._priceCalculator.CalculateFinalBuyingPrice(item);
+        var price = this._priceCalculator.CalculateMerchantBuyingPrice(item);
         return this._castleSiegeTaxProvider.TryPayStoreCostAsync(player, price);
     }
 }

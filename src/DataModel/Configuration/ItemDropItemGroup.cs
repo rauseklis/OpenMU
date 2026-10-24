@@ -73,4 +73,22 @@ public partial class ItemDropItemGroup : DropItemGroup
     /// Gets or sets the effect which should be shown in the game client when this drop group is applied.
     /// </summary>
     public ItemDropEffect DropEffect { get; set; }
+
+    /// <summary>
+    /// Gets or sets the chance for a second Excellent option. Null preserves shared rules.
+    /// When set, an Excellent reward receives exactly one or two distinct supported options.
+    /// </summary>
+    public double? ExcellentSecondOptionChance { get; set; }
+
+    /// <summary>
+    /// Gets or sets the supported skill chance for ordinary rewards. Null preserves shared rules.
+    /// Excellent rewards always retain their supported skill.
+    /// </summary>
+    public double? SkillChance { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether jewelry rewards always receive a supported HP recovery or
+    /// maximum-mana option at an equally selected level from one through three.
+    /// </summary>
+    public bool GuaranteeJewelryOption { get; set; }
 }

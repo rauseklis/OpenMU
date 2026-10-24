@@ -41,6 +41,7 @@ public class DefaultDropGenerator : IDropGenerator
     private readonly AsyncLock _lock = new();
     private readonly IRandomizer _randomizer;
     private readonly bool _smallBonusDropsEnabled;
+    private readonly double? _smallBonusDropChance;
     private readonly IList<ItemDefinition> _ancientItems;
     private readonly IList<ItemDefinition> _droppableItems;
     private readonly IList<ItemDefinition>?[] _droppableItemsPerMonsterLevel = new IList<ItemDefinition>?[byte.MaxValue + 1];
@@ -55,11 +56,18 @@ public class DefaultDropGenerator : IDropGenerator
     /// <param name="config">The configuration.</param>
     /// <param name="randomizer">The randomizer.</param>
     /// <param name="smallBonusDropsEnabled">Whether this server enables configured small-bonus drops.</param>
-    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer, bool smallBonusDropsEnabled = false)
+    /// <param name="smallBonusDropChance">An optional combined bonus chance, shared equally by eligible groups.</param>
+    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer, bool smallBonusDropsEnabled = false, double? smallBonusDropChance = null)
     {
+        if (smallBonusDropChance is { } chance && (!double.IsFinite(chance) || chance is < 0 or > 1))
+        {
+            throw new ArgumentOutOfRangeException(nameof(smallBonusDropChance));
+        }
+
         this._excellentItemDropLevelDelta = config.ExcellentItemDropLevelDelta;
         this._randomizer = randomizer;
         this._smallBonusDropsEnabled = smallBonusDropsEnabled;
+        this._smallBonusDropChance = smallBonusDropChance;
         this._maxItemOptionLevelDrop = IsValidOptionLevelDrop(config.MaximumItemOptionLevelDrop)
             ? config.MaximumItemOptionLevelDrop
             : DefaultMaxItemOptionLevelDrop;
@@ -386,6 +394,17 @@ public class DefaultDropGenerator : IDropGenerator
 
         // Absolute probabilities: neither ordinary loot weights nor premium bonuses apply.
         var threshold = this._randomizer.NextDouble();
+        if (this._smallBonusDropChance is { } totalChance)
+        {
+            if (threshold >= totalChance)
+            {
+                return null;
+            }
+
+            var index = this._randomizer.NextInt(0, this._smallBonusDropGroups.Count);
+            return this.GenerateItemFromGroup(monster, this._smallBonusDropGroups[index]);
+        }
+
         foreach (var group in this._smallBonusDropGroups)
         {
             if (threshold < group.Chance)
@@ -410,7 +429,10 @@ public class DefaultDropGenerator : IDropGenerator
 
             if (group.ItemType == SpecialItemType.SmallBonus)
             {
-                this._smallBonusDropGroups.Add(group);
+                if (group.Chance > 0)
+                {
+                    this._smallBonusDropGroups.Add(group);
+                }
             }
             else if (group.Chance >= 1.0)
             {
@@ -444,7 +466,7 @@ public class DefaultDropGenerator : IDropGenerator
 
         if (selectedGroup is ItemDropItemGroup itemDropItemGroup)
         {
-            item.Level = (byte)this._randomizer.NextInt(itemDropItemGroup.MinimumLevel, itemDropItemGroup.MaximumLevel + 1);
+            this.ApplyBoxReward(item, itemDropItemGroup);
         }
         else if (selectedGroup.ItemLevel is { } itemLevel)
         {
@@ -458,6 +480,12 @@ public class DefaultDropGenerator : IDropGenerator
         item.Level = GetDroppedItemLevel(item.Definition!, Math.Min(item.Level, item.Definition!.MaximumItemLevel));
 
         return item;
+    }
+
+    private void ApplyBoxReward(Item item, ItemDropItemGroup group)
+    {
+        item.Level = (byte)this._randomizer.NextInt(group.MinimumLevel, group.MaximumLevel + 1);
+        BoxRewardOptions.Apply(item, group, this._randomizer);
     }
 
     private void ApplyOption(Item item, ItemOptionDefinition option)

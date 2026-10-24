@@ -291,6 +291,53 @@ public class DropGeneratorTest
         Assert.That(new GameServerDefinition().SmallBonusDropsEnabled, Is.False);
     }
 
+    /// <summary>
+    /// Tests that an editable total rate is preserved with different eligible pool sizes.
+    /// </summary>
+    /// <param name="chance">The configured total probability.</param>
+    /// <param name="count">The eligible bonus count.</param>
+    [TestCase(0.05, 1)]
+    [TestCase(0.05, 3)]
+    [TestCase(0.2, 2)]
+    [TestCase(0.0, 2)]
+    [TestCase(1.0, 2)]
+    public async Task TestEditableCombinedBonusChanceAsync(double chance, int count)
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        for (var index = 0; index < count; index++)
+        {
+            player.CurrentMap!.Definition.DropItemGroups.Add(1, SpecialItemType.SmallBonus, true);
+        }
+
+        double roll = 0;
+        var selectedIndex = 0;
+        var randomizer = new Mock<IRandomizer>();
+        randomizer.Setup(r => r.NextDouble()).Returns(() => roll);
+        randomizer.Setup(r => r.NextInt(It.IsAny<int>(), It.IsAny<int>()))
+            .Returns((int minimum, int maximum) => maximum == count ? selectedIndex : minimum);
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), randomizer.Object, true, chance);
+        var monster = this.GetMonster(3, 70);
+        var hits = 0;
+        var variants = new HashSet<ItemDefinition>();
+        const int samples = 1000;
+        for (var index = 0; index < samples; index++)
+        {
+            roll = (index + 0.5) / samples;
+            selectedIndex = index % count;
+            var (items, _) = await generator.GenerateItemDropsAsync(monster, 1, player).ConfigureAwait(false);
+            var result = items.ToList();
+            Assert.That(result.Count, Is.LessThanOrEqualTo(1));
+            hits += result.Count;
+            foreach (var item in result)
+            {
+                variants.Add(item.Definition!);
+            }
+        }
+
+        Assert.That(hits, Is.EqualTo((int)(samples * chance)));
+        Assert.That(variants.Count, Is.EqualTo(chance == 0 ? 0 : count));
+    }
+
     private MonsterDefinition GetMonster(int numberOfDrops, byte level)
     {
         var monster = new Mock<MonsterDefinition>();
