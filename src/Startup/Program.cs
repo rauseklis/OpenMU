@@ -617,6 +617,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Added ribbon boxes to the Lorencia bar for 1,000 Zen each.");
         }
 
+        if (await RibbonBoxRewardsUpdateInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the approved red, green and blue ribbon box contents.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

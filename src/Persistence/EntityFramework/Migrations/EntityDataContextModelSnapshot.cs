@@ -2842,6 +2842,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<double?>("SkillChance")
                         .HasColumnType("double precision");
 
+                    b.Property<double?>("LuckChance")
+                        .HasColumnType("double precision");
+
                     b.Property<bool>("GuaranteeJewelryOption")
                         .HasColumnType("boolean");
 

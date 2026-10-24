@@ -24,6 +24,7 @@ public static class BoxRewardOptions
     /// <param name="randomizer">The randomizer.</param>
     public static void Apply(Item item, ItemDropItemGroup group, IRandomizer randomizer)
     {
+        ApplyLuck(item, group, randomizer);
         ApplyExcellentOptions(item, group, randomizer);
         if (group.ItemType == SpecialItemType.Excellent)
         {
@@ -38,6 +39,27 @@ public static class BoxRewardOptions
         if (group.GuaranteeJewelryOption)
         {
             ApplyJewelryOption(item, randomizer);
+        }
+    }
+
+    private static void ApplyLuck(Item item, ItemDropItemGroup group, IRandomizer randomizer)
+    {
+        if (group.LuckChance is not { } chance)
+        {
+            return;
+        }
+
+        ValidateChance(chance);
+        var luck = item.Definition!.PossibleItemOptions.SelectMany(options => options.PossibleOptions)
+            .FirstOrDefault(option => Equals(option.OptionType, ItemOptionTypes.Luck));
+        foreach (var link in item.ItemOptions.Where(link => Equals(link.ItemOption?.OptionType, ItemOptionTypes.Luck)).ToArray())
+        {
+            item.ItemOptions.Remove(link);
+        }
+
+        if (luck is not null && randomizer.NextDouble() < chance)
+        {
+            item.ItemOptions.Add(new ItemOptionLink { ItemOption = luck });
         }
     }
 
