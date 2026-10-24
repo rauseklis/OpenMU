@@ -23,7 +23,9 @@ using Npgsql;
 [TestFixture]
 public class TierOneAncientStatsDatabaseTests
 {
-    private const string FixtureConnection = "Host=127.0.0.1;Port=55473;Database=mu_tier1_full_stats;User Id=tier1validation;Command Timeout=120;";
+    private static readonly string FixtureDatabase = $"mu_tier1_full_stats_{Guid.NewGuid():N}";
+
+    private static readonly string FixtureConnection = $"Host=127.0.0.1;Port=55473;Database={FixtureDatabase};User Id=tier1validation;Command Timeout=120;";
 
     /// <summary>
     /// Seeds a new disposable database, simulates the previous options, and persists the upgrade once.
@@ -37,7 +39,8 @@ public class TierOneAncientStatsDatabaseTests
         await using (var connection = new NpgsqlConnection("Host=127.0.0.1;Port=55473;Database=postgres;User Id=tier1validation;"))
         {
             await connection.OpenAsync().ConfigureAwait(false);
-            await using var command = new NpgsqlCommand("SELECT count(*) FROM pg_database WHERE datname='mu_tier1_full_stats'", connection);
+            await using var command = new NpgsqlCommand("SELECT count(*) FROM pg_database WHERE datname=@database", connection);
+            command.Parameters.AddWithValue("database", FixtureDatabase);
             Assert.That(Convert.ToInt64(await command.ExecuteScalarAsync().ConfigureAwait(false)), Is.Zero, "Refusing to overwrite an existing fixture.");
         }
 
@@ -50,6 +53,8 @@ public class TierOneAncientStatsDatabaseTests
         await using (var database = new EntityDataContext())
         {
             await database.Database.ExecuteSqlRawAsync("""
+                DELETE FROM config."ConfigurationUpdate" WHERE "Version"=131;
+                UPDATE config."ConfigurationUpdateState" SET "CurrentInstalledVersion"=130;
                 UPDATE config."ConnectServerDefinition" SET "ClientListenerPort"="ClientListenerPort"-20000;
                 UPDATE config."GameServerEndpoint" SET "NetworkPort"="NetworkPort"-20000;
                 UPDATE config."ChatServerEndpoint" SET "NetworkPort"="NetworkPort"-20000;
