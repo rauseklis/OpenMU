@@ -28,9 +28,20 @@ than the ordinary Storm Hard items at number 60. Trite is permanent equipment:
 it can be traded, dropped, stored, repaired and sold in a personal shop. Its
 existing client base stats and level 150 requirement are retained.
 
-The existing set bonuses are unchanged. Rave is excluded from these three
-reward pools. Summoner's low tier and the proposed all-stat bonuses remain
-unassigned or deferred.
+All existing set bonuses are kept. A complete Hyperion Bronze, Barnake Pad or
+Fase Silk set additionally grants **+100 Strength, +100 Agility, +100 Vitality
+and +100 Energy**. A complete Cloud Brass set additionally grants **+75 to each
+of those four stats**. These bonuses require every distinct set piece, with
+nonzero durability. Removing or breaking any required piece removes the new
+bonuses; partial-set bonuses retain their original behavior. Two different
+complete sets grant their respective bonuses separately. Command is unchanged.
+
+The item tooltip lists the new four full-set options before the set is complete,
+using inactive styling until all required pieces are equipped. Both players
+need the matching client update to see these options.
+
+Rave is excluded from these three reward pools. Summoner's low tier remains
+unassigned. The mid and high tiers receive no new all-stat bonus.
 
 These are the unlocked Silver and Golden Boxes. Keys and sealed boxes are not
 used by these opening rules. Box of Luck is item **14/11, level 0**; Silver Box

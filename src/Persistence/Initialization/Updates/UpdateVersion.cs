@@ -618,4 +618,5 @@ public enum UpdateVersion
     CrustRespawnDelay = 128,
     LowerFruitDropChance = 129,
     AncientTierBoxes = 130,
+    TierOneAncientStats = 131,
 }
