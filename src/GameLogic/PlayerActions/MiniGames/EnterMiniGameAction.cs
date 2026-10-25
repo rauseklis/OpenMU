@@ -188,7 +188,7 @@ public class EnterMiniGameAction
         }
     }
 
-    private bool CheckTicketItem(MiniGameDefinition miniGameDefinition, Player player, byte gameTicketInventoryIndex, out Item? ticketItem)
+    internal bool CheckTicketItem(MiniGameDefinition miniGameDefinition, Player player, byte gameTicketInventoryIndex, out Item? ticketItem)
     {
         ticketItem = null;
 
@@ -206,7 +206,7 @@ public class EnterMiniGameAction
             }
         }
 
-        foreach (var candidateItem in player.Inventory?.FindItemsByDefinition(ticketItemDefinition) ?? Enumerable.Empty<Item>())
+        foreach (var candidateItem in player.Inventory?.Items ?? Enumerable.Empty<Item>())
         {
             if (this.IsValidTicket(candidateItem, ticketItemDefinition, miniGameDefinition))
             {
@@ -221,9 +221,10 @@ public class EnterMiniGameAction
     private bool IsValidTicket(Item? ticketItem, ItemDefinition requiredItemDefinition, MiniGameDefinition miniGameDefinition)
     {
         return ticketItem is not null
-            && requiredItemDefinition.Equals(ticketItem.Definition)
-            && ticketItem.Durability > 0
-            && ticketItem.Level == miniGameDefinition.TicketItemLevel;
+            && (ReusableEventTicket.IsValid(ticketItem, miniGameDefinition)
+                || (requiredItemDefinition.Equals(ticketItem.Definition)
+                    && ticketItem.Durability >= 1
+                    && ticketItem.Level == miniGameDefinition.TicketItemLevel));
     }
 
     private bool CheckEntranceFee(MiniGameDefinition miniGameDefinition, Player player, out int entranceFee)

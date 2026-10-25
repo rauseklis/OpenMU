@@ -68,7 +68,7 @@ public sealed class LumenBoxListings : InitializerBase
         store.Items.Add(listing);
     }
 
-    private static byte FindFreeSlot(ItemStorage store)
+    internal static byte FindFreeSlot(ItemStorage store)
     {
         var occupied = new bool[ShopWidth * ShopHeight];
         foreach (var item in store.Items)
@@ -88,6 +88,6 @@ public sealed class LumenBoxListings : InitializerBase
         }
 
         var freeSlot = Array.FindIndex(occupied, used => !used);
-        return freeSlot >= 0 ? (byte)freeSlot : throw new InvalidOperationException("Lumen's shop has no free space for a reward box.");
+        return freeSlot >= 0 ? (byte)freeSlot : throw new InvalidOperationException("Lumen's shop has no free space for another item.");
     }
 }

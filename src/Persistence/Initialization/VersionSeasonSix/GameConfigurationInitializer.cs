@@ -60,7 +60,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new SkillsInitializer(this.Context, this.GameConfiguration).Initialize();
         new Orbs(this.Context, this.GameConfiguration).Initialize();
         new Scrolls(this.Context, this.GameConfiguration).Initialize();
-        new EventTicketItems(this.Context, this.GameConfiguration).Initialize();
+        this.InitializeEventTickets();
         new Wings(this.Context, this.GameConfiguration).Initialize();
         new Pets(this.Context, this.GameConfiguration).Initialize();
         new ExcellentOptions(this.Context, this.GameConfiguration).Initialize();
@@ -86,6 +86,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new NpcInitialization(this.Context, this.GameConfiguration).Initialize();
         new AncientBoxShop(this.Context, this.GameConfiguration).Initialize();
         new RibbonBoxShop(this.Context, this.GameConfiguration).Initialize();
+        new ReusableEventTicketShop(this.Context, this.GameConfiguration).Initialize();
         new InvasionMobsInitialization(this.Context, this.GameConfiguration).Initialize();
         new GameMapsInitializer(this.Context, this.GameConfiguration).Initialize();
         this.AssignCharacterClassHomeMaps();
@@ -156,6 +157,12 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         jewelMix.SingleJewel = singleJewel;
         jewelMix.MixedJewel = packedJewel;
         this.GameConfiguration.JewelMixes.Add(jewelMix);
+    }
+
+    private void InitializeEventTickets()
+    {
+        new EventTicketItems(this.Context, this.GameConfiguration).Initialize();
+        new ReusableEventTicketItems(this.Context, this.GameConfiguration).Initialize();
     }
 
     private void InitializeDevilSquareRewards()
