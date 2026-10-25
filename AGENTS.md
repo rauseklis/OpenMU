@@ -26,6 +26,8 @@ This is a private MU Online project of two brothers: this server repository (`ra
 9. **At the start of a session:** `git fetch origin`, read `docs/OPERATIONS.md` (short) from `origin/main` of the client repository, do not change anything, then ask the user
    "What are we working on today?" and wait. The full guide is `docs/CODEX_GUIDE.md` there.
 10. **At the end of every task** report in a few lines: what changed, what you tested, what you did not test, what the user should check.
+11. **The game client is for Windows only.** Linux and macOS clients are NOT needed and are not released (their CI builds are switched off in the client
+    repository). Do not build, fix, test or write code or docs for them. This does not concern this server, which runs on Linux in Docker on the VPS.
 
 **Read the project guide first:**
 [`docs/OPERATIONS.md` in the client repository](https://github.com/rauseklis/MuMain/blob/main/docs/OPERATIONS.md). It explains how the two
