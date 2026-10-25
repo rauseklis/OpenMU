@@ -652,4 +652,9 @@ public enum UpdateVersion
     /// Sets DS seven completion EXP to 60, 55, 50 and 45 million.
     /// </summary>
     DevilSquareSevenExperience = 140,
+
+    /// <summary>
+    /// Adds configurable reusable BC, DS and Kalima tickets and Lumen test listings.
+    /// </summary>
+    ReusableEventTickets = 141,
 }

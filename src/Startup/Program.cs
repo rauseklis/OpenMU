@@ -633,10 +633,19 @@ internal sealed class Program : IDisposable
         }
 
         await this.InstallDevilSquareRewardsAsync(contextProvider).ConfigureAwait(false);
+        await this.InstallReusableEventTicketsAsync(contextProvider).ConfigureAwait(false);
 
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
+    }
+
+    private async Task InstallReusableEventTicketsAsync(IPersistenceContextProvider contextProvider)
+    {
+        if (await ReusableEventTicketsInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed reusable BC, DS and Kalima tickets and Lumen test listings.");
+        }
     }
 
     private async Task InstallDevilSquareRewardsAsync(IPersistenceContextProvider contextProvider)
