@@ -78,8 +78,8 @@ public class ChaosMixes : InitializerBase
         var jerridon = this.GameConfiguration.Monsters.Single(m => m.NpcWindow == NpcWindow.RemoveJohOption);
         jerridon.ItemCraftings.Add(this.RestoreItemCrafting());
 
-        var cherryBlossomSpirit = this.GameConfiguration.Monsters.Single(m => m.NpcWindow == NpcWindow.CherryBlossomBranchesAssembly);
-        cherryBlossomSpirit.ItemCraftings.Add(this.CherryBlossomEventCrafting());
+        new Items.CherryBlossomRewards(this.Context, this.GameConfiguration).Initialize();
+        new Items.CherryBlossomShop(this.Context, this.GameConfiguration).Initialize();
     }
 
     private ItemCrafting ItemLevelUpgradeCrafting(byte craftingNumber, byte targetLevel)
@@ -1256,40 +1256,6 @@ public class ChaosMixes : InitializerBase
         guardian.MinimumAmount = 1;
         guardian.MaximumAmount = 1;
         craftingSettings.RequiredItems.Add(guardian);
-
-        return crafting;
-    }
-
-    private ItemCrafting CherryBlossomEventCrafting()
-    {
-        var crafting = this.Context.CreateNew<ItemCrafting>();
-        crafting.Name = "Cherry Blossom Event Mix";
-        crafting.Number = 41;
-        var craftingSettings = this.Context.CreateNew<SimpleCraftingSettings>();
-        crafting.SimpleCraftingSettings = craftingSettings;
-        craftingSettings.SuccessPercent = 100;
-
-        var branches = this.Context.CreateNew<ItemCraftingRequiredItem>();
-        branches.MinimumAmount = 255;
-        branches.MaximumAmount = 255;
-        branches.PossibleItems.Add(this.GameConfiguration.Items.First(i => i.Name == "Golden Cherry Blossom Branch"));
-        craftingSettings.RequiredItems.Add(branches);
-
-        craftingSettings.ResultItemMaxExcOptionCount = 1;
-        craftingSettings.ResultItemExcellentOptionChance = 100;
-        craftingSettings.ResultItemSelect = ResultItemSelection.Any;
-        for (int group = 7; group < 12; group++)
-        {
-            for (int number = 0; number < 16; number++)
-            {
-                if (this.GameConfiguration.Items.FirstOrDefault(item => item.Group == group && item.Number == number) is { } itemDefinition)
-                {
-                    var randomExcellentItem = this.Context.CreateNew<ItemCraftingResultItem>();
-                    randomExcellentItem.ItemDefinition = itemDefinition;
-                    craftingSettings.ResultItems.Add(randomExcellentItem);
-                }
-            }
-        }
 
         return crafting;
     }

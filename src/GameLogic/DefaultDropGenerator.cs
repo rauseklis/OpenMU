@@ -498,6 +498,11 @@ public class DefaultDropGenerator : IDropGenerator
     {
         item.Level = (byte)this._randomizer.NextInt(group.MinimumLevel, group.MaximumLevel + 1);
         BoxRewardOptions.Apply(item, group, this._randomizer);
+        if (item.Definition is { Group: 14, Number: >= 88 and <= 90 })
+        {
+            // Cherry Blossom stacks are collected one branch per box, not born full.
+            item.Durability = 1;
+        }
     }
 
     private void ApplyOption(Item item, ItemOptionDefinition option)

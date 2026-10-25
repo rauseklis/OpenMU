@@ -634,6 +634,10 @@ internal sealed class Program : IDisposable
 
         await this.InstallDevilSquareRewardsAsync(contextProvider).ConfigureAwait(false);
         await this.InstallReusableEventTicketsAsync(contextProvider).ConfigureAwait(false);
+        if (await CherryBlossomRewardsInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed Cherry Blossom Play-Box and Noria branch rewards.");
+        }
 
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 

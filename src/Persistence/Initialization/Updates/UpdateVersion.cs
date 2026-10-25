@@ -657,4 +657,9 @@ public enum UpdateVersion
     /// Adds configurable reusable BC, DS and Kalima tickets and Lumen test listings.
     /// </summary>
     ReusableEventTickets = 141,
+
+    /// <summary>
+    /// Installs single-branch Play-Box drops and Noria reward exchanges.
+    /// </summary>
+    CherryBlossomRewards = 142,
 }
