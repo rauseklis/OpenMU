@@ -107,6 +107,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
 
         // After all items exist.
         new ItemRules(this.Context, this.GameConfiguration).Initialize();
+        new BonusProgression(this.Context, this.GameConfiguration).Initialize();
     }
 
     /// <summary>

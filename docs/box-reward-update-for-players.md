@@ -90,6 +90,8 @@ disabled. The maximum Master level and EXP-block setting still apply.
 
 These are event completion payouts in addition to ordinary monster EXP and loot.
 
+Ordinary monster-bonus locations, Star rewards and opening category chances are documented in [Monster bonuses and equipment progression](box-reward-rebalance.md). Heart of Love equipment is +8 through +10. Every Kundun tier now awards 60% armor, 30% weapons and 10% shields.
+
 Kundun one-option/two-option probabilities are +1: 70/30%, +2: 75/25%,
 +3: 80/20%, +4: 85/15%, +5: 90/10%. All Kundun equipment remains Excellent +0
 without sockets. Luck and equipment ADD changes are deferred.

@@ -99,6 +99,12 @@ public partial class ItemDropItemGroup : DropItemGroup
     public bool GuaranteeJewelryOption { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether ordinary equipment ADD is removed from this reward.
+    /// Shared item definitions and other reward sources retain their existing options.
+    /// </summary>
+    public bool SuppressAdditionalOption { get; set; }
+
+    /// <summary>
     /// Gets or sets the required Ancient set of this reward group. Null preserves random set selection.
     /// </summary>
     public virtual ItemSetGroup? AncientSet { get; set; }
