@@ -656,6 +656,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed missing bonus test stock and empty Red/Blue Chocolate rewards.");
         }
 
+        if (await LorenciaShopLayoutInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed Lorencia bar horizontal progression layout.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

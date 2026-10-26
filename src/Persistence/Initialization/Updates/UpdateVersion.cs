@@ -682,4 +682,9 @@ public enum UpdateVersion
     /// Adds missing bonus test stock and empties Red/Blue Chocolate rewards.
     /// </summary>
     ChocolateBonusStock = 146,
+
+    /// <summary>
+    /// Arranges Lumen's bonus stock into horizontal progression rows.
+    /// </summary>
+    LorenciaShopLayout = 147,
 }
