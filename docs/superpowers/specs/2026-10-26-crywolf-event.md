@@ -1,0 +1,113 @@
+# Crywolf event (design, draft for approval)
+
+Status: draft, nothing implemented. Branch `feat/crywolf` (from `origin/master` 332dfc38).
+
+## Goal
+
+The full original Crywolf Fortress event on our server, built in stages. Each stage ships disabled by default, so a
+merge never changes ordinary play. Ordinary hunting on map 34, the Balgass barracks quest and all other events keep
+working.
+
+## Source of the logic
+
+Upstream OpenMU PR #1005 (MIT licence), reviewed snapshot `7cd2928682777f9156caa90d7413d94b1a8c1a7f`, changes against
+base `a0cfc01438bd52c013532c5654978203a0b49ac1`. Keep the licence notice and attribution. Adapt it to our fork by
+porting files; do not merge the later upstream branch. The brother's partial local import (94 files, uncommitted, on his
+PC) is a convenience only: either he pushes a checkpoint branch or we redo the import from the comparison. The
+Aetherion pack is reference for rules and numbers only; none of its files or code is copied.
+
+## What is verified (2026-10-26)
+
+- `origin/master` has map 34, NPC and altar spawns and three client-to-server packets (`BD 00`, `BD 03`, `BD 09`). It has
+  no server-to-client `BD` definitions and no event logic.
+- The client already handles the Crywolf messages (info, altar state, contract, timer) and has the cinematic code.
+- `UpdateVersion` 142 is taken (`CherryBlossomRewards`); the new update needs the next free number at merge time.
+- Packet package version is 0.9.23 (was 0.9.22; the donor adds only server-to-client packets).
+
+## Stages (each its own PR, server first when packets change)
+
+1. **Foundation, off by default.** Port the data model (`CrywolfData`, terrain variants), persistence, migration and
+   configuration update. The plug-in is disabled by default for fresh and existing databases. Tests: build, schema upgrade
+   on a throwaway database, update applied twice is idempotent, nothing changes while disabled.
+2. **Waves and bosses.** Event definition, state machine, monster groups and AI, Balgass and Selupan, Wolf Statue HP.
+   Failing tests first for: Balgass never spawned must not count as victory; disable during any phase fully stops the
+   event (timers, army, modifiers, terrain).
+3. **Contracts and rewards.** Altar contracts, hero ranking, rewards, chaos-rate benefit, reward idempotence across
+   disconnect and restart, full inventory.
+4. **Client and packets.** Check server-to-client layouts against the client receive code; bump packet versions in the three
+   projects with the matching client change, merged together. Port the cinematic fixes (MuMain PR #655) if still missing.
+5. **Defeat penalties.** Configurable and off by default: EXP retained and +10% maximum HP on affected monsters, chosen by an
+   explicit list of hunting maps. Applied once, on top of channel rates. Beginner mobs, NPCs, summons and fixed-HP objectives
+   excluded.
+6. **Staging test.** Both players run a deliberate loss and a win on a throwaway server (shifted ports, disposable
+   database). Only then enable on live, by an explicit decision of the owner.
+
+## Open decisions (needed before the stage that uses them)
+
+| Decision | Needed by |
+|---|---|
+| Battle host channel (Emberion 50x or 5x) | stage 2 |
+| Schedule and time zone (reference: weekly, 20:30; `Europe/Riga`), or manual start | stage 2 |
+| Participation level (minimum level, resets) and entry rules | stage 2 |
+| Battle length (guides say 30 min; reference state durations total about 21 min) | stage 2 |
+| Rewards and victory benefits | stage 3 |
+| EXP retained percent, jewel-only drop penalty and percent, map list, penalty duration | stage 5 |
+| Previous result after disable and re-enable | stage 2 |
+
+## Safety
+
+No live database or configuration change, no merge, no deploy without the owner's explicit yes. Live changes go through a
+configuration update with a backup first. Tests use a throwaway PostgreSQL database only.
+
+## Decisions made
+
+- 2026-10-26, owner: rewards stay as the donor designs them. Every elf with a valid contract at the end of the battle
+  gets a reward item, and every top-5 hero gets one at the end of the event, so one player can get two.
+- 2026-10-26: a battle in which Balgass was due but could not be spawned has no result (the previous one stays), it is
+  neither a victory nor a defeat.
+
+## Status (2026-10-26)
+
+Built and covered by source tests, nothing played yet:
+
+1. Foundation, disabled by default, one additive migration (checked on a disposable PostgreSQL 17 database).
+2. Waves and bosses: Balgass-missing and stop-the-event bugs fixed (the cancelled battle ends through the abort path so the
+   client shows no result), kill, survival and restart paths tested.
+3. Contracts and rewards tested (contractor reward, no reward after a defeat, release on death, concurrent requests).
+4. Packet layouts verified against the client byte for byte; packages 0.9.23 (server, and client feed); the intro cinematic
+   fixes of upstream MuMain #655 ported into the client.
+5. Defeat penalties, configurable and off by default (`IsPenaltyActive`). The defaults are the penalty of the original
+   game (official Webzen guide: a failed defence makes the Jewel of Guardian drop less often in the Land of Trials; a
+   successful defence reduces the strength of monsters by 10 % everywhere except the Land of Trials, and adds 5 % to the
+   success rate of invitation mixes): `PenaltyMapNumbers` = Land of Trials (31), `PenaltyJewels` = Jewel of Guardian,
+   `JewelDropPenaltyPercentage` = 70 (Webzen publishes no number), `ExperiencePenaltyPercentage` = 100 and
+   `MonsterHealthPenaltyPercentage` = 100 (neither exists in the original game; they stay available as knobs, e.g. for
+   the requested Tarkan and Icarus penalty), `BenefitExcludedMapNumbers` = Land of Trials. The event starts once a week,
+   Saturday 20:30 server time; `StartDays` and `StartTimes` can be changed in the plug-in configuration.
+
+Open before it can go live: the settings above, the battle host channel, the schedule and time zone, the reward items, and
+the staging battles with a deliberate loss and a victory.
+
+- 2026-10-26, owner: penalties and map list follow the original Webzen values; the schedule is one weekly slot that can be
+  reconfigured later (default Saturday 20:30).
+- 2026-10-26, owner: the event runs on BOTH channels (Emberion 50x and 5x). Each channel runs its own battle on its own map
+  at the same time, keeps its own result (one `CrywolfData` row per game server) and has its own benefits and penalties.
+  `RunsOnAllGameServers` (default true) can be switched off to let only `GameServerId` run it, with the other channels
+  taking over its result.
+
+## Reconfiguring later
+
+Everything below is a setting of the Crywolf plug-in configuration (admin panel, plug-in "Crywolf"), read again at each
+tick, so no restart or deployment is needed:
+
+| Setting | Default |
+|---|---|
+| `StartDays`, `StartTimes` (server time zone) | Saturday, 20:30 |
+| `RunsOnAllGameServers`, `GameServerId` | true (50x and 5x each run it), host 0 |
+| `RewardItemGroup`, `RewardItemNumber` | 14, 13 (Jewel of Bless) |
+| `IsPenaltyActive` | false |
+| `PenaltyMapNumbers`, `PenaltyJewels` | Land of Trials (31), Jewel of Guardian |
+| `JewelDropPenaltyPercentage`, `ExperiencePenaltyPercentage`, `MonsterHealthPenaltyPercentage` | 70, 100, 100 |
+| `PenaltyMinimumMonsterLevel` | 0 |
+| `IsBenefitActive`, `MonsterHealthBenefitPercentage`, `ChaosRateBenefit`, `BenefitExcludedMapNumbers` | true, 90, 5, Land of Trials |
+| battle length, state durations, scores, rank EXP | the original game values |

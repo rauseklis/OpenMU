@@ -8,6 +8,7 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.NPC;
+using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.GameLogic.Views;
 using MUnique.OpenMU.GameLogic.Views.Party;
 using MUnique.OpenMU.Persistence;
@@ -371,6 +372,22 @@ public sealed class Party : AsyncDisposable
         return (int)totalBaseExperience;
     }
 
+    /// <summary>
+    /// Lets the plugins modify the experience of a party member, like it's done for a solo kill
+    /// (see <see cref="PlayerExperience.CalculateAfterKillAsync"/>).
+    /// </summary>
+    private static async ValueTask<int> ApplyExperiencePlugInsAsync(Player player, IAttackable killed, bool isMasterExperience, double experience)
+    {
+        if (player.GameContext.PlugInManager.GetPlugInPoint<IExperienceCalculationPlugIn>() is { } plugInPoint)
+        {
+            var args = new ExperienceCalculationArgs(killed, isMasterExperience, experience);
+            await plugInPoint.CalculateExperienceAsync(player, args).ConfigureAwait(false);
+            experience = args.Experience;
+        }
+
+        return (int)experience;
+    }
+
     private static async ValueTask<int> AwardExperienceAsync(Player player, float perLevel, IAttackable killed)
     {
         var attributes = player.Attributes!;
@@ -379,19 +396,27 @@ public sealed class Party : AsyncDisposable
 
         if (isAtMaxLevel && isMasterClass)
         {
-            var exp = (int)(perLevel
-                            * attributes[Stats.TotalLevel]
-                            * player.GameContext.MasterExperienceRate
-                            * (attributes[Stats.MasterExperienceRate] + attributes[Stats.BonusExperienceRate]));
+            var exp = await ApplyExperiencePlugInsAsync(
+                player,
+                killed,
+                true,
+                perLevel
+                * attributes[Stats.TotalLevel]
+                * player.GameContext.MasterExperienceRate
+                * (attributes[Stats.MasterExperienceRate] + attributes[Stats.BonusExperienceRate])).ConfigureAwait(false);
 
             await player.AddMasterExperienceAsync(exp, killed).ConfigureAwait(false);
             return exp;
         }
 
-        var normalExperience = (int)(perLevel
-                                     * attributes[Stats.Level]
-                                     * player.GameContext.ExperienceRate
-                                     * (attributes[Stats.ExperienceRate] + attributes[Stats.BonusExperienceRate]));
+        var normalExperience = await ApplyExperiencePlugInsAsync(
+            player,
+            killed,
+            false,
+            perLevel
+            * attributes[Stats.Level]
+            * player.GameContext.ExperienceRate
+            * (attributes[Stats.ExperienceRate] + attributes[Stats.BonusExperienceRate])).ConfigureAwait(false);
 
         if (!isAtMaxLevel)
         {
