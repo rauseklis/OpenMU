@@ -1,6 +1,6 @@
 # Box of Kundun Excellent progression
 
-Staged local update; not deployed. Kundun +1 through +5 stop at the Star/pre-Pink base tier. No Pink/Blue equipment is eligible. Ancient pools and normal bonus boxes are unchanged.
+The live reward design is described below. Kundun +1 through +5 stop at the Star/pre-Pink base tier. No Pink/Blue equipment is eligible. Ancient pools and normal bonus boxes are unchanged.
 
 Each opening gives **one Excellent +0 item**, never an entire set. No sockets. Shared server Luck, ADD and supported Skill behavior is preserved; these do not count as Excellent options.
 

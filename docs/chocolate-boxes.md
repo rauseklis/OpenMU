@@ -1,6 +1,6 @@
 # Chocolate Boxes
 
-These settings belong to the staged Chocolate endgame update; deployment requires the paired client patch.
+These settings are live with the paired Chocolate endgame client update.
 
 One box gives one ordinary item. No Excellent, Ancient or socket rewards. Pink and Blue equipment is +6–+9; the two rare maces always drop +0. Luck, ADD and applicable weapon Skill use the shared server chances.
 

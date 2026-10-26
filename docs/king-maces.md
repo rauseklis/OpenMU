@@ -29,7 +29,7 @@ upgrade level. At +13: 202-217 and 252-272. Normal item level limits are retaine
 Configuration update 123 adds the definitions to existing Season 6 databases;
 fresh Season 6 configurations include them too. Reapplying the initializer
 preserves existing matching definitions and rejects differently named occupied
-slots. The original definition-only update did not enable loot drops; the staged Chocolate update below adds its reviewed box sources.
+slots. The original definition-only update did not enable loot drops; the Chocolate update below adds its reviewed box sources.
 No bank/inventory grants or changes to existing items are part of this update.
 
 Deploy with the paired client update, which includes both models, their
@@ -37,4 +37,4 @@ textures, matching item data, orange names and Royal upgrade flames. The server
 does not grant these weapons to accounts or alter existing inventory contents.
 Final appearance and equipped-weapon effects should be reviewed in game.
 
-Chocolate update 148 enables the normal mace in Blue at 5% overall and Royal in Red at 100%, both +0. These are staged settings requiring paired client data.
+Chocolate update 148 enables the normal mace in Blue at 5% overall and Royal in Red at 100%, both +0. These live settings use the paired client data.

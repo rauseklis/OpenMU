@@ -121,7 +121,7 @@ Thunder Hawk and Valiant have four armor pieces and no helm; Piercing Groove has
 
 ## Kundun +1 through +5
 
-Every Kundun tier gives **60% armor, 30% weapons/books and 10% shields**. The staged Kundun update rebuilds the pools as pre-Pink **Excellent +0** equipment with no sockets. Shared Luck/ADD and supported Skill rules remain. See [exact Kundun pools, class weights and item mappings](kundun-progression.md).
+Every Kundun tier gives **60% armor, 30% weapons/books and 10% shields**. The Kundun update rebuilds the pools as pre-Pink **Excellent +0** equipment with no sockets. Shared Luck/ADD and supported Skill rules remain. See [exact Kundun pools, class weights and item mappings](kundun-progression.md).
 
 | Kundun tier | One Excellent option | Two distinct Excellent options |
 |---|---:|---:|
