@@ -89,7 +89,7 @@ public class SimpleItemCraftingHandler : BaseItemCraftingHandler
                         rate = (byte)(rate + this._settings.SuccessPercentageAdditionForGuardianItem);
                     }
 
-                    if (this._settings.SuccessPercentageAdditionForSocketItem != default && item.SocketCount > 0)
+                    if (this._settings.SuccessPercentageAdditionForSocketItem != default && item.SocketCount > 0 && item.Definition?.MaximumSockets > 0)
                     {
                         rate = (byte)(rate + this._settings.SuccessPercentageAdditionForSocketItem);
                     }

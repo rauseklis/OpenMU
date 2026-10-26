@@ -112,6 +112,10 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new BloodCastleRewardBalance(this.Context, this.GameConfiguration).Initialize();
         new ChocolateBonusStock(this.Context, this.GameConfiguration).Initialize();
         new LorenciaShopLayout(this.Context, this.GameConfiguration).Initialize();
+        new ChocolateEndgameRewards(this.Context, this.GameConfiguration).Initialize();
+        new ChocolateEndgameItemBalance(this.Context, this.GameConfiguration).Initialize();
+        new KundunProgression(this.Context, this.GameConfiguration).Initialize();
+        new DisabledSocketSystem(this.Context, this.GameConfiguration).Initialize();
     }
 
     /// <summary>

@@ -336,7 +336,7 @@ public static class ItemExtensions
             }
 
             if (RequirementReductionAttributeMapping.TryGetValue(requirement.Attribute, out var reductionAttribute)
-                && item.ItemOptions.FirstOrDefault(o =>
+                && item.ItemOptions.Where(o => SocketOptionPolicy.IsActive(item, o.ItemOption?.OptionType)).FirstOrDefault(o =>
                         o.ItemOption?.PowerUpDefinition?.TargetAttribute == reductionAttribute
                         || (o.ItemOption?.LevelDependentOptions.Any(l => l.PowerUpDefinition?.TargetAttribute == reductionAttribute) ?? false))
                     is { } reductionOption)

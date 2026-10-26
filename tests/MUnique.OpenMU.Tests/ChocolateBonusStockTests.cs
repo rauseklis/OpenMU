@@ -59,12 +59,13 @@ public class ChocolateBonusStockTests
     }
 
     [Test]
-    public async Task FreshConfigurationOffersReviewedBonusesAndEmptyRedBlueAsync()
+    public async Task StockInitializerOffersReviewedBonusesAndEmptyRedBlueAsync()
     {
         var provider = new InMemoryPersistenceContextProvider();
         await new DataInitialization(provider, NullLoggerFactory.Instance).CreateInitialDataAsync(1, false).ConfigureAwait(false);
         using var context = provider.CreateNewConfigurationContext();
         var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        new MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix.Items.ChocolateBonusStock(context, configuration).Initialize();
         var store = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
         foreach (var level in new byte[] { 0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12 })
         {

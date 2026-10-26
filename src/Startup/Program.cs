@@ -661,6 +661,21 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed Lorencia bar horizontal progression layout.");
         }
 
+        if (await ChocolateEndgameInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed reviewed Chocolate endgame rewards and disabled socket functionality.");
+        }
+
+        if (await KundunProgressionInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed pre-Pink Kundun +1 through +5 Excellent progression.");
+        }
+
+        if (await CherryExchangeRevisionInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed six equal rewards for each Cherry Blossom leaf exchange.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

@@ -158,7 +158,9 @@ public class ItemPowerUpFactory : IItemPowerUpFactory
             yield break;
         }
 
-        var activeItemOptions = activeItems.SelectMany(i => i.ItemOptions.Select(o => o.ItemOption ?? throw Error.NotInitializedProperty(o, nameof(o.ItemOption)))).ToList();
+        var activeItemOptions = activeItems.SelectMany(i => i.ItemOptions
+            .Where(o => SocketOptionPolicy.IsActive(i, o.ItemOption?.OptionType))
+            .Select(o => o.ItemOption ?? throw Error.NotInitializedProperty(o, nameof(o.ItemOption)))).ToList();
         foreach (var combinationBonus in gameConfiguration.ItemOptionCombinationBonuses.Where(c => c.Bonus is { }))
         {
             var remainingOptions = activeItemOptions.ToList<ItemOption>();
@@ -233,7 +235,7 @@ public class ItemPowerUpFactory : IItemPowerUpFactory
             yield break;
         }
 
-        foreach (var optionLink in options)
+        foreach (var optionLink in options.Where(option => SocketOptionPolicy.IsActive(item, option.ItemOption?.OptionType)))
         {
             var option = optionLink.ItemOption;
             if (option is null)

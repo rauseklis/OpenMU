@@ -1,0 +1,2406 @@
+[
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        2
+      ],
+      [
+        8,
+        2
+      ],
+      [
+        9,
+        2
+      ],
+      [
+        10,
+        2
+      ],
+      [
+        11,
+        2
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "DW",
+    "family": 0,
+    "variant": 1,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        4
+      ],
+      [
+        8,
+        4
+      ],
+      [
+        9,
+        4
+      ],
+      [
+        10,
+        4
+      ],
+      [
+        11,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        5
+      ],
+      [
+        8,
+        5
+      ],
+      [
+        9,
+        5
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        11,
+        5
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 1,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        0
+      ],
+      [
+        8,
+        0
+      ],
+      [
+        9,
+        0
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        11,
+        0
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        10
+      ],
+      [
+        8,
+        10
+      ],
+      [
+        9,
+        10
+      ],
+      [
+        10,
+        10
+      ],
+      [
+        11,
+        10
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "Elf",
+    "family": 2,
+    "variant": 1,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        11
+      ],
+      [
+        8,
+        11
+      ],
+      [
+        9,
+        11
+      ],
+      [
+        10,
+        11
+      ],
+      [
+        11,
+        11
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        8,
+        5
+      ],
+      [
+        9,
+        5
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        11,
+        5
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 1,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        8,
+        0
+      ],
+      [
+        9,
+        0
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        11,
+        0
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        5
+      ],
+      [
+        8,
+        5
+      ],
+      [
+        9,
+        5
+      ],
+      [
+        10,
+        5
+      ],
+      [
+        11,
+        5
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "DL",
+    "family": 4,
+    "variant": 1,
+    "chance": 0.049999999999999996,
+    "items": [
+      [
+        7,
+        0
+      ],
+      [
+        8,
+        0
+      ],
+      [
+        9,
+        0
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        11,
+        0
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "armor",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.09999999999999999,
+    "items": [
+      [
+        7,
+        5
+      ],
+      [
+        8,
+        5
+      ],
+      [
+        9,
+        5
+      ],
+      [
+        11,
+        5
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "weapons",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        1
+      ],
+      [
+        5,
+        2
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "weapons",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        6
+      ],
+      [
+        0,
+        7
+      ],
+      [
+        0,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "weapons",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        11
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "weapons",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        8
+      ],
+      [
+        5,
+        3
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "weapons",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        0
+      ],
+      [
+        2,
+        1
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "weapons",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        14
+      ],
+      [
+        5,
+        21
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "weapons",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        0
+      ],
+      [
+        2,
+        1
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "shields",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        0
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "shields",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "shields",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "shields",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 1,
+    "category": "shields",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        7
+      ],
+      [
+        8,
+        7
+      ],
+      [
+        9,
+        7
+      ],
+      [
+        10,
+        7
+      ],
+      [
+        11,
+        7
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        6
+      ],
+      [
+        8,
+        6
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        10,
+        6
+      ],
+      [
+        11,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 1,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        8
+      ],
+      [
+        8,
+        8
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        10,
+        8
+      ],
+      [
+        11,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        12
+      ],
+      [
+        8,
+        12
+      ],
+      [
+        9,
+        12
+      ],
+      [
+        10,
+        12
+      ],
+      [
+        11,
+        12
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        8,
+        6
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        10,
+        6
+      ],
+      [
+        11,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 1,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        8,
+        8
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        10,
+        8
+      ],
+      [
+        11,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        6
+      ],
+      [
+        8,
+        6
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        10,
+        6
+      ],
+      [
+        11,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "DL",
+    "family": 4,
+    "variant": 1,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        25
+      ],
+      [
+        8,
+        25
+      ],
+      [
+        9,
+        25
+      ],
+      [
+        10,
+        25
+      ],
+      [
+        11,
+        25
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        39
+      ],
+      [
+        8,
+        39
+      ],
+      [
+        9,
+        39
+      ],
+      [
+        10,
+        39
+      ],
+      [
+        11,
+        39
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.02857142857142857,
+    "items": [
+      [
+        7,
+        6
+      ],
+      [
+        8,
+        6
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        11,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "RF",
+    "family": 6,
+    "variant": 1,
+    "chance": 0.02857142857142857,
+    "items": [
+      [
+        7,
+        8
+      ],
+      [
+        8,
+        8
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        11,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "armor",
+    "class": "RF",
+    "family": 6,
+    "variant": 2,
+    "chance": 0.02857142857142857,
+    "items": [
+      [
+        7,
+        9
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        9
+      ],
+      [
+        11,
+        9
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "weapons",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        3
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "weapons",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        10
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "weapons",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        4,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "weapons",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        10
+      ],
+      [
+        5,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "weapons",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "weapons",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        15
+      ],
+      [
+        5,
+        22
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "weapons",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        3
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "shields",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        4
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "shields",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        6
+      ],
+      [
+        6,
+        10
+      ],
+      [
+        6,
+        9
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "shields",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        3
+      ],
+      [
+        6,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "shields",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        6
+      ],
+      [
+        6,
+        10
+      ],
+      [
+        6,
+        9
+      ]
+    ]
+  },
+  {
+    "tier": 2,
+    "category": "shields",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        6
+      ],
+      [
+        6,
+        10
+      ],
+      [
+        6,
+        9
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        3
+      ],
+      [
+        8,
+        3
+      ],
+      [
+        9,
+        3
+      ],
+      [
+        10,
+        3
+      ],
+      [
+        11,
+        3
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        9
+      ],
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        9
+      ],
+      [
+        10,
+        9
+      ],
+      [
+        11,
+        9
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 1,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        1
+      ],
+      [
+        8,
+        1
+      ],
+      [
+        9,
+        1
+      ],
+      [
+        10,
+        1
+      ],
+      [
+        11,
+        1
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        13
+      ],
+      [
+        8,
+        13
+      ],
+      [
+        9,
+        13
+      ],
+      [
+        10,
+        13
+      ],
+      [
+        11,
+        13
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        9
+      ],
+      [
+        10,
+        9
+      ],
+      [
+        11,
+        9
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 1,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        8,
+        1
+      ],
+      [
+        9,
+        1
+      ],
+      [
+        10,
+        1
+      ],
+      [
+        11,
+        1
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        26
+      ],
+      [
+        8,
+        26
+      ],
+      [
+        9,
+        26
+      ],
+      [
+        10,
+        26
+      ],
+      [
+        11,
+        26
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        40
+      ],
+      [
+        8,
+        40
+      ],
+      [
+        9,
+        40
+      ],
+      [
+        10,
+        40
+      ],
+      [
+        11,
+        40
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "armor",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        59
+      ],
+      [
+        8,
+        59
+      ],
+      [
+        9,
+        59
+      ],
+      [
+        11,
+        59
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "weapons",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        5
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "weapons",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        13
+      ],
+      [
+        0,
+        12
+      ],
+      [
+        0,
+        14
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "weapons",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        4,
+        5
+      ],
+      [
+        4,
+        12
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "weapons",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        14
+      ],
+      [
+        5,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "weapons",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        9
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "weapons",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        16
+      ],
+      [
+        5,
+        23
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "weapons",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        32
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "shields",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "shields",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        7
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "shields",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "shields",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        7
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 3,
+    "category": "shields",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        7
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "armor",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        35
+      ],
+      [
+        8,
+        35
+      ],
+      [
+        9,
+        35
+      ],
+      [
+        10,
+        35
+      ],
+      [
+        11,
+        35
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        34
+      ],
+      [
+        8,
+        34
+      ],
+      [
+        9,
+        34
+      ],
+      [
+        10,
+        34
+      ],
+      [
+        11,
+        34
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "armor",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        14
+      ],
+      [
+        8,
+        14
+      ],
+      [
+        9,
+        14
+      ],
+      [
+        10,
+        14
+      ],
+      [
+        11,
+        14
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        8,
+        15
+      ],
+      [
+        9,
+        15
+      ],
+      [
+        10,
+        15
+      ],
+      [
+        11,
+        15
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "armor",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        27
+      ],
+      [
+        8,
+        27
+      ],
+      [
+        9,
+        27
+      ],
+      [
+        10,
+        27
+      ],
+      [
+        11,
+        27
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "armor",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        41
+      ],
+      [
+        8,
+        41
+      ],
+      [
+        9,
+        41
+      ],
+      [
+        10,
+        41
+      ],
+      [
+        11,
+        41
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "armor",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        60
+      ],
+      [
+        8,
+        60
+      ],
+      [
+        9,
+        60
+      ],
+      [
+        11,
+        60
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "weapons",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        6
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "weapons",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        16
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "weapons",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        4,
+        13
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "weapons",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        5
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "weapons",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        10
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "weapons",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        17
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "weapons",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        33
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "shields",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        14
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "shields",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        11
+      ],
+      [
+        6,
+        12
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "shields",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        11
+      ],
+      [
+        6,
+        14
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "shields",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        11
+      ],
+      [
+        6,
+        12
+      ],
+      [
+        6,
+        14
+      ]
+    ]
+  },
+  {
+    "tier": 4,
+    "category": "shields",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        18
+      ],
+      [
+        8,
+        18
+      ],
+      [
+        9,
+        18
+      ],
+      [
+        10,
+        18
+      ],
+      [
+        11,
+        18
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        16
+      ],
+      [
+        8,
+        16
+      ],
+      [
+        9,
+        16
+      ],
+      [
+        10,
+        16
+      ],
+      [
+        11,
+        16
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        36
+      ],
+      [
+        8,
+        36
+      ],
+      [
+        9,
+        36
+      ],
+      [
+        10,
+        36
+      ],
+      [
+        11,
+        36
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "Elf",
+    "family": 2,
+    "variant": 1,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        7,
+        19
+      ],
+      [
+        8,
+        19
+      ],
+      [
+        9,
+        19
+      ],
+      [
+        10,
+        19
+      ],
+      [
+        11,
+        19
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        8,
+        37
+      ],
+      [
+        9,
+        37
+      ],
+      [
+        10,
+        37
+      ],
+      [
+        11,
+        37
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "MG",
+    "family": 3,
+    "variant": 1,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        8,
+        20
+      ],
+      [
+        9,
+        20
+      ],
+      [
+        10,
+        20
+      ],
+      [
+        11,
+        20
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        38
+      ],
+      [
+        8,
+        38
+      ],
+      [
+        9,
+        38
+      ],
+      [
+        10,
+        38
+      ],
+      [
+        11,
+        38
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        42
+      ],
+      [
+        8,
+        42
+      ],
+      [
+        9,
+        42
+      ],
+      [
+        10,
+        42
+      ],
+      [
+        11,
+        42
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "armor",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.08571428571428572,
+    "items": [
+      [
+        7,
+        61
+      ],
+      [
+        8,
+        61
+      ],
+      [
+        9,
+        61
+      ],
+      [
+        11,
+        61
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "weapons",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        9
+      ],
+      [
+        5,
+        8
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "weapons",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        20
+      ],
+      [
+        3,
+        10
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "weapons",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        4,
+        16
+      ],
+      [
+        4,
+        17
+      ],
+      [
+        2,
+        7
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "weapons",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        31
+      ],
+      [
+        0,
+        18
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "weapons",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        2,
+        11
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "weapons",
+    "class": "SUM",
+    "family": 5,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        5,
+        18
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "weapons",
+    "class": "RF",
+    "family": 6,
+    "variant": 0,
+    "chance": 0.04285714285714286,
+    "items": [
+      [
+        0,
+        34
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "shields",
+    "class": "DW",
+    "family": 0,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        15
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "shields",
+    "class": "DK",
+    "family": 1,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        13
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "shields",
+    "class": "Elf",
+    "family": 2,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        16
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "shields",
+    "class": "MG",
+    "family": 3,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        13
+      ]
+    ]
+  },
+  {
+    "tier": 5,
+    "category": "shields",
+    "class": "DL",
+    "family": 4,
+    "variant": 0,
+    "chance": 0.02,
+    "items": [
+      [
+        6,
+        11
+      ]
+    ]
+  }
+]

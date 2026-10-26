@@ -1,54 +1,42 @@
 # Cherry Blossom branches and rewards
 
-Open a Cherry Blossom Play-Box to receive **one random reward**. Each of these six outcomes has an equal chance: **1 in 6 (16 2/3%)**.
+Open a Cherry Blossom Play-Box to receive **one random reward**. Each outcome has an equal chance, displayed as **16.67%**.
 
 | Play-Box reward | Chance |
 |---|---:|
-| Cherry Blossom Wine | 16 2/3% |
-| Cherry Blossom Rice Cake | 16 2/3% |
-| Cherry Blossom Flower Petal | 16 2/3% |
-| White Cherry Blossom Branch x1 | 16 2/3% |
-| Red Cherry Blossom Branch x1 | 16 2/3% |
-| Golden Cherry Blossom Branch x1 | 16 2/3% |
+| Cherry Blossom Wine | 16.67% |
+| Cherry Blossom Rice Cake | 16.67% |
+| Cherry Blossom Flower Petal | 16.67% |
+| White Cherry Blossom Branch ×1 | 16.67% |
+| Red Cherry Blossom Branch ×1 | 16.67% |
+| Golden Cherry Blossom Branch ×1 | 16.67% |
 
-Collect branches of the same color and visit **Cherry Blossom Spirit in Noria, at 179,126**. Put the required branches into the exchange window and combine them. After a successful exchange, move the reward back into your inventory before closing the window. An exchange consumes the branches and gives **one random reward**, with a **100% exchange success rate** and no Zen fee. Different colors cannot be combined together.
+Collect leaves of the same color and visit **Cherry Blossom Spirit in Noria, at 179,126**. Put the required leaves into the exchange window and combine them. Move the reward back into your inventory before closing the window. Each exchange consumes the required leaves and gives **one random reward**, with **100% success** and **no Zen fee**. Different colors cannot be combined.
 
-## White branches: collect 10
+| Leaves required | Reward | Chance |
+|---|---|---:|
+| White ×10 | Jewel of Bless ×1 | 16.67% |
+| | Jewel of Chaos ×1 | 16.67% |
+| | Jewel of Life ×1 | 16.67% |
+| | Jewel of Soul ×1 | 16.67% |
+| | Kalima Ticket — 1 use | 16.67% |
+| | Spirit of Guardian ×1 | 16.67% |
+| Red ×30 | Box of Kundun +1 ×1 | 16.67% |
+| | Devil Square Ticket — 1 use | 16.67% |
+| | Blood Castle Ticket — 1 use | 16.67% |
+| | Pet Skeleton ×1 | 16.67% |
+| | Pet Unicorn ×1 | 16.67% |
+| | Pet Panda ×1 | 16.67% |
+| Golden ×255 | Blood Castle Ticket — 10 uses | 16.67% |
+| | Devil Square Ticket — 10 uses | 16.67% |
+| | Jewel of Bless pack ×10 jewels | 16.67% |
+| | Jewel of Soul pack ×10 jewels | 16.67% |
+| | Silver Box ×1 | 16.67% |
+| | Box of Kundun +3 ×1 | 16.67% |
 
-| Reward | Chance |
-|---|---:|
-| Jewel of Bless x1 | 16 2/3% |
-| Jewel of Chaos x1 | 16 2/3% |
-| Jewel of Life x1 | 16 2/3% |
-| Jewel of Soul x1 | 16 2/3% |
-| Kalima Ticket: one ticket with 1 use | 16 2/3% |
-| Spirit of Guardian x1 | 16 2/3% |
+Tickets are single items whose remaining uses decrease after successful entry; a ten-use ticket is not ten separate tickets. Pets arrive with full health and no time limit and retain normal health-loss rules. Each jewel pack contains exactly 10 jewels.
 
-## Red branches: collect 30
-
-| Reward | Chance |
-|---|---:|
-| Box of Luck x1 | 16 2/3% |
-| Devil Square Ticket: one ticket with 1 use | 16 2/3% |
-| Blood Castle Ticket: one ticket with 1 use | 16 2/3% |
-| Pet Skeleton x1 | 16 2/3% |
-| Pet Unicorn x1 | 16 2/3% |
-| Pet Panda x1 | 16 2/3% |
-
-## Golden branches: collect 255
-
-| Reward | Chance |
-|---|---:|
-| Blood Castle Ticket: one ticket with 10 uses | 18% |
-| Devil Square Ticket: one ticket with 10 uses | 18% |
-| Packed Jewel of Bless: one pack containing 10 jewels | 18% |
-| Packed Jewel of Soul: one pack containing 10 jewels | 18% |
-| Silver Box x1 | 18% |
-| Golden Box x1 | 10% |
-
-Tickets are single items whose remaining uses decrease when successfully used; a ten-use ticket is not ten separate tickets. Pets arrive with full health and no time limit, and retain their normal pet behavior and health-loss rules. The jewel packs contain 10 jewels each, not 10 packs.
-
-White and Red probabilities are exact equal sixths; displayed decimal approximations may not add up to precisely 100%. The boxes awarded here keep their existing contents.
+Each tier has six equally likely rewards. Percentages are rounded to two decimal places for display; the internal selection uses six equal entries. Awarded boxes retain their own contents. Silver Box remains the Tier 2 Ancient source. Other Box of Luck and Golden Box sources and their contents are unchanged.
 
 ## Test shop stock
 

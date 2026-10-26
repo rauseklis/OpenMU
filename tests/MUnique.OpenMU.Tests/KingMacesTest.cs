@@ -19,8 +19,8 @@ using Basic = MUnique.OpenMU.Persistence.BasicModel;
 [TestFixture]
 public class KingMacesTest
 {
-    [TestCase(22, 110, 125, 30)]
-    [TestCase(23, 150, 170, 40)]
+    [TestCase(22, 150, 165, 30)]
+    [TestCase(23, 200, 220, 40)]
     public void CreatesApprovedWeaponWithoutChangingTemplate(int number, int minimum, int maximum, int speed)
     {
         using var context = new InMemoryPersistenceContextProvider().CreateNewContext();

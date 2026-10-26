@@ -71,18 +71,24 @@ public class CherryBlossomRewardTests
         {
             88 => new[] { (14, 13), (12, 15), (14, 16), (14, 14), (13, 48), (13, 65) },
             89 => new[] { (14, 11), (13, 46), (13, 47), (13, 123), (13, 106), (13, 80) },
-            _ => new[] { (13, 47), (13, 46), (12, 30), (12, 31), (14, 124), (14, 123) },
+            _ => new[] { (13, 47), (13, 46), (12, 30), (12, 31), (14, 124), (14, 11) },
         };
         Assert.That(results.Select(result => ((int)result.ItemDefinition!.Group, (int)result.ItemDefinition.Number)).Distinct(), Is.EquivalentTo(expected));
+        Assert.That(results, Has.Length.EqualTo(6), "One equally likely result entry per reward.");
         foreach (var outcome in results.GroupBy(result => (result.ItemDefinition!.Group, result.ItemDefinition.Number)))
         {
-            var expectedChance = branchNumber != 90 ? 1.0 / 6 : outcome.Key == ((byte)14, (short)123) ? 0.10 : 0.18;
+            var expectedChance = 1.0 / 6;
             Assert.That((double)outcome.Count() / results.Length, Is.EqualTo(expectedChance).Within(0.000000001));
         }
 
         Assert.That(results.Where(result => result.ItemDefinition!.Group == 13 && result.ItemDefinition.Number is >= 46 and <= 48)
             .All(result => result.Durability == (branchNumber == 90 ? 10 : 1)), Is.True);
-        Assert.That(results.All(result => result.RandomMinimumLevel == 0 && result.RandomMaximumLevel == 0), Is.True);
+        foreach (var result in results)
+        {
+            var level = result.ItemDefinition is { Group: 14, Number: 11 } ? branchNumber == 89 ? 8 : 10 : 0;
+            Assert.That(result.RandomMinimumLevel, Is.EqualTo(level));
+            Assert.That(result.RandomMaximumLevel, Is.EqualTo(level));
+        }
     }
     [TestCase(88, 10)]
     [TestCase(89, 30)]
@@ -113,7 +119,7 @@ public class CherryBlossomRewardTests
         Assert.That(player.TemporaryStorage.Items, Has.Exactly(1).Items);
         Assert.That(player.TemporaryStorage.Items, Does.Not.Contain(branch));
         Assert.That(reward!.Durability, Is.GreaterThan(0));
-        Assert.That(reward.Level, Is.Zero);
+        Assert.That(reward.Level, Is.EqualTo(reward.Definition is { Group: 14, Number: 11 } ? number == 89 ? 8 : 10 : 0));
         Assert.That((await handler.DoMixAsync(player, 0).ConfigureAwait(false)).Result, Is.Not.EqualTo(CraftingResult.Success));
         Assert.That(player.TemporaryStorage.Items.Single(), Is.SameAs(reward));
     }
@@ -145,6 +151,31 @@ public class CherryBlossomRewardTests
         Assert.That(box.DropItems, Does.Contain(preserved));
         Assert.That(unrelatedBox.DropItems, Is.EquivalentTo(oldRewards));
     }
+
+    [Test]
+    public async Task ExchangeRevisionPreservesAllBoxPoolsAndInstallsOnlyOnceAsync()
+    {
+        var provider = new InMemoryPersistenceContextProvider();
+        await new DataInitialization(provider, NullLoggerFactory.Instance).CreateInitialDataAsync(1, false).ConfigureAwait(false);
+        using var context = provider.CreateNewContext();
+        foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false))
+            .Where(update => update.Version == (int)UpdateVersion.CherryExchangeRevision).ToArray())
+        {
+            await context.DeleteAsync(update).ConfigureAwait(false);
+        }
+
+        var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        var before = BoxFingerprint(configuration);
+        var shop = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items.ToArray();
+        await context.SaveChangesAsync().ConfigureAwait(false);
+        Assert.That(await CherryExchangeRevisionInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await CherryExchangeRevisionInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        Assert.That(BoxFingerprint(configuration), Is.EqualTo(before), "Ancient, Kundun, Chocolate, Play-Box and all other box contents stay unchanged.");
+        Assert.That(configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items, Is.EquivalentTo(shop));
+    }
+
+    private static string BoxFingerprint(GameConfiguration configuration) => string.Join('\n', configuration.Items.OrderBy(item => item.Group).ThenBy(item => item.Number)
+        .SelectMany(item => item.DropItems.Select(group => $"{item.Group}/{item.Number}:{group.SourceItemLevel}:{group.Description}:{group.Chance}:{group.ItemType}:{group.MinimumLevel}:{group.MaximumLevel}:{group.MoneyAmount}:{group.ExcellentSecondOptionChance}:{group.SkillChance}:{group.LuckChance}:{string.Join(',', group.PossibleItems.Select(reward => $"{reward.Group}/{reward.Number}").Order())}")));
 
     [Test]
     public async Task CherryBlossomShopReplacesOnlyTicketMaterialsAsync()
@@ -201,7 +232,7 @@ public class CherryBlossomRewardTests
                 Assert.That(player.TemporaryStorage.Items.Count(), Is.EqualTo(1));
                 var expectedDurability = result.Durability ?? (result.ItemDefinition!.Group == 13 && result.ItemDefinition.Number is 65 or 80 or 106 or 123 ? 255 : 1);
                 Assert.That(outcome.Item.Durability, Is.EqualTo(expectedDurability));
-                Assert.That(outcome.Item.Level, Is.Zero, "Level zero jewel packs contain ten jewels.");
+                Assert.That(outcome.Item.Level, Is.EqualTo(result.RandomMinimumLevel), "Kundun wrappers retain their tier; level-zero jewel packs contain ten jewels.");
             }
         }
     }

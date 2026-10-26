@@ -90,8 +90,9 @@ public class CherryBlossomDatabaseTests
                 Assert.That(listing.StorePrice, Is.EqualTo(1000));
             }
             var gold = spirit.ItemCraftings.Single(recipe => recipe.Number == 41).SimpleCraftingSettings!;
-            Assert.That(gold.ResultItems, Has.Count.EqualTo(50));
-            Assert.That(gold.ResultItems.Count(result => result.ItemDefinition is { Group: 14, Number: 123 }), Is.EqualTo(5));
+            Assert.That(gold.ResultItems, Has.Count.EqualTo(6));
+            Assert.That(gold.ResultItems.Single(result => result.ItemDefinition is { Group: 14, Number: 11 }).RandomMinimumLevel, Is.EqualTo(10));
+            Assert.That(gold.ResultItems.Any(result => result.ItemDefinition is { Group: 14, Number: 123 }), Is.False);
             Assert.That(gold.ResultItems.Where(result => result.ItemDefinition is { Group: 13 }).All(result => result.Durability == 10), Is.True);
         }
 

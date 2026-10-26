@@ -15,8 +15,8 @@ public sealed class CherryBlossomRewards(IContext context, GameConfiguration con
 {
     private const byte BranchGroup = 14;
     private const short SpiritNumber = 450;
-    private const int OrdinaryGoldWeight = 9;
-    private const int GoldenBoxWeight = 5;
+    private const byte KundunOneWrapperLevel = 8;
+    private const byte KundunThreeWrapperLevel = 10;
 
     /// <inheritdoc />
     public override void Initialize()
@@ -25,6 +25,14 @@ public sealed class CherryBlossomRewards(IContext context, GameConfiguration con
         this.EnsureBranch(89, "Red Cherry Blossom Branch", 30);
         this.EnsureBranch(90, "Golden Cherry Blossom Branch", 255);
         this.ConfigurePlayBox();
+        this.ConfigureExchanges();
+    }
+
+    /// <summary>
+    /// Replaces only the three Noria exchanges, leaving Play-Box drops and shops untouched.
+    /// </summary>
+    public void ConfigureExchanges()
+    {
         var spirit = this.GameConfiguration.Monsters.Single(monster => monster.Number == SpiritNumber);
         foreach (var oldRecipe in spirit.ItemCraftings.Where(recipe => recipe.Number is 41 or 42 or 43).ToArray())
         {
@@ -33,7 +41,7 @@ public sealed class CherryBlossomRewards(IContext context, GameConfiguration con
 
         this.AddExchange(spirit, 42, 88, 10, [(14, 13), (12, 15), (14, 16), (14, 14), (13, 48), (13, 65)]);
         this.AddExchange(spirit, 43, 89, 30, [(14, 11), (13, 46), (13, 47), (13, 123), (13, 106), (13, 80)]);
-        this.AddExchange(spirit, 41, 90, 255, [(13, 47), (13, 46), (12, 30), (12, 31), (14, 124), (14, 123)]);
+        this.AddExchange(spirit, 41, 90, 255, [(13, 47), (13, 46), (12, 30), (12, 31), (14, 124), (14, 11)]);
     }
 
     private void EnsureBranch(short number, string name, byte capacity)
@@ -92,23 +100,22 @@ public sealed class CherryBlossomRewards(IContext context, GameConfiguration con
         settings.RequiredItems.Add(input);
         foreach (var reward in rewards)
         {
-            // Each entry is an equal lottery slot: Gold uses 9 slots per ordinary reward
-            // and 5 for Golden Box, giving exactly 18/18/18/18/18/10 out of 50.
-            var weight = branchNumber != 90 ? 1 : reward == ((byte)14, (short)123) ? GoldenBoxWeight : OrdinaryGoldWeight;
-            for (var slot = 0; slot < weight; slot++)
-            {
-                this.AddResult(settings, reward, branchNumber == 90 ? (byte)10 : (byte)1);
-            }
+            // ResultItemSelection.Any selects one of six equal entries without rounding chances.
+            var level = reward == ((byte)14, (short)11)
+                ? branchNumber == 89 ? KundunOneWrapperLevel : KundunThreeWrapperLevel
+                : (byte)0;
+            this.AddResult(settings, reward, branchNumber == 90 ? (byte)10 : (byte)1, level);
         }
 
         recipe.SimpleCraftingSettings = settings;
         spirit.ItemCraftings.Add(recipe);
     }
 
-    private void AddResult(SimpleCraftingSettings settings, (byte Group, short Number) reward, byte ticketUses)
+    private void AddResult(SimpleCraftingSettings settings, (byte Group, short Number) reward, byte ticketUses, byte level)
     {
         var result = this.Context.CreateNew<ItemCraftingResultItem>();
         result.ItemDefinition = this.Item(reward.Group, reward.Number);
+        result.RandomMinimumLevel = result.RandomMaximumLevel = level;
         if (reward.Group == 13 && reward.Number is >= 46 and <= 48)
         {
             result.Durability = ticketUses;
