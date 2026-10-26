@@ -41,6 +41,17 @@ public sealed class CrywolfMonsterIntelligence : INpcIntelligence, IDisposable
     /// </summary>
     private const int WaypointDistance = 20;
 
+    /// <summary>
+    /// The maximum distance of one walk. The path finder of the monsters only searches a segment of 16 x 16 tiles
+    /// (see <see cref="ScopedGridNetwork"/>), so a longer way has to be walked in several steps.
+    /// </summary>
+    private const int MaximumStepDistance = 12;
+
+    /// <summary>
+    /// The distance by which the step gets shorter, when the end of a step can't be reached.
+    /// </summary>
+    private const int StepReduction = 2;
+
     private readonly CrywolfContext _context;
     private readonly CrywolfMonsterGroup? _group;
     private readonly CrywolfBallista? _ballista;
@@ -198,11 +209,51 @@ public sealed class CrywolfMonsterIntelligence : INpcIntelligence, IDisposable
         }
 
         var walkTarget = GetNextWalkTarget(monster.Position, goal);
-        if (!await monster.WalkToAsync(walkTarget).ConfigureAwait(false) && walkTarget != goal)
+        if (!await this.WalkTowardsAsync(monster, walkTarget).ConfigureAwait(false) && walkTarget != goal)
         {
             // The waypoint can't be reached, e.g. because of the terrain. The goal might be reachable.
-            await monster.WalkToAsync(goal).ConfigureAwait(false);
+            await this.WalkTowardsAsync(monster, goal).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Gets the points on the straight way to the target, which are at most <see cref="MaximumStepDistance"/> away
+    /// from the position: the farthest first, then shorter ones, if the farther ones can't be reached.
+    /// </summary>
+    /// <param name="position">The position.</param>
+    /// <param name="target">The target.</param>
+    /// <returns>The points of the steps.</returns>
+    internal static IEnumerable<Point> GetSteps(Point position, Point target)
+    {
+        var distance = position.EuclideanDistanceTo(target);
+        if (distance <= MaximumStepDistance)
+        {
+            yield return target;
+            yield break;
+        }
+
+        for (var step = (double)MaximumStepDistance; step >= StepReduction; step -= StepReduction)
+        {
+            var fraction = step / distance;
+            yield return new Point(
+                (byte)Math.Clamp(Math.Round(position.X + ((target.X - position.X) * fraction)), 0, byte.MaxValue),
+                (byte)Math.Clamp(Math.Round(position.Y + ((target.Y - position.Y) * fraction)), 0, byte.MaxValue));
+        }
+    }
+
+    private async ValueTask<bool> WalkTowardsAsync(Monster monster, Point target)
+    {
+        foreach (var step in GetSteps(monster.Position, target))
+        {
+            if (step != monster.Position
+                && this.CanWalkOn(step)
+                && await monster.WalkToAsync(step).ConfigureAwait(false))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsChance(int percentage)
