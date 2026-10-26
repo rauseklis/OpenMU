@@ -641,6 +641,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed Cherry Blossom Play-Box and Noria branch rewards.");
         }
 
+        if (await CrywolfEventInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the data of the crywolf event. The event stays disabled until its plug-in is enabled.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
