@@ -384,7 +384,8 @@ public class CrywolfPenaltyTest
 
     private static async ValueTask<(CrywolfPlugIn PlugIn, GameContext GameContext)> CreatePlugInAsync(bool isOccupied, Action<CrywolfEventDefinition> configure, bool execute = true)
     {
-        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        // The plug-in of the plug-in manager would run in the background of the game context, in addition to the one of the test.
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext(new[] { new PlugInConfiguration { TypeId = typeof(CrywolfPlugIn).GUID, IsActive = false } });
         using (var persistenceContext = gameContext.PersistenceContextProvider.CreateNewTypedContext(typeof(CrywolfData), false, gameContext.Configuration))
         {
             var data = persistenceContext.CreateNew<CrywolfData>();
