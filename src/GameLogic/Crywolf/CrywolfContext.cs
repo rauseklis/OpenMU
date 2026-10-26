@@ -60,7 +60,6 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
     private int _lastRemainingTimeStep = -1;
     private int _contractedAltarCount;
     private bool _isBalgassAppearanceDone;
-    private bool _isBattleVoid;
     private CrywolfOccupationState _occupationBeforeWar;
     private bool _isStatueAttackStarted;
     private bool _isStartForced;
@@ -483,7 +482,6 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
         this._stateStart = DateTime.UtcNow;
         this._isStartForced = false;
         Interlocked.Exchange(ref this._isSkipRequested, 0);
-        this._isBattleVoid = false;
         this.ReleaseAltars();
         this._scores.Clear();
         this._heroes.Clear();
@@ -706,7 +704,6 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
         Volatile.Write(ref this._isBalgassDead, 0);
         this._balgassKillerName = null;
         this._isBalgassAppearanceDone = false;
-        this._isBattleVoid = false;
         this._isStatueAttackStarted = false;
         this._contractedAltarCount = 0;
         this._scores.Clear();
@@ -801,10 +798,12 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
             else if (this._isBalgassAppearanceDone)
             {
                 // Balgass was due, but couldn't be spawned (e.g. because his spawn is missing). That's no victory of the
-                // players and no defeat, so the battle has no result and the previous one stays.
+                // players and no defeat, so the battle has no result and the previous one stays. The event is stopped
+                // instead of ended, because the client shows a result in the state End.
                 this._logger.LogError("Balgass couldn't be spawned, so the crywolf battle has no result.");
-                this._isBattleVoid = true;
-                this.Occupation = this._occupationBeforeWar;
+                await this.ShowMessageToAllPlayersAsync(nameof(PlayerMessage.CrywolfBattleVoid)).ConfigureAwait(false);
+                await this.AbortAsync().ConfigureAwait(false);
+                return;
             }
             else
             {
@@ -818,12 +817,6 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
 
     private async ValueTask EndBattleAsync()
     {
-        if (this._isBattleVoid)
-        {
-            await this.EndVoidBattleAsync().ConfigureAwait(false);
-            return;
-        }
-
         var isDefended = this.Occupation == CrywolfOccupationState.Peace;
         this._logger.LogInformation("Crywolf battle ended, defended: {defended}.", isDefended);
         await this.ShowMessageToAllPlayersAsync(isDefended ? nameof(PlayerMessage.CrywolfDefenseSucceeded) : nameof(PlayerMessage.CrywolfDefenseFailed)).ConfigureAwait(false);
@@ -871,18 +864,6 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
             .ToList();
         await this.ForEachMapPlayerAsync(player => player.InvokeViewPlugInAsync<ICrywolfEventViewPlugIn>(p => p.ShowHeroListAsync(heroList)).AsTask()).ConfigureAwait(false);
         await this.SaveDataAsync(true).ConfigureAwait(false);
-    }
-
-    private async ValueTask EndVoidBattleAsync()
-    {
-        await this.ShowMessageToAllPlayersAsync(nameof(PlayerMessage.CrywolfBattleVoid)).ConfigureAwait(false);
-        this.ReleaseAltars();
-        this._scores.Clear();
-        this._heroes.Clear();
-        await this.ShowStateToMapPlayersAsync().ConfigureAwait(false);
-
-        // The war ends without a result: it doesn't count as battle end, so the result of the previous one stays.
-        await this.SaveDataAsync(false).ConfigureAwait(false);
     }
 
     private void ReleaseAltars()

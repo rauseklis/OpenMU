@@ -306,8 +306,10 @@ public class CrywolfContextTest
         context.SkipWaitingTime();
         await context.TickAsync().ConfigureAwait(false);
 
-        Assert.That(context.State, Is.EqualTo(CrywolfState.End));
+        // The client shows a result in the state End, so the event has to stop instead of ending with the previous result.
+        Assert.That(context.State, Is.EqualTo(CrywolfState.None));
         Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.Occupied), "The previous result stays.");
+        Assert.That(altar.State, Is.EqualTo(CrywolfAltarState.Free));
         var data = await LoadDataAsync(gameContext).ConfigureAwait(false);
         Assert.That(data?.IsOccupied, Is.True);
         Assert.That(data?.IsWarRunning, Is.False);
