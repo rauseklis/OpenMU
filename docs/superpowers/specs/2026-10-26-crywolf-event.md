@@ -58,3 +58,10 @@ Aetherion pack is reference for rules and numbers only; none of its files or cod
 
 No live database or configuration change, no merge, no deploy without the owner's explicit yes. Live changes go through a
 configuration update with a backup first. Tests use a throwaway PostgreSQL database only.
+
+## Decisions made
+
+- 2026-10-26, owner: rewards stay as the donor designs them. Every elf with a valid contract at the end of the battle
+  gets a reward item, and every top-5 hero gets one at the end of the event, so one player can get two.
+- 2026-10-26: a battle in which Balgass was due but could not be spawned has no result (the previous one stays), it is
+  neither a victory nor a defeat.
