@@ -110,6 +110,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new ItemRules(this.Context, this.GameConfiguration).Initialize();
         new BonusProgression(this.Context, this.GameConfiguration).Initialize();
         new BloodCastleRewardBalance(this.Context, this.GameConfiguration).Initialize();
+        new ChocolateBonusStock(this.Context, this.GameConfiguration).Initialize();
     }
 
     /// <summary>

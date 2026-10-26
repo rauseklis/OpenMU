@@ -651,6 +651,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed fixed Blood Castle experience and repaired empty Ribbon payouts.");
         }
 
+        if (await ChocolateBonusStockInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed missing bonus test stock and empty Red/Blue Chocolate rewards.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
