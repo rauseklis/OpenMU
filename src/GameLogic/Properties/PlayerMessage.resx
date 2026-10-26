@@ -894,6 +894,9 @@
   <data name="CrywolfDefenseFailed" xml:space="preserve">
     <value>Defending has failed! The statue of the holy wolf has been taken over by Balgass.</value>
   </data>
+  <data name="CrywolfBattleVoid" xml:space="preserve">
+    <value>The battle of Crywolf could not be decided and was cancelled. The fortress stays as it was.</value>
+  </data>
   <data name="CrywolfRankResult" xml:space="preserve">
     <value>Your MvP rank is {0}. You received {1} experience points.</value>
   </data>

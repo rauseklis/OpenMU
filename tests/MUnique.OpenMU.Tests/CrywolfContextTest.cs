@@ -277,6 +277,95 @@ public class CrywolfContextTest
         Assert.That(balgass, Is.Not.Null);
     }
 
+    /// <summary>
+    /// Tests that the battle is not won, when Balgass was due but couldn't be spawned (e.g. because of a missing spawn
+    /// in the configuration). The result of the previous battle has to stay, and the contractors don't get a reward.
+    /// </summary>
+    [Test]
+    public async Task BattleIsVoidWhenBalgassCouldNotBeSpawnedAsync()
+    {
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        await SaveDataAsync(gameContext, data =>
+        {
+            data.IsOccupied = true;
+            data.LastBattleEnd = DateTime.UtcNow - TimeSpan.FromDays(3);
+        }).ConfigureAwait(false);
+        var previousBattleEnd = (await LoadDataAsync(gameContext).ConfigureAwait(false))!.LastBattleEnd;
+        var (context, player, _) = await CreateContextAsync(gameContext, addBalgassSpawn: false).ConfigureAwait(false);
+        var altar = context.Altars[0];
+
+        await ProceedToAsync(context, CrywolfState.Ready).ConfigureAwait(false);
+        await context.ContractAltarAsync(player, altar.Npc.Id).ConfigureAwait(false);
+        await context.TickAsync().ConfigureAwait(false);
+        await ProceedToAsync(context, CrywolfState.Start).ConfigureAwait(false);
+        context.SkipWaitingTime();
+        await context.TickAsync().ConfigureAwait(false);
+        Assert.That(context.State, Is.EqualTo(CrywolfState.Start), "precondition: Balgass was due, but is missing");
+        context.SkipWaitingTime();
+        await context.TickAsync().ConfigureAwait(false);
+
+        Assert.That(context.State, Is.EqualTo(CrywolfState.End));
+        Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.Occupied), "The previous result stays.");
+        var data = await LoadDataAsync(gameContext).ConfigureAwait(false);
+        Assert.That(data?.IsOccupied, Is.True);
+        Assert.That(data?.IsWarRunning, Is.False);
+        Assert.That(data?.LastBattleEnd, Is.EqualTo(previousBattleEnd), "No battle result is recorded.");
+    }
+
+    /// <summary>
+    /// Tests that stopping the event (e.g. when its plug-in is deactivated) in each phase ends the war completely:
+    /// the army and Balgass are removed, the contracts are released, and the result of the previous battle stays.
+    /// </summary>
+    /// <param name="state">The state, in which the event is stopped.</param>
+    [TestCase(CrywolfState.Notify1)]
+    [TestCase(CrywolfState.Notify2)]
+    [TestCase(CrywolfState.Ready)]
+    [TestCase(CrywolfState.Start)]
+    public async Task AbortEndsTheWarCompletelyAsync(CrywolfState state)
+    {
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        await SaveDataAsync(gameContext, data =>
+        {
+            data.IsOccupied = true;
+            data.LastBattleEnd = DateTime.UtcNow - TimeSpan.FromDays(3);
+        }).ConfigureAwait(false);
+        var previousBattleEnd = (await LoadDataAsync(gameContext).ConfigureAwait(false))!.LastBattleEnd;
+        var (context, player, _) = await CreateContextAsync(gameContext).ConfigureAwait(false);
+        var altar = context.Altars[0];
+
+        await ProceedToAsync(context, CrywolfState.Ready).ConfigureAwait(false);
+        await context.ContractAltarAsync(player, altar.Npc.Id).ConfigureAwait(false);
+        await context.TickAsync().ConfigureAwait(false);
+        await ProceedToAsync(context, CrywolfState.Start).ConfigureAwait(false);
+        context.SkipWaitingTime();
+        await context.TickAsync().ConfigureAwait(false);
+        Assert.That(IsBalgassOnMap(context), Is.True, "precondition");
+        if (state != CrywolfState.Start)
+        {
+            // Restarts the event to reach the state in which it's stopped.
+            await context.AbortAsync().ConfigureAwait(false);
+            context.SkipWaitingTime();
+            await context.TickAsync().ConfigureAwait(false);
+            await ProceedToAsync(context, state).ConfigureAwait(false);
+        }
+
+        await context.AbortAsync().ConfigureAwait(false);
+
+        Assert.That(context.State, Is.EqualTo(CrywolfState.None));
+        Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.Occupied), "The previous result stays.");
+        Assert.That(IsBalgassOnMap(context), Is.False);
+        Assert.That(altar.State, Is.EqualTo(CrywolfAltarState.Free));
+        var data = await LoadDataAsync(gameContext).ConfigureAwait(false);
+        Assert.That(data?.IsWarRunning, Is.False);
+        Assert.That(data?.IsOccupied, Is.True);
+        Assert.That(data?.LastBattleEnd, Is.EqualTo(previousBattleEnd));
+    }
+
+    private static bool IsBalgassOnMap(CrywolfContext context)
+    {
+        return context.Map!.GetNpcsInRange(new Point(110, 79), 3).OfType<Monster>().Any(monster => monster.Definition.Number == 349);
+    }
+
     private static async ValueTask ProceedToAsync(CrywolfContext context, CrywolfState state)
     {
         for (var i = 0; i < 10 && context.State != state; i++)
@@ -302,7 +391,8 @@ public class CrywolfContextTest
     private static async ValueTask<(CrywolfContext Context, Player Player, GameContext GameContext)> CreateContextAsync(
         GameContext? gameContext = null,
         byte? serverId = null,
-        Action<CrywolfEventDefinition>? configure = null)
+        Action<CrywolfEventDefinition>? configure = null,
+        bool addBalgassSpawn = true)
     {
         gameContext ??= (GameContext)GameContextTestHelper.CreateGameContext();
         var map = (await gameContext.GetMapAsync(0).ConfigureAwait(false))!;
@@ -322,20 +412,23 @@ public class CrywolfContextTest
             await AddNpcAsync(map, definition.AltarNumbers[i], new Point((byte)(AltarPosition.X - (i * 2)), AltarPosition.Y)).ConfigureAwait(false);
         }
 
-        var balgass = new MonsterDefinition { Id = Guid.NewGuid(), Number = 349, ObjectKind = NpcObjectKind.Monster, AttackDelay = TimeSpan.FromHours(1) };
-        balgass.Attributes.Add(new MonsterAttribute { AttributeDefinition = Stats.MaximumHealth, Value = 100 });
-        map.Definition.MonsterSpawns.Add(new Persistence.BasicModel.MonsterSpawnArea
+        if (addBalgassSpawn)
         {
-            MonsterDefinition = balgass,
-            GameMap = map.Definition,
-            X1 = 110,
-            X2 = 110,
-            Y1 = 79,
-            Y2 = 79,
-            Quantity = 1,
-            SpawnTrigger = SpawnTrigger.OnceAtWaveStart,
-            WaveNumber = definition.BalgassWaveNumber,
-        });
+            var balgass = new MonsterDefinition { Id = Guid.NewGuid(), Number = 349, ObjectKind = NpcObjectKind.Monster, AttackDelay = TimeSpan.FromHours(1) };
+            balgass.Attributes.Add(new MonsterAttribute { AttributeDefinition = Stats.MaximumHealth, Value = 100 });
+            map.Definition.MonsterSpawns.Add(new Persistence.BasicModel.MonsterSpawnArea
+            {
+                MonsterDefinition = balgass,
+                GameMap = map.Definition,
+                X1 = 110,
+                X2 = 110,
+                Y1 = 79,
+                Y2 = 79,
+                Quantity = 1,
+                SpawnTrigger = SpawnTrigger.OnceAtWaveStart,
+                WaveNumber = definition.BalgassWaveNumber,
+            });
+        }
 
         var context = new CrywolfContext(gameContext, definition, serverId);
         await context.InitializeAsync().ConfigureAwait(false);

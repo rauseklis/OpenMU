@@ -60,6 +60,8 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
     private int _lastRemainingTimeStep = -1;
     private int _contractedAltarCount;
     private bool _isBalgassAppearanceDone;
+    private bool _isBattleVoid;
+    private CrywolfOccupationState _occupationBeforeWar;
     private bool _isStatueAttackStarted;
     private bool _isStartForced;
     private int _isSkipRequested;
@@ -460,6 +462,38 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
         await player.InvokeViewPlugInAsync<ICrywolfEventViewPlugIn>(p => p.ShowContractResultAsync(isSuccess, altar.Index, altarState)).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Stops the event at once, e.g. when it's disabled: the war ends without a result, the army is removed,
+    /// the contracts are released, and the result of the previous battle stays.
+    /// </summary>
+    public async ValueTask AbortAsync()
+    {
+        if (this.State == CrywolfState.None)
+        {
+            return;
+        }
+
+        this._logger.LogInformation("The crywolf event was stopped in the state {state}.", this.State);
+        if (this.Occupation == CrywolfOccupationState.War)
+        {
+            this.Occupation = this._occupationBeforeWar;
+        }
+
+        this.State = CrywolfState.None;
+        this._stateStart = DateTime.UtcNow;
+        this._isStartForced = false;
+        Interlocked.Exchange(ref this._isSkipRequested, 0);
+        this._isBattleVoid = false;
+        this.ReleaseAltars();
+        this._scores.Clear();
+        this._heroes.Clear();
+        await this.RemoveEventMonstersAsync().ConfigureAwait(false);
+        await this.ApplyOccupationAsync().ConfigureAwait(false);
+        await this.RestoreCommonMonstersAsync().ConfigureAwait(false);
+        await this.ShowStateToMapPlayersAsync().ConfigureAwait(false);
+        await this.SaveDataAsync(false).ConfigureAwait(false);
+    }
+
     /// <inheritdoc />
     public void Dispose()
     {
@@ -657,6 +691,7 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
     private async ValueTask StartWarAsync()
     {
         await this.ShowMessageToAllPlayersAsync(nameof(PlayerMessage.CrywolfNotify2)).ConfigureAwait(false);
+        this._occupationBeforeWar = this.Occupation;
         this.Occupation = CrywolfOccupationState.War;
         await this.SaveDataAsync(false).ConfigureAwait(false);
         await this.ApplyOccupationAsync().ConfigureAwait(false);
@@ -671,6 +706,7 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
         Volatile.Write(ref this._isBalgassDead, 0);
         this._balgassKillerName = null;
         this._isBalgassAppearanceDone = false;
+        this._isBattleVoid = false;
         this._isStatueAttackStarted = false;
         this._contractedAltarCount = 0;
         this._scores.Clear();
@@ -762,9 +798,17 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
                 await this.ShowMessageToMapPlayersAsync(nameof(PlayerMessage.CrywolfBalgassAlive)).ConfigureAwait(false);
                 this.Occupation = CrywolfOccupationState.Occupied;
             }
+            else if (this._isBalgassAppearanceDone)
+            {
+                // Balgass was due, but couldn't be spawned (e.g. because his spawn is missing). That's no victory of the
+                // players and no defeat, so the battle has no result and the previous one stays.
+                this._logger.LogError("Balgass couldn't be spawned, so the crywolf battle has no result.");
+                this._isBattleVoid = true;
+                this.Occupation = this._occupationBeforeWar;
+            }
             else
             {
-                // Balgass didn't appear (e.g. because of the configuration), and the altars were protected.
+                // Balgass wasn't due yet (the battle is configured shorter than his appearance), and the altars were protected.
                 this.Occupation = CrywolfOccupationState.Peace;
             }
 
@@ -774,6 +818,12 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
 
     private async ValueTask EndBattleAsync()
     {
+        if (this._isBattleVoid)
+        {
+            await this.EndVoidBattleAsync().ConfigureAwait(false);
+            return;
+        }
+
         var isDefended = this.Occupation == CrywolfOccupationState.Peace;
         this._logger.LogInformation("Crywolf battle ended, defended: {defended}.", isDefended);
         await this.ShowMessageToAllPlayersAsync(isDefended ? nameof(PlayerMessage.CrywolfDefenseSucceeded) : nameof(PlayerMessage.CrywolfDefenseFailed)).ConfigureAwait(false);
@@ -821,6 +871,30 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
             .ToList();
         await this.ForEachMapPlayerAsync(player => player.InvokeViewPlugInAsync<ICrywolfEventViewPlugIn>(p => p.ShowHeroListAsync(heroList)).AsTask()).ConfigureAwait(false);
         await this.SaveDataAsync(true).ConfigureAwait(false);
+    }
+
+    private async ValueTask EndVoidBattleAsync()
+    {
+        await this.ShowMessageToAllPlayersAsync(nameof(PlayerMessage.CrywolfBattleVoid)).ConfigureAwait(false);
+        this.ReleaseAltars();
+        this._scores.Clear();
+        this._heroes.Clear();
+        await this.ShowStateToMapPlayersAsync().ConfigureAwait(false);
+
+        // The war ends without a result: it doesn't count as battle end, so the result of the previous one stays.
+        await this.SaveDataAsync(false).ConfigureAwait(false);
+    }
+
+    private void ReleaseAltars()
+    {
+        foreach (var altar in this._altars)
+        {
+            lock (altar)
+            {
+                altar.Reset();
+                altar.Hide();
+            }
+        }
     }
 
     private async ValueTask EndCycleAsync()

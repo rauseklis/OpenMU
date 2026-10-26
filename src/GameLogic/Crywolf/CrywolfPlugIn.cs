@@ -92,6 +92,16 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
         return plugIn is not null && plugIn._contexts.TryGetValue(gameContext, out var context) ? context : null;
     }
 
+    /// <summary>
+    /// Gets the context of the crywolf event of the game context, which is run by this instance of the plug-in.
+    /// </summary>
+    /// <param name="gameContext">The game context.</param>
+    /// <returns>The context of the crywolf event.</returns>
+    internal CrywolfContext? GetOwnContext(IGameContext gameContext)
+    {
+        return this._contexts.TryGetValue(gameContext, out var context) ? context : null;
+    }
+
     /// <inheritdoc />
     public async ValueTask ExecuteTaskAsync(GameContext gameContext)
     {
@@ -336,6 +346,40 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
         this._experienceMultiplier.Value = 1;
         this._appliedEffects = null;
         this._attachedGameContexts.Clear();
+
+        // A running war has to end, too. Otherwise, the army, the contracts and the war terrain would stay frozen.
+        _ = Task.Run(this.AbortEventsAsync);
+    }
+
+    /// <summary>
+    /// Stops the events of all game contexts, without interfering with a tick which is currently running.
+    /// </summary>
+    private async Task AbortEventsAsync()
+    {
+        foreach (var (gameContext, context) in this._contexts.ToList())
+        {
+            try
+            {
+                this._runningTicks.GetOrAdd(gameContext, 0);
+                while (!this._runningTicks.TryUpdate(gameContext, 1, 0))
+                {
+                    await Task.Delay(50).ConfigureAwait(false);
+                }
+
+                try
+                {
+                    await context.AbortAsync().ConfigureAwait(false);
+                }
+                finally
+                {
+                    this._runningTicks[gameContext] = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                gameContext.LoggerFactory.CreateLogger<CrywolfPlugIn>().LogError(ex, "Couldn't stop the crywolf event.");
+            }
+        }
     }
 
     private async ValueTask UpdateMultipliersAsync(GameContext gameContext)

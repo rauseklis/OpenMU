@@ -385,6 +385,15 @@ namespace MUnique.OpenMU.GameLogic.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The battle of Crywolf could not be decided and was cancelled. The fortress stays as it was..
+        /// </summary>
+        public static string CrywolfBattleVoid {
+            get {
+                return ResourceManager.GetString("CrywolfBattleVoid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Defending has failed! The statue of the holy wolf has been taken over by Balgass..
         /// </summary>
         public static string CrywolfDefenseFailed {

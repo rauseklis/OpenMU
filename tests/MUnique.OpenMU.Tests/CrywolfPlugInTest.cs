@@ -9,6 +9,8 @@ using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.Crywolf;
+using MUnique.OpenMU.DataModel.Configuration;
+using MUnique.OpenMU.GameLogic.NPC;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using ItemDefinition = MUnique.OpenMU.Persistence.BasicModel.ItemDefinition;
 
@@ -94,6 +96,62 @@ public class CrywolfPlugInTest
         await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
 
         Assert.That(player.Attributes[Stats.ExperienceRate], Is.EqualTo(normalRate * 0.5f));
+    }
+
+    /// <summary>
+    /// Tests that deactivating the plugin during the war ends the war, so that the other game servers don't stay in it.
+    /// </summary>
+    [Test]
+    public async Task DeactivationDuringTheWarEndsTheWarAsync()
+    {
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        var map = (await gameContext.GetMapAsync(0).ConfigureAwait(false))!;
+        var definition = new CrywolfEventDefinition { MapNumber = 0, MonsterGroups = new List<CrywolfMonsterGroup>() };
+        await AddNpcAsync(map, definition.StatueNumber).ConfigureAwait(false);
+        foreach (var altarNumber in definition.AltarNumbers)
+        {
+            await AddNpcAsync(map, altarNumber).ConfigureAwait(false);
+        }
+
+        var plugIn = new CrywolfPlugIn { Configuration = definition };
+        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+        var context = plugIn.GetOwnContext(gameContext)!;
+        for (var i = 0; i < 10 && context.Occupation != CrywolfOccupationState.War; i++)
+        {
+            plugIn.ForceStart();
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+        }
+
+        Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.War), "precondition");
+
+        gameContext.PlugInManager.RegisterPlugIn<IPeriodicTaskPlugIn, CrywolfPlugIn>();
+        gameContext.PlugInManager.DeactivatePlugIn<CrywolfPlugIn>();
+
+        for (var i = 0; i < 100 && context.State != CrywolfState.None; i++)
+        {
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+
+        Assert.That(context.State, Is.EqualTo(CrywolfState.None));
+        Assert.That(context.Occupation, Is.Not.EqualTo(CrywolfOccupationState.War));
+    }
+
+    private static async ValueTask AddNpcAsync(GameMap map, short number)
+    {
+        var npcDefinition = new MUnique.OpenMU.Persistence.BasicModel.MonsterDefinition { Id = Guid.NewGuid(), Number = number, ObjectKind = NpcObjectKind.PassiveNpc };
+        var spawnArea = new MUnique.OpenMU.Persistence.BasicModel.MonsterSpawnArea
+        {
+            MonsterDefinition = npcDefinition,
+            GameMap = map.Definition,
+            X1 = (byte)(120 + (number % 10)),
+            X2 = (byte)(120 + (number % 10)),
+            Y1 = 30,
+            Y2 = 30,
+            Quantity = 1,
+        };
+        var npc = new NonPlayerCharacter(spawnArea, npcDefinition, map);
+        npc.Initialize();
+        await map.AddAsync(npc).ConfigureAwait(false);
     }
 
     private static bool IsDropCancelled(CrywolfPlugIn plugIn, Player killer, byte group, short number)
