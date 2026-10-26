@@ -2,55 +2,6 @@
   "totalBonusChance": 0.05,
   "eligibleMonsters": [
     {
-      "bonus": "SILVER MEDAL",
-      "map": 2,
-      "monster": 20,
-      "name": "Elite Yeti",
-      "level": 36
-    },
-    {
-      "bonus": "SILVER MEDAL",
-      "map": 1,
-      "monster": 5,
-      "name": "Hell Hound",
-      "level": 38
-    },
-    {
-      "bonus": "SILVER MEDAL",
-      "map": 1,
-      "monster": 13,
-      "name": "Hell Spider",
-      "level": 40
-    },
-    {
-      "bonus": "SILVER MEDAL",
-      "map": 1,
-      "monster": 16,
-      "name": "Elite Skeleton",
-      "level": 42
-    },
-    {
-      "bonus": "SILVER MEDAL",
-      "map": 1,
-      "monster": 9,
-      "name": "Thunder Lich",
-      "level": 44
-    },
-    {
-      "bonus": "SILVER MEDAL",
-      "map": 1,
-      "monster": 8,
-      "name": "Poison Bull",
-      "level": 46
-    },
-    {
-      "bonus": "SILVER MEDAL",
-      "map": 1,
-      "monster": 10,
-      "name": "Dark Knight",
-      "level": 48
-    },
-    {
       "bonus": "BOX OF HEAVEN",
       "map": 2,
       "monster": 24,
@@ -261,144 +212,277 @@
       "level": 70
     },
     {
+      "bonus": "SILVER MEDAL",
+      "map": 2,
+      "monster": 20,
+      "name": "Elite Yeti",
+      "level": 36
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 5,
+      "name": "Hell Hound",
+      "level": 38
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 13,
+      "name": "Hell Spider",
+      "level": 40
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 16,
+      "name": "Elite Skeleton",
+      "level": 42
+    },
+    {
+      "bonus": "SILVER MEDAL",
+      "map": 1,
+      "monster": 9,
+      "name": "Thunder Lich",
+      "level": 44
+    },
+    {
       "bonus": "GOLD MEDAL",
+      "map": 1,
+      "monster": 8,
+      "name": "Poison Bull",
+      "level": 46
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 1,
+      "monster": 10,
+      "name": "Dark Knight",
+      "level": 48
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 1,
+      "monster": 18,
+      "name": "Gorgon",
+      "level": 55
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 36,
+      "name": "Shadow",
+      "level": 47
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 39,
+      "name": "Poison Shadow",
+      "level": 50
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 34,
+      "name": "Cursed Wizard",
+      "level": 54
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 4,
+      "monster": 41,
+      "name": "Death Cow",
+      "level": 57
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 7,
+      "monster": 45,
+      "name": "Bahamut",
+      "level": 43
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 7,
+      "monster": 46,
+      "name": "Vepar",
+      "level": 45
+    },
+    {
+      "bonus": "GOLD MEDAL",
+      "map": 7,
+      "monster": 47,
+      "name": "Valkyrie",
+      "level": 46
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 1,
+      "monster": 18,
+      "name": "Gorgon",
+      "level": 55
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 4,
+      "monster": 34,
+      "name": "Cursed Wizard",
+      "level": 54
+    },
+    {
+      "bonus": "HEART OF LOVE",
+      "map": 4,
+      "monster": 41,
+      "name": "Death Cow",
+      "level": 57
+    },
+    {
+      "bonus": "FIRECRACKER",
       "map": 4,
       "monster": 37,
       "name": "Devil",
       "level": 60
     },
     {
-      "bonus": "GOLD MEDAL",
+      "bonus": "FIRECRACKER",
       "map": 4,
       "monster": 40,
       "name": "Death Knight",
       "level": 62
     },
     {
-      "bonus": "GOLD MEDAL",
+      "bonus": "FIRECRACKER",
       "map": 4,
       "monster": 35,
       "name": "Death Gorgon",
       "level": 64
     },
     {
-      "bonus": "GOLD MEDAL",
+      "bonus": "FIRECRACKER",
       "map": 4,
       "monster": 38,
       "name": "Balrog",
       "level": 66
     },
     {
-      "bonus": "GOLD MEDAL",
+      "bonus": "FIRECRACKER",
       "map": 7,
       "monster": 51,
       "name": "Great Bahamut",
       "level": 66
     },
     {
-      "bonus": "GOLD MEDAL",
+      "bonus": "FIRECRACKER",
       "map": 7,
       "monster": 52,
       "name": "Silver Valkyrie",
       "level": 68
     },
     {
-      "bonus": "GOLD MEDAL",
+      "bonus": "FIRECRACKER",
       "map": 7,
       "monster": 48,
       "name": "Lizard King",
       "level": 70
     },
     {
-      "bonus": "HEART OF LOVE",
-      "map": 4,
-      "monster": 40,
-      "name": "Death Knight",
-      "level": 62
-    },
-    {
-      "bonus": "HEART OF LOVE",
-      "map": 4,
-      "monster": 35,
-      "name": "Death Gorgon",
-      "level": 64
-    },
-    {
-      "bonus": "HEART OF LOVE",
-      "map": 4,
-      "monster": 38,
-      "name": "Balrog",
-      "level": 66
-    },
-    {
-      "bonus": "HEART OF LOVE",
-      "map": 7,
-      "monster": 51,
-      "name": "Great Bahamut",
-      "level": 66
-    },
-    {
-      "bonus": "HEART OF LOVE",
-      "map": 7,
-      "monster": 52,
-      "name": "Silver Valkyrie",
-      "level": 68
-    },
-    {
-      "bonus": "HEART OF LOVE",
-      "map": 7,
-      "monster": 48,
-      "name": "Lizard King",
-      "level": 70
-    },
-    {
-      "bonus": "HEART OF LOVE",
+      "bonus": "FIRECRACKER",
       "map": 7,
       "monster": 49,
       "name": "Hydra",
       "level": 74
     },
     {
-      "bonus": "FIRECRACKER",
+      "bonus": "STAR",
+      "map": 8,
+      "monster": 62,
+      "name": "Mutant",
+      "level": 72
+    },
+    {
+      "bonus": "STAR",
+      "map": 8,
+      "monster": 60,
+      "name": "Bloody Wolf",
+      "level": 76
+    },
+    {
+      "bonus": "STAR",
       "map": 8,
       "monster": 57,
       "name": "Iron Wheel",
       "level": 80
     },
     {
-      "bonus": "FIRECRACKER",
+      "bonus": "STAR",
       "map": 8,
       "monster": 58,
       "name": "Tantallos",
       "level": 83
     },
     {
-      "bonus": "FIRECRACKER",
+      "bonus": "STAR",
       "map": 8,
       "monster": 61,
       "name": "Beam Knight",
       "level": 84
     },
     {
-      "bonus": "FIRECRACKER",
+      "bonus": "STAR",
+      "map": 10,
+      "monster": 69,
+      "name": "Alquamos",
+      "level": 75
+    },
+    {
+      "bonus": "STAR",
       "map": 10,
       "monster": 71,
       "name": "Mega Crust",
       "level": 78
     },
     {
-      "bonus": "FIRECRACKER",
+      "bonus": "STAR",
       "map": 10,
       "monster": 70,
       "name": "Queen Rainer",
       "level": 82
     },
     {
-      "bonus": "FIRECRACKER",
+      "bonus": "STAR",
       "map": 10,
       "monster": 73,
       "name": "Drakan",
       "level": 86
+    },
+    {
+      "bonus": "STAR",
+      "map": 33,
+      "monster": 308,
+      "name": "Death Tree",
+      "level": 72
+    },
+    {
+      "bonus": "STAR",
+      "map": 33,
+      "monster": 307,
+      "name": "Forest Orc",
+      "level": 74
+    },
+    {
+      "bonus": "STAR",
+      "map": 33,
+      "monster": 306,
+      "name": "Death Rider",
+      "level": 78
+    },
+    {
+      "bonus": "STAR",
+      "map": 33,
+      "monster": 305,
+      "name": "Blue Golem",
+      "level": 84
     }
   ],
   "jewels": {
@@ -484,30 +568,30 @@
   },
   "weights": {
     "SILVER MEDAL": {
-      "armor": 0.3,
-      "weapons": 0.2,
-      "shields": 0.05,
+      "armor": 0.33,
+      "weapons": 0.1925,
+      "shields": 0.0275,
       "jewels": 0.2,
       "rings": 0.05,
       "zen": 0.2
     },
     "GOLD MEDAL": {
-      "armor": 0.35,
-      "weapons": 0.3,
-      "shields": 0.05,
+      "armor": 0.42,
+      "weapons": 0.245,
+      "shields": 0.035,
       "jewels": 0.15,
       "rings": 0.05,
       "zen": 0.1
     },
     "HEART OF LOVE": {
-      "weapons": 0.5,
-      "shields": 0.1,
+      "weapons": 0.525,
+      "shields": 0.075,
       "jewels": 0.3,
       "zen": 0.1
     },
     "FIRECRACKER": {
-      "armor": 0.2,
-      "weapons": 0.2,
+      "armor": 0.25263157894736843,
+      "weapons": 0.14736842105263157,
       "jewels": 0.35,
       "zen": 0.25
     },
@@ -704,5 +788,347 @@
     13,
     14,
     15
+  ],
+  "starClasses": [
+    {
+      "name": "DW",
+      "armor": [
+        [
+          7,
+          18
+        ],
+        [
+          8,
+          18
+        ],
+        [
+          9,
+          18
+        ],
+        [
+          10,
+          18
+        ],
+        [
+          11,
+          18
+        ],
+        [
+          7,
+          35
+        ],
+        [
+          8,
+          35
+        ],
+        [
+          9,
+          35
+        ],
+        [
+          10,
+          35
+        ],
+        [
+          11,
+          35
+        ]
+      ],
+      "weapons": [
+        [
+          5,
+          9
+        ],
+        [
+          5,
+          8
+        ]
+      ],
+      "shield": 15
+    },
+    {
+      "name": "DK",
+      "armor": [
+        [
+          7,
+          16
+        ],
+        [
+          8,
+          16
+        ],
+        [
+          9,
+          16
+        ],
+        [
+          10,
+          16
+        ],
+        [
+          11,
+          16
+        ],
+        [
+          7,
+          34
+        ],
+        [
+          8,
+          34
+        ],
+        [
+          9,
+          34
+        ],
+        [
+          10,
+          34
+        ],
+        [
+          11,
+          34
+        ]
+      ],
+      "weapons": [
+        [
+          0,
+          20
+        ],
+        [
+          3,
+          10
+        ]
+      ],
+      "shield": 13
+    },
+    {
+      "name": "Elf",
+      "armor": [
+        [
+          7,
+          19
+        ],
+        [
+          8,
+          19
+        ],
+        [
+          9,
+          19
+        ],
+        [
+          10,
+          19
+        ],
+        [
+          11,
+          19
+        ],
+        [
+          7,
+          36
+        ],
+        [
+          8,
+          36
+        ],
+        [
+          9,
+          36
+        ],
+        [
+          10,
+          36
+        ],
+        [
+          11,
+          36
+        ]
+      ],
+      "weapons": [
+        [
+          4,
+          16
+        ],
+        [
+          4,
+          17
+        ],
+        [
+          2,
+          7
+        ]
+      ],
+      "shield": 16
+    },
+    {
+      "name": "MG",
+      "armor": [
+        [
+          8,
+          20
+        ],
+        [
+          9,
+          20
+        ],
+        [
+          10,
+          20
+        ],
+        [
+          11,
+          20
+        ],
+        [
+          8,
+          37
+        ],
+        [
+          9,
+          37
+        ],
+        [
+          10,
+          37
+        ],
+        [
+          11,
+          37
+        ]
+      ],
+      "weapons": [
+        [
+          0,
+          18
+        ],
+        [
+          0,
+          31
+        ],
+        [
+          5,
+          8
+        ]
+      ],
+      "shield": 13
+    },
+    {
+      "name": "DL",
+      "armor": [
+        [
+          7,
+          27
+        ],
+        [
+          8,
+          27
+        ],
+        [
+          9,
+          27
+        ],
+        [
+          10,
+          27
+        ],
+        [
+          11,
+          27
+        ],
+        [
+          7,
+          38
+        ],
+        [
+          8,
+          38
+        ],
+        [
+          9,
+          38
+        ],
+        [
+          10,
+          38
+        ],
+        [
+          11,
+          38
+        ]
+      ],
+      "weapons": [
+        [
+          2,
+          11
+        ]
+      ],
+      "shield": 11
+    },
+    {
+      "name": "Summoner",
+      "armor": [
+        [
+          7,
+          42
+        ],
+        [
+          8,
+          42
+        ],
+        [
+          9,
+          42
+        ],
+        [
+          10,
+          42
+        ],
+        [
+          11,
+          42
+        ]
+      ],
+      "weapons": [
+        [
+          5,
+          18
+        ],
+        [
+          5,
+          23
+        ]
+      ],
+      "shield": null
+    },
+    {
+      "name": "RF",
+      "armor": [
+        [
+          7,
+          61
+        ],
+        [
+          8,
+          61
+        ],
+        [
+          9,
+          61
+        ],
+        [
+          11,
+          61
+        ]
+      ],
+      "weapons": [
+        [
+          0,
+          34
+        ]
+      ],
+      "shield": null
+    }
   ]
 }

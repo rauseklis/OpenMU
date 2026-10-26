@@ -18,7 +18,7 @@ CREATE TEMP TABLE reward_plan ON COMMIT DROP AS
  SELECT r.* FROM approved_plan, jsonb_to_recordset(value->'rewards') AS r(
  id uuid, description text, level smallint, chance double precision, type integer,
  minimum smallint, maximum smallint, money integer, second double precision,
- skill double precision, jewelry boolean, effect integer, items jsonb);
+ skill double precision, jewelry boolean, effect integer, items jsonb, luck double precision, "suppressAdd" boolean);
 CREATE TEMP TABLE bonus_plan ON COMMIT DROP AS
  SELECT b.* FROM approved_plan, jsonb_to_recordset(value->'bonuses') AS b(
  id uuid, bonus text, map smallint, monster smallint, name text, level smallint);
@@ -60,8 +60,8 @@ DELETE FROM config."ItemDropItemGroup" d USING source_box b
 INSERT INTO config."ItemDropItemGroup"
  ("Id","Description","Chance","ItemType","ItemDefinitionId","SourceItemLevel",
   "MinimumLevel","MaximumLevel","MoneyAmount","RequiredCharacterLevel","DropEffect",
-  "ExcellentSecondOptionChance","SkillChance","GuaranteeJewelryOption")
- SELECT r.id,r.description,r.chance,r.type,b.id,r.level,r.minimum,r.maximum,r.money,0,r.effect,r.second,r.skill,r.jewelry
+  "ExcellentSecondOptionChance","SkillChance","GuaranteeJewelryOption","LuckChance","SuppressAdditionalOption")
+ SELECT r.id,r.description,r.chance,r.type,b.id,r.level,r.minimum,r.maximum,r.money,0,r.effect,r.second,r.skill,r.jewelry,r.luck,r."suppressAdd"
  FROM reward_plan r CROSS JOIN source_box b;
 INSERT INTO config."ItemDropItemGroupItemDefinition" ("ItemDropItemGroupId","ItemDefinitionId")
  SELECT group_id,item_id FROM reward_items;
@@ -117,7 +117,7 @@ CREATE TEMP TABLE selected_shop ON COMMIT DROP AS
 CREATE TEMP TABLE shop_plan ON COMMIT DROP AS
  SELECT ('24b00002-0000-4000-8000-'||lpad(level::text,12,'0'))::uuid AS id,
  level, row_number() OVER (ORDER BY level) AS position
- FROM reward_plan GROUP BY level;
+ FROM reward_plan WHERE level <> 1 GROUP BY level;
 CREATE TEMP TABLE free_shop_slots ON COMMIT DROP AS
  SELECT slot::smallint AS slot, row_number() OVER (ORDER BY slot) AS position
  FROM generate_series(0,119) slot

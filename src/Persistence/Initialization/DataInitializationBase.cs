@@ -204,6 +204,14 @@ public abstract class DataInitializationBase : IDataInitializationPlugIn
     /// </summary>
     protected abstract void CreateGameClientDefinition();
 
+    /// <summary>
+    /// Applies version-specific settings to a newly created server.
+    /// </summary>
+    /// <param name="server">The new server definition.</param>
+    protected virtual void ConfigureGameServer(GameServerDefinition server)
+    {
+    }
+
     private void CreateDefaultPlugInConfiguration(Type plugInType, PlugInConfiguration plugInConfiguration, ReferenceHandler referenceHandler)
     {
         try
@@ -272,6 +280,7 @@ public abstract class DataInitializationBase : IDataInitializationPlugIn
             server.ExperienceRate = 1.0f;
             server.GameConfiguration = this.GameConfiguration;
             server.ServerConfiguration = gameServerConfiguration;
+            this.ConfigureGameServer(server);
 
             foreach (var client in await this.Context.GetAsync<GameClientDefinition>().ConfigureAwait(false))
             {

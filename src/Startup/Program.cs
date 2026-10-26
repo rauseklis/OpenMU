@@ -634,6 +634,8 @@ internal sealed class Program : IDisposable
 
         await this.InstallDevilSquareRewardsAsync(contextProvider).ConfigureAwait(false);
         await this.InstallReusableEventTicketsAsync(contextProvider).ConfigureAwait(false);
+        await this.InstallBonusProgressionAsync(contextProvider).ConfigureAwait(false);
+
         if (await CherryBlossomRewardsInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
         {
             this._logger.Information("Installed Cherry Blossom Play-Box and Noria branch rewards.");
@@ -642,6 +644,14 @@ internal sealed class Program : IDisposable
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
+    }
+
+    private async Task InstallBonusProgressionAsync(IPersistenceContextProvider contextProvider)
+    {
+        if (await BonusProgressionInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed approved bonus progression and Star rewards.");
+        }
     }
 
     private async Task InstallReusableEventTicketsAsync(IPersistenceContextProvider contextProvider)

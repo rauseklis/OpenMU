@@ -2900,6 +2900,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<bool>("GuaranteeJewelryOption")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("SuppressAdditionalOption")
+                        .HasColumnType("boolean");
+
                     b.Property<byte>("SourceItemLevel")
                         .HasColumnType("smallint");
 

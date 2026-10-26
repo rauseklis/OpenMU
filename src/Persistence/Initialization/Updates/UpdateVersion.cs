@@ -664,7 +664,12 @@ public enum UpdateVersion
     CherryBlossomRewards = 142,
 
     /// <summary>
+    /// Installs the reviewed ordinary bonus and Star progression.
+    /// </summary>
+    BonusProgression = 143,
+
+    /// <summary>
     /// The version of the <see cref="AddCrywolfEventUpdatePlugIn"/>.
     /// </summary>
-    AddCrywolfEvent = 143,
+    AddCrywolfEvent = 144,
 }

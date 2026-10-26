@@ -1,3 +1,5 @@
+> Current Season 6 progression uses the exact monster/map assignments in [Monster bonuses and equipment progression](box-reward-rebalance.md). The older 19-gift pool below is historical and is replaced by that one-time startup update. Do not reapply the historical small-bonus SQL to the updated server.
+
 # Server 1: one combined 5% small-gift monster roll
 
 Opt-in configuration for the owner's selected gift pool, enabled only on Server 1
