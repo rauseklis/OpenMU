@@ -672,4 +672,9 @@ public enum UpdateVersion
     /// The version of the <see cref="AddCrywolfEventUpdatePlugIn"/>.
     /// </summary>
     AddCrywolfEvent = 144,
+
+    /// <summary>
+    /// Balances fixed Blood Castle experience and restores missing Ribbon payouts.
+    /// </summary>
+    BloodCastleRewardBalance = 145,
 }

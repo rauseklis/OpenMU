@@ -646,6 +646,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed the data of the crywolf event. The event stays disabled until its plug-in is enabled.");
         }
 
+        if (await BloodCastleRewardBalanceInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed fixed Blood Castle experience and repaired empty Ribbon payouts.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

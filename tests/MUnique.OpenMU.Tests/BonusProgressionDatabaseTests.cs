@@ -28,6 +28,61 @@ public class BonusProgressionDatabaseTests
     private const string Connection = "Host=127.0.0.1;Port=55503;Database=" + DatabaseName + ";User Id=progressionvalidation;Command Timeout=120;";
 
     [Test]
+    [Explicit("Requires the existing task-owned disposable fixture on 127.0.0.1:55503.")]
+    public async Task RepairExistingBloodCastleRewardsAsync()
+    {
+        Assert.That(Environment.GetEnvironmentVariable("BONUS_PROGRESSION_FIXTURE"), Is.EqualTo("repair-disposable"));
+        ConnectionConfigurator.Initialize(new FixtureConnectionSettings());
+        JsonConverterRegistry.RegisterConverter(new LocalizedStringJsonConverter());
+        JsonConverterRegistry.RegisterConverter(new BinaryAsHexJsonConverter());
+        var provider = new PersistenceContextProvider(NullLoggerFactory.Instance, null);
+        await provider.ApplyAllPendingUpdatesAsync().ConfigureAwait(false);
+        string preserved;
+        using (var context = provider.CreateNewContext())
+        {
+            var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+            preserved = PreservedBloodCastleState(configuration);
+            foreach (var game in configuration.MiniGameDefinitions.Where(game => game.Type == MiniGameType.BloodCastle && game.GameLevel is >= 5 and <= 7))
+            {
+                Assert.That(game.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Item).ItemReward!.PossibleItems, Is.Empty, "Reproduce the deployed cleanup defect in the old disposable fixture.");
+            }
+        }
+
+        Assert.That(await BloodCastleRewardBalanceInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await BloodCastleRewardBalanceInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        using var reloaded = provider.CreateNewConfigurationContext();
+        var after = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        Assert.That(PreservedBloodCastleState(after), Is.EqualTo(preserved));
+        var objectives = new[] { 45000, 140000, 260000, 390000, 500000, 2210000, 5300000 };
+        var completions = new[] { 70000, 210000, 370000, 510000, 590000, 2230000, 3500000 };
+        var generator = new DefaultDropGenerator(after, Rand.GetRandomizer());
+        foreach (var game in after.MiniGameDefinitions.Where(game => game.Type == MiniGameType.BloodCastle && game.GameLevel is >= 1 and <= 7))
+        {
+            Assert.That(game.Rewards.Where(reward => reward.RewardType == MiniGameRewardType.Experience && reward.RequiredKill is not null)
+                .Select(reward => reward.RewardAmount), Is.EqualTo(new[] { objectives[game.GameLevel - 1], objectives[game.GameLevel - 1] }));
+            Assert.That(game.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Experience && reward.RequiredKill is null).RewardAmount, Is.EqualTo(completions[game.GameLevel - 1]));
+            if (game.GameLevel >= 5)
+            {
+                var group = game.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Item).ItemReward!;
+                var item = generator.GenerateItemDrop(group);
+                Assert.That(item!.Definition!.Group, Is.EqualTo(12));
+                Assert.That(item.Definition.Number, Is.EqualTo(game.GameLevel switch { 5 => 33, 6 => 34, _ => 32 }));
+            }
+        }
+    }
+
+    private static string PreservedBloodCastleState(GameConfiguration configuration)
+    {
+        var events = configuration.MiniGameDefinitions.OrderBy(game => game.GetId())
+            .SelectMany(game => game.Rewards.OrderBy(reward => reward.GetId()).Select(reward =>
+                $"{game.GetId()}:{reward.GetId()}:{reward.RewardType}:{reward.RequiredSuccess}:{reward.RequiredKill?.GetId()}:{reward.ItemReward?.GetId()}:"
+                + (game.Type == MiniGameType.BloodCastle && game.GameLevel <= 7 && reward.RewardType == MiniGameRewardType.Experience ? "balanced" : reward.RewardAmount.ToString())
+                + (game.Type == MiniGameType.BloodCastle && game.GameLevel is >= 5 and <= 7 ? string.Empty : $":{string.Join(',', reward.ItemReward?.PossibleItems.Select(item => item.GetId()).Order() ?? Enumerable.Empty<Guid>())}")));
+        return string.Join('\n', events.Concat(configuration.Items.Where(item => item.Group == 12 && item.Number is >= 32 and <= 34)
+            .SelectMany(item => item.DropItems).OrderBy(group => group.GetId()).Select(group => $"{group.GetId()}:{group.Chance}:{group.MoneyAmount}:{string.Join(',', group.PossibleItems.Select(item => item.GetId()).Order())}")));
+    }
+
+    [Test]
     [Explicit("Requires BONUS_PROGRESSION_FIXTURE=seed-disposable and the task-owned 127.0.0.1:55503 cluster.")]
     public async Task SeedUpgradeReloadAndGenerateAsync()
     {
@@ -132,7 +187,7 @@ public class BonusProgressionDatabaseTests
     {
         var events = configuration.MiniGameDefinitions.OrderBy(game => game.GetId())
             .SelectMany(game => game.Rewards.OrderBy(reward => reward.GetId())
-                .Select(reward => $"{game.GetId()}:{reward.GetId()}:{reward.RewardType}:{reward.RewardAmount}"));
+                .Select(reward => $"{game.GetId()}:{reward.GetId()}:{reward.RewardType}:{reward.RewardAmount}:{reward.ItemReward?.GetId()}:{string.Join(',', reward.ItemReward?.PossibleItems.Select(item => item.GetId()).Order() ?? Enumerable.Empty<Guid>())}"));
         var ribbons = configuration.Items.Where(item => item.Group == 12 && item.Number is >= 32 and <= 34)
             .OrderBy(item => item.Number).SelectMany(item => item.DropItems.OrderBy(group => group.GetId())
                 .Select(group => $"{group.GetId()}:{group.Chance}:{group.MoneyAmount}:{group.SkillChance}:{group.LuckChance}:{string.Join(',', group.PossibleItems.Select(reward => reward.GetId()).Order())}"));

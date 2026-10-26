@@ -66,9 +66,14 @@ INSERT INTO config."ItemDropItemGroup"
 INSERT INTO config."ItemDropItemGroupItemDefinition" ("ItemDropItemGroupId","ItemDefinitionId")
  SELECT group_id,item_id FROM reward_items;
 
+-- Event payout groups must never be changed by ordinary monster-source cleanup.
+CREATE TEMP TABLE protected_event_groups ON COMMIT DROP AS
+ SELECT DISTINCT "ItemRewardId" AS id FROM config."MiniGameReward" WHERE "ItemRewardId" IS NOT NULL;
+
 -- Replace this configuration's small-bonus pool; retain the item definitions.
 DELETE FROM config."DropItemGroup" d USING selected_configuration c
- WHERE d."GameConfigurationId"=c.id AND d."ItemType"=7;
+ WHERE d."GameConfigurationId"=c.id AND d."ItemType"=7
+ AND d."Id" NOT IN (SELECT id FROM protected_event_groups);
 
 CREATE TEMP TABLE excluded_items ON COMMIT DROP AS
  SELECT i."Id" AS id FROM approved_plan p
@@ -81,9 +86,12 @@ CREATE TEMP TABLE removed_bonus_groups ON COMMIT DROP AS
  SELECT DISTINCT g."Id" AS id FROM config."DropItemGroup" g
  JOIN config."DropItemGroupItemDefinition" j ON j."DropItemGroupId"=g."Id"
  JOIN selected_configuration c ON g."GameConfigurationId"=c.id
- WHERE j."ItemDefinitionId" IN (SELECT id FROM excluded_items)
+ WHERE g."Id" NOT IN (SELECT id FROM protected_event_groups)
+ AND (EXISTS (SELECT FROM config."GameMapDefinitionDropItemGroup" m WHERE m."DropItemGroupId"=g."Id")
+      OR EXISTS (SELECT FROM config."MonsterDefinitionDropItemGroup" m WHERE m."DropItemGroupId"=g."Id"))
+ AND (j."ItemDefinitionId" IN (SELECT id FROM excluded_items)
  OR (j."ItemDefinitionId" IN (SELECT id FROM source_box)
-     AND coalesce(g."ItemLevel",0) IN (SELECT jsonb_array_elements_text(value->'excludedWrapperLevels')::smallint FROM approved_plan));
+     AND coalesce(g."ItemLevel",0) IN (SELECT jsonb_array_elements_text(value->'excludedWrapperLevels')::smallint FROM approved_plan)));
 DELETE FROM config."DropItemGroupItemDefinition" j
  WHERE j."DropItemGroupId" IN (SELECT id FROM removed_bonus_groups)
  AND (j."ItemDefinitionId" IN (SELECT id FROM excluded_items)

@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix.Events;
+using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix.Items;
+using MUnique.OpenMU.Persistence.Initialization.Updates;
 using MUnique.OpenMU.Persistence.InMemory;
 
 /// <summary>
@@ -16,6 +18,58 @@ using MUnique.OpenMU.Persistence.InMemory;
 [TestFixture]
 public class BloodCastleCompletionRewardTests
 {
+    [Test]
+    public async Task RepairIsOneTimePreservesCustomPayoutsAndProtectsEventGroupsAsync()
+    {
+        var provider = new InMemoryPersistenceContextProvider();
+        await new DataInitialization(provider, NullLoggerFactory.Instance).CreateInitialDataAsync(1, false).ConfigureAwait(false);
+        using var context = provider.CreateNewContext();
+        var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        var castles = configuration.MiniGameDefinitions.Where(game => game.Type == MiniGameType.BloodCastle).ToDictionary(game => game.GameLevel);
+        var preserved = castles.Values.SelectMany(game => game.Rewards)
+            .Where(reward => reward.RewardType != MiniGameRewardType.Experience)
+            .Select(reward => (reward, reward.RewardAmount, reward.RequiredSuccess)).ToArray();
+        var payouts = castles.Where(pair => pair.Key is >= 5 and <= 7)
+            .ToDictionary(pair => pair.Key, pair => pair.Value.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Item).ItemReward!);
+        payouts[5].PossibleItems.Clear();
+        payouts[7].PossibleItems.Clear();
+        var custom = configuration.Items.Single(item => item.Group == 14 && item.Number == 13);
+        payouts[6].PossibleItems.Clear();
+        payouts[6].PossibleItems.Add(custom);
+        foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false))
+            .Where(update => update.Version == (int)UpdateVersion.BloodCastleRewardBalance).ToArray())
+        {
+            await context.DeleteAsync(update).ConfigureAwait(false);
+        }
+
+        await context.SaveChangesAsync().ConfigureAwait(false);
+        Assert.That(await BloodCastleRewardBalanceInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(payouts[5].PossibleItems.Single().Number, Is.EqualTo(33));
+        Assert.That(payouts[7].PossibleItems.Single().Number, Is.EqualTo(32));
+        Assert.That(payouts[6].PossibleItems.Single(), Is.SameAs(custom), "Never replace a nonempty custom payout.");
+        foreach (var (reward, amount, flags) in preserved)
+        {
+            Assert.That(reward.RewardAmount, Is.EqualTo(amount));
+            Assert.That(reward.RequiredSuccess, Is.EqualTo(flags));
+            Assert.That(castles.Values.SelectMany(game => game.Rewards), Does.Contain(reward));
+        }
+
+        var eventGroups = configuration.MiniGameDefinitions.SelectMany(game => game.Rewards)
+            .Where(reward => reward.ItemReward is not null).Select(reward => reward.ItemReward!).Distinct()
+            .ToDictionary(group => group, group => group.PossibleItems.ToArray());
+        new BonusProgression(context, configuration).Initialize();
+        foreach (var (group, items) in eventGroups)
+        {
+            Assert.That(group.PossibleItems, Is.EquivalentTo(items));
+        }
+
+        var edited = castles[7].Rewards.First(reward => reward.RewardType == MiniGameRewardType.Experience);
+        edited.RewardAmount = 123456;
+        await context.SaveChangesAsync().ConfigureAwait(false);
+        Assert.That(await BloodCastleRewardBalanceInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        Assert.That(edited.RewardAmount, Is.EqualTo(123456), "Later administrator edits must survive restarts.");
+    }
+
     /// <summary>
     /// Lower levels give Zen and jewels, upper levels always give the appropriate box.
     /// </summary>
