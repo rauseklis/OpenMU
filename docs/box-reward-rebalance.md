@@ -1,201 +1,138 @@
-# Box reward rebalance
+# Monster bonuses and equipment progression
 
-This document describes the owner's approved reward plan. The JSON manifests and
-transactional maintenance script implement it for a populated Season 6 database.
+Each eligible monster kill has one combined **5% bonus chance**. When multiple bonuses are assigned to that exact monster and map, the chance is divided equally between them. At most **one bonus** can drop per kill. Ordinary monster loot is separate. This pool is enabled on Server 1; other servers keep their own settings.
 
-## Monster bonus drops
+An opening gives one item or one Zen outcome, never a complete armor set. Monster drop chances and box opening chances are separate. Equipment is ordinary unless the box is explicitly a Kundun or Ancient reward.
 
-- Keep the existing combined 5% small-bonus chance for now.
-- A monster may qualify for several bonus types, but a kill awards at most one
-  small bonus. Ordinary loot remains separate.
-- Use the exact monsters and maps in the owner's bonus-location list, rather
-  than selecting every monster in a level range.
-- Remove the other bonus variants from this bonus pool for now. Preserve their
-  item definitions, existing inventory items and opening behavior.
-- Split the combined 5% equally among each monster's eligible bonus types,
-  confirmed by the owner. Each eligible type has probability 0.05 / N per kill,
-  where N is that monster's eligible bonus count. Two types each get 2.5%; three
-  each get approximately 1.6667%. Select at most one bonus per kill. Removing old
-  pool entries must not silently reduce the combined chance below 5%.
+## Monster locations
 
-## Box opening rewards
+| Bonus | Map | Monsters |
+|---|---|---|
+| Box Of Heaven | Dungeon | Larva (Lv 25), Cyclops (Lv 28), Ghost (Lv 32), Hell Hound (Lv 38), Hell Spider (Lv 40), Elite Skeleton (Lv 42), Thunder Lich (Lv 44), Poison Bull (Lv 46), Dark Knight (Lv 48), Gorgon (Lv 55) |
+| Box Of Heaven | Devias | Worm (Lv 20), Ice Monster (Lv 22), Hommerd (Lv 24), Assassin (Lv 26), Yeti (Lv 30), Elite Yeti (Lv 36) |
+| Box Of Heaven | Lost Tower | Shadow (Lv 47), Poison Shadow (Lv 50), Cursed Wizard (Lv 54), Death Cow (Lv 57), Devil (Lv 60), Death Knight (Lv 62), Death Gorgon (Lv 64), Balrog (Lv 66) |
+| Box Of Heaven | Atlans | Bahamut (Lv 43), Vepar (Lv 45), Valkyrie (Lv 46), Great Bahamut (Lv 66), Silver Valkyrie (Lv 68), Lizard King (Lv 70) |
+| Silver Medal | Dungeon | Hell Hound (Lv 38), Hell Spider (Lv 40), Elite Skeleton (Lv 42), Thunder Lich (Lv 44) |
+| Silver Medal | Devias | Elite Yeti (Lv 36) |
+| Gold Medal | Dungeon | Poison Bull (Lv 46), Dark Knight (Lv 48), Gorgon (Lv 55) |
+| Gold Medal | Lost Tower | Shadow (Lv 47), Poison Shadow (Lv 50), Cursed Wizard (Lv 54), Death Cow (Lv 57) |
+| Gold Medal | Atlans | Bahamut (Lv 43), Vepar (Lv 45), Valkyrie (Lv 46) |
+| Heart Of Love | Dungeon | Gorgon (Lv 55) |
+| Heart Of Love | Lost Tower | Cursed Wizard (Lv 54), Death Cow (Lv 57) |
+| Firecracker | Lost Tower | Devil (Lv 60), Death Knight (Lv 62), Death Gorgon (Lv 64), Balrog (Lv 66) |
+| Firecracker | Atlans | Great Bahamut (Lv 66), Silver Valkyrie (Lv 68), Lizard King (Lv 70), Hydra (Lv 74) |
+| Star | Tarkan | Mutant (Lv 72), Bloody Wolf (Lv 76), Iron Wheel (Lv 80), Tantallos (Lv 83), Beam Knight (Lv 84) |
+| Star | Icarus | Alquamos (Lv 75), Mega Crust (Lv 78), Queen Rainer (Lv 82), Drakan (Lv 86) |
+| Star | Aida | Death Tree (Lv 72), Forest Orc (Lv 74), Death Rider (Lv 78), Blue Golem (Lv 84) |
 
-These probabilities are per opening, separate from the monster bonus chance.
+Example: a monster assigned Heaven and Firecracker has 2.5% Heaven, 2.5% Firecracker and 95% no bonus. A monster assigned Heaven, Gold Medal and Heart of Love has 1 2/3% for each bonus.
 
-| Box | Armor | Weapons | Shields | Jewels | Accessories | Fruits | Zen |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Kundun +1 through +5 | 45% | 45% | 10% | 0% | 0% | 0% | 0% |
-| Silver Medal | 30% | 20% | 5% | 20% | 5% | 0% | 20% |
-| Gold Medal | 35% | 30% | 5% | 15% | 5% | 0% | 10% |
-| Heart of Love | 0% | 50% | 10% | 30% | 0% | 0% | 10% |
-| Firecracker | 20% | 20% | 0% | 35% | 0% | 0% | 25% |
+## Ordinary opening probabilities
 
-Silver Medal and Gold Medal accessory rewards are standard ordinary rings only,
-not pendants or transformation/event rings. Their item levels are +0 through +4,
-with HP recovery randomly selected as 1%, 2% or 3% on every eligible ring reward.
-Ring of Magic (13/24) is included with its normal maximum-mana option randomly
-selected as +1%, +2% or +3%, instead of HP recovery, confirmed by the owner.
-Both medals use the same six-ring pool: Ice (13/8), Poison (13/9), Fire (13/21),
-Earth (13/22), Wind (13/23) and Magic (13/24). Each ring is equally likely within
-the 5% ring category (probability 0.05 / 6 per opening), confirmed by the owner.
+| Bonus | Armor | Weapons | Shields | Jewels | Rings | Fruits | Pets | Higher pet group | Zen |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Silver Medal | 33% | 19.25% | 2.75% | 20% | 5% | 0% | 0% | 0% | 20% |
+| Gold Medal | 42% | 24.5% | 3.5% | 15% | 5% | 0% | 0% | 0% | 10% |
+| Heart Of Love | 0% | 52.5% | 7.5% | 30% | 0% | 0% | 0% | 0% | 10% |
+| Firecracker | 25.263158% | 14.736842% | 0% | 35% | 0% | 0% | 0% | 0% | 25% |
+| Box Of Heaven | 0% | 0% | 0% | 40% | 0% | 10% | 25% | 5% | 20% |
+| Star | 60% | 35% | 5% | 0% | 0% | 0% | 0% | 0% | 0% |
 
-Box of Heaven's revised reward split is confirmed: 20% Zen, 40% jewels,
-10% fruits, 25% Satan/Angel/Horn and 5% Demon/Guardian/Dinorant, totaling 100%.
-Accessory rewards are removed from Box of Heaven. Guardian in the 5% group
-is Spirit of Guardian (13/65), confirmed by the owner, not Guardian Angel.
-The owner confirmed the 25% pet group mappings: Satan is Imp (13/1), Angel is
-Guardian Angel (13/0), and Horn is Horn of Uniria (13/2).
-Each pet is equally likely within its group, confirmed by the owner: Imp,
-Guardian Angel and Horn of Uniria each have probability 0.25 / 3 per opening
-(approximately 8.3333%); Demon, Spirit of Guardian and Horn of Dinorant each have
-probability 0.05 / 3 (approximately 1.6667%). Use exact group fractions rather
-than rounded percentages when configuring these rewards.
+Firecracker equipment uses the exact 60:35 armor/weapon ratio within its unchanged 40% equipment share; displayed percentages are rounded. Boxes without an armor or shield category do not gain one. Non-equipment category chances are unchanged.
 
-Kundun equipment is Excellent +0. Other listed equipment is ordinary.
-All Kundun boxes contain non-socket Excellent equipment only, confirmed by the
-owner. No socket items may enter their reward pools. Verify by actual item ID
-and socket eligibility rather than relying on display names.
-Skull Shield belongs to Heart of Love's shield category, separate from weapons.
-Heart of Love weapons and Skull Shield both use item levels +9 through +11.
-Item levels are equally likely within each agreed range, confirmed by the owner:
-ordinary bonus equipment uses +7, +8 or +9; Heart of Love weapons and Skull
-Shield use +9, +10 or +11; medal rings use +0, +1, +2, +3 or +4. Kundun rewards
-remain fixed at +0.
-The Box of Heaven fruit category may award any of the five fruit types.
-All five fruit types are equally likely: Strength, Agility, Vitality, Energy and
-Command each have a 2% chance per opening (one fifth of the 10% fruit category),
-confirmed by the owner.
-Equal selection within item lists and overlaps between box tiers are acceptable.
-Indigo is removed from the proposed Kundun +5 armor list, with no replacement.
-Lionheart Quiver is removed from the proposed Firecracker weapon list, with no replacement.
-Firecracker's Holy Storm Claw maps to Storm Hard Glove (group 0, number 33),
-confirmed by the owner. Selecting this reward gives one glove item, not a pair.
-The Firecracker receiving these rewards is the reward-opening variant (14/11,
-source level 2), confirmed by the owner. Remove fireworks-only variants from
-monster drop sources; preserve their definitions, existing items and effects.
+## Equipment levels and options
 
-Zen rewards are fixed amounts when the Zen category is selected:
+- Silver Medal, Gold Medal and Firecracker: **+7 through +9**.
+- Heart of Love weapons and Skull Shield: **+8 through +10**.
+- Star armor, weapons and books: **+6 through +9**.
+- Each allowed upgrade level is equally likely.
+- Medal rings: **+0 through +4**. Ice, Poison, Fire, Earth and Wind receive 1-3% HP recovery; Ring of Magic receives 1-3% maximum mana instead. Each of the six rings is equally likely within the ring category.
+- Ordinary equipment Luck and ADD use shared server settings. Supported ordinary weapon/shield skills use the existing bonus rules: 50%, or 90% for bows/crossbows. A weapon without a supported skill never gets one.
+- **All Summoner book rewards always have their supported skill.**
+- Star shields are exceptions: fixed levels below, with **no Luck, no ADD and no skill**.
+- The existing 15% two-handed damage bonus is unchanged.
 
-| Box | Zen amount |
-| --- | ---: |
-| Silver Medal | 10,000 |
-| Gold Medal | 20,000 |
-| Heart of Love | 30,000 |
-| Firecracker | 50,000 |
-| Box of Heaven | 100,000 |
+## Star class pools
 
-Jewel reward pools:
+| Class | Armor sets | Weapons |
+|---|---|---|
+| DW | Grand Soul, Eclipse | Dragon Soul Staff, Staff of Destruction |
+| DK | Black Dragon, Ashcrow | Knight Blade, Dragon Spear |
+| Elf | Divine, Iris | Saint Crossbow, Celestial Bow, Elemental Mace |
+| MG | Thunder Hawk, Valiant | Thunder Blade, Rune Blade, Staff of Destruction |
+| DL | Dark Steel, Glorious | Lord Scepter |
+| Summoner | Demonic (server name Black Rose) | Demonic Stick, Book of Lagle |
+| RF | Piercing Groove | Piercing Blade Glove |
 
-| Bonus | Allowed jewels |
-| --- | --- |
-| Silver Medal | Bless, Soul, Chaos |
-| Gold Medal | Bless, Soul, Chaos, Life |
-| Heart of Love | Bless, Soul, Life, Creation |
-| Box of Heaven | Bless, Soul |
-| Firecracker | Bless, Soul, Life, Creation, Gemstone |
+All seven classes have an equal **1/7 overall reward share**, regardless of item counts. Energy Elf is part of the Elf share, including Elemental Mace. Shared weapons can be equipped by other eligible classes without granting an extra class share.
 
-Every jewel is equally likely within its bonus's jewel category, confirmed by
-the owner. Divide that category's probability by its jewel count; do not round
-individual chances before generating the reward.
+Every class has a 60% armor share inside its class allocation. DW, DK, Elf, MG and DL each have 33% weapons and 7% shields; Summoner and RF have 40% weapons and no shields. This keeps the overall opening split exactly **60% armor / 35% weapons / 5% shields**, while retaining equal total class shares. Individual pieces within each class/category are equally likely.
 
-The medals' ring option is separate from the item's +0 through +4 upgrade level.
-The reward must not omit its agreed HP recovery or maximum-mana option.
-The 1%, 2% and 3% option values are equally likely (one third each), confirmed
-by the owner, for both HP recovery rings and Ring of Magic's maximum mana.
+| Star shield | Class allocation | Fixed level | Options |
+|---|---|---:|---|
+| Grand Soul Shield | DW | +7 | No Luck, ADD or skill |
+| Dragon Shield | DK and MG | +7 | No Luck, ADD or skill |
+| Elemental Shield | Elf / EE | +8 | No Luck, ADD or skill |
+| Serpent Shield | DL | +8 | No Luck, ADD or skill |
 
-| Kundun tier | Exactly one Excellent option | Exactly two Excellent options | Luck |
-| --- | ---: | ---: | ---: |
-| +1 | 70% | 30% | Deferred |
-| +2 | 75% | 25% | Deferred |
-| +3 | 80% | 20% | Deferred |
-| +4 | 85% | 15% | Deferred |
-| +5 | 90% | 10% | Deferred |
+Thunder Hawk and Valiant have four armor pieces and no helm; Piercing Groove has helm, armor, pants and boots. Demonic and Black Rose are the same selected set. Star contains no old rewards, jewels, Zen, Cross Shield or unselected level-380 equipment. Dragon Spear replaces Dark Breaker. None of its selected equipment overlaps Firecracker.
 
-These settings need box-specific overrides so other drops retain their existing
-Luck and Excellent rules. Items may receive only options they support.
-Luck and ADD changes are deferred by the owner. The proposed weighted ADD table is not approved for this
-implementation stage.
+## Existing ordinary bonus contents
 
-Ordinary shields from bonus rewards have a 50% chance to receive their supported
-skill. Every Excellent shield and Excellent weapon receives its supported skill
-with 100% probability, including Kundun rewards. Items without a supported skill
-never receive one. Ordinary monster equipment drops retain their existing skill
-rules.
+### Silver Medal
 
-Ordinary weapons from bonus rewards have a 50% chance to receive their supported
-skill, except bows and crossbows, which receive their supported skill with 90%
-probability. This does not grant a skill to an item without skill support.
+- **Armor:** Bone (5 pieces), Scale (5 pieces), Brass (5 pieces), Silk (5 pieces), Wind (5 pieces), Violent Wind (5 pieces).
+- **Weapons:** Serpent Sword, Light Saber, Battle Axe, Great Hammer, Battle Scepter, Battle Bow, Light Crossbow, Serpent Staff, Thunder Staff, Violent Wind Stick, Book of Samut.
+- **Shields:** Elven Shield, Skull Shield, Plate Shield, Large Round Shield.
+- **Jewels:** Jewel of Bless, Jewel of Soul, Jewel of Chaos.
+- **Rings:** Ice, Poison, Fire, Earth, Wind and Magic.
+- **Zen outcome:** 10,000 Zen.
 
-## Confirmed item mappings and configuration
+### Gold Medal
 
-### Item names checked by the owner in-game
+- **Armor:** Sphinx (5 pieces), Plate (5 pieces), Spirit (5 pieces), Light Plate (5 pieces), Red Wing (5 pieces), Sacred Fire (4 pieces).
+- **Weapons:** Heliacal Sword, Double Blade, Lighting Sword, Sacred Glove, Master Scepter, Tiger Bow, Silver Bow, Serpent Crossbow, Gorgon Staff, Legendary Staff, Red Wing Stick, Book of Neil.
+- **Shields:** Dragon Slayer Shield, Spiked Shield, Tower Shield, Legendary Shield.
+- **Jewels:** Jewel of Bless, Jewel of Soul, Jewel of Chaos, Jewel of Life.
+- **Rings:** Ice, Poison, Fire, Earth, Wind and Magic.
+- **Zen outcome:** 20,000 Zen.
 
-| In-game name | Server source name | Item number |
-| --- | --- | ---: |
-| Demonic | Black Rose | 42 |
-| Storm Blitz | Aura | 43 |
-| Storm Zahard | Storm Hard | 60 |
-| Piercing Grove | Piercing | 61 |
-| Violent Wind armor | Mistery | 39 |
-| Sacred Fire armor | Sacred | 59 |
+### Heart Of Love
 
-The Demonic Summoner set requested for Kundun +4 maps to Black Rose (42).
-The Storm Zahard Rage Fighter armor set requested for Kundun +4 maps to
-Storm Hard (60), confirmed by the owner. Armor rewards are individual pieces.
-The Piercing Grove Rage Fighter armor set requested for Kundun +5 maps to
-Piercing (61), confirmed by the owner.
-Violent Wind armor in Kundun +1 and Silver Medal maps to the first Summoner
-armor set, Mistery (39), confirmed by the owner. This mapping is for armor only;
-the separately defined Violent Wind Stick retains its own identity.
-Sacred Fire armor in Kundun +3 and Gold Medal maps to the Rage Fighter Sacred
-armor set (59), confirmed by the owner.
-Book of Samut in every proposed reward list maps to Book of Sahamutt (5/21),
-confirmed by the owner.
-The initialized catalog test and database validation verify that these Kundun
-item pools have no sockets and support at least two Excellent options. The live
-maintenance preview also refuses any socket item in a Kundun pool.
+- **Weapons:** Heliacal Sword, Double Blade, Lighting Sword, Sacred Glove, Battle Scepter, Master Scepter, Tiger Bow, Silver Bow, Serpent Crossbow, Thunder Staff, Gorgon Staff, Legendary Staff, Red Wing Stick, Book of Samut, Book of Neil.
+- **Shields:** Skull Shield.
+- **Jewels:** Jewel of Bless, Jewel of Soul, Jewel of Life, Jewel of Creation.
+- **Zen outcome:** 30,000 Zen.
 
-### Lorencia bar test stock
+### Firecracker
 
-Lumen the Barmaid sells Kundun +1 through +5, Silver Medal, Gold Medal, Heart of
-Love, Firecracker and Box of Heaven for 1,000 Zen each before any castle tax.
-The maintenance script finds ten free cells in her existing shop and preserves
-all other stock. It refuses missing shops, insufficient space or conflicting IDs.
+- **Armor:** Dragon (5 pieces), Legendary (5 pieces), Guardian (5 pieces), Adamantine (5 pieces), Ancient (5 pieces), Storm Jahad (4 pieces), Storm Crow (4 pieces).
+- **Weapons:** Sword of Destruction, Holy Storm Claw, Great Scepter, Bill of Balrog, Bluewing Crossbow, Staff of Resurrection, Ancient Stick, Book of Neil.
+- **Jewels:** Jewel of Bless, Jewel of Soul, Jewel of Life, Jewel of Creation, Gemstone.
+- **Zen outcome:** 50,000 Zen.
 
-These are unlimited merchant listings available to everyone for owner-requested
-testing. Opening rewards can be worth much more than the purchase price. The
-explicit price is stored on the merchant template in `StorePrice`; purchased
-items do not inherit it. Ordinary item sale prices remain unchanged. The normal
-NPC item-list packet does not transmit a purchase price, so the client's tooltip
-may show its usual calculated price. Verify actual Zen deducted in game.
+### Box Of Heaven
 
-### Later shared Luck and ADD changes
+- **Jewels:** Jewel of Bless, Jewel of Soul.
+- **Pets:** Imp, Guardian Angel, Horn of Uniria.
+- **Higher Pet Group:** Demon, Spirit of Guardian, Horn of Dinorant.
+- **Fruits:** Strength, Agility, Vitality, Energy and Command; one of each type at 2% per opening.
+- **Zen outcome:** 100,000 Zen.
 
-Opening groups do not override Luck or equipment ADD. They use the same item
-option definitions as other sources, so later changes to those shared definitions
-also affect these rewards. The medal jewelry option is intentionally guaranteed
-separately; it does not replace equipment ADD rules.
+## Kundun +1 through +5
 
-## Deployment and validation
+Every Kundun tier gives **60% armor, 30% weapons and 10% shields**. Equipment stays **Excellent +0**, without sockets. Existing item pools, shared Luck/ADD and supported skill rules remain; item types are not replaced by this update.
 
-Implement and test on branch codex/box-reward-settings. Use a disposable server
-and database with isolated ports. Test category boundaries, independent Luck and
-Excellent rolls, valid unique options, unchanged ordinary loot, at most one bonus
-per kill, and exact map/monster restrictions.
+| Kundun tier | One Excellent option | Two distinct Excellent options |
+|---|---:|---:|
+| +1 | 70% | 30% |
+| +2 | 75% | 25% |
+| +3 | 80% | 20% |
+| +4 | 85% | 15% |
+| +5 | 90% | 10% |
 
-Existing configuration lives in the database. Changing seed defaults alone does
-not rebalance a populated server. Deploy code through a tested PR first so the
-schema migration adds the optional reward fields. Then generate the maintenance
-SQL using `python deploy/live/prepare-box-rewards.py`. The generator does not
-connect to any database. Use the existing private database connection mechanism
-with `psql -X -v expected_database=<exact-name>` for a preview; it rolls back.
-After owner approval and a backup, add `-v apply=true` to commit the same plan.
-Restart the game server afterward to reload the reward groups and merchant stock.
-This script is not run automatically by migrations or deployment.
+## What stays unchanged
 
-The maintenance test targets only the disposable loopback cluster on port 55443,
-database `mu_box_rewards_20261024_final`, role `boxvalidation`. It checks preview
-rollback, the database-name guard, the exact monster/map restrictions, the latest
-Kundun probabilities, preservation of unrelated records and repeated application.
-The explicit fixture seeds with the same JSON converters as normal startup and
-reloads every reward group through production persistence for generation checks.
+Blood Castle and Devil Square completion rewards, Ribbon box contents and probabilities, Ancient reward boxes, Cherry Blossom exchanges, shared Luck/ADD settings, other game servers and the owner-requested Lorencia test shop stock remain unchanged. Existing items in inventories and warehouses are not converted.
+
+The tested startup update installs the approved plan once before loading the game configuration. Later restarts preserve administrator changes. No client code, packet or asset change is needed for these reward rules. Players reconnect after the server deployment; no new client rebuild is required.

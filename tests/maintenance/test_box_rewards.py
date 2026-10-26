@@ -69,15 +69,15 @@ class BoxRewardMaintenanceTests(unittest.TestCase):
         self.assertEqual(query('SELECT count(*) FROM data."Item" WHERE "Id"::text LIKE \'24b00002-%\' AND "StorePrice"=1000'), "10")
         actual_chances = json.loads(query('SELECT json_object_agg("SourceItemLevel",chance) FROM (SELECT DISTINCT "SourceItemLevel","ExcellentSecondOptionChance" AS chance FROM config."ItemDropItemGroup" WHERE "Id"::text LIKE \'24b00000-%\' AND "ItemType"=2) t'))
         self.assertEqual(actual_chances, {"8": .30, "9": .25, "10": .20, "11": .15, "12": .10})
-        self.assertEqual(query('SELECT count(*) FROM config."ItemDropItemGroup" WHERE "Id"::text LIKE \'24b00000-%\''), "48")
-        self.assertEqual(query('SELECT count(*) FROM config."DropItemGroup" WHERE "ItemType"=7'), "57")
+        self.assertEqual(query('SELECT count(*) FROM config."ItemDropItemGroup" WHERE "Id"::text LIKE \'24b00000-%\''), "73")
+        self.assertEqual(query('SELECT count(*) FROM config."DropItemGroup" WHERE "ItemType"=7'), "69")
         self.assertEqual(query('SELECT "SmallBonusDropChance" FROM config."GameServerDefinition" WHERE "ServerID"=0'), "0.05")
         actual = json.loads(query('''SELECT json_agg(json_build_array(m."Number",n."Number",g."ItemLevel"))
             FROM config."DropItemGroup" g JOIN config."GameMapDefinitionDropItemGroup" j ON j."DropItemGroupId"=g."Id"
             JOIN config."GameMapDefinition" m ON m."Id"=j."GameMapDefinitionId"
             JOIN config."MonsterDefinition" n ON n."Id"=g."MonsterId" WHERE g."ItemType"=7'''))
         rules = json.loads((ROOT / "deploy/live/box-reward-rules.json").read_text())
-        levels = {"SILVER MEDAL": 5, "GOLD MEDAL": 6, "HEART OF LOVE": 3, "FIRECRACKER": 2, "BOX OF HEAVEN": 7}
+        levels = {"SILVER MEDAL": 5, "GOLD MEDAL": 6, "HEART OF LOVE": 3, "FIRECRACKER": 2, "BOX OF HEAVEN": 7, "STAR": 1}
         expected = [[entry["map"], entry["monster"], levels[entry["bonus"]]] for entry in rules["eligibleMonsters"]]
         self.assertEqual(sorted(actual), sorted(expected))
         repeated = apply(generated, commit=True)

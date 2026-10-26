@@ -17,6 +17,7 @@
     <DocumentationFile>..\..\bin\Release\MUnique.OpenMU.Persistence.Initialization.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\BonusProgression.json" />
     <None Remove="Resources\075_Terrain1.att" />
     <None Remove="Resources\075_Terrain2.att" />
     <None Remove="Resources\075_Terrain3.att" />

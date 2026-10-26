@@ -26,6 +26,7 @@ public static class BoxRewardOptions
     {
         ApplyLuck(item, group, randomizer);
         ApplyExcellentOptions(item, group, randomizer);
+        RemoveSuppressedAdditionalOptions(item, group);
         if (group.ItemType == SpecialItemType.Excellent)
         {
             item.HasSkill = item.CanHaveSkill();
@@ -60,6 +61,19 @@ public static class BoxRewardOptions
         if (luck is not null && randomizer.NextDouble() < chance)
         {
             item.ItemOptions.Add(new ItemOptionLink { ItemOption = luck });
+        }
+    }
+
+    private static void RemoveSuppressedAdditionalOptions(Item item, ItemDropItemGroup group)
+    {
+        if (!group.SuppressAdditionalOption)
+        {
+            return;
+        }
+
+        foreach (var link in item.ItemOptions.Where(link => Equals(link.ItemOption?.OptionType, ItemOptionTypes.Option)).ToArray())
+        {
+            item.ItemOptions.Remove(link);
         }
     }
 

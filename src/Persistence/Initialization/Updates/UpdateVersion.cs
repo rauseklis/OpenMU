@@ -662,4 +662,9 @@ public enum UpdateVersion
     /// Installs single-branch Play-Box drops and Noria reward exchanges.
     /// </summary>
     CherryBlossomRewards = 142,
+
+    /// <summary>
+    /// Installs the reviewed ordinary bonus and Star progression.
+    /// </summary>
+    BonusProgression = 143,
 }

@@ -19,6 +19,24 @@ using MUnique.OpenMU.GameLogic.Attributes;
 public class BoxRewardOptionsTests
 {
     /// <summary>
+    /// Plain shields clear inherited ADD, Luck and skill while default rewards retain ADD.
+    /// </summary>
+    /// <param name="suppress">Whether the reward disables ADD.</param>
+    [TestCase(true)]
+    [TestCase(false)]
+    public void AdditionalOptionSuppressionIsScopedToTheReward(bool suppress)
+    {
+        var item = CreateItem(true);
+        var add = new ItemOptionLink { ItemOption = new IncreasableItemOption { OptionType = ItemOptionTypes.Option }, Level = 3 };
+        item.ItemOptions.Add(add);
+        item.HasSkill = true;
+        var group = new ItemDropItemGroup { SuppressAdditionalOption = suppress, SkillChance = 0, LuckChance = 0 };
+        BoxRewardOptions.Apply(item, group, new Mock<IRandomizer>().Object);
+        Assert.That(item.ItemOptions.Contains(add), Is.EqualTo(!suppress));
+        Assert.That(item.HasSkill, Is.False);
+    }
+
+    /// <summary>
     /// Exactly a quarter of red-box rolls have luck while equipment ADD stays unchanged.
     /// </summary>
     [Test]

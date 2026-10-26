@@ -50,6 +50,16 @@ public class DataInitialization : DataInitializationBase
     protected override IGameMapsInitializer GameMapsInitializer => new GameMapsInitializer(this.Context, this.GameConfiguration);
 
     /// <inheritdoc />
+    protected override void ConfigureGameServer(GameServerDefinition server)
+    {
+        if (server.ServerID == 0)
+        {
+            server.SmallBonusDropsEnabled = true;
+            server.SmallBonusDropChance = 0.05;
+        }
+    }
+
+    /// <inheritdoc />
     protected override void CreateGameClientDefinition()
     {
         var season6GmoClient = this.Context.CreateNew<GameClientDefinition>();
