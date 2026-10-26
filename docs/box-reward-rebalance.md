@@ -133,6 +133,6 @@ Every Kundun tier gives **60% armor, 30% weapons and 10% shields**. Equipment st
 
 ## What stays unchanged
 
-Blood Castle and Devil Square completion rewards, Ribbon box contents and probabilities, Ancient reward boxes, Cherry Blossom exchanges, shared Luck/ADD settings, other game servers and the owner-requested Lorencia test shop stock remain unchanged. Existing items in inventories and warehouses are not converted.
+Devil Square completion rewards, Ribbon box contents and probabilities, Ancient reward boxes, Cherry Blossom exchanges, shared Luck/ADD settings, other game servers and the owner-requested Lorencia test shop stock remain unchanged. Existing items in inventories and warehouses are not converted. Blood Castle fixed EXP and the repair of empty BC +5 through +7 Ribbon payouts are described in [Blood Castle rewards](blood-castle-rewards.md).
 
 The tested startup update installs the approved plan once before loading the game configuration. Later restarts preserve administrator changes. No client code, packet or asset change is needed for these reward rules. Players reconnect after the server deployment; no new client rebuild is required.

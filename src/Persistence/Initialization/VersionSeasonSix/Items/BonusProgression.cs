@@ -76,7 +76,9 @@ public sealed class BonusProgression : InitializerBase
 
     private void ConfigureMonsterBonuses(ItemDefinition wrapper, JsonElement plan)
     {
-        foreach (var old in this.GameConfiguration.DropItemGroups.Where(group => group.ItemType == SpecialItemType.SmallBonus).ToArray())
+        var eventGroups = this.GameConfiguration.MiniGameDefinitions.SelectMany(game => game.Rewards)
+            .Where(reward => reward.ItemReward is not null).Select(reward => reward.ItemReward!).ToHashSet();
+        foreach (var old in this.GameConfiguration.DropItemGroups.Where(group => group.ItemType == SpecialItemType.SmallBonus && !eventGroups.Contains(group)).ToArray())
         {
             foreach (var map in this.GameConfiguration.Maps)
             {
@@ -91,7 +93,7 @@ public sealed class BonusProgression : InitializerBase
             this.GameConfiguration.DropItemGroups.Remove(old);
         }
 
-        this.RemoveOldOrdinaryBonusSources(wrapper, plan);
+        this.RemoveOldOrdinaryBonusSources(wrapper, plan, eventGroups);
         foreach (var bonus in plan.GetProperty("bonuses").EnumerateArray())
         {
             var group = this.Context.CreateNew<DropItemGroup>();
@@ -106,7 +108,7 @@ public sealed class BonusProgression : InitializerBase
         }
     }
 
-    private void RemoveOldOrdinaryBonusSources(ItemDefinition wrapper, JsonElement plan)
+    private void RemoveOldOrdinaryBonusSources(ItemDefinition wrapper, JsonElement plan, HashSet<DropItemGroup> eventGroups)
     {
         var excludedKeys = plan.GetProperty("excludedItems").EnumerateArray()
             .Select(key => (Group: key[0].GetByte(), Number: key[1].GetInt16())).ToHashSet();
@@ -117,7 +119,9 @@ public sealed class BonusProgression : InitializerBase
             item.DropsFromMonsters = false;
         }
 
-        foreach (var group in this.GameConfiguration.DropItemGroups.Where(group => group.ItemType != SpecialItemType.SmallBonus).ToArray())
+        var ordinaryGroups = this.GameConfiguration.Maps.SelectMany(map => map.DropItemGroups)
+            .Concat(this.GameConfiguration.Monsters.SelectMany(monster => monster.DropItemGroups)).ToHashSet();
+        foreach (var group in ordinaryGroups.Where(group => group.ItemType != SpecialItemType.SmallBonus && !eventGroups.Contains(group)))
         {
             var removed = group.PossibleItems.Where(item => excluded.Contains(item)
                 || (item == wrapper && levels.Contains(group.ItemLevel ?? 0))).ToArray();

@@ -10,9 +10,16 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DATABASE = "mu_box_rewards_20261024_final"
-ENV = {**os.environ, "PGHOST": "127.0.0.1", "PGPORT": "55443",
-       "PGUSER": "boxvalidation", "PGDATABASE": DATABASE, "PGPASSWORD": ""}
+DATABASE = os.environ.get("BOX_REWARD_TEST_DATABASE", "mu_box_rewards_20261024_final")
+PORT = os.environ.get("BOX_REWARD_TEST_PORT", "55443")
+USER = os.environ.get("BOX_REWARD_TEST_USER", "boxvalidation")
+if (DATABASE, PORT, USER) not in {
+    ("mu_box_rewards_20261024_final", "55443", "boxvalidation"),
+    ("mu_bonus_progression_20261026", "55503", "progressionvalidation"),
+}:
+    raise RuntimeError("Refusing any database other than the task-owned disposable fixtures")
+ENV = {**os.environ, "PGHOST": "127.0.0.1", "PGPORT": PORT,
+       "PGUSER": USER, "PGDATABASE": DATABASE, "PGPASSWORD": ""}
 PSQL = os.environ.get("BOX_REWARD_PSQL", "psql")
 
 
@@ -43,11 +50,15 @@ def apply(script, commit=False, expected=DATABASE):
 
 class BoxRewardMaintenanceTests(unittest.TestCase):
     def test_preview_application_and_repeat(self):
-        self.assertEqual(query("SELECT inet_server_port()"), "55443")
+        self.assertEqual(query("SELECT inet_server_port()"), PORT)
         self.assertEqual(query("SELECT current_database()"), DATABASE)
         generated = subprocess.run([sys.executable, str(ROOT / "deploy/live/prepare-box-rewards.py")],
                                    text=True, capture_output=True, check=True).stdout
         before = snapshot(("config", "data", "guild", "friend"))
+        event_items_sql = '''SELECT coalesce(jsonb_agg(to_jsonb(j) ORDER BY to_jsonb(j)::text),'[]')
+            FROM config."DropItemGroupItemDefinition" j WHERE j."DropItemGroupId" IN
+            (SELECT "ItemRewardId" FROM config."MiniGameReward" WHERE "ItemRewardId" IS NOT NULL)'''
+        event_items = query(event_items_sql)
         unrelated_items = query('SELECT coalesce(jsonb_agg(to_jsonb(i) ORDER BY "Id"),\'[]\') FROM data."Item" i WHERE "Id"::text NOT LIKE \'24b00002-%\'')
         wrong = apply(generated, commit=True, expected="wrong_database")
         self.assertNotEqual(wrong.returncode, 0)
@@ -59,6 +70,7 @@ class BoxRewardMaintenanceTests(unittest.TestCase):
         committed = apply(generated, commit=True)
         self.assertEqual(committed.returncode, 0, committed.stderr)
         after = snapshot(("config", "data", "guild", "friend"))
+        self.assertEqual(query(event_items_sql), event_items, "Event payout contents must survive monster-source cleanup")
         changed = {name for name in before if before[name] != after[name]}
         allowed = {"config.ItemDropItemGroup", "config.ItemDropItemGroupItemDefinition",
                    "config.DropItemGroup", "config.DropItemGroupItemDefinition",
@@ -70,7 +82,7 @@ class BoxRewardMaintenanceTests(unittest.TestCase):
         actual_chances = json.loads(query('SELECT json_object_agg("SourceItemLevel",chance) FROM (SELECT DISTINCT "SourceItemLevel","ExcellentSecondOptionChance" AS chance FROM config."ItemDropItemGroup" WHERE "Id"::text LIKE \'24b00000-%\' AND "ItemType"=2) t'))
         self.assertEqual(actual_chances, {"8": .30, "9": .25, "10": .20, "11": .15, "12": .10})
         self.assertEqual(query('SELECT count(*) FROM config."ItemDropItemGroup" WHERE "Id"::text LIKE \'24b00000-%\''), "73")
-        self.assertEqual(query('SELECT count(*) FROM config."DropItemGroup" WHERE "ItemType"=7'), "69")
+        self.assertEqual(query('SELECT count(*) FROM config."DropItemGroup" WHERE "ItemType"=7 AND "GameConfigurationId" IS NOT NULL'), "69")
         self.assertEqual(query('SELECT "SmallBonusDropChance" FROM config."GameServerDefinition" WHERE "ServerID"=0'), "0.05")
         actual = json.loads(query('''SELECT json_agg(json_build_array(m."Number",n."Number",g."ItemLevel"))
             FROM config."DropItemGroup" g JOIN config."GameMapDefinitionDropItemGroup" j ON j."DropItemGroupId"=g."Id"

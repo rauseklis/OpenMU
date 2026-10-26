@@ -116,6 +116,35 @@ public class BonusProgressionTests
         Assert.That(pairs.Where(pair => pair.Level == 2).All(pair => pair.Map is 4 or 7), Is.True);
     }
 
+    [TestCase(1, 45000, 70000, 160)]
+    [TestCase(2, 140000, 210000, 180)]
+    [TestCase(3, 260000, 370000, 200)]
+    [TestCase(4, 390000, 510000, 220)]
+    [TestCase(5, 500000, 590000, 240)]
+    [TestCase(6, 2210000, 2230000, 260)]
+    [TestCase(7, 5300000, 3500000, 280)]
+    [TestCase(8, 130000, 40000, 300)]
+    public void BloodCastleUsesFixedExperienceAndOriginalTimeBonus(int level, int objective, int completion, int time)
+    {
+        var game = this._configuration.MiniGameDefinitions.Single(game => game.Type == MiniGameType.BloodCastle && game.GameLevel == level);
+        var experience = game.Rewards.Where(reward => reward.RewardType == MiniGameRewardType.Experience).ToArray();
+        Assert.That(experience.Where(reward => reward.RequiredKill is not null).Select(reward => reward.RewardAmount), Is.EqualTo(new[] { objective, objective }));
+        Assert.That(experience.Single(reward => reward.RequiredKill is null).RewardAmount, Is.EqualTo(completion));
+        Assert.That(game.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.ExperiencePerRemainingSeconds).RewardAmount, Is.EqualTo(time));
+    }
+
     private List<ItemDropItemGroup> Groups(byte level) => this._configuration.Items.Single(item => item.Group == 14 && item.Number == 11)
         .DropItems.Where(group => group.SourceItemLevel == level).ToList();
+
+    [Test]
+    public void BloodCastleRibbonPoolsRemainAvailableAfterProgressionInitialization()
+    {
+        foreach (var game in this._configuration.MiniGameDefinitions.Where(game => game.Type == MiniGameType.BloodCastle && game.GameLevel is >= 5 and <= 7))
+        {
+            var payout = game.Rewards.Single(reward => reward.RewardType == MiniGameRewardType.Item);
+            var expected = game.GameLevel switch { 5 => 33, 6 => 34, _ => 32 };
+            Assert.That(payout.ItemReward!.PossibleItems.Select(item => ((int)item.Group, (int)item.Number)),
+                Is.EqualTo(new[] { (12, expected) }), $"BC +{game.GameLevel} must still award its Ribbon box.");
+        }
+    }
 }
