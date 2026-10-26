@@ -692,4 +692,9 @@ public enum UpdateVersion
     /// Installs ordinary Chocolate endgame rewards and disables socket functionality safely.
     /// </summary>
     ChocolateEndgame = 148,
+
+    /// <summary>
+    /// Rebuilds only Kundun +1 through +5 as pre-Pink Excellent equipment.
+    /// </summary>
+    KundunProgression = 149,
 }

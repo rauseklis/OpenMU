@@ -114,6 +114,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new LorenciaShopLayout(this.Context, this.GameConfiguration).Initialize();
         new ChocolateEndgameRewards(this.Context, this.GameConfiguration).Initialize();
         new ChocolateEndgameItemBalance(this.Context, this.GameConfiguration).Initialize();
+        new KundunProgression(this.Context, this.GameConfiguration).Initialize();
         new DisabledSocketSystem(this.Context, this.GameConfiguration).Initialize();
     }
 

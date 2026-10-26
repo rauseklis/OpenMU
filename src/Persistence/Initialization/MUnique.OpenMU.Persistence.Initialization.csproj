@@ -18,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\BonusProgression.json" />
+    <EmbeddedResource Include="Resources\KundunProgression.json" />
     <None Remove="Resources\075_Terrain1.att" />
     <None Remove="Resources\075_Terrain2.att" />
     <None Remove="Resources\075_Terrain3.att" />

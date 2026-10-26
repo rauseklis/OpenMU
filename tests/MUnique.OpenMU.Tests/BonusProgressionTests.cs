@@ -61,7 +61,7 @@ public class BonusProgressionTests
             Assert.That(groups.Where(group => group.PossibleItems.All(item => item.Group < 6)).Sum(group => group.Chance), Is.EqualTo(.30).Within(1e-12));
             Assert.That(groups.Where(group => group.PossibleItems.All(item => item.Group == 6)).Sum(group => group.Chance), Is.EqualTo(.10).Within(1e-12));
             Assert.That(groups.All(group => group.ItemType == SpecialItemType.Excellent && group.MinimumLevel == 0 && group.MaximumLevel == 0), Is.True);
-            Assert.That(groups.All(group => Math.Abs(group.ExcellentSecondOptionChance!.Value - new[] { .30, .25, .20, .15, .10 }[level - 8]) < 1e-12), Is.True);
+            Assert.That(groups.All(group => Math.Abs(group.ExcellentSecondOptionChance!.Value - new[] { .50, .40, .30, .20, .10 }[level - 8]) < 1e-12), Is.True);
         }
     }
 
