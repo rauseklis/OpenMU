@@ -146,6 +146,7 @@ public class CrywolfPenaltyTest
         {
             d.JewelDropPenaltyPercentage = 0;
             d.PenaltyMapNumbers = new List<short> { 0 };
+            d.PenaltyJewels = new List<CrywolfPenaltyItem> { new() { Group = 14, Number = 13 } };
         }).ConfigureAwait(false);
         var player = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
         var monster = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
@@ -223,7 +224,11 @@ public class CrywolfPenaltyTest
     [Test]
     public async Task DeactivationUndoesTheHealthPenaltyAsync()
     {
-        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: true, d => d.PenaltyMapNumbers = new List<short> { 0 }, execute: false).ConfigureAwait(false);
+        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: true, d =>
+        {
+            d.PenaltyMapNumbers = new List<short> { 0 };
+            d.MonsterHealthPenaltyPercentage = 110;
+        }, execute: false).ConfigureAwait(false);
         var map = (await gameContext.GetMapAsync(0).ConfigureAwait(false))!;
         var monster = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
         await plugIn.ObjectAddedToMapAsync(map, monster).ConfigureAwait(false);
@@ -246,6 +251,7 @@ public class CrywolfPenaltyTest
         {
             d.JewelDropPenaltyPercentage = 0;
             d.PenaltyMapNumbers = new List<short> { 0 };
+            d.PenaltyJewels = new List<CrywolfPenaltyItem> { new() { Group = 14, Number = 13 }, new() { Group = 12, Number = 15 } };
         }).ConfigureAwait(false);
         var player = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
         var monster = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
@@ -253,15 +259,58 @@ public class CrywolfPenaltyTest
         Assert.That(IsDropCancelled(plugIn, monster, player, 14, 13), Is.True, "Jewel of Bless");
         Assert.That(IsDropCancelled(plugIn, monster, player, 12, 15), Is.True, "Jewel of Chaos");
         Assert.That(IsDropCancelled(plugIn, monster, player, 14, 15), Is.False, "Zen isn't a jewel");
+        Assert.That(IsDropCancelled(plugIn, monster, player, 14, 31), Is.False, "Jewel of Guardian isn't in the configured list");
 
         var (peacePlugIn, peaceContext) = await CreatePlugInAsync(isOccupied: false, d =>
         {
             d.JewelDropPenaltyPercentage = 0;
             d.PenaltyMapNumbers = new List<short> { 0 };
+            d.PenaltyJewels = new List<CrywolfPenaltyItem> { new() { Group = 14, Number = 13 } };
         }).ConfigureAwait(false);
         var peaceMonster = await CreateMonsterAsync(peaceContext).ConfigureAwait(false);
         var peacePlayer = await PlayerTestHelper.CreatePlayerAsync(peaceContext).ConfigureAwait(false);
         Assert.That(IsDropCancelled(peacePlugIn, peaceMonster, peacePlayer, 14, 13), Is.False, "Peace");
+    }
+
+    /// <summary>
+    /// Tests that the default configuration is the penalty of the original game: only the Jewel of Guardian drops
+    /// less often, only in the Land of Trials, and that the experience and the health of monsters aren't changed.
+    /// </summary>
+    [Test]
+    public void DefaultsAreThePenaltyOfTheOriginalGame()
+    {
+        var definition = new CrywolfEventDefinition();
+
+        Assert.That(definition.PenaltyMapNumbers, Is.EqualTo(new short[] { 31 }), "Land of Trials");
+        Assert.That(definition.PenaltyJewels.Select(item => (item.Group, item.Number)), Is.EqualTo(new[] { ((byte)14, (short)31) }), "Jewel of Guardian");
+        Assert.That(definition.ExperiencePenaltyPercentage, Is.EqualTo(100));
+        Assert.That(definition.MonsterHealthPenaltyPercentage, Is.EqualTo(100));
+        Assert.That(definition.IsPenaltyActive, Is.False);
+        Assert.That(definition.BenefitExcludedMapNumbers, Is.EqualTo(new short[] { 31 }), "Land of Trials");
+        Assert.That(definition.StartDays, Is.EqualTo(new[] { DayOfWeek.Saturday }));
+    }
+
+    /// <summary>
+    /// Tests that the monsters of the maps, which are excluded from the benefit, keep their health, like in the original game.
+    /// </summary>
+    [Test]
+    public async Task BenefitDoesNotReduceTheHealthOfExcludedMapsAsync()
+    {
+        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: false, d => d.BenefitExcludedMapNumbers = new List<short> { 0 }, execute: false).ConfigureAwait(false);
+        var map = (await gameContext.GetMapAsync(0).ConfigureAwait(false))!;
+        var monster = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
+        await map.AddAsync(monster).ConfigureAwait(false);
+        await plugIn.ObjectAddedToMapAsync(map, monster).ConfigureAwait(false);
+
+        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+        Assert.That(monster.Attributes[Stats.MaximumHealth], Is.EqualTo(1000), "The map is excluded.");
+
+        plugIn.Configuration!.BenefitExcludedMapNumbers = new List<short> { 31 };
+        var other = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
+        await map.AddAsync(other).ConfigureAwait(false);
+        await plugIn.ObjectAddedToMapAsync(map, other).ConfigureAwait(false);
+        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+        Assert.That(other.Attributes[Stats.MaximumHealth], Is.EqualTo(900), "The benefit applies to other maps.");
     }
 
     private static bool IsDropCancelled(CrywolfPlugIn plugIn, Monster monster, Player killer, byte group = 14, short number = 13)

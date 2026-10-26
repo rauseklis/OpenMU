@@ -55,10 +55,10 @@ public class CrywolfEventDefinitionTest
     {
         var definition = new CrywolfEventDefinition();
 
-        // 2026-09-30 is a wednesday, 2026-09-29 a tuesday.
-        Assert.That(definition.IsStartTime(new DateTime(2026, 09, 30, 20, 30, 2)), Is.True);
-        Assert.That(definition.IsStartTime(new DateTime(2026, 09, 30, 20, 31, 0)), Is.False);
-        Assert.That(definition.IsStartTime(new DateTime(2026, 09, 29, 20, 30, 2)), Is.False);
+        // Once a week like in the original game: 2026-10-03 is a saturday, 2026-09-30 a wednesday.
+        Assert.That(definition.IsStartTime(new DateTime(2026, 10, 03, 20, 30, 2)), Is.True);
+        Assert.That(definition.IsStartTime(new DateTime(2026, 10, 03, 20, 31, 0)), Is.False);
+        Assert.That(definition.IsStartTime(new DateTime(2026, 09, 30, 20, 30, 2)), Is.False);
     }
 
     /// <summary>

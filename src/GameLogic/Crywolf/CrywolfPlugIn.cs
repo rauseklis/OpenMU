@@ -35,19 +35,6 @@ using MUnique.OpenMU.PlugIns;
 public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISupportCustomConfiguration<CrywolfEventDefinition>, ISupportDefaultCustomConfiguration,
     IObjectAddedToMapPlugIn, IObjectRemovedFromMapPlugIn, IMonsterItemDropPlugIn, IExperienceCalculationPlugIn, IDisabledByDefault, IDisposable
 {
-    /// <summary>
-    /// The jewels which drop less often while the penalties apply, like in the original game.
-    /// </summary>
-    private static readonly HashSet<(byte Group, short Number)> PenaltyJewels = new()
-    {
-        (14, 13), // Jewel of Bless
-        (14, 14), // Jewel of Soul
-        (14, 16), // Jewel of Life
-        (14, 22), // Jewel of Creation
-        (12, 15), // Jewel of Chaos
-        (14, 31), // Jewel of Guardian
-    };
-
     private readonly ConcurrentDictionary<IGameContext, CrywolfContext> _contexts = new();
     private readonly ConcurrentDictionary<IGameContext, int> _runningTicks = new();
 
@@ -229,9 +216,9 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     public void ItemDropping(AttackableNpcBase monster, Player killer, Item item, CancelEventArgs eventArgs)
     {
         if (item.Definition is { } definition
-            && PenaltyJewels.Contains((definition.Group, definition.Number))
             && this._contexts.TryGetValue(killer.GameContext, out var context)
             && context.ArePenaltiesApplied
+            && context.Definition.PenaltyJewels.Any(jewel => jewel.Group == definition.Group && jewel.Number == definition.Number)
             && context.Definition.IsPenaltyTarget(monster)
             && Rand.NextInt(0, 100) >= context.Definition.JewelDropPenaltyPercentage)
         {
@@ -255,7 +242,7 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
         this._contexts.Clear();
     }
 
-    private static bool IsAffectedByHealthBenefit(Monster monster)
+    private static bool IsOrdinaryMonster(Monster monster)
     {
         // Like in the original game, it applies to all monsters, but not to the summons of players.
         // Monsters with a fixed maximum health (e.g. the gates of blood castle) keep it.
@@ -287,9 +274,16 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
         }
     }
 
+    private bool IsAffectedByHealthBenefit(Monster monster)
+    {
+        // The monsters of some maps (like the Land of Trials in the original game) keep their health.
+        return IsOrdinaryMonster(monster)
+               && !(monster.CurrentMap is { } map && this.Configuration?.BenefitExcludedMapNumbers.Contains((short)map.Definition.Number) == true);
+    }
+
     private bool TryAttachHealthMultiplier(Monster monster)
     {
-        if (!IsAffectedByHealthBenefit(monster) || this._attachedAttributeSystems.TryGetValue(monster.Attributes, out _))
+        if (!this.IsAffectedByHealthBenefit(monster) || this._attachedAttributeSystems.TryGetValue(monster.Attributes, out _))
         {
             return false;
         }
@@ -301,8 +295,7 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
 
     private bool TryAttachHealthPenaltyMultiplier(Monster monster)
     {
-        if (!IsAffectedByHealthBenefit(monster)
-            || this.Configuration?.IsPenaltyTarget(monster) != true
+        if (this.Configuration?.IsPenaltyTarget(monster) != true
             || this._attachedPenaltySystems.TryGetValue(monster.Attributes, out _))
         {
             return false;

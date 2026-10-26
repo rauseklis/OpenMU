@@ -76,9 +76,17 @@ Built and covered by source tests, nothing played yet:
 3. Contracts and rewards tested (contractor reward, no reward after a defeat, release on death, concurrent requests).
 4. Packet layouts verified against the client byte for byte; packages 0.9.23 (server, and client feed); the intro cinematic
    fixes of upstream MuMain #655 ported into the client.
-5. Defeat penalties, configurable and off by default (`IsPenaltyActive`): `PenaltyMapNumbers` (default Tarkan 8 and
-   Icarus 10), `PenaltyMinimumMonsterLevel` (0), `ExperiencePenaltyPercentage` (100), `JewelDropPenaltyPercentage` (70),
-   `MonsterHealthPenaltyPercentage` (110). None of these values is approved for live.
+5. Defeat penalties, configurable and off by default (`IsPenaltyActive`). The defaults are the penalty of the original
+   game (official Webzen guide: a failed defence makes the Jewel of Guardian drop less often in the Land of Trials; a
+   successful defence reduces the strength of monsters by 10 % everywhere except the Land of Trials, and adds 5 % to the
+   success rate of invitation mixes): `PenaltyMapNumbers` = Land of Trials (31), `PenaltyJewels` = Jewel of Guardian,
+   `JewelDropPenaltyPercentage` = 70 (Webzen publishes no number), `ExperiencePenaltyPercentage` = 100 and
+   `MonsterHealthPenaltyPercentage` = 100 (neither exists in the original game; they stay available as knobs, e.g. for
+   the requested Tarkan and Icarus penalty), `BenefitExcludedMapNumbers` = Land of Trials. The event starts once a week,
+   Saturday 20:30 server time; `StartDays` and `StartTimes` can be changed in the plug-in configuration.
 
 Open before it can go live: the settings above, the battle host channel, the schedule and time zone, the reward items, and
 the staging battles with a deliberate loss and a victory.
+
+- 2026-10-26, owner: penalties and map list follow the original Webzen values; the schedule is one weekly slot that can be
+  reconfigured later (default Saturday 20:30).

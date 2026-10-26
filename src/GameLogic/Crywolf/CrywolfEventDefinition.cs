@@ -36,7 +36,7 @@ public class CrywolfEventDefinition
     /// <summary>
     /// Gets or sets the days of the week, on which the event starts.
     /// </summary>
-    public IList<DayOfWeek> StartDays { get; set; } = new List<DayOfWeek> { DayOfWeek.Wednesday, DayOfWeek.Saturday };
+    public IList<DayOfWeek> StartDays { get; set; } = new List<DayOfWeek> { DayOfWeek.Saturday };
 
     /// <summary>
     /// Gets or sets the times of the day (in the time zone of the server), at which the event starts with its first notification.
@@ -343,15 +343,27 @@ public class CrywolfEventDefinition
     /// <summary>
     /// Gets or sets the maximum health of the affected monsters in percent of their normal maximum health, while the penalties apply.
     /// </summary>
-    public int MonsterHealthPenaltyPercentage { get; set; } = 110;
+    public int MonsterHealthPenaltyPercentage { get; set; } = 100;
 
     /// <summary>
     /// Gets or sets the numbers of the maps, whose monsters are affected by the penalties (experience, jewel drops and
     /// maximum health). Monsters of all other maps, e.g. of the beginner maps, aren't affected. The numbers are no
     /// threshold, because the numbers of the maps aren't ordered by their difficulty.
-    /// By default, these are the hunting maps Tarkan (8) and Icarus (10).
+    /// By default, it's the Land of Trials (31) like in the original game, whose jewels of guardian drop less often.
     /// </summary>
-    public IList<short> PenaltyMapNumbers { get; set; } = new List<short> { 8, 10 };
+    public IList<short> PenaltyMapNumbers { get; set; } = new List<short> { 31 };
+
+    /// <summary>
+    /// Gets or sets the items which drop less often while the penalties apply. By default, it's the Jewel of Guardian
+    /// like in the original game.
+    /// </summary>
+    public IList<CrywolfPenaltyItem> PenaltyJewels { get; set; } = new List<CrywolfPenaltyItem> { new() { Group = 14, Number = 31 } };
+
+    /// <summary>
+    /// Gets or sets the numbers of the maps, whose monsters keep their maximum health while the benefits apply.
+    /// By default, it's the Land of Trials (31) like in the original game, where the strength of the monsters isn't reduced.
+    /// </summary>
+    public IList<short> BenefitExcludedMapNumbers { get; set; } = new List<short> { 31 };
 
     /// <summary>
     /// Gets or sets the minimum level of the monsters which are affected by the penalties, in addition to <see cref="PenaltyMapNumbers"/>.
