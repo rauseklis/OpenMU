@@ -662,4 +662,9 @@ public enum UpdateVersion
     /// Installs single-branch Play-Box drops and Noria reward exchanges.
     /// </summary>
     CherryBlossomRewards = 142,
+
+    /// <summary>
+    /// The version of the <see cref="AddCrywolfEventUpdatePlugIn"/>.
+    /// </summary>
+    AddCrywolfEvent = 143,
 }
