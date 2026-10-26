@@ -661,6 +661,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed Lorencia bar horizontal progression layout.");
         }
 
+        if (await ChocolateEndgameInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed reviewed Chocolate endgame rewards and disabled socket functionality.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

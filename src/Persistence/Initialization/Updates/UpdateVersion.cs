@@ -687,4 +687,9 @@ public enum UpdateVersion
     /// Arranges Lumen's bonus stock into horizontal progression rows.
     /// </summary>
     LorenciaShopLayout = 147,
+
+    /// <summary>
+    /// Installs ordinary Chocolate endgame rewards and disables socket functionality safely.
+    /// </summary>
+    ChocolateEndgame = 148,
 }

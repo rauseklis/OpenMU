@@ -137,7 +137,7 @@ internal class Socket : AccountInitializerBase
         item.HasSkill = item.Definition.Skill != null;
         item.SocketCount = item.Definition.MaximumSockets;
         var slot = 0;
-        foreach (var socketOption in socketSlots)
+        foreach (var socketOption in socketSlots.Take(item.SocketCount))
         {
             var socketOptionLink = this.Context.CreateNew<ItemOptionLink>();
             socketOptionLink.ItemOption = item.Definition.PossibleItemOptions.SelectMany(o => o.PossibleOptions)
