@@ -677,4 +677,9 @@ public enum UpdateVersion
     /// Balances fixed Blood Castle experience and restores missing Ribbon payouts.
     /// </summary>
     BloodCastleRewardBalance = 145,
+
+    /// <summary>
+    /// Adds missing bonus test stock and empties Red/Blue Chocolate rewards.
+    /// </summary>
+    ChocolateBonusStock = 146,
 }

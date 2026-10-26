@@ -29,6 +29,59 @@ public class BonusProgressionDatabaseTests
 
     [Test]
     [Explicit("Requires the existing task-owned disposable fixture on 127.0.0.1:55503.")]
+    public async Task InstallChocolateStockOnExistingFixtureAsync()
+    {
+        Assert.That(Environment.GetEnvironmentVariable("BONUS_PROGRESSION_FIXTURE"), Is.EqualTo("chocolate-stock-disposable"));
+        ConnectionConfigurator.Initialize(new FixtureConnectionSettings());
+        JsonConverterRegistry.RegisterConverter(new LocalizedStringJsonConverter());
+        JsonConverterRegistry.RegisterConverter(new BinaryAsHexJsonConverter());
+        var provider = new PersistenceContextProvider(NullLoggerFactory.Instance, null);
+        string events;
+        string pink;
+        Dictionary<Guid, string> stock;
+        using (var context = provider.CreateNewContext())
+        {
+            var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+            events = PreservedBloodCastleState(configuration);
+            pink = ChocolatePinkFingerprint(configuration);
+            stock = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items
+                .ToDictionary(item => item.GetId(), item => $"{item.Definition!.GetId()}:{item.ItemSlot}:{item.Level}:{item.Durability}:{item.StorePrice}");
+        }
+
+        Assert.That(await ChocolateBonusStockInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await ChocolateBonusStockInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        using var reloaded = provider.CreateNewConfigurationContext();
+        var after = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        Assert.That(PreservedBloodCastleState(after), Is.EqualTo(events));
+        Assert.That(ChocolatePinkFingerprint(after), Is.EqualTo(pink));
+        var listings = after.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items;
+        Assert.That(listings.Count, Is.EqualTo(stock.Count + 5));
+        foreach (var item in listings.Where(item => stock.ContainsKey(item.GetId())))
+        {
+            Assert.That($"{item.Definition!.GetId()}:{item.ItemSlot}:{item.Level}:{item.Durability}:{item.StorePrice}", Is.EqualTo(stock[item.GetId()]));
+        }
+
+        Assert.That(listings.Where(item => !stock.ContainsKey(item.GetId())).All(item => item.StorePrice == 1000), Is.True);
+        var generator = new DefaultDropGenerator(after, Rand.GetRandomizer());
+        foreach (var number in new short[] { 33, 34 })
+        {
+            var groups = after.Items.Single(item => item.Group == 14 && item.Number == number).DropItems;
+            Assert.That(groups, Has.Count.EqualTo(1));
+            for (var draw = 0; draw < 50; draw++)
+            {
+                var result = generator.GenerateItemDrop(groups);
+                Assert.That(result.Item, Is.Null);
+                Assert.That(result.Money, Is.Null);
+            }
+        }
+    }
+
+    private static string ChocolatePinkFingerprint(GameConfiguration configuration)
+        => string.Join('\n', configuration.Items.Single(item => item.Group == 14 && item.Number == 32).DropItems.OrderBy(group => group.GetId())
+            .Select(group => $"{group.GetId()}:{group.Chance}:{group.SourceItemLevel}:{group.ItemType}:{group.MinimumLevel}:{group.MaximumLevel}:{group.MoneyAmount}:{string.Join(',', group.PossibleItems.Select(item => item.GetId()).Order())}"));
+
+    [Test]
+    [Explicit("Requires the existing task-owned disposable fixture on 127.0.0.1:55503.")]
     public async Task RepairExistingBloodCastleRewardsAsync()
     {
         Assert.That(Environment.GetEnvironmentVariable("BONUS_PROGRESSION_FIXTURE"), Is.EqualTo("repair-disposable"));
