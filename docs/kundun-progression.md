@@ -18,7 +18,7 @@ Always one or two EXC options, never duplicates. Higher base-item strength is ba
 
 Armor **60%**, weapons/books **30%**, shields **10%** at every tier. Each eligible class receives an equal share within the category. Armor variants split their class share equally, then one eligible piece is selected equally. Weapon/book and shield variants split their class share equally. Shared items can be selected through more than one class; these intended routes are additive, without multiplying the weight of a class with more variants.
 
-Armor class share: +1 has six classes at **10% overall each** (no SUM armor); +2–+5 have seven classes at **60/7% overall each**. Weapons/books: seven classes at **30/7% overall each**. Shields: DW/DK/Elf/MG/DL at **2% overall each**, no SUM/RF shields. MG has no helm; RF has no gloves.
+Armor class share: +1 has six classes at **10% overall each** (no SUM armor); +2–+5 have seven classes at **8.57% overall each** (rounded). Weapons/books: seven classes at **4.29% overall each** (rounded). Shields: DW/DK/Elf/MG/DL at **2% overall each**, no SUM/RF shields. MG has no helm; RF has no gloves.
 
 ## Kundun +1
 

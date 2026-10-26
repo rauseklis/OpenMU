@@ -55,7 +55,7 @@ public class DataInitialization : DataInitializationBase
         if (server.ServerID == 0)
         {
             server.SmallBonusDropsEnabled = true;
-            server.SmallBonusDropChance = 0.05;
+            server.SmallBonusDropChance = null;
         }
     }
 

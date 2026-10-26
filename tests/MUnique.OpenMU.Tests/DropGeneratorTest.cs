@@ -338,6 +338,64 @@ public class DropGeneratorTest
         Assert.That(variants.Count, Is.EqualTo(chance == 0 ? 0 : count));
     }
 
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(3)]
+    public async Task AbsoluteBonusRollsPreserveOverlapAndOrdinaryLootAsync(int scenario)
+    {
+        const int samples = 200_000;
+        var chances = scenario switch
+        {
+            0 => new[] { .01 },
+            1 => new[] { .01, .005, .0025 },
+            2 => new[] { .0015, .0025 },
+            _ => new[] { .0005 },
+        };
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        using var context = player.PersistenceContext;
+        var groups = player.CurrentMap!.Definition.DropItemGroups;
+        var ordinary = groups.Add(8000, SpecialItemType.None, true).PossibleItems.Single();
+        var bonusItems = chances.Select(chance =>
+        {
+            var group = groups.Add(1, SpecialItemType.SmallBonus, true);
+            group.Chance = chance;
+            return group.PossibleItems.Single();
+        }).ToArray();
+        var counts = new int[chances.Length];
+        var ordinaryHits = 0;
+        var ordinaryWithBonus = 0;
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), new SeededRandomizer(26000 + scenario), true, null);
+        var monster = this.GetMonster(1, 43);
+        for (var draw = 0; draw < samples; draw++)
+        {
+            var (items, _) = await generator.GenerateItemDropsAsync(monster, 1, player).ConfigureAwait(false);
+            var result = items.ToArray();
+            var ordinaryCount = result.Count(item => item.Definition == ordinary);
+            Assert.That(ordinaryCount, Is.LessThanOrEqualTo(1));
+            ordinaryHits += ordinaryCount;
+            var bonuses = result.Where(item => item.Definition != ordinary).ToArray();
+            Assert.That(bonuses.Length, Is.LessThanOrEqualTo(1));
+            if (bonuses.Length == 1)
+            {
+                counts[Array.IndexOf(bonusItems, bonuses[0].Definition)]++;
+                ordinaryWithBonus += ordinaryCount;
+            }
+        }
+
+        for (var index = 0; index < chances.Length; index++)
+        {
+            var tolerance = 6 * Math.Sqrt(chances[index] * (1 - chances[index]) / samples);
+            Assert.That((double)counts[index] / samples, Is.EqualTo(chances[index]).Within(tolerance));
+        }
+
+        Assert.That((double)ordinaryHits / samples, Is.EqualTo(.80).Within(.005), "Ordinary loot keeps its own 80% roll.");
+        var jointChance = .80 * chances.Sum();
+        Assert.That((double)ordinaryWithBonus / samples, Is.EqualTo(jointChance).Within(6 * Math.Sqrt(jointChance * (1 - jointChance) / samples)));
+
+        TestContext.WriteLine($"Absolute bonus scenario {scenario}: {string.Join(',', counts)} of {samples}; no bonus {samples - counts.Sum()}.");
+    }
+
     private MonsterDefinition GetMonster(int numberOfDrops, byte level)
     {
         var monster = new Mock<MonsterDefinition>();
