@@ -1,6 +1,21 @@
 # Monster bonuses and equipment progression
 
-Each eligible monster kill has one combined **5% bonus chance**. When multiple bonuses are assigned to that exact monster and map, the chance is divided equally between them. At most **one bonus** can drop per kill. Ordinary monster loot is separate. This pool is enabled on Server 1; other servers keep their own settings.
+This monster-drop and Box of Heaven update is tested locally and is **not deployed**. Other reward rules below retain the released configuration.
+
+Each eligible kill uses one bonus roll with these absolute chances. Overlapping bonuses keep their own chances; at most **one bonus** can drop per kill. The remaining chance gives no bonus. Ordinary loot rolls separately. This progression is enabled on Server 1; other servers retain their own settings.
+
+| Bonus | Eligibility | Monster-drop chance |
+|---|---|---:|
+| Silver Medal | Ordinary automatic world spawns, monster levels 1–44 inclusive | 1.00% |
+| Gold Medal | Existing specified Gold monsters | 0.50% |
+| Heart of Love | Existing specified Heart monsters | 0.35% |
+| Box of Heaven | Existing specified Heaven monsters | 0.25% |
+| Firecracker | Existing specified Firecracker monsters | 0.15% |
+| Star | Existing specified Star monsters | 0.05% |
+
+Silver eligibility is derived from monster level and normal spawn data, rather than a manually maintained monster list. NPCs, event-only spawns/objectives, disabled spawns, special guaranteed-reward bosses and event/battle-zone maps are excluded. Summoned monsters already do not generate loot. Ordinary eligible Kalima hunting monsters are included; this does not add Silver to Kalima bosses.
+
+Average eligible kills per bonus are approximately 100 for Silver, 200 for Gold, 286 for Heart, 400 for Heaven, 667 for Firecracker and 2,000 for Star. These are statistical averages, not guaranteed drop counts.
 
 An opening gives one item or one Zen outcome, never a complete armor set. Monster drop chances and box opening chances are separate. Equipment is ordinary unless the box is explicitly a Kundun or Ancient reward.
 
@@ -12,8 +27,7 @@ An opening gives one item or one Zen outcome, never a complete armor set. Monste
 | Box Of Heaven | Devias | Worm (Lv 20), Ice Monster (Lv 22), Hommerd (Lv 24), Assassin (Lv 26), Yeti (Lv 30), Elite Yeti (Lv 36) |
 | Box Of Heaven | Lost Tower | Shadow (Lv 47), Poison Shadow (Lv 50), Cursed Wizard (Lv 54), Death Cow (Lv 57), Devil (Lv 60), Death Knight (Lv 62), Death Gorgon (Lv 64), Balrog (Lv 66) |
 | Box Of Heaven | Atlans | Bahamut (Lv 43), Vepar (Lv 45), Valkyrie (Lv 46), Great Bahamut (Lv 66), Silver Valkyrie (Lv 68), Lizard King (Lv 70) |
-| Silver Medal | Dungeon | Hell Hound (Lv 38), Hell Spider (Lv 40), Elite Skeleton (Lv 42), Thunder Lich (Lv 44) |
-| Silver Medal | Devias | Elite Yeti (Lv 36) |
+| Silver Medal | Normal hunting maps | Eligible ordinary automatic spawns at Lv1–44: Lorencia, Noria, Devias, Dungeon, Atlans, Elvenland, Kalima 1 and Kalima 2 |
 | Gold Medal | Dungeon | Poison Bull (Lv 46), Dark Knight (Lv 48), Gorgon (Lv 55) |
 | Gold Medal | Lost Tower | Shadow (Lv 47), Poison Shadow (Lv 50), Cursed Wizard (Lv 54), Death Cow (Lv 57) |
 | Gold Medal | Atlans | Bahamut (Lv 43), Vepar (Lv 45), Valkyrie (Lv 46) |
@@ -25,20 +39,27 @@ An opening gives one item or one Zen outcome, never a complete armor set. Monste
 | Star | Icarus | Alquamos (Lv 75), Mega Crust (Lv 78), Queen Rainer (Lv 82), Drakan (Lv 86) |
 | Star | Aida | Death Tree (Lv 72), Forest Orc (Lv 74), Death Rider (Lv 78), Blue Golem (Lv 84) |
 
-Example: a monster assigned Heaven and Firecracker has 2.5% Heaven, 2.5% Firecracker and 95% no bonus. A monster assigned Heaven, Gold Medal and Heart of Love has 1 2/3% for each bonus.
+Examples of the single bonus roll:
+
+| Eligible bonuses | Absolute chances | No bonus |
+|---|---|---:|
+| Silver only | Silver 1.00% | 99.00% |
+| Silver + Heaven | Silver 1.00%, Heaven 0.25% | 98.75% |
+| Silver + Gold + Heaven, e.g. Bahamut | Silver 1.00%, Gold 0.50%, Heaven 0.25% | 98.25% |
+| Firecracker + Heaven | Firecracker 0.15%, Heaven 0.25% | 99.60% |
 
 ## Ordinary opening probabilities
 
-| Bonus | Armor | Weapons | Shields | Jewels | Rings | Fruits | Pets | Higher pet group | Zen |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Silver Medal | 33% | 19.25% | 2.75% | 20% | 5% | 0% | 0% | 0% | 20% |
-| Gold Medal | 42% | 24.5% | 3.5% | 15% | 5% | 0% | 0% | 0% | 10% |
-| Heart Of Love | 0% | 52.5% | 7.5% | 30% | 0% | 0% | 0% | 0% | 10% |
-| Firecracker | 25.263158% | 14.736842% | 0% | 35% | 0% | 0% | 0% | 0% | 25% |
-| Box Of Heaven | 0% | 0% | 0% | 40% | 0% | 10% | 25% | 5% | 20% |
-| Star | 60% | 35% | 5% | 0% | 0% | 0% | 0% | 0% | 0% |
+| Bonus | Armor | Weapons | Shields | Jewels | Rings | Pets | Higher pet group | Zen |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Silver Medal | 33% | 19.25% | 2.75% | 20% | 5% | 0% | 0% | 20% |
+| Gold Medal | 42% | 24.5% | 3.5% | 15% | 5% | 0% | 0% | 10% |
+| Heart Of Love | 0% | 52.5% | 7.5% | 30% | 0% | 0% | 0% | 10% |
+| Firecracker | 25.263158% | 14.736842% | 0% | 35% | 0% | 0% | 0% | 25% |
+| Box Of Heaven | 0% | 0% | 0% | 45% | 0% | 30% | 5% | 20% |
+| Star | 60% | 35% | 5% | 0% | 0% | 0% | 0% | 0% |
 
-Firecracker equipment uses the exact 60:35 armor/weapon ratio within its unchanged 40% equipment share; displayed percentages are rounded. Boxes without an armor or shield category do not gain one. Non-equipment category chances are unchanged.
+Firecracker equipment uses the exact 60:35 armor/weapon ratio within its unchanged 40% equipment share; displayed percentages are rounded. Boxes without an armor or shield category do not gain one. Other boxes keep their existing non-equipment category chances.
 
 ## Equipment levels and options
 
@@ -64,7 +85,7 @@ Firecracker equipment uses the exact 60:35 armor/weapon ratio within its unchang
 | Summoner | Demonic (server name Black Rose) | Demonic Stick, Book of Lagle |
 | RF | Piercing Groove | Piercing Blade Glove |
 
-All seven classes have an equal **1/7 overall reward share**, regardless of item counts. Energy Elf is part of the Elf share, including Elemental Mace. Shared weapons can be equipped by other eligible classes without granting an extra class share.
+All seven classes have an equal **14.29% overall reward share** (rounded), regardless of item counts. Energy Elf is part of the Elf share, including Elemental Mace. Shared weapons can be equipped by other eligible classes without granting an extra class share.
 
 Every class has a 60% armor share inside its class allocation. DW, DK, Elf, MG and DL each have 33% weapons and 7% shields; Summoner and RF have 40% weapons and no shields. This keeps the overall opening split exactly **60% armor / 35% weapons / 5% shields**, while retaining equal total class shares. Individual pieces within each class/category are equally likely.
 
@@ -116,7 +137,7 @@ Thunder Hawk and Valiant have four armor pieces and no helm; Piercing Groove has
 - **Jewels:** Jewel of Bless, Jewel of Soul.
 - **Pets:** Imp, Guardian Angel, Horn of Uniria.
 - **Higher Pet Group:** Demon, Spirit of Guardian, Horn of Dinorant.
-- **Fruits:** Strength, Agility, Vitality, Energy and Command; one of each type at 2% per opening.
+- Bless and Soul are **22.50% each** per opening; normal pets are **10.00% each**; each higher pet is approximately **1.67%**. Categories are selected first, then equally among their members. Box of Heaven does not award Fruits.
 - **Zen outcome:** 100,000 Zen.
 
 ## Kundun +1 through +5
