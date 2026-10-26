@@ -103,7 +103,7 @@ public class BonusProgressionTests
         var pairs = this._configuration.Maps.SelectMany(map => map.DropItemGroups
             .Where(group => group.ItemType == SpecialItemType.SmallBonus)
             .Select(group => (Map: (int)map.Number, Monster: (int)group.Monster!.Number, Level: (int)group.ItemLevel!.Value))).ToList();
-        Assert.That(pairs.Count, Is.EqualTo(69));
+        Assert.That(pairs.Count(pair => pair.Level != 5), Is.EqualTo(64), "Only Silver sources are expanded by the absolute-chance update.");
         Assert.That(pairs.Distinct().Count(), Is.EqualTo(pairs.Count));
         Assert.That(pairs.Where(pair => pair.Level == 1).Select(pair => (pair.Map, pair.Monster)), Is.EquivalentTo(new[]
         {

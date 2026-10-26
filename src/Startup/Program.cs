@@ -676,6 +676,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed six equal rewards for each Cherry Blossom leaf exchange.");
         }
 
+        if (await AbsoluteBonusProgressionInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed absolute monster bonus chances and fruit-free Heaven rewards.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

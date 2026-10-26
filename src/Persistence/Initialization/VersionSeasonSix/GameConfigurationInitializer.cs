@@ -116,6 +116,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new ChocolateEndgameItemBalance(this.Context, this.GameConfiguration).Initialize();
         new KundunProgression(this.Context, this.GameConfiguration).Initialize();
         new DisabledSocketSystem(this.Context, this.GameConfiguration).Initialize();
+        new AbsoluteBonusProgression(this.Context, this.GameConfiguration).Initialize();
     }
 
     /// <summary>

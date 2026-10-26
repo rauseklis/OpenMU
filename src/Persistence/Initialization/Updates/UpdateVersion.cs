@@ -702,4 +702,9 @@ public enum UpdateVersion
     /// Gives each leaf exchange six equal outcomes with reviewed Kundun box rewards.
     /// </summary>
     CherryExchangeRevision = 150,
+
+    /// <summary>
+    /// Uses absolute monster bonus chances, early Silver and fruit-free Heaven rewards.
+    /// </summary>
+    AbsoluteBonusProgression = 151,
 }
