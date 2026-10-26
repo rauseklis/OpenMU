@@ -29,6 +29,42 @@ public class BonusProgressionDatabaseTests
 
     [Test]
     [Explicit("Requires the existing task-owned disposable fixture on 127.0.0.1:55503.")]
+    public async Task ArrangeLorenciaOnExistingFixtureAsync()
+    {
+        Assert.That(Environment.GetEnvironmentVariable("BONUS_PROGRESSION_FIXTURE"), Is.EqualTo("lorencia-layout-disposable"));
+        ConnectionConfigurator.Initialize(new FixtureConnectionSettings());
+        JsonConverterRegistry.RegisterConverter(new LocalizedStringJsonConverter());
+        JsonConverterRegistry.RegisterConverter(new BinaryAsHexJsonConverter());
+        var provider = new PersistenceContextProvider(NullLoggerFactory.Instance, null);
+        string events;
+        string pink;
+        Dictionary<Guid, string> stock;
+        using (var context = provider.CreateNewContext())
+        {
+            var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+            events = PreservedBloodCastleState(configuration);
+            pink = ChocolatePinkFingerprint(configuration);
+            stock = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items.ToDictionary(item => item.GetId(),
+                item => $"{item.Definition!.GetId()}:{item.Level}:{item.Durability}:{item.StorePrice}:{item.HasSkill}:{item.SocketCount}:{item.PetExperience}");
+        }
+
+        Assert.That(await LorenciaShopLayoutInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await LorenciaShopLayoutInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        using var reloaded = provider.CreateNewConfigurationContext();
+        var after = (await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        Assert.That(PreservedBloodCastleState(after), Is.EqualTo(events));
+        Assert.That(ChocolatePinkFingerprint(after), Is.EqualTo(pink));
+        LorenciaShopLayoutTests.AssertValidLayout(after);
+        var listings = after.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items;
+        Assert.That(listings.Select(item => item.GetId()), Is.EquivalentTo(stock.Keys));
+        foreach (var item in listings)
+        {
+            Assert.That($"{item.Definition!.GetId()}:{item.Level}:{item.Durability}:{item.StorePrice}:{item.HasSkill}:{item.SocketCount}:{item.PetExperience}", Is.EqualTo(stock[item.GetId()]));
+        }
+    }
+
+    [Test]
+    [Explicit("Requires the existing task-owned disposable fixture on 127.0.0.1:55503.")]
     public async Task InstallChocolateStockOnExistingFixtureAsync()
     {
         Assert.That(Environment.GetEnvironmentVariable("BONUS_PROGRESSION_FIXTURE"), Is.EqualTo("chocolate-stock-disposable"));
