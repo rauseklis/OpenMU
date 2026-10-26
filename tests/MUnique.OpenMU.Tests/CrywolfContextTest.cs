@@ -12,6 +12,7 @@ using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.Crywolf;
 using MUnique.OpenMU.GameLogic.NPC;
 using MUnique.OpenMU.Pathfinding;
+using ItemDefinition = MUnique.OpenMU.Persistence.BasicModel.ItemDefinition;
 using MonsterAttribute = MUnique.OpenMU.Persistence.BasicModel.MonsterAttribute;
 using MonsterDefinition = MUnique.OpenMU.Persistence.BasicModel.MonsterDefinition;
 
@@ -427,6 +428,92 @@ public class CrywolfContextTest
     }
 
     /// <summary>
+    /// Tests that the contractor of a defended fortress gets the reward at the end of the battle, owned by the elf.
+    /// </summary>
+    [Test]
+    public async Task ContractorGetsTheRewardWhenTheFortressIsDefendedAsync()
+    {
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        var rewardDefinition = AddRewardItemDefinition(gameContext);
+        var (context, player, _) = await CreateContextAsync(gameContext).ConfigureAwait(false);
+
+        var bystander = await CreatePlayerAtAltarAsync(gameContext).ConfigureAwait(false);
+
+        await StartBattleWithBalgassAsync(context, player).ConfigureAwait(false);
+        await KillBalgassAsync(context, player).ConfigureAwait(false);
+        await context.TickAsync().ConfigureAwait(false);
+
+        Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.Peace), "precondition");
+        var rewards = GetRewards(player, rewardDefinition);
+        Assert.That(rewards, Has.Count.GreaterThanOrEqualTo(1));
+        Assert.That(rewards.All(reward => reward.IsPlayerAnOwner(player)), Is.True);
+        Assert.That(rewards.Any(reward => reward.IsPlayerAnOwner(bystander)), Is.False, "The reward is dropped for the elf only.");
+    }
+
+    /// <summary>
+    /// Tests that nobody gets a reward when the fortress is lost.
+    /// </summary>
+    [Test]
+    public async Task NoRewardWhenTheFortressIsLostAsync()
+    {
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        var rewardDefinition = AddRewardItemDefinition(gameContext);
+        var (context, player, _) = await CreateContextAsync(gameContext, configure: d => d.BattleDuration = TimeSpan.FromMilliseconds(1)).ConfigureAwait(false);
+
+        await StartBattleWithBalgassAsync(context, player).ConfigureAwait(false);
+        await Task.Delay(20).ConfigureAwait(false);
+        await context.TickAsync().ConfigureAwait(false);
+        await ProceedToAsync(context, CrywolfState.None).ConfigureAwait(false);
+
+        Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.Occupied), "precondition");
+        Assert.That(GetRewards(player, rewardDefinition), Is.Empty);
+    }
+
+    /// <summary>
+    /// Tests that an altar is released when its elf dies, and that another elf can take it over.
+    /// </summary>
+    [Test]
+    public async Task AltarIsReleasedWhenTheContractorDiesAsync()
+    {
+        var (context, player, gameContext) = await CreateContextAsync(configure: d => d.AltarCooldown = TimeSpan.Zero).ConfigureAwait(false);
+        var other = await CreatePlayerAtAltarAsync(gameContext).ConfigureAwait(false);
+        var altar = context.Altars[0];
+        await ProceedToAsync(context, CrywolfState.Ready).ConfigureAwait(false);
+        await context.ContractAltarAsync(player, altar.Npc.Id).ConfigureAwait(false);
+        await context.TickAsync().ConfigureAwait(false);
+        Assert.That(altar.State, Is.EqualTo(CrywolfAltarState.Contracted), "precondition");
+
+        player.IsAlive = false;
+        await context.TickAsync().ConfigureAwait(false);
+        Assert.That(altar.State, Is.EqualTo(CrywolfAltarState.Free));
+        Assert.That(altar.Contractor, Is.Null);
+
+        await context.ContractAltarAsync(other, altar.Npc.Id).ConfigureAwait(false);
+
+        Assert.That(altar.Contractor, Is.SameAs(other));
+        Assert.That(altar.ContractCount, Is.EqualTo(2), "Each attempt counts as contract.");
+    }
+
+    /// <summary>
+    /// Tests that two elves, which request the same altar at the same time, result in exactly one contract.
+    /// </summary>
+    [Test]
+    public async Task ConcurrentRequestsForOneAltarResultInOneContractAsync()
+    {
+        var (context, player, gameContext) = await CreateContextAsync().ConfigureAwait(false);
+        var other = await CreatePlayerAtAltarAsync(gameContext).ConfigureAwait(false);
+        var altar = context.Altars[0];
+        await ProceedToAsync(context, CrywolfState.Ready).ConfigureAwait(false);
+
+        await Task.WhenAll(
+            Task.Run(() => context.ContractAltarAsync(player, altar.Npc.Id).AsTask()),
+            Task.Run(() => context.ContractAltarAsync(other, altar.Npc.Id).AsTask())).ConfigureAwait(false);
+
+        Assert.That(altar.ContractCount, Is.EqualTo(1));
+        Assert.That(altar.Contractor, Is.AnyOf(player, other));
+    }
+
+    /// <summary>
     /// Tests that stopping the event (e.g. when its plug-in is deactivated) in each phase ends the war completely:
     /// the army and Balgass are removed, the contracts are released, and the result of the previous battle stays.
     /// </summary>
@@ -523,6 +610,28 @@ public class CrywolfContextTest
         }
 
         Assert.That(balgass.IsAlive, Is.False, "precondition: Balgass is killed");
+    }
+
+    private static ItemDefinition AddRewardItemDefinition(GameContext gameContext)
+    {
+        var definition = new ItemDefinition { Id = Guid.NewGuid(), Group = 14, Number = 13, Name = "Jewel of Bless", Width = 1, Height = 1 };
+        gameContext.Configuration.Items.Add(definition);
+        return definition;
+    }
+
+    private static IList<DroppedItem> GetRewards(Player player, ItemDefinition definition)
+    {
+        return player.CurrentMap!.GetDropsInRange(player.Position, 5).OfType<DroppedItem>().Where(drop => drop.Item.Definition == definition).ToList();
+    }
+
+    private static async ValueTask<Player> CreatePlayerAtAltarAsync(GameContext gameContext)
+    {
+        var other = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
+        await other.PlayerState.TryAdvanceToAsync(PlayerState.EnteredWorld).ConfigureAwait(false);
+        other.IsAlive = true;
+        other.Position = AltarPosition;
+        await other.CurrentMap!.AddAsync(other).ConfigureAwait(false);
+        return other;
     }
 
     private static bool IsBalgassOnMap(CrywolfContext context)
