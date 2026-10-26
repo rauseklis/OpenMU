@@ -4,6 +4,9 @@
 
 namespace MUnique.OpenMU.GameLogic.Crywolf;
 
+using MUnique.OpenMU.GameLogic.Attributes;
+using MUnique.OpenMU.GameLogic.NPC;
+
 /// <summary>
 /// Describes the run of the crywolf event.
 /// </summary>
@@ -336,6 +339,44 @@ public class CrywolfEventDefinition
     /// Gets or sets the experience of killed monsters in percent of the normal experience, while the penalties apply.
     /// </summary>
     public int ExperiencePenaltyPercentage { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the maximum health of the affected monsters in percent of their normal maximum health, while the penalties apply.
+    /// </summary>
+    public int MonsterHealthPenaltyPercentage { get; set; } = 110;
+
+    /// <summary>
+    /// Gets or sets the numbers of the maps, whose monsters are affected by the penalties (experience, jewel drops and
+    /// maximum health). Monsters of all other maps, e.g. of the beginner maps, aren't affected. The numbers are no
+    /// threshold, because the numbers of the maps aren't ordered by their difficulty.
+    /// By default, these are the hunting maps Tarkan (8) and Icarus (10).
+    /// </summary>
+    public IList<short> PenaltyMapNumbers { get; set; } = new List<short> { 8, 10 };
+
+    /// <summary>
+    /// Gets or sets the minimum level of the monsters which are affected by the penalties, in addition to <see cref="PenaltyMapNumbers"/>.
+    /// </summary>
+    public short PenaltyMinimumMonsterLevel { get; set; }
+
+    /// <summary>
+    /// Determines whether the penalties of an occupied fortress affect the specified object, which is one rule for
+    /// the experience, the jewel drops and the maximum health: it has to be an ordinary monster (no NPC, no summon
+    /// of a player and no monster with a fixed health) of one of the <see cref="PenaltyMapNumbers"/>, with at least
+    /// the <see cref="PenaltyMinimumMonsterLevel"/>. Bosses, invasion and event monsters of these maps are
+    /// ordinary monsters, too.
+    /// </summary>
+    /// <param name="attackable">The object, e.g. the killed monster.</param>
+    /// <returns><c>true</c>, if the penalties affect the object; otherwise, <c>false</c>.</returns>
+    public bool IsPenaltyTarget(IAttackable? attackable)
+    {
+        return attackable is Monster monster
+               && monster.Definition.ObjectKind == NpcObjectKind.Monster
+               && monster.SummonedBy is null
+               && monster.SpawnArea.MaximumHealthOverride is null
+               && monster.CurrentMap is { } map
+               && this.PenaltyMapNumbers.Contains((short)map.Definition.Number)
+               && monster.Attributes[Stats.Level] >= this.PenaltyMinimumMonsterLevel;
+    }
 
     /// <summary>
     /// Determines whether the event starts at the specified local time of the server.

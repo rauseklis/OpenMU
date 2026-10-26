@@ -151,6 +151,21 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
     public float ExperienceMultiplier => this.ArePenaltiesApplied ? this._definition.ExperiencePenaltyPercentage / 100f : 1f;
 
     /// <summary>
+    /// Gets the multiplier of the maximum health of the monsters which are affected by the penalties.
+    /// </summary>
+    public float MonsterHealthPenaltyMultiplier => this.ArePenaltiesApplied ? this._definition.MonsterHealthPenaltyPercentage / 100f : 1f;
+
+    /// <summary>
+    /// Gets the multiplier of the experience which is gained for the kill of the specified object.
+    /// </summary>
+    /// <param name="killed">The killed object.</param>
+    /// <returns>The multiplier, which is 1 when the penalties don't affect the object.</returns>
+    public float GetExperienceMultiplier(IAttackable killed)
+    {
+        return this.ArePenaltiesApplied && this._definition.IsPenaltyTarget(killed) ? this.ExperienceMultiplier : 1f;
+    }
+
+    /// <summary>
     /// Gets the additional success rate in percent of the chaos machine mixes of the event tickets, which is also shown to the player.
     /// </summary>
     public byte ChaosRateBenefit => this.AreBenefitsApplied ? this._definition.ChaosRateBenefit : (byte)0;

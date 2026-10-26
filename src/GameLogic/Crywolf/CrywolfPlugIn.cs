@@ -25,14 +25,15 @@ using MUnique.OpenMU.PlugIns;
 /// <list type="bullet">
 ///   <item>While the fortress is in peace after it has been defended, the maximum health of the monsters is reduced,
 ///     and the chaos machine mixes of the event tickets get an additional success rate.</item>
-///   <item>While the fortress is occupied, the jewels drop less often, and the experience of killed monsters is reduced.</item>
+///   <item>While the fortress is occupied and the penalties are active, the monsters of the configured hunting maps give less experience,
+///     drop jewels less often and have more maximum health.</item>
 /// </list>
 /// </remarks>
 [PlugIn]
 [Display(Name = nameof(PlugInResources.CrywolfPlugIn_Name), Description = nameof(PlugInResources.CrywolfPlugIn_Description), ResourceType = typeof(PlugInResources))]
 [Guid("3E8B5C27-9D41-4A6F-B2C8-7F1D6E0A9B34")]
 public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISupportCustomConfiguration<CrywolfEventDefinition>, ISupportDefaultCustomConfiguration,
-    IObjectAddedToMapPlugIn, IObjectRemovedFromMapPlugIn, IPlayerStateChangedPlugIn, IMonsterItemDropPlugIn, IDisabledByDefault, IDisposable
+    IObjectAddedToMapPlugIn, IObjectRemovedFromMapPlugIn, IMonsterItemDropPlugIn, IExperienceCalculationPlugIn, IDisabledByDefault, IDisposable
 {
     /// <summary>
     /// The jewels which drop less often while the penalties apply, like in the original game.
@@ -56,17 +57,22 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     private readonly SimpleElement _monsterHealthMultiplier = new(1.0f, AggregateType.Multiplicate);
 
     /// <summary>
-    /// The multiplier of the <see cref="Stats.ExperienceRate"/> and <see cref="Stats.MasterExperienceRate"/> of the players.
+    /// The multiplier of the maximum health of the monsters which are affected by the penalties.
     /// </summary>
-    private readonly SimpleElement _experienceMultiplier = new(1.0f, AggregateType.Multiplicate);
+    private readonly SimpleElement _monsterHealthPenaltyMultiplier = new(1.0f, AggregateType.Multiplicate);
 
     /// <summary>
-    /// The attribute systems of the monsters and players, to which the multipliers are attached.
+    /// The attribute systems of the monsters, to which the health benefit is attached.
     /// </summary>
     private readonly ConditionalWeakTable<object, object> _attachedAttributeSystems = new();
 
     /// <summary>
-    /// The game contexts, in which the multipliers were attached to the existing monsters and players since the plugin has been activated.
+    /// The attribute systems of the monsters, to which the health penalty is attached.
+    /// </summary>
+    private readonly ConditionalWeakTable<object, object> _attachedPenaltySystems = new();
+
+    /// <summary>
+    /// The game contexts, in which the multipliers were attached to the existing monsters since the plugin has been activated.
     /// </summary>
     private readonly ConcurrentDictionary<IGameContext, byte> _attachedGameContexts = new();
 
@@ -173,10 +179,15 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     /// <inheritdoc />
     public ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
     {
-        if (addedObject is Monster monster && this.TryAttachHealthMultiplier(monster))
+        if (addedObject is Monster monster)
         {
-            // The monster got its health before it was added to the map. When it respawns, it stays on the map and keeps the multiplier.
-            monster.Health = (int)monster.Attributes[Stats.MaximumHealth];
+            var isBenefitAttached = this.TryAttachHealthMultiplier(monster);
+            var isPenaltyAttached = this.TryAttachHealthPenaltyMultiplier(monster);
+            if (isBenefitAttached || isPenaltyAttached)
+            {
+                // The monster got its health before it was added to the map. When it respawns, it stays on the map and keeps the multiplier.
+                monster.Health = (int)monster.Attributes[Stats.MaximumHealth];
+            }
         }
 
         return ValueTask.CompletedTask;
@@ -185,31 +196,30 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     /// <inheritdoc />
     public ValueTask ObjectRemovedFromMapAsync(GameMap map, ILocateable removedObject)
     {
-        if (removedObject is Monster monster && this._attachedAttributeSystems.Remove(monster.Attributes))
+        if (removedObject is Monster monster)
         {
-            monster.Attributes.RemoveElement(this._monsterHealthMultiplier, Stats.MaximumHealth);
+            if (this._attachedAttributeSystems.Remove(monster.Attributes))
+            {
+                monster.Attributes.RemoveElement(this._monsterHealthMultiplier, Stats.MaximumHealth);
+            }
+
+            if (this._attachedPenaltySystems.Remove(monster.Attributes))
+            {
+                monster.Attributes.RemoveElement(this._monsterHealthPenaltyMultiplier, Stats.MaximumHealth);
+            }
         }
 
         return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public ValueTask PlayerStateChangedAsync(Player player, State previousState, State currentState)
+    public ValueTask CalculateExperienceAsync(Player player, ExperienceCalculationArgs args)
     {
-        if (currentState.IsDisconnectedOrFinished())
+        // It's decided here, where the killed monster is known, so that monsters of other maps keep their experience.
+        // The experience already contains the rates of the channel and the other systems, so it's only multiplied.
+        if (this._contexts.TryGetValue(player.GameContext, out var context))
         {
-            if (player.Attributes is { } attributes && this._attachedAttributeSystems.Remove(attributes))
-            {
-                attributes.RemoveElement(this._experienceMultiplier, Stats.ExperienceRate);
-                attributes.RemoveElement(this._experienceMultiplier, Stats.MasterExperienceRate);
-            }
-
-            return ValueTask.CompletedTask;
-        }
-
-        if (previousState == PlayerState.CharacterSelection && currentState == PlayerState.EnteredWorld)
-        {
-            this.TryAttachExperienceMultiplier(player);
+            args.Experience *= context.GetExperienceMultiplier(args.KilledObject);
         }
 
         return ValueTask.CompletedTask;
@@ -222,6 +232,7 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
             && PenaltyJewels.Contains((definition.Group, definition.Number))
             && this._contexts.TryGetValue(killer.GameContext, out var context)
             && context.ArePenaltiesApplied
+            && context.Definition.IsPenaltyTarget(monster)
             && Rand.NextInt(0, 100) >= context.Definition.JewelDropPenaltyPercentage)
         {
             eventArgs.Cancel = true;
@@ -288,36 +299,31 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
         return true;
     }
 
-    private void TryAttachExperienceMultiplier(Player player)
+    private bool TryAttachHealthPenaltyMultiplier(Monster monster)
     {
-        if (player.Attributes is not { } attributes || this._attachedAttributeSystems.TryGetValue(attributes, out _))
+        if (!IsAffectedByHealthBenefit(monster)
+            || this.Configuration?.IsPenaltyTarget(monster) != true
+            || this._attachedPenaltySystems.TryGetValue(monster.Attributes, out _))
         {
-            return;
+            return false;
         }
 
-        this._attachedAttributeSystems.AddOrUpdate(attributes, this);
-        attributes.AddElement(this._experienceMultiplier, Stats.ExperienceRate);
-        attributes.AddElement(this._experienceMultiplier, Stats.MasterExperienceRate);
+        this._attachedPenaltySystems.AddOrUpdate(monster.Attributes, this);
+        monster.Attributes.AddElement(this._monsterHealthPenaltyMultiplier, Stats.MaximumHealth);
+        return true;
     }
 
     /// <summary>
-    /// Attaches the multipliers to the monsters and players of the game context, which exist already.
+    /// Attaches the multipliers to the monsters of the game context, which exist already.
     /// </summary>
     private async ValueTask AttachMultipliersAsync(IGameContext gameContext)
     {
-        foreach (var player in await gameContext.GetPlayersAsync().ConfigureAwait(false))
-        {
-            if (player.PlayerState.CurrentState == PlayerState.EnteredWorld)
-            {
-                this.TryAttachExperienceMultiplier(player);
-            }
-        }
-
         foreach (var map in await gameContext.GetMapsAsync().ConfigureAwait(false))
         {
             foreach (var monster in map.GetNpcsInRange(new Point(128, 128), byte.MaxValue).OfType<Monster>())
             {
                 this.TryAttachHealthMultiplier(monster);
+                this.TryAttachHealthPenaltyMultiplier(monster);
             }
         }
     }
@@ -343,7 +349,7 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
         // The multipliers stay attached, but without an effect. When the plugin is activated again, they're
         // attached to the monsters and players which came in the meantime, and get their values again.
         this._monsterHealthMultiplier.Value = 1;
-        this._experienceMultiplier.Value = 1;
+        this._monsterHealthPenaltyMultiplier.Value = 1;
         this._appliedEffects = null;
         this._attachedGameContexts.Clear();
 
@@ -405,21 +411,25 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
                 LogAppliedEffects(gameContext.LoggerFactory.CreateLogger<CrywolfPlugIn>(), context);
             }
 
-            var experienceMultiplier = context.ExperienceMultiplier;
-            if (Math.Abs(this._experienceMultiplier.Value - experienceMultiplier) > float.Epsilon)
+            var isHealthReduced = false;
+            var healthMultiplier = context.MonsterHealthMultiplier;
+            if (Math.Abs(this._monsterHealthMultiplier.Value - healthMultiplier) > float.Epsilon)
             {
-                this._experienceMultiplier.Value = experienceMultiplier;
+                isHealthReduced |= healthMultiplier < this._monsterHealthMultiplier.Value;
+                this._monsterHealthMultiplier.Value = healthMultiplier;
             }
 
-            var healthMultiplier = context.MonsterHealthMultiplier;
-            var previousHealthMultiplier = this._monsterHealthMultiplier.Value;
-            if (Math.Abs(previousHealthMultiplier - healthMultiplier) > float.Epsilon)
+            var penaltyMultiplier = context.MonsterHealthPenaltyMultiplier;
+            if (Math.Abs(this._monsterHealthPenaltyMultiplier.Value - penaltyMultiplier) > float.Epsilon)
             {
-                this._monsterHealthMultiplier.Value = healthMultiplier;
-                if (healthMultiplier < previousHealthMultiplier)
-                {
-                    await this.LimitMonsterHealthAsync().ConfigureAwait(false);
-                }
+                isHealthReduced |= penaltyMultiplier < this._monsterHealthPenaltyMultiplier.Value;
+                this._monsterHealthPenaltyMultiplier.Value = penaltyMultiplier;
+            }
+
+            // A raised maximum health doesn't heal the living monsters, but a lowered one limits their health.
+            if (isHealthReduced)
+            {
+                await this.LimitMonsterHealthAsync().ConfigureAwait(false);
             }
         }
         finally

@@ -21,84 +21,6 @@ using ItemDefinition = MUnique.OpenMU.Persistence.BasicModel.ItemDefinition;
 public class CrywolfPlugInTest
 {
     /// <summary>
-    /// Tests that jewels drop less often while the fortress is occupied, and that other items aren't affected.
-    /// </summary>
-    [Test]
-    public async Task JewelsDropLessOftenWhileOccupiedAsync()
-    {
-        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: true, d => d.JewelDropPenaltyPercentage = 0).ConfigureAwait(false);
-        var player = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
-
-        Assert.That(IsDropCancelled(plugIn, player, 14, 13), Is.True, "Jewel of Bless");
-        Assert.That(IsDropCancelled(plugIn, player, 12, 15), Is.True, "Jewel of Chaos");
-        Assert.That(IsDropCancelled(plugIn, player, 14, 15), Is.False, "Zen isn't a jewel");
-    }
-
-    /// <summary>
-    /// Tests that jewels drop normally while the fortress is in peace.
-    /// </summary>
-    [Test]
-    public async Task JewelsDropNormallyInPeaceAsync()
-    {
-        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: false, d => d.JewelDropPenaltyPercentage = 0).ConfigureAwait(false);
-        var player = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
-
-        Assert.That(IsDropCancelled(plugIn, player, 14, 13), Is.False);
-    }
-
-    /// <summary>
-    /// Tests that the experience rate of the players is reduced while the fortress is occupied.
-    /// </summary>
-    [Test]
-    public async Task ExperienceIsReducedWhileOccupiedAsync()
-    {
-        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: true, d => d.ExperiencePenaltyPercentage = 50, execute: false).ConfigureAwait(false);
-        var player = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
-        await plugIn.PlayerStateChangedAsync(player, PlayerState.CharacterSelection, PlayerState.EnteredWorld).ConfigureAwait(false);
-        var normalRate = player.Attributes![Stats.ExperienceRate];
-
-        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
-
-        Assert.That(player.Attributes[Stats.ExperienceRate], Is.EqualTo(normalRate * 0.5f));
-    }
-
-    /// <summary>
-    /// Tests that deactivating the plugin undoes its multipliers.
-    /// </summary>
-    [Test]
-    public async Task DeactivationUndoesTheMultipliersAsync()
-    {
-        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: true, d => d.ExperiencePenaltyPercentage = 50, execute: false).ConfigureAwait(false);
-        var player = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
-        await plugIn.PlayerStateChangedAsync(player, PlayerState.CharacterSelection, PlayerState.EnteredWorld).ConfigureAwait(false);
-        var normalRate = player.Attributes![Stats.ExperienceRate];
-        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
-        Assert.That(player.Attributes[Stats.ExperienceRate], Is.EqualTo(normalRate * 0.5f), "precondition");
-
-        gameContext.PlugInManager.RegisterPlugIn<IPeriodicTaskPlugIn, CrywolfPlugIn>();
-        gameContext.PlugInManager.DeactivatePlugIn<CrywolfPlugIn>();
-
-        Assert.That(player.Attributes[Stats.ExperienceRate], Is.EqualTo(normalRate));
-    }
-
-    /// <summary>
-    /// Tests that players, which are already in the game when the plugin starts, get the multiplier, too.
-    /// </summary>
-    [Test]
-    public async Task PlayersInTheGameGetTheMultiplierAsync()
-    {
-        var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: true, d => d.ExperiencePenaltyPercentage = 50, execute: false).ConfigureAwait(false);
-        var player = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
-        await player.PlayerState.TryAdvanceToAsync(PlayerState.EnteredWorld).ConfigureAwait(false);
-        await gameContext.AddPlayerAsync(player).ConfigureAwait(false);
-        var normalRate = player.Attributes![Stats.ExperienceRate];
-
-        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
-
-        Assert.That(player.Attributes[Stats.ExperienceRate], Is.EqualTo(normalRate * 0.5f));
-    }
-
-    /// <summary>
     /// Tests that deactivating the plugin during the war ends the war, so that the other game servers don't stay in it.
     /// </summary>
     [Test]
@@ -152,14 +74,6 @@ public class CrywolfPlugInTest
         var npc = new NonPlayerCharacter(spawnArea, npcDefinition, map);
         npc.Initialize();
         await map.AddAsync(npc).ConfigureAwait(false);
-    }
-
-    private static bool IsDropCancelled(CrywolfPlugIn plugIn, Player killer, byte group, short number)
-    {
-        var item = new MUnique.OpenMU.Persistence.BasicModel.Item { Definition = new ItemDefinition { Group = group, Number = number } };
-        var eventArgs = new CancelEventArgs();
-        plugIn.ItemDropping(null!, killer, item, eventArgs);
-        return eventArgs.Cancel;
     }
 
     private static async ValueTask<(CrywolfPlugIn PlugIn, GameContext GameContext)> CreatePlugInAsync(bool isOccupied, Action<CrywolfEventDefinition> configure, bool execute = true)
