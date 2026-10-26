@@ -94,3 +94,20 @@ the staging battles with a deliberate loss and a victory.
   at the same time, keeps its own result (one `CrywolfData` row per game server) and has its own benefits and penalties.
   `RunsOnAllGameServers` (default true) can be switched off to let only `GameServerId` run it, with the other channels
   taking over its result.
+
+## Reconfiguring later
+
+Everything below is a setting of the Crywolf plug-in configuration (admin panel, plug-in "Crywolf"), read again at each
+tick, so no restart or deployment is needed:
+
+| Setting | Default |
+|---|---|
+| `StartDays`, `StartTimes` (server time zone) | Saturday, 20:30 |
+| `RunsOnAllGameServers`, `GameServerId` | true (50x and 5x each run it), host 0 |
+| `RewardItemGroup`, `RewardItemNumber` | 14, 13 (Jewel of Bless) |
+| `IsPenaltyActive` | false |
+| `PenaltyMapNumbers`, `PenaltyJewels` | Land of Trials (31), Jewel of Guardian |
+| `JewelDropPenaltyPercentage`, `ExperiencePenaltyPercentage`, `MonsterHealthPenaltyPercentage` | 70, 100, 100 |
+| `PenaltyMinimumMonsterLevel` | 0 |
+| `IsBenefitActive`, `MonsterHealthBenefitPercentage`, `ChaosRateBenefit`, `BenefitExcludedMapNumbers` | true, 90, 5, Land of Trials |
+| battle length, state durations, scores, rank EXP | the original game values |

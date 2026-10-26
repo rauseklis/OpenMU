@@ -540,6 +540,32 @@ public class CrywolfContextTest
     }
 
     /// <summary>
+    /// Tests that the reward item is configurable: it's Jewel of Bless by default, and another item after it was reconfigured.
+    /// </summary>
+    [Test]
+    public async Task RewardItemIsConfigurableAsync()
+    {
+        var defaults = new CrywolfEventDefinition();
+        Assert.That((defaults.RewardItemGroup, defaults.RewardItemNumber), Is.EqualTo(((byte)14, (short)13)), "Jewel of Bless by default");
+
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        var bless = AddRewardItemDefinition(gameContext);
+        var soul = new ItemDefinition { Id = Guid.NewGuid(), Group = 14, Number = 14, Name = "Jewel of Soul", Width = 1, Height = 1 };
+        gameContext.Configuration.Items.Add(soul);
+        var (context, player, _) = await CreateContextAsync(gameContext).ConfigureAwait(false);
+        var reconfigured = context.Definition;
+        reconfigured.RewardItemNumber = 14;
+        context.UpdateDefinition(reconfigured);
+
+        await StartBattleWithBalgassAsync(context, player).ConfigureAwait(false);
+        await KillBalgassAsync(context, player).ConfigureAwait(false);
+        await context.TickAsync().ConfigureAwait(false);
+
+        Assert.That(GetRewards(player, soul), Is.Not.Empty, "The reconfigured item is dropped.");
+        Assert.That(GetRewards(player, bless), Is.Empty, "Not the previous one.");
+    }
+
+    /// <summary>
     /// Tests that stopping the event (e.g. when its plug-in is deactivated) in each phase ends the war completely:
     /// the army and Balgass are removed, the contracts are released, and the result of the previous battle stays.
     /// </summary>
