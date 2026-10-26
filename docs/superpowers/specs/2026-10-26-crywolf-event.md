@@ -65,3 +65,20 @@ configuration update with a backup first. Tests use a throwaway PostgreSQL datab
   gets a reward item, and every top-5 hero gets one at the end of the event, so one player can get two.
 - 2026-10-26: a battle in which Balgass was due but could not be spawned has no result (the previous one stays), it is
   neither a victory nor a defeat.
+
+## Status (2026-10-26)
+
+Built and covered by source tests, nothing played yet:
+
+1. Foundation, disabled by default, one additive migration (checked on a disposable PostgreSQL 17 database).
+2. Waves and bosses: Balgass-missing and stop-the-event bugs fixed (the cancelled battle ends through the abort path so the
+   client shows no result), kill, survival and restart paths tested.
+3. Contracts and rewards tested (contractor reward, no reward after a defeat, release on death, concurrent requests).
+4. Packet layouts verified against the client byte for byte; packages 0.9.23 (server, and client feed); the intro cinematic
+   fixes of upstream MuMain #655 ported into the client.
+5. Defeat penalties, configurable and off by default (`IsPenaltyActive`): `PenaltyMapNumbers` (default Tarkan 8 and
+   Icarus 10), `PenaltyMinimumMonsterLevel` (0), `ExperiencePenaltyPercentage` (100), `JewelDropPenaltyPercentage` (70),
+   `MonsterHealthPenaltyPercentage` (110). None of these values is approved for live.
+
+Open before it can go live: the settings above, the battle host channel, the schedule and time zone, the reward items, and
+the staging battles with a deliberate loss and a victory.
