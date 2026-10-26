@@ -23,6 +23,7 @@ public partial class AddCrywolf : Migration
             columns: table => new
             {
                 Id = table.Column<Guid>(type: "uuid", nullable: false),
+                GameServerId = table.Column<byte>(type: "smallint", nullable: false),
                 IsOccupied = table.Column<bool>(type: "boolean", nullable: false),
                 IsWarRunning = table.Column<bool>(type: "boolean", nullable: false),
                 WarStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),

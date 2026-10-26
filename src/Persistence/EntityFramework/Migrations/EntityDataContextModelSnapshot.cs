@@ -1776,6 +1776,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<byte>("GameServerId")
+                        .HasColumnType("smallint");
+
                     b.Property<bool>("IsOccupied")
                         .HasColumnType("boolean");
 

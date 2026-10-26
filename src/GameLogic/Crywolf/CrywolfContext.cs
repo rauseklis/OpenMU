@@ -67,7 +67,6 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
     private IReadOnlyList<CrywolfAltar> _altars = [];
     private bool _isMissingConfigurationLogged;
     private int _isBalgassDead;
-    private Guid? _dataId;
     private bool _hasBattleResult;
     private bool _isEventServer = true;
     private bool _isEventServerLogged;
@@ -194,6 +193,24 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
     /// Gets the crywolf map.
     /// </summary>
     internal GameMap? Map => this._map;
+
+    /// <summary>
+    /// Gets the id of the game server to which the persistent state belongs: the own one, when every game server
+    /// runs the event, otherwise the one of the game server which runs it.
+    /// </summary>
+    private byte DataGameServerId => this._definition.RunsOnAllGameServers ? this._serverId ?? 0 : this._definition.GameServerId;
+
+    /// <summary>
+    /// Finds the persistent state of this game server: its own one, when every game server runs the event. Otherwise,
+    /// it's the only one, which also stays when another game server takes over the event.
+    /// </summary>
+    private CrywolfData? FindData(IEnumerable<CrywolfData> rows)
+    {
+        var gameServerId = this.DataGameServerId;
+        return this._definition.RunsOnAllGameServers
+            ? rows.FirstOrDefault(row => row.GameServerId == gameServerId)
+            : rows.FirstOrDefault();
+    }
 
     private bool IsBalgassDead => Volatile.Read(ref this._isBalgassDead) != 0;
 
@@ -1108,7 +1125,7 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
     /// <returns><c>true</c>, if this game server took over the event from another game server; otherwise, <c>false</c>.</returns>
     private bool UpdateEventServer()
     {
-        var isEventServer = this._serverId is not { } serverId || serverId == this._definition.GameServerId;
+        var isEventServer = this._definition.RunsOnAllGameServers || this._serverId is not { } serverId || serverId == this._definition.GameServerId;
         if (isEventServer == this._isEventServer && this._isEventServerLogged)
         {
             return false;
@@ -1162,12 +1179,11 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
         try
         {
             using var context = this._gameContext.PersistenceContextProvider.CreateNewTypedContext(typeof(CrywolfData), false, this._gameContext.Configuration);
-            if ((await context.GetAsync<CrywolfData>().ConfigureAwait(false)).FirstOrDefault() is not { } data)
+            if (this.FindData(await context.GetAsync<CrywolfData>().ConfigureAwait(false)) is not { } data)
             {
                 return false;
             }
 
-            this._dataId = data.Id;
             this._hasBattleResult = data.LastBattleEnd.HasValue;
             this.Occupation = data.IsWarRunning && !this._isEventServer && !this.IsWarOverdue(data)
                 ? CrywolfOccupationState.War
@@ -1203,10 +1219,13 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
         try
         {
             using var context = this._gameContext.PersistenceContextProvider.CreateNewTypedContext(typeof(CrywolfData), false, this._gameContext.Configuration);
-            var data = this._dataId is { } id
-                ? await context.GetByIdAsync<CrywolfData>(id).ConfigureAwait(false)
-                : (await context.GetAsync<CrywolfData>().ConfigureAwait(false)).FirstOrDefault();
-            data ??= context.CreateNew<CrywolfData>();
+            var data = this.FindData(await context.GetAsync<CrywolfData>().ConfigureAwait(false));
+            if (data is null)
+            {
+                data = context.CreateNew<CrywolfData>();
+                data.GameServerId = this.DataGameServerId;
+            }
+
             var isWarStarting = this.Occupation == CrywolfOccupationState.War && !data.IsWarRunning;
             data.IsWarRunning = this.Occupation == CrywolfOccupationState.War;
             data.WarStart = data.IsWarRunning ? (isWarStarting ? DateTime.UtcNow : data.WarStart) : null;
@@ -1221,7 +1240,6 @@ public sealed class CrywolfContext : IEventStateProvider, IDisposable
             }
 
             await context.SaveChangesAsync().ConfigureAwait(false);
-            this._dataId = data.Id;
             this._hasBattleResult |= isBattleEnd;
         }
         catch (Exception ex)

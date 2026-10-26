@@ -169,6 +169,7 @@ public class CrywolfPenaltyTest
             d.PenaltyMapNumbers = new List<short> { 0 };
             d.MonsterHealthPenaltyPercentage = 110;
         }, execute: false).ConfigureAwait(false);
+        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
         var map = (await gameContext.GetMapAsync(0).ConfigureAwait(false))!;
         var affected = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
         await map.AddAsync(affected).ConfigureAwait(false);
@@ -229,6 +230,7 @@ public class CrywolfPenaltyTest
             d.PenaltyMapNumbers = new List<short> { 0 };
             d.MonsterHealthPenaltyPercentage = 110;
         }, execute: false).ConfigureAwait(false);
+        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
         var map = (await gameContext.GetMapAsync(0).ConfigureAwait(false))!;
         var monster = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
         await plugIn.ObjectAddedToMapAsync(map, monster).ConfigureAwait(false);
@@ -297,6 +299,7 @@ public class CrywolfPenaltyTest
     public async Task BenefitDoesNotReduceTheHealthOfExcludedMapsAsync()
     {
         var (plugIn, gameContext) = await CreatePlugInAsync(isOccupied: false, d => d.BenefitExcludedMapNumbers = new List<short> { 0 }, execute: false).ConfigureAwait(false);
+        await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
         var map = (await gameContext.GetMapAsync(0).ConfigureAwait(false))!;
         var monster = await CreateMonsterAsync(gameContext).ConfigureAwait(false);
         await map.AddAsync(monster).ConfigureAwait(false);
@@ -311,6 +314,34 @@ public class CrywolfPenaltyTest
         await plugIn.ObjectAddedToMapAsync(map, other).ConfigureAwait(false);
         await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
         Assert.That(other.Attributes[Stats.MaximumHealth], Is.EqualTo(900), "The benefit applies to other maps.");
+    }
+
+    /// <summary>
+    /// Tests that the benefit and the penalty apply per game server, because each of them has its own result.
+    /// </summary>
+    [Test]
+    public async Task EachGameServerHasItsOwnHealthEffectsAsync()
+    {
+        var (plugIn, defended) = await CreatePlugInAsync(isOccupied: false, d => d.PenaltyMapNumbers = new List<short> { 0 }, execute: false).ConfigureAwait(false);
+        var (_, occupied) = await CreatePlugInAsync(isOccupied: true, d => d.PenaltyMapNumbers = new List<short> { 0 }, execute: false).ConfigureAwait(false);
+        plugIn.Configuration!.MonsterHealthPenaltyPercentage = 110;
+        plugIn.Configuration.BenefitExcludedMapNumbers = new List<short>();
+        await plugIn.ExecuteTaskAsync(defended).ConfigureAwait(false);
+        await plugIn.ExecuteTaskAsync(occupied).ConfigureAwait(false);
+        var defendedMap = (await defended.GetMapAsync(0).ConfigureAwait(false))!;
+        var occupiedMap = (await occupied.GetMapAsync(0).ConfigureAwait(false))!;
+        var defendedMonster = await CreateMonsterAsync(defended).ConfigureAwait(false);
+        var occupiedMonster = await CreateMonsterAsync(occupied).ConfigureAwait(false);
+        await defendedMap.AddAsync(defendedMonster).ConfigureAwait(false);
+        await occupiedMap.AddAsync(occupiedMonster).ConfigureAwait(false);
+        await plugIn.ObjectAddedToMapAsync(defendedMap, defendedMonster).ConfigureAwait(false);
+        await plugIn.ObjectAddedToMapAsync(occupiedMap, occupiedMonster).ConfigureAwait(false);
+
+        await plugIn.ExecuteTaskAsync(defended).ConfigureAwait(false);
+        await plugIn.ExecuteTaskAsync(occupied).ConfigureAwait(false);
+
+        Assert.That(defendedMonster.Attributes[Stats.MaximumHealth], Is.EqualTo(900), "Benefit of the defended server.");
+        Assert.That(occupiedMonster.Attributes[Stats.MaximumHealth], Is.EqualTo(1100), "Penalty of the occupied server.");
     }
 
     private static bool IsDropCancelled(CrywolfPlugIn plugIn, Monster monster, Player killer, byte group = 14, short number = 13)

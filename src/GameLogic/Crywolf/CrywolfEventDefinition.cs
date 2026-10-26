@@ -24,10 +24,17 @@ public class CrywolfEventDefinition
     public short MapNumber { get; set; } = 34;
 
     /// <summary>
-    /// Gets or sets the id of the game server, which runs the event.
+    /// Gets or sets a value indicating whether every game server (e.g. the 50x and the 5x experience server) runs the
+    /// event on its own map, at the same time, with its own result, and its own benefits and penalties.
+    /// If it's <c>false</c>, only the game server <see cref="GameServerId"/> runs the event.
+    /// </summary>
+    public bool RunsOnAllGameServers { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the id of the game server, which runs the event, when <see cref="RunsOnAllGameServers"/> is <c>false</c>.
     /// </summary>
     /// <remarks>
-    /// Like the castle siege server of the original game, only one game server runs the event. The other
+    /// Like the castle siege server of the original game, only one game server runs the event then. The other
     /// game servers take over its result from the database, so that the occupation state and its benefits
     /// and penalties are the same on all of them. On their crywolf map, the battle doesn't take place.
     /// </remarks>

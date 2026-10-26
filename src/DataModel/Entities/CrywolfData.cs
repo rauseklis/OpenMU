@@ -5,7 +5,8 @@
 namespace MUnique.OpenMU.DataModel.Entities;
 
 /// <summary>
-/// Persistent state of the crywolf event, stored as a single row, like the original game does it.
+/// Persistent state of the crywolf event, stored as a row per game server which runs the event
+/// (a single row, like the original game does it, when only one game server runs it).
 /// It keeps the result of the last event until the next one.
 /// </summary>
 /// <remarks>
@@ -19,6 +20,13 @@ public class CrywolfData
     /// Gets or sets the unique identifier of this record.
     /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the id of the game server, to which this state belongs. When the event runs on all game servers,
+    /// each of them has its own state. Otherwise, it's the state of the game server which runs the event, which the
+    /// other game servers take over.
+    /// </summary>
+    public byte GameServerId { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the crywolf fortress is occupied by Balgass,

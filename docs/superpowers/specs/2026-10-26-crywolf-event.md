@@ -90,3 +90,7 @@ the staging battles with a deliberate loss and a victory.
 
 - 2026-10-26, owner: penalties and map list follow the original Webzen values; the schedule is one weekly slot that can be
   reconfigured later (default Saturday 20:30).
+- 2026-10-26, owner: the event runs on BOTH channels (Emberion 50x and 5x). Each channel runs its own battle on its own map
+  at the same time, keeps its own result (one `CrywolfData` row per game server) and has its own benefits and penalties.
+  `RunsOnAllGameServers` (default true) can be switched off to let only `GameServerId` run it, with the other channels
+  taking over its result.

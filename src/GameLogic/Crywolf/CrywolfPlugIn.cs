@@ -39,37 +39,37 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     private readonly ConcurrentDictionary<IGameContext, int> _runningTicks = new();
 
     /// <summary>
-    /// The multiplier of the maximum health of the monsters. Like the occupation state, it's the same for all game servers.
+    /// The multipliers of the maximum health of the monsters of each game server. Every game server has its own result of the
+    /// event, and so its own benefit and penalty.
     /// </summary>
-    private readonly SimpleElement _monsterHealthMultiplier = new(1.0f, AggregateType.Multiplicate);
+    private readonly ConcurrentDictionary<IGameContext, HealthEffects> _healthEffects = new();
 
     /// <summary>
-    /// The multiplier of the maximum health of the monsters which are affected by the penalties.
+    /// The attribute systems of the monsters, to which the health benefit is attached, with the multipliers which got attached.
     /// </summary>
-    private readonly SimpleElement _monsterHealthPenaltyMultiplier = new(1.0f, AggregateType.Multiplicate);
+    private readonly ConditionalWeakTable<object, HealthEffects> _attachedAttributeSystems = new();
 
     /// <summary>
-    /// The attribute systems of the monsters, to which the health benefit is attached.
+    /// The attribute systems of the monsters, to which the health penalty is attached, with the multipliers which got attached.
     /// </summary>
-    private readonly ConditionalWeakTable<object, object> _attachedAttributeSystems = new();
+    private readonly ConditionalWeakTable<object, HealthEffects> _attachedPenaltySystems = new();
 
     /// <summary>
-    /// The attribute systems of the monsters, to which the health penalty is attached.
+    /// The game servers of the maps, so that the monsters get the multipliers of their game server.
     /// </summary>
-    private readonly ConditionalWeakTable<object, object> _attachedPenaltySystems = new();
+    private readonly ConditionalWeakTable<GameMap, IGameContext> _mapOwners = new();
 
     /// <summary>
     /// The game contexts, in which the multipliers were attached to the existing monsters since the plugin has been activated.
     /// </summary>
     private readonly ConcurrentDictionary<IGameContext, byte> _attachedGameContexts = new();
 
-    private int _isUpdatingMultipliers;
     private int _isSubscribedToDeactivation;
 
     /// <summary>
-    /// The benefits and penalties which apply, so that their changes are logged.
+    /// The benefits and penalties which apply on each game server, so that their changes are logged.
     /// </summary>
-    private (bool Benefits, bool Penalties)? _appliedEffects;
+    private readonly ConcurrentDictionary<IGameContext, (bool Benefits, bool Penalties)> _appliedEffects = new();
 
     /// <inheritdoc />
     public CrywolfEventDefinition? Configuration { get; set; }
@@ -164,20 +164,19 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     }
 
     /// <inheritdoc />
-    public ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
+    public async ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
     {
-        if (addedObject is Monster monster)
+        if (addedObject is Monster monster && await this.FindGameContextAsync(map).ConfigureAwait(false) is { } gameContext)
         {
-            var isBenefitAttached = this.TryAttachHealthMultiplier(monster);
-            var isPenaltyAttached = this.TryAttachHealthPenaltyMultiplier(monster);
+            var effects = this._healthEffects.GetOrAdd(gameContext, _ => new HealthEffects());
+            var isBenefitAttached = this.TryAttachHealthMultiplier(monster, effects);
+            var isPenaltyAttached = this.TryAttachHealthPenaltyMultiplier(monster, effects);
             if (isBenefitAttached || isPenaltyAttached)
             {
                 // The monster got its health before it was added to the map. When it respawns, it stays on the map and keeps the multiplier.
                 monster.Health = (int)monster.Attributes[Stats.MaximumHealth];
             }
         }
-
-        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -185,14 +184,16 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     {
         if (removedObject is Monster monster)
         {
-            if (this._attachedAttributeSystems.Remove(monster.Attributes))
+            if (this._attachedAttributeSystems.TryGetValue(monster.Attributes, out var benefit))
             {
-                monster.Attributes.RemoveElement(this._monsterHealthMultiplier, Stats.MaximumHealth);
+                this._attachedAttributeSystems.Remove(monster.Attributes);
+                monster.Attributes.RemoveElement(benefit.Benefit, Stats.MaximumHealth);
             }
 
-            if (this._attachedPenaltySystems.Remove(monster.Attributes))
+            if (this._attachedPenaltySystems.TryGetValue(monster.Attributes, out var penalty))
             {
-                monster.Attributes.RemoveElement(this._monsterHealthPenaltyMultiplier, Stats.MaximumHealth);
+                this._attachedPenaltySystems.Remove(monster.Attributes);
+                monster.Attributes.RemoveElement(penalty.Penalty, Stats.MaximumHealth);
             }
         }
 
@@ -257,14 +258,14 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
         if (context.AreBenefitsApplied)
         {
             logger.LogInformation(
-                "The crywolf fortress is in peace. The benefits apply on all game servers: chaos mix success rate +{chaosRate} %, monster health {monsterHealth} %.",
+                "The crywolf fortress is in peace. The benefits apply on this game server: chaos mix success rate +{chaosRate} %, monster health {monsterHealth} %.",
                 definition.ChaosRateBenefit,
                 definition.MonsterHealthBenefitPercentage);
         }
         else if (context.ArePenaltiesApplied)
         {
             logger.LogInformation(
-                "The crywolf fortress is occupied. The penalties apply on all game servers: jewel drop chance {jewelDrop} %, experience {experience} %.",
+                "The crywolf fortress is occupied. The penalties apply on this game server: jewel drop chance {jewelDrop} %, experience {experience} %.",
                 definition.JewelDropPenaltyPercentage,
                 definition.ExperiencePenaltyPercentage);
         }
@@ -281,19 +282,19 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
                && !(monster.CurrentMap is { } map && this.Configuration?.BenefitExcludedMapNumbers.Contains((short)map.Definition.Number) == true);
     }
 
-    private bool TryAttachHealthMultiplier(Monster monster)
+    private bool TryAttachHealthMultiplier(Monster monster, HealthEffects effects)
     {
         if (!this.IsAffectedByHealthBenefit(monster) || this._attachedAttributeSystems.TryGetValue(monster.Attributes, out _))
         {
             return false;
         }
 
-        this._attachedAttributeSystems.AddOrUpdate(monster.Attributes, this);
-        monster.Attributes.AddElement(this._monsterHealthMultiplier, Stats.MaximumHealth);
+        this._attachedAttributeSystems.AddOrUpdate(monster.Attributes, effects);
+        monster.Attributes.AddElement(effects.Benefit, Stats.MaximumHealth);
         return true;
     }
 
-    private bool TryAttachHealthPenaltyMultiplier(Monster monster)
+    private bool TryAttachHealthPenaltyMultiplier(Monster monster, HealthEffects effects)
     {
         if (this.Configuration?.IsPenaltyTarget(monster) != true
             || this._attachedPenaltySystems.TryGetValue(monster.Attributes, out _))
@@ -301,9 +302,31 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
             return false;
         }
 
-        this._attachedPenaltySystems.AddOrUpdate(monster.Attributes, this);
-        monster.Attributes.AddElement(this._monsterHealthPenaltyMultiplier, Stats.MaximumHealth);
+        this._attachedPenaltySystems.AddOrUpdate(monster.Attributes, effects);
+        monster.Attributes.AddElement(effects.Penalty, Stats.MaximumHealth);
         return true;
+    }
+
+    /// <summary>
+    /// Finds the game server of a map.
+    /// </summary>
+    private async ValueTask<IGameContext?> FindGameContextAsync(GameMap map)
+    {
+        if (this._mapOwners.TryGetValue(map, out var owner))
+        {
+            return owner;
+        }
+
+        foreach (var gameContext in this._contexts.Keys)
+        {
+            if ((await gameContext.GetMapsAsync().ConfigureAwait(false)).Contains(map))
+            {
+                this._mapOwners.AddOrUpdate(map, gameContext);
+                return gameContext;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -311,12 +334,14 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
     /// </summary>
     private async ValueTask AttachMultipliersAsync(IGameContext gameContext)
     {
+        var effects = this._healthEffects.GetOrAdd(gameContext, _ => new HealthEffects());
         foreach (var map in await gameContext.GetMapsAsync().ConfigureAwait(false))
         {
+            this._mapOwners.AddOrUpdate(map, gameContext);
             foreach (var monster in map.GetNpcsInRange(new Point(128, 128), byte.MaxValue).OfType<Monster>())
             {
-                this.TryAttachHealthMultiplier(monster);
-                this.TryAttachHealthPenaltyMultiplier(monster);
+                this.TryAttachHealthMultiplier(monster, effects);
+                this.TryAttachHealthPenaltyMultiplier(monster, effects);
             }
         }
     }
@@ -341,9 +366,13 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
 
         // The multipliers stay attached, but without an effect. When the plugin is activated again, they're
         // attached to the monsters and players which came in the meantime, and get their values again.
-        this._monsterHealthMultiplier.Value = 1;
-        this._monsterHealthPenaltyMultiplier.Value = 1;
-        this._appliedEffects = null;
+        foreach (var effects in this._healthEffects.Values)
+        {
+            effects.Benefit.Value = 1;
+            effects.Penalty.Value = 1;
+        }
+
+        this._appliedEffects.Clear();
         this._attachedGameContexts.Clear();
 
         // A running war has to end, too. Otherwise, the army, the contracts and the war terrain would stay frozen.
@@ -383,72 +412,72 @@ public sealed class CrywolfPlugIn : IFeaturePlugIn, IPeriodicTaskPlugIn, ISuppor
 
     private async ValueTask UpdateMultipliersAsync(GameContext gameContext)
     {
-        if (Interlocked.Exchange(ref this._isUpdatingMultipliers, 1) != 0)
+        if (!this._contexts.TryGetValue(gameContext, out var context))
         {
             return;
         }
 
-        try
+        var effects = this._healthEffects.GetOrAdd(gameContext, _ => new HealthEffects());
+        var appliedEffects = (context.AreBenefitsApplied, context.ArePenaltiesApplied);
+        if (!this._appliedEffects.TryGetValue(gameContext, out var previousEffects) || previousEffects != appliedEffects)
         {
-            // The occupation state is the same on all game servers, but the one which runs the event knows its changes first.
-            var context = this._contexts.Values.FirstOrDefault(c => c.IsEventServer) ?? this._contexts.Values.FirstOrDefault();
-            if (context is null)
-            {
-                return;
-            }
-
-            var appliedEffects = (context.AreBenefitsApplied, context.ArePenaltiesApplied);
-            if (this._appliedEffects != appliedEffects)
-            {
-                this._appliedEffects = appliedEffects;
-                LogAppliedEffects(gameContext.LoggerFactory.CreateLogger<CrywolfPlugIn>(), context);
-            }
-
-            var isHealthReduced = false;
-            var healthMultiplier = context.MonsterHealthMultiplier;
-            if (Math.Abs(this._monsterHealthMultiplier.Value - healthMultiplier) > float.Epsilon)
-            {
-                isHealthReduced |= healthMultiplier < this._monsterHealthMultiplier.Value;
-                this._monsterHealthMultiplier.Value = healthMultiplier;
-            }
-
-            var penaltyMultiplier = context.MonsterHealthPenaltyMultiplier;
-            if (Math.Abs(this._monsterHealthPenaltyMultiplier.Value - penaltyMultiplier) > float.Epsilon)
-            {
-                isHealthReduced |= penaltyMultiplier < this._monsterHealthPenaltyMultiplier.Value;
-                this._monsterHealthPenaltyMultiplier.Value = penaltyMultiplier;
-            }
-
-            // A raised maximum health doesn't heal the living monsters, but a lowered one limits their health.
-            if (isHealthReduced)
-            {
-                await this.LimitMonsterHealthAsync().ConfigureAwait(false);
-            }
+            this._appliedEffects[gameContext] = appliedEffects;
+            LogAppliedEffects(gameContext.LoggerFactory.CreateLogger<CrywolfPlugIn>(), context);
         }
-        finally
+
+        var isHealthReduced = false;
+        var healthMultiplier = context.MonsterHealthMultiplier;
+        if (Math.Abs(effects.Benefit.Value - healthMultiplier) > float.Epsilon)
         {
-            Volatile.Write(ref this._isUpdatingMultipliers, 0);
+            isHealthReduced |= healthMultiplier < effects.Benefit.Value;
+            effects.Benefit.Value = healthMultiplier;
+        }
+
+        var penaltyMultiplier = context.MonsterHealthPenaltyMultiplier;
+        if (Math.Abs(effects.Penalty.Value - penaltyMultiplier) > float.Epsilon)
+        {
+            isHealthReduced |= penaltyMultiplier < effects.Penalty.Value;
+            effects.Penalty.Value = penaltyMultiplier;
+        }
+
+        // A raised maximum health doesn't heal the living monsters, but a lowered one limits their health.
+        if (isHealthReduced)
+        {
+            await LimitMonsterHealthAsync(gameContext).ConfigureAwait(false);
         }
     }
 
     /// <summary>
-    /// Limits the health of the living monsters to their reduced maximum health.
+    /// Limits the health of the living monsters of a game server to their reduced maximum health.
     /// </summary>
-    private async ValueTask LimitMonsterHealthAsync()
+    private static async ValueTask LimitMonsterHealthAsync(IGameContext gameContext)
     {
-        foreach (var gameContext in this._contexts.Keys)
+        foreach (var map in await gameContext.GetMapsAsync().ConfigureAwait(false))
         {
-            foreach (var map in await gameContext.GetMapsAsync().ConfigureAwait(false))
+            foreach (var monster in map.GetNpcsInRange(new Point(128, 128), byte.MaxValue).OfType<Monster>())
             {
-                foreach (var monster in map.GetNpcsInRange(new Point(128, 128), byte.MaxValue).OfType<Monster>())
+                var maximumHealth = (int)monster.Attributes[Stats.MaximumHealth];
+                if (monster.Health > maximumHealth)
                 {
-                    var maximumHealth = (int)monster.Attributes[Stats.MaximumHealth];
-                    if (monster.Health > maximumHealth)
-                    {
-                        monster.Health = maximumHealth;
-                    }
+                    monster.Health = maximumHealth;
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// The multipliers of the maximum health of the monsters of a game server.
+    /// </summary>
+    private sealed class HealthEffects
+    {
+        /// <summary>
+        /// Gets the multiplier of the benefit (less health after a successful defence).
+        /// </summary>
+        public SimpleElement Benefit { get; } = new(1.0f, AggregateType.Multiplicate);
+
+        /// <summary>
+        /// Gets the multiplier of the penalty of the monsters which are affected by it.
+        /// </summary>
+        public SimpleElement Penalty { get; } = new(1.0f, AggregateType.Multiplicate);
     }
 }

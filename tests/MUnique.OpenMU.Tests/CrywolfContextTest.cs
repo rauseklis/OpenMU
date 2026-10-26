@@ -100,7 +100,7 @@ public class CrywolfContextTest
         var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
         await SaveDataAsync(gameContext, data => data.IsWarRunning = true).ConfigureAwait(false);
 
-        var (context, _, _) = await CreateContextAsync(gameContext, serverId: 1).ConfigureAwait(false);
+        var (context, _, _) = await CreateContextAsync(gameContext, serverId: 1, configure: d => d.RunsOnAllGameServers = false).ConfigureAwait(false);
         context.SkipWaitingTime();
         await context.TickAsync().ConfigureAwait(false);
 
@@ -120,7 +120,7 @@ public class CrywolfContextTest
     {
         var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
         await SaveDataAsync(gameContext, data => data.IsWarRunning = true).ConfigureAwait(false);
-        var (context, _, _) = await CreateContextAsync(gameContext, serverId: 1).ConfigureAwait(false);
+        var (context, _, _) = await CreateContextAsync(gameContext, serverId: 1, configure: d => d.RunsOnAllGameServers = false).ConfigureAwait(false);
         Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.War));
 
         var definition = context.Definition;
@@ -150,7 +150,7 @@ public class CrywolfContextTest
             data.LastBattleEnd = DateTime.UtcNow - TimeSpan.FromDays(3);
         }).ConfigureAwait(false);
 
-        var (context, _, _) = await CreateContextAsync(gameContext, serverId: 1).ConfigureAwait(false);
+        var (context, _, _) = await CreateContextAsync(gameContext, serverId: 1, configure: d => d.RunsOnAllGameServers = false).ConfigureAwait(false);
 
         Assert.That(context.Occupation, Is.EqualTo(CrywolfOccupationState.Occupied));
     }
@@ -513,6 +513,30 @@ public class CrywolfContextTest
 
         Assert.That(altar.ContractCount, Is.EqualTo(1));
         Assert.That(altar.Contractor, Is.AnyOf(player, other));
+    }
+
+    /// <summary>
+    /// Tests that when the event runs on all game servers (e.g. the 50x and the 5x server), each of them runs it,
+    /// and keeps its own result: the outcome of one server doesn't change the other.
+    /// </summary>
+    [Test]
+    public async Task EachGameServerRunsTheEventWithItsOwnResultAsync()
+    {
+        var gameContext = (GameContext)GameContextTestHelper.CreateGameContext();
+        var (first, _, _) = await CreateContextAsync(gameContext, serverId: 0).ConfigureAwait(false);
+        var (second, _, _) = await CreateContextAsync(gameContext, serverId: 1).ConfigureAwait(false);
+        Assert.That(first.IsEventServer, Is.True);
+        Assert.That(second.IsEventServer, Is.True, "Every game server runs the event.");
+
+        // The first server loses its battle, because nobody contracts an altar.
+        await ProceedToAsync(first, CrywolfState.Start).ConfigureAwait(false);
+
+        Assert.That(first.Occupation, Is.EqualTo(CrywolfOccupationState.Occupied));
+        var reloaded = (await CreateContextAsync(gameContext, serverId: 1).ConfigureAwait(false)).Context;
+        Assert.That(reloaded.Occupation, Is.EqualTo(CrywolfOccupationState.Peace), "The second server keeps its own result.");
+        using var persistenceContext = gameContext.PersistenceContextProvider.CreateNewTypedContext(typeof(CrywolfData), false, gameContext.Configuration);
+        var rows = (await persistenceContext.GetAsync<CrywolfData>().ConfigureAwait(false)).ToList();
+        Assert.That(rows.Where(row => row.IsOccupied).Select(row => row.GameServerId), Is.EqualTo(new byte[] { 0 }));
     }
 
     /// <summary>
