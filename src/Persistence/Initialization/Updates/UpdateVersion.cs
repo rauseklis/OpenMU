@@ -697,4 +697,9 @@ public enum UpdateVersion
     /// Rebuilds only Kundun +1 through +5 as pre-Pink Excellent equipment.
     /// </summary>
     KundunProgression = 149,
+
+    /// <summary>
+    /// Gives each leaf exchange six equal outcomes with reviewed Kundun box rewards.
+    /// </summary>
+    CherryExchangeRevision = 150,
 }
