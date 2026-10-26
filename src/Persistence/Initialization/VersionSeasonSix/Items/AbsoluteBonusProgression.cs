@@ -22,7 +22,9 @@ public sealed class AbsoluteBonusProgression(IContext context, GameConfiguration
     /// <inheritdoc />
     public override void Initialize()
     {
-        foreach (var group in this.GameConfiguration.DropItemGroups.Where(IsReviewedBonus))
+        var eventRewards = this.GameConfiguration.MiniGameDefinitions.SelectMany(game => game.Rewards)
+            .Where(reward => reward.ItemReward is not null).Select(reward => reward.ItemReward!).ToHashSet();
+        foreach (var group in this.GameConfiguration.DropItemGroups.Where(group => IsReviewedBonus(group) && !eventRewards.Contains(group)))
         {
             group.Chance = group.ItemLevel switch
             {
@@ -36,7 +38,7 @@ public sealed class AbsoluteBonusProgression(IContext context, GameConfiguration
             };
         }
 
-        this.ConfigureSilverSources();
+        this.ConfigureSilverSources(eventRewards);
         this.ConfigureHeaven();
     }
 
@@ -57,9 +59,9 @@ public sealed class AbsoluteBonusProgression(IContext context, GameConfiguration
             && !monster.DropItemGroups.Any(group => group.ItemType != SpecialItemType.SmallBonus && group.Chance >= 1);
     }
 
-    private void ConfigureSilverSources()
+    private void ConfigureSilverSources(HashSet<DropItemGroup> eventRewards)
     {
-        foreach (var old in this.GameConfiguration.DropItemGroups.Where(group => IsReviewedBonus(group) && group.ItemLevel == SilverLevel).ToArray())
+        foreach (var old in this.GameConfiguration.DropItemGroups.Where(group => IsReviewedBonus(group) && group.ItemLevel == SilverLevel && !eventRewards.Contains(group)).ToArray())
         {
             foreach (var map in this.GameConfiguration.Maps)
             {

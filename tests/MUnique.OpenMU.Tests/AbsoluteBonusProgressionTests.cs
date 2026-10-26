@@ -167,6 +167,35 @@ public class AbsoluteBonusProgressionTests
     }
 
     [Test]
+    public void EventRewardGroupsAreNeverRetunedOrRemoved()
+    {
+        var provider = new InMemoryPersistenceContextProvider();
+        using var context = provider.CreateNewContext();
+        var game = this._configuration.MiniGameDefinitions.First();
+        var group = context.CreateNew<DropItemGroup>();
+        group.ItemType = SpecialItemType.SmallBonus;
+        group.ItemLevel = 5;
+        group.Chance = .75;
+        group.PossibleItems.Add(this._configuration.Items.Single(item => item.Group == 14 && item.Number == 11));
+        var reward = context.CreateNew<MiniGameReward>();
+        reward.ItemReward = group;
+        game.Rewards.Add(reward);
+        this._configuration.DropItemGroups.Add(group);
+        try
+        {
+            new AbsoluteBonusProgression(context, this._configuration).Initialize();
+            Assert.That(group.Chance, Is.EqualTo(.75));
+            Assert.That(this._configuration.DropItemGroups, Does.Contain(group));
+            Assert.That(reward.ItemReward, Is.SameAs(group));
+        }
+        finally
+        {
+            game.Rewards.Remove(reward);
+            this._configuration.DropItemGroups.Remove(group);
+        }
+    }
+
+    [Test]
     public void ReapplyPreservesEveryUnrelatedOpeningPoolAndExchange()
     {
         var provider = new InMemoryPersistenceContextProvider();

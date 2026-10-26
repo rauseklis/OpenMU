@@ -24,7 +24,7 @@ using Npgsql;
 [TestFixture]
 public class AbsoluteBonusProgressionDatabaseTests
 {
-    private const string DatabaseName = "mu_absolute_bonus_20261026";
+    private const string DatabaseName = "mu_absolute_bonus_20261026_verified";
     private const string Connection = "Host=127.0.0.1;Port=55503;Database=" + DatabaseName + ";User Id=progressionvalidation;Command Timeout=120;";
 
     [Test]
