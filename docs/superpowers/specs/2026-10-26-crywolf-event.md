@@ -22,7 +22,7 @@ Aetherion pack is reference for rules and numbers only; none of its files or cod
   no server-to-client `BD` definitions and no event logic.
 - The client already handles the Crywolf messages (info, altar state, contract, timer) and has the cinematic code.
 - `UpdateVersion` 142 is taken (`CherryBlossomRewards`); the new update needs the next free number at merge time.
-- Packet package version is 0.9.22.
+- Packet package version is 0.9.23 (was 0.9.22; the donor adds only server-to-client packets).
 
 ## Stages (each its own PR, server first when packets change)
 
