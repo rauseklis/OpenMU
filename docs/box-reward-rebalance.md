@@ -1,6 +1,6 @@
 # Monster bonuses and equipment progression
 
-This monster-drop and Box of Heaven update is tested locally and is **not deployed**. Other reward rules below retain the released configuration.
+The monster-drop and Box of Heaven rules below define the configured progression. Other reward systems retain their existing configuration.
 
 Each eligible kill uses one bonus roll with these absolute chances. Overlapping bonuses keep their own chances; at most **one bonus** can drop per kill. The remaining chance gives no bonus. Ordinary loot rolls separately. This progression is enabled on Server 1; other servers retain their own settings.
 
