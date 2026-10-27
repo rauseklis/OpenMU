@@ -241,6 +241,9 @@ public class PersistenceContextProvider : IMigratableDatabaseContextProvider
     /// <inheritdoc />
     public Persistence.JewelBank.IJewelBankRepository CreateJewelBankRepository() => new JewelBank.JewelBankRepository();
 
+    /// <inheritdoc />
+    public Persistence.CashShop.ICashShopRepository CreateCashShopRepository() => new CashShop.CashShopRepository();
+
     public IContext CreateNewTradeContext()
     {
         return new CachingEntityFrameworkContext(new TradeContext(), this.RepositoryProvider, null, this._loggerFactory.CreateLogger<CachingEntityFrameworkContext>());
