@@ -33,7 +33,7 @@ public class BonusProgressionTests
         Assert.That(groups.Sum(group => group.Chance), Is.EqualTo(1).Within(1e-12));
         var shields = groups.Where(group => group.PossibleItems.All(item => item.Group == 6)).ToList();
         Assert.That(shields.SelectMany(group => group.PossibleItems).Select(item => item.Number),
-            Is.EquivalentTo(new short[] { 13, 13, 15, 11, 16 }));
+            Is.EquivalentTo(new short[] { 13, 15, 11, 16 }));
         foreach (var group in shields)
         {
             var expectedLevel = group.PossibleItems.First().Number is 11 or 16 ? 8 : 7;
@@ -79,13 +79,13 @@ public class BonusProgressionTests
     }
 
     [Test]
-    public void StarBalancesClassesAndCategoriesWithoutFirecrackerOverlap()
+    public void StarPreservesArmorSharesAndCategoriesWithoutFirecrackerOverlap()
     {
         var groups = this.Groups(1);
         foreach (var name in new[] { "DW", "DK", "Elf", "MG", "DL", "Summoner", "RF" })
         {
-            Assert.That(groups.Where(group => group.Description.Value!.StartsWith($"Approved Star: {name} /", StringComparison.Ordinal))
-                .Sum(group => group.Chance), Is.EqualTo(1.0 / 7).Within(1e-12), name);
+            Assert.That(groups.Where(group => group.Description.Value!.StartsWith($"Approved Star: {name} / armor", StringComparison.Ordinal))
+                .Sum(group => group.Chance), Is.EqualTo(.6 / 7).Within(1e-12), name);
         }
 
         Assert.That(groups.Where(group => group.PossibleItems.All(item => item.Group is >= 7 and <= 11)).Sum(group => group.Chance), Is.EqualTo(.60).Within(1e-12));

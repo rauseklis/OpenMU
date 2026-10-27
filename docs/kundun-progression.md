@@ -1,6 +1,6 @@
 # Box of Kundun Excellent progression
 
-The live reward design is described below. Kundun +1 through +5 stop at the Star/pre-Pink base tier. No Pink/Blue equipment is eligible. Ancient pools and normal bonus boxes are unchanged.
+**Prepared normalization update - not deployed.** The reward design below preserves all existing category totals and item pools. Kundun +1 through +5 stop at the Star/pre-Pink base tier. No Pink/Blue equipment is eligible. Ancient pools and normal bonus boxes are unchanged.
 
 Each opening gives **one Excellent +0 item**, never an entire set. No sockets. Shared server Luck, ADD and supported Skill behavior is preserved; these do not count as Excellent options.
 
@@ -16,9 +16,21 @@ Always one or two EXC options, never duplicates. Higher base-item strength is ba
 
 ## Selection probabilities
 
-Armor **60%**, weapons/books **30%**, shields **10%** at every tier. Each eligible class receives an equal share within the category. Armor variants split their class share equally, then one eligible piece is selected equally. Weapon/book and shield variants split their class share equally. Shared items can be selected through more than one class; these intended routes are additive, without multiplying the weight of a class with more variants.
+Armor **60%**, weapons/books **30%**, shields **10%** at every tier. Within armor, select one unique set equally, then one of its included pieces equally. A set receives no extra chance because several classes can wear it. The opening character's class never filters the loot.
 
-Armor class share: +1 has six classes at **10% overall each** (no SUM armor); +2–+5 have seven classes at **8.57% overall each** (rounded). Weapons/books: seven classes at **4.29% overall each** (rounded). Shields: DW/DK/Elf/MG/DL at **2% overall each**, no SUM/RF shields. MG has no helm; RF has no gloves.
+| Kundun | Unique armor sets | Chance per set, all openings |
+|---|---:|---:|
+| +1 | 6 | 10.00% |
+| +2 | 7 | 8.57% |
+| +3 | 7 | 8.57% |
+| +4 | 7 | 8.57% |
+| +5 | 9 | 6.67% |
+
+Percentages are rounded for display; each tier's exact armor total is 60%. Five-piece sets give each piece 20% of the selected set's chance; four-piece sets give each 25%. Previously included pieces are preserved, including helmets in shared sets. Kundun +2 Plate retains its four selected pieces; no extra piece is added.
+
+Shared weapons/books and shields count once. Their existing variant weights are retained by averaging an item's original per-route weights and rescaling within the unchanged category total. This removes extra probability from repeated class references. No class-specific reward share is guaranteed.
+
+The equipment tables below are grouped by class for readability, not as separate weighted routes. Repeated names refer to the same reward. Equip restrictions, including MG's inability to wear helmets and RF's inability to wear gloves, remain unchanged.
 
 ## Kundun +1
 

@@ -47,48 +47,34 @@ public class KundunProgressionTests
         }
     }
 
-    [TestCase(1, "F9B2ACD8BE33A1A8847A00E4F341A629E6BEAAF1D2C8196BF113CCDE9FDB7D8D")]
-    [TestCase(2, "DD3B4D1BF3EEBAE2588A1E444FF9E03C6996A5ED7632D008FEBE135AA7F07620")]
-    [TestCase(3, "B8FCC9787699BF11C837049A7C004072D23ED70BC2CE103C11DACF1F2D5D8E1D")]
-    [TestCase(4, "14BD32E926B38E1AEA107E941C14DD5F4251A975137B046AB09912260A12E3B0")]
-    [TestCase(5, "0BC9B3EDF3EB71A89A765BC183157E75298D13D24F7A996B23BB1D880EB43B8B")]
+    [TestCase(1, "59FCEF4DF47509E9A2FD8152F24D01CB9524DBEC81BD31D72835732189F50D70")]
+    [TestCase(2, "EA4535380C95EF116A6D06EB7DF16619439A791D8AB21760FFF61F9E903FE12A")]
+    [TestCase(3, "74A241CC968687FDF2C40EB461CB637BE55D78880324754BFE195D380D19FF6A")]
+    [TestCase(4, "E2081A0D82DD4A01E5310402B2AF35FB0E36BBD450A25C6DB6A85D5B937A534D")]
+    [TestCase(5, "0EF2BF284A22169CB1D6D7BEEC6C71A97858ECB191F5C6AE3E27774BAF546C1C")]
     public void ExactTierItemsMatchApprovedTables(int tier, string expectedHash)
     {
-        var rows = this.Groups(tier).SelectMany(group =>
-        {
-            var parts = group.Description.Value!.Split(" / ");
-            return group.PossibleItems.Select(item => $"{parts[1]}/{parts[2]}/{item.Group}/{item.Number}");
-        }).Order(StringComparer.Ordinal);
+        var rows = this.Groups(tier).SelectMany(group => group.PossibleItems)
+            .Select(item => $"{item.Group}/{item.Number}").Distinct().Order(StringComparer.Ordinal);
         var bytes = System.Text.Encoding.UTF8.GetBytes(string.Join('\n', rows));
         Assert.That(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)), Is.EqualTo(expectedHash));
     }
 
     [Test]
-    public void ClassWeightsAndLegalPiecesAreExact()
+    public void CategoryWeightsAndLegalPiecesAreExact()
     {
         for (var tier = 1; tier <= 5; tier++)
         {
             var groups = this.Groups(tier);
-            foreach (var (category, chance, classes) in new[] { ("armor", .6, tier == 1 ? 6 : 7), ("weapons", .3, 7), ("shields", .1, 5) })
+            foreach (var (category, chance) in new[] { ("armor", .6), ("weapons", .3), ("shields", .1) })
             {
                 var categoryGroups = groups.Where(group => group.Description.Value!.Split(" / ")[1] == category).ToArray();
                 Assert.That(categoryGroups.Sum(group => group.Chance), Is.EqualTo(chance).Within(1e-12));
-                var classGroups = categoryGroups.GroupBy(group => group.Description.Value!.Split(" / ")[2]).ToArray();
-                Assert.That(classGroups.Length, Is.EqualTo(classes));
-                foreach (var classGroup in classGroups)
+                foreach (var group in categoryGroups)
                 {
-                    Assert.That(classGroup.Sum(group => group.Chance), Is.EqualTo(chance / classes).Within(1e-12));
-                    var family = Array.IndexOf(new[] { "DW", "DK", "Elf", "MG", "DL", "SUM", "RF" }, classGroup.Key);
-                    foreach (var group in classGroup)
-                    {
-                        Assert.That(group.PossibleItems.All(item => item.QualifiedCharacters.Any(character => character.Number / 4 == family)), Is.True);
-                        Assert.That(group.SkillChance, Is.Null);
-                        Assert.That(group.LuckChance, Is.Null);
-                        if (category == "armor")
-                        {
-                            Assert.That(group.PossibleItems.Select(item => item.Group), Is.EquivalentTo(classGroup.Key == "MG" ? new byte[] { 8, 9, 10, 11 } : classGroup.Key == "RF" ? new byte[] { 7, 8, 9, 11 } : new byte[] { 7, 8, 9, 10, 11 }));
-                        }
-                    }
+                    Assert.That(group.PossibleItems.All(item => item.QualifiedCharacters.Count > 0), Is.True);
+                    Assert.That(group.SkillChance, Is.Null);
+                    Assert.That(group.LuckChance, Is.Null);
                 }
             }
         }
@@ -165,6 +151,7 @@ public class KundunProgressionTests
         var before = this.UnrelatedFingerprint();
         var expected = this.KundunFingerprint();
         new KundunProgression(context, this._configuration).Initialize();
+        new UniqueRewardWeights(context, this._configuration).Initialize();
         Assert.That(this.UnrelatedFingerprint(), Is.EqualTo(before));
         Assert.That(this.KundunFingerprint(), Is.EqualTo(expected));
         for (var tier = 1; tier <= 3; tier++)
@@ -172,9 +159,9 @@ public class KundunProgressionTests
             Assert.That(this.Groups(tier).SelectMany(group => group.PossibleItems).Any(item => item.Group == 5 && item.Number == 20 + tier), Is.True);
         }
 
-        Assert.That(this.Groups(1).Any(group => group.Description.Value!.Contains("/ armor / SUM /", StringComparison.Ordinal)), Is.False);
-        Assert.That(this.Groups(2).Where(group => group.Description.Value!.Contains("/ armor / SUM /", StringComparison.Ordinal)).SelectMany(group => group.PossibleItems).All(item => item.Number == 39), Is.True);
-        Assert.That(this.Groups(5).Where(group => group.Description.Value!.Contains("/ armor / SUM /", StringComparison.Ordinal)).SelectMany(group => group.PossibleItems).All(item => item.Number == 42), Is.True);
+        Assert.That(this.Groups(1).SelectMany(group => group.PossibleItems).Any(item => item.Group >= 7 && item.QualifiedCharacters.Any(character => character.Number / 4 == 5)), Is.False);
+        Assert.That(this.Groups(2).SelectMany(group => group.PossibleItems).Any(item => item.Group == 8 && item.Number == 39), Is.True);
+        Assert.That(this.Groups(5).SelectMany(group => group.PossibleItems).Any(item => item.Group == 8 && item.Number == 42), Is.True);
     }
 
     private List<ItemDropItemGroup> Groups(int tier) => this._configuration.Items.Single(item => item.Group == 14 && item.Number == 11).DropItems.Where(group => group.SourceItemLevel == tier + 7).ToList();

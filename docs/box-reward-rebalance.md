@@ -61,6 +61,8 @@ Examples of the single bonus roll:
 
 Firecracker equipment uses the exact 60:35 armor/weapon ratio within its unchanged 40% equipment share; displayed percentages are rounded. Boxes without an armor or shield category do not gain one. Other boxes keep their existing non-equipment category chances.
 
+**Prepared normalization update - not deployed.** Silver, Gold and Firecracker select one unique armor set equally, then one of its included pieces equally. Silver's six sets are 5.50% each per opening; Gold's six sets are 7.00% each; Firecracker's seven sets are approximately 3.61% each. Shared equip eligibility does not add probability. Category totals above and all item pools stay unchanged.
+
 ## Equipment levels and options
 
 - Silver Medal, Gold Medal and Firecracker: **+7 through +9**.
@@ -85,11 +87,11 @@ Firecracker equipment uses the exact 60:35 armor/weapon ratio within its unchang
 | Summoner | Demonic (server name Black Rose) | Demonic Stick, Book of Lagle |
 | RF | Piercing Groove | Piercing Blade Glove |
 
-All seven classes have an equal **14.29% overall reward share** (rounded), regardless of item counts. Energy Elf is part of the Elf share, including Elemental Mace. Shared weapons can be equipped by other eligible classes without granting an extra class share.
+Star retains **60% armor / 35% weapons/books / 5% shields**. Its armor selections are unchanged: Grand Soul, Eclipse, Black Dragon, Ashcrow, Divine, Iris, Thunder Hawk, Valiant, Dark Steel and Glorious are approximately **4.29% each** per opening; Demonic and Piercing Groove are approximately **8.57% each**. One piece is selected uniformly within the selected set. These armor sets already had unique routes.
 
-Every class has a 60% armor share inside its class allocation. DW, DK, Elf, MG and DL each have 33% weapons and 7% shields; Summoner and RF have 40% weapons and no shields. This keeps the overall opening split exactly **60% armor / 35% weapons / 5% shields**, while retaining equal total class shares. Individual pieces within each class/category are equally likely.
+Shared weapons and shields now count once, without extra chance from multiple class references. Staff of Destruction is approximately **2.08%** per opening. Existing weapon/book variant weights are otherwise retained proportionally, including the EE Elemental Mace and Summoner book. Each of the four unique Star shields is **1.25%**. The opening character's class does not filter rewards. No equal overall class share is promised by these global loot pools.
 
-| Star shield | Class allocation | Fixed level | Options |
+| Star shield | Equip families | Fixed level | Options |
 |---|---|---:|---|
 | Grand Soul Shield | DW | +7 | No Luck, ADD or skill |
 | Dragon Shield | DK and MG | +7 | No Luck, ADD or skill |
@@ -142,7 +144,7 @@ Thunder Hawk and Valiant have four armor pieces and no helm; Piercing Groove has
 
 ## Kundun +1 through +5
 
-Every Kundun tier gives **60% armor, 30% weapons/books and 10% shields**. The Kundun update rebuilds the pools as pre-Pink **Excellent +0** equipment with no sockets. Shared Luck/ADD and supported Skill rules remain. See [exact Kundun pools, class weights and item mappings](kundun-progression.md).
+Every Kundun tier gives **60% armor, 30% weapons/books and 10% shields**. The Kundun update rebuilds the pools as pre-Pink **Excellent +0** equipment with no sockets. Shared Luck/ADD and supported Skill rules remain. See [exact Kundun pools, unique-set weights and item mappings](kundun-progression.md).
 
 | Kundun tier | One Excellent option | Two distinct Excellent options |
 |---|---:|---:|
