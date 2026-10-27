@@ -1,0 +1,46 @@
+# Shop item name (as in the Webzen script, without [..] prefixes and _N Day suffixes), item group, item number, item level.
+# Only items that exist in the OpenMU item data are listed; every other Webzen package is hidden from the shop script.
+Seal of Ascension,13,43,0
+Seal of Wealth,13,44,0
+Seal of Sustenance,13,45,0
+Seal of Healing,13,62,0
+Seal of Divinity,13,63,0
+Master Seal of Ascension,13,93,0
+Master Seal of Wealth,13,94,0
+Scroll of Quickness,14,72,0
+Scroll of Protection,14,73,0
+Scroll of Wrath,14,74,0
+Scroll of Wizardry,14,75,0
+Scroll of Health,14,76,0
+Scroll of Mana,14,77,0
+Scroll of Battle,14,97,0
+Scroll of Strengthener,14,98,0
+Reset Fruit Strength,14,78,0
+Reset Fruit Quickness,14,79,0
+Reset Fruit Health,14,80,0
+Reset Fruit Energy,14,81,0
+Reset Fruit Control,14,82,0
+Pet Unicorn,13,106,0
+Pet Skeleton,13,123,0
+Pet Panda,13,80,0
+Demon,13,64,0
+Spirit of Guardian,13,65,0
+Panda Ring,13,76,0
+Skeleton Transformation Ring,13,122,0
+Wizard Ring,13,20,0
+Devil Square Ticket,13,46,0
+Blood Castle Ticket,13,47,0
+Kalima Ticket,13,48,0
+Box of Kundun +1,14,11,8
+Box of Kundun +2,14,11,9
+Box of Kundun +3,14,11,10
+Box of Kundun +4,14,11,11
+Box of Kundun +5,14,11,12
+Bundle of Jewel of Bless (30),12,30,2
+Bundle of Jewel of Soul (30),12,31,2
+Jewel of Chaos Bundle (10),12,141,0
+Jewel of Life Bundle (10),12,136,0
+Bundle of Jewel of Harmony (10),12,140,0
+Cherry Blossom Wine,14,85,0
+Cherry Blossom Rice Cake,14,86,0
+Cherry Blossom Petal,14,87,0
