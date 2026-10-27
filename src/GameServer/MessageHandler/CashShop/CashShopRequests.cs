@@ -5,7 +5,6 @@
 namespace MUnique.OpenMU.GameServer.MessageHandler.CashShop;
 
 using MUnique.OpenMU.GameLogic;
-using MUnique.OpenMU.Persistence;
 using MUnique.OpenMU.Persistence.CashShop;
 
 /// <summary>Authenticated, read-only Cash Shop requests shared by the network handler and integration tests.</summary>
@@ -24,7 +23,7 @@ internal static class CashShopRequests
         }
 
         var subCode = packet.Span[3];
-        var authenticated = player.Account is IIdentifiable && player.SelectedCharacter is not null
+        var authenticated = player.Account is Persistence.IIdentifiable && player.SelectedCharacter is not null
             && player.PlayerState.CurrentState == PlayerState.EnteredWorld;
         if (subCode == 0x02)
         {
@@ -43,7 +42,7 @@ internal static class CashShopRequests
                 return null;
             }
 
-            var account = (IIdentifiable)player.Account!;
+            var account = (Persistence.IIdentifiable)player.Account!;
             var balance = await repository.GetBalanceAsync(account.Id, player.GetGameServerId()).ConfigureAwait(false);
             return CashShopProtocol.Balance(balance);
         }

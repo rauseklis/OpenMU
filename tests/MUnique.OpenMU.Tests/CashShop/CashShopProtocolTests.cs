@@ -102,7 +102,7 @@ public class CashShopProtocolTests
     {
         var id = Guid.NewGuid();
         var account = new Mock<Account>();
-        account.As<IIdentifiable>().SetupGet(a => a.Id).Returns(id);
+        account.As<Persistence.IIdentifiable>().SetupGet(a => a.Id).Returns(id);
         account.Setup(a => a.Attributes).Returns(new List<StatAttribute>());
         account.Setup(a => a.UnlockedCharacterClasses).Returns(new List<CharacterClass>());
         player.Account = account.Object;
