@@ -66,7 +66,7 @@ public class KundunProgressionTests
         for (var tier = 1; tier <= 5; tier++)
         {
             var groups = this.Groups(tier);
-            foreach (var (category, chance) in new[] { ("armor", .6), ("weapons", .3), ("shields", .1) })
+            foreach (var (category, chance) in new[] { ("armor", .7), ("weapons", .2), ("shields", .1) })
             {
                 var categoryGroups = groups.Where(group => group.Description.Value!.Split(" / ")[1] == category).ToArray();
                 Assert.That(categoryGroups.Sum(group => group.Chance), Is.EqualTo(chance).Within(1e-12));
@@ -112,7 +112,7 @@ public class KundunProgressionTests
         Assert.That((double)doubleOptions / samples, Is.EqualTo((6 - tier) / 10.0).Within(.005));
         for (var category = 0; category < categories.Length; category++)
         {
-            Assert.That((double)categories[category] / samples, Is.EqualTo(new[] { .6, .3, .1 }[category]).Within(.005));
+            Assert.That((double)categories[category] / samples, Is.EqualTo(new[] { .7, .2, .1 }[category]).Within(.005));
         }
 
         TestContext.WriteLine($"Kundun +{tier}: armor/weapons/shields {categories[0]}/{categories[1]}/{categories[2]}, two distinct EXC {doubleOptions}/{samples}.");
@@ -152,6 +152,7 @@ public class KundunProgressionTests
         var expected = this.KundunFingerprint();
         new KundunProgression(context, this._configuration).Initialize();
         new UniqueRewardWeights(context, this._configuration).Initialize();
+        new RewardCategoryRatios(context, this._configuration).Initialize();
         Assert.That(this.UnrelatedFingerprint(), Is.EqualTo(before));
         Assert.That(this.KundunFingerprint(), Is.EqualTo(expected));
         for (var tier = 1; tier <= 3; tier++)

@@ -118,6 +118,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new DisabledSocketSystem(this.Context, this.GameConfiguration).Initialize();
         new AbsoluteBonusProgression(this.Context, this.GameConfiguration).Initialize();
         new UniqueRewardWeights(this.Context, this.GameConfiguration).Initialize();
+        new RewardCategoryRatios(this.Context, this.GameConfiguration).Initialize();
     }
 
     /// <summary>

@@ -1,28 +1,28 @@
 # Chocolate Boxes
 
-These settings are live with the paired Chocolate endgame client update.
+**Prepared category update - not deployed.** The category ratios below are the final prepared values. Existing item pools and item rules are unchanged.
 
 One box gives one ordinary item. No Excellent, Ancient or socket rewards. Pink and Blue equipment is +6–+9; the two rare maces always drop +0. Luck, ADD and applicable weapon Skill use the shared server chances.
 
 ## Pink
 
-Armor 60%, weapons 30%, shields 10%. Armor class shares below are percentages of all openings, not conditional percentages. Pieces are equally likely within a selected set. MG has no helmet; RF has no gloves.
+Armor 70%, weapons 20%, shields 10%. Armor class shares below are percentages of all openings, not conditional percentages. Pieces are equally likely within a selected set. MG has no helmet; RF has no gloves.
 
 | Class | Armor | Overall armor chance | Weapons |
 | --- | --- | --- | --- |
-| DW | Dark Soul | 8% | Platina Staff, Staff of Kundun |
-| DK | Dark Phoenix, Great Dragon | 4% each | Bone Blade, Dark Breaker |
-| Elf | Red Spirit | 8% | Great Reign Crossbow, Albatross Bow |
-| MG | Hurricane | 8% | Sword Dancer, Dark Reign Blade |
-| DL | Dark Master | 8% | Shining Scepter, Great Lord Scepter |
-| SUM | Aura (client Storm Blitz) | 10% | Storm Blitz Stick |
-| RF | Phoenix Soul | 10% | Phoenix Soul Star |
+| DW | Dark Soul | 9.33% | Platina Staff, Staff of Kundun |
+| DK | Dark Phoenix, Great Dragon | 4.67% each | Bone Blade, Dark Breaker |
+| Elf | Red Spirit | 9.33% | Great Reign Crossbow, Albatross Bow |
+| MG | Hurricane | 9.33% | Sword Dancer, Dark Reign Blade |
+| DL | Dark Master | 9.33% | Shining Scepter, Great Lord Scepter |
+| SUM | Aura (client Storm Blitz) | 11.67% | Storm Blitz Stick |
+| RF | Phoenix Soul | 11.67% | Phoenix Soul Star |
 
-Each class receives approximately 4.29% of all openings as weapons. Multiple weapons split that class share equally. Shields are Guardian (DW), Crimson Glory (DK), Frost Barrier (Elf), Salamander (MG), Cross (DL): 2% overall each.
+Each class receives approximately 2.86% of all openings as weapons. Multiple weapons split that class share equally. Shields are Guardian (DW), Crimson Glory (DK), Frost Barrier (Elf), Salamander (MG), Cross (DL): 2% overall each.
 
 ## Blue
 
-Armor 70%, ordinary weapons 25%, rare Mace of King 5% overall. Each of six classes receives approximately 11.67% armor and 4.17% ordinary weapons. No RF armor or ordinary weapon is included.
+Armor 80%, ordinary weapons 15%, rare Mace of King 5% overall. Each of six classes receives approximately 13.33% armor and 2.50% ordinary weapons. The rare Mace stays separate; all weapon-type outcomes together total 20%. No RF armor or ordinary weapon is included.
 
 | Class | Armor | Weapons |
 | --- | --- | --- |
@@ -48,7 +48,7 @@ Lilium and Eternal Wing are server/client names for the same set. Plain +0 value
 | Gloves | 45 | 197 | 79 | 0 |
 | Boots | 50 | 214 | 84 | 0 |
 
-Total base DEF is **268**. Upgrade levels and ADD raise requirements by the normal server rules. The selected Chocolate equipment no longer requires character level 380; class/advancement and other stat requirements still apply. Displayed probability percentages are rounded; class and variant selection uses exact equal weights internally.
+Total base DEF is **268**. Upgrade levels and ADD raise requirements by the normal server rules. The selected Chocolate equipment no longer requires character level 380; class/advancement and other stat requirements still apply. Displayed probability percentages are rounded; full-precision weights retain the existing relative chances within each category.
 
 ## Red and sockets
 

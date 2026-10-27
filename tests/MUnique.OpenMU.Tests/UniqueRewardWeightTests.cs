@@ -30,14 +30,14 @@ public class UniqueRewardWeightTests
         this._configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
     }
 
-    [TestCase(8, 6, .6)]
-    [TestCase(9, 7, .6)]
-    [TestCase(10, 7, .6)]
-    [TestCase(11, 7, .6)]
-    [TestCase(12, 9, .6)]
-    [TestCase(5, 6, .33)]
-    [TestCase(6, 6, .42)]
-    [TestCase(2, 7, .25263157894736843)]
+    [TestCase(8, 6, .7)]
+    [TestCase(9, 7, .7)]
+    [TestCase(10, 7, .7)]
+    [TestCase(11, 7, .7)]
+    [TestCase(12, 9, .7)]
+    [TestCase(5, 6, .4125)]
+    [TestCase(6, 6, .525)]
+    [TestCase(2, 7, .32)]
     public void EachUniqueArmorSetHasOneEqualAllocation(byte level, int count, double total)
     {
         var armor = this.Groups(level).Where(group => group.PossibleItems.Count > 0 && group.PossibleItems.All(item => item.Group is >= 7 and <= 11)).ToArray();

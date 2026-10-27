@@ -722,4 +722,9 @@ public enum UpdateVersion
     /// Removes duplicate class-route contributions from global equipment reward weights.
     /// </summary>
     UniqueRewardWeights = 154,
+
+    /// <summary>
+    /// Scales equipment categories toward armor without changing normalized internal weights.
+    /// </summary>
+    RewardCategoryRatios = 155,
 }
