@@ -164,6 +164,23 @@ public class CashShopCatalogTests
         repository.VerifyAll();
     }
 
+    /// <summary>Plug-in identifiers must be unique across the game server, or the server cannot register its plug-ins at startup.</summary>
+    [Test]
+    public void PlugInGuidsAreUnique()
+    {
+        var types = new[] { typeof(CashShopCatalog).Assembly, typeof(Player).Assembly }
+            .SelectMany(a => a.GetTypes())
+            .Where(t => t.GetCustomAttributes(typeof(MUnique.OpenMU.PlugIns.PlugInAttribute), false).Length > 0)
+            .Select(t => (Type: t, Id: t.GUID))
+            .ToList();
+
+        var duplicates = types.GroupBy(t => t.Id).Where(g => g.Count() > 1).Select(g => string.Join(", ", g.Select(t => t.Type.Name))).ToList();
+
+        Assert.That(duplicates, Is.Empty);
+        Assert.That(types.Any(t => t.Type.Name == "CashShopScriptVersionPlugIn"), Is.True);
+        Assert.That(types.Any(t => t.Type.Name == "CashChatCommandPlugIn"), Is.True);
+    }
+
     private static DataModel.Configuration.Items.ItemDefinition CreateDefinition(byte group, short number)
         => new() { Group = group, Number = number, Width = 1, Height = 1, Durability = 1 };
 
