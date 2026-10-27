@@ -25,6 +25,15 @@ internal sealed class CashShopCatalog
     /// <summary>The identifier of the announced script version (folder <c>512.2012.085</c> in the client's <c>Data/InGameShopScript</c>).</summary>
     internal const ushort ScriptYearIdentifier = 85;
 
+    /// <summary>The sales zone of the banner version (folder <c>583.2012.001</c> in the client's <c>Data/InGameShopBanner</c>, which holds an empty banner list).</summary>
+    internal const ushort BannerZone = 583;
+
+    /// <summary>The year of the announced banner version.</summary>
+    internal const ushort BannerYear = 2012;
+
+    /// <summary>The identifier of the announced banner version.</summary>
+    internal const ushort BannerYearIdentifier = 1;
+
     private const int ProductPropertyQuantity = 7;
 
     private readonly Dictionary<int, Package> _packages = new();

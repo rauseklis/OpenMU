@@ -11,7 +11,7 @@ using MUnique.OpenMU.GameServer.RemoteView;
 using MUnique.OpenMU.Network;
 using MUnique.OpenMU.PlugIns;
 
-/// <summary>Tells the client which shop script to load when a character enters the game; without it the client refuses to open the shop.</summary>
+/// <summary>Tells the client which shop script and banner list to load when a character enters the game; without it the client refuses to open the shop.</summary>
 [PlugIn]
 [Guid("5C0E5C9A-2F3B-4F0D-9B9E-6B1F0D6B7C11")]
 internal sealed class CashShopScriptVersionPlugIn : IPlayerStateChangedPlugIn
@@ -26,11 +26,13 @@ internal sealed class CashShopScriptVersionPlugIn : IPlayerStateChangedPlugIn
             return;
         }
 
-        var packet = CashShopProtocol.ScriptVersion();
-        await connection.SendAsync(() =>
+        foreach (var packet in new[] { CashShopProtocol.ScriptVersion(), CashShopProtocol.BannerVersion() })
         {
-            packet.AsSpan().CopyTo(connection.Output.GetSpan(packet.Length));
-            return packet.Length;
-        }).ConfigureAwait(false);
+            await connection.SendAsync(() =>
+            {
+                packet.AsSpan().CopyTo(connection.Output.GetSpan(packet.Length));
+                return packet.Length;
+            }).ConfigureAwait(false);
+        }
     }
 }
