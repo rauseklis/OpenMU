@@ -39,9 +39,9 @@ public sealed class CherryBlossomRewards(IContext context, GameConfiguration con
             spirit.ItemCraftings.Remove(oldRecipe);
         }
 
-        this.AddExchange(spirit, 42, 88, 10, [(14, 13), (12, 15), (14, 16), (14, 14), (13, 48), (13, 65)]);
-        this.AddExchange(spirit, 43, 89, 30, [(14, 11), (13, 46), (13, 47), (13, 123), (13, 106), (13, 80)]);
-        this.AddExchange(spirit, 41, 90, 255, [(13, 47), (13, 46), (12, 30), (12, 31), (14, 124), (14, 11)]);
+        this.AddExchange(spirit, 42, 88, 10, [(14, 13, 0, 1), (12, 15, 0, 1), (14, 16, 0, 1), (14, 14, 0, 1), (13, 48, 0, 1), (13, 65, 0, 1)]);
+        this.AddExchange(spirit, 43, 89, 30, [(14, 11, KundunOneWrapperLevel, 150), (14, 11, 2, 150), (12, 33, 0, 150), (13, 46, 0, 150), (13, 47, 0, 150), (13, 106, 0, 74), (13, 123, 0, 47), (13, 80, 0, 29)]);
+        this.AddExchange(spirit, 41, 90, 255, [(13, 47, 0, 2), (13, 46, 0, 2), (12, 30, 0, 2), (12, 31, 0, 2), (14, 11, KundunThreeWrapperLevel, 2), (14, 124, 0, 1), (14, 11, 0, 1)]);
     }
 
     private void EnsureBranch(short number, string name, byte capacity)
@@ -84,7 +84,7 @@ public sealed class CherryBlossomRewards(IContext context, GameConfiguration con
         box.DropItems.Add(group);
     }
 
-    private void AddExchange(MonsterDefinition spirit, byte recipeNumber, short branchNumber, byte count, (byte Group, short Number)[] rewards)
+    private void AddExchange(MonsterDefinition spirit, byte recipeNumber, short branchNumber, byte count, (byte Group, short Number, byte Level, int Weight)[] rewards)
     {
         var recipe = this.Context.CreateNew<ItemCrafting>();
         recipe.Number = recipeNumber;
@@ -100,11 +100,11 @@ public sealed class CherryBlossomRewards(IContext context, GameConfiguration con
         settings.RequiredItems.Add(input);
         foreach (var reward in rewards)
         {
-            // ResultItemSelection.Any selects one of six equal entries without rounding chances.
-            var level = reward == ((byte)14, (short)11)
-                ? branchNumber == 89 ? KundunOneWrapperLevel : KundunThreeWrapperLevel
-                : (byte)0;
-            this.AddResult(settings, reward, branchNumber == 90 ? (byte)10 : (byte)1, level);
+            // Any selects one uniform slot. Repeated slots encode exact rational chances.
+            for (var slot = 0; slot < reward.Weight; slot++)
+            {
+                this.AddResult(settings, (reward.Group, reward.Number), branchNumber == 90 ? (byte)10 : (byte)1, reward.Level);
+            }
         }
 
         recipe.SimpleCraftingSettings = settings;
