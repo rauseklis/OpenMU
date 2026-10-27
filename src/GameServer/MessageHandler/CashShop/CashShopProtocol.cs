@@ -13,6 +13,9 @@ internal static class CashShopProtocol
     /// <summary>The existing Cash Shop group.</summary>
     internal const byte Code = 0xD2;
 
+    /// <summary>The number of storage items the client shows per page.</summary>
+    internal const int StoragePageSize = 9;
+
     /// <summary>Validates framing before handlers read a sub-code or payload.</summary>
     /// <param name="packet">The whole decrypted request.</param>
     /// <returns>Whether it is a supported, correctly sized C1 request.</returns>
@@ -28,8 +31,10 @@ internal static class CashShopProtocol
         {
             0x01 => packet.Length == 4,
             0x02 => packet.Length == 5 && packet[4] <= 1,
-            0x05 => packet.Length == 9,
-            0x03 or 0x04 or 0x0A or 0x0B => packet.Length >= 5,
+            0x05 => packet.Length is 9 or 10,
+            0x03 => packet.Length == 23,
+            0x0B => packet.Length == 15,
+            0x04 or 0x0A => packet.Length >= 5,
             0x08 => packet.Length == 4,
             0x09 or 0x13 => packet.Length == 8,
             _ => false,
@@ -72,6 +77,77 @@ internal static class CashShopProtocol
         var result = Create(0x06, 12);
         BinaryPrimitives.WriteUInt16LittleEndian(result.AsSpan(8), 1);
         BinaryPrimitives.WriteUInt16LittleEndian(result.AsSpan(10), 1);
+        return result;
+    }
+
+    /// <summary>Builds the answer to a buy request.</summary>
+    /// <param name="result">0 = bought; 1 = not enough currency; 2 = storage full; 4 = not available; 0xFF = error.</param>
+    /// <returns>The 9-byte answer.</returns>
+    internal static byte[] BuyResult(byte result)
+    {
+        var packet = Create(0x03, 9);
+        packet[4] = result;
+        return packet;
+    }
+
+    /// <summary>Builds the answer to a use request.</summary>
+    /// <param name="result">0 = used; 1 = no such item; 21 = inventory full; 22 = cannot be used; 0xFF = error.</param>
+    /// <returns>The 5-byte answer.</returns>
+    internal static byte[] UseResult(byte result)
+    {
+        var packet = Create(0x0B, 5);
+        packet[4] = result;
+        return packet;
+    }
+
+    /// <summary>Builds the answer to a delete request.</summary>
+    /// <param name="result">0 = deleted; otherwise failed.</param>
+    /// <returns>The 5-byte answer.</returns>
+    internal static byte[] DeleteResult(byte result)
+    {
+        var packet = Create(0x0A, 5);
+        packet[4] = result;
+        return packet;
+    }
+
+    /// <summary>Builds the announcement of the shop script version; the client cannot open the shop before it got one.</summary>
+    /// <returns>The 10-byte packet.</returns>
+    internal static byte[] ScriptVersion()
+    {
+        var packet = Create(0x0C, 10);
+        BinaryPrimitives.WriteUInt16LittleEndian(packet.AsSpan(4), CashShopCatalog.ScriptZone);
+        BinaryPrimitives.WriteUInt16LittleEndian(packet.AsSpan(6), CashShopCatalog.ScriptYear);
+        BinaryPrimitives.WriteUInt16LittleEndian(packet.AsSpan(8), CashShopCatalog.ScriptYearIdentifier);
+        return packet;
+    }
+
+    /// <summary>Builds one page of the storage: the count packet, followed by one packet per item.</summary>
+    /// <param name="items">All stored items of the account.</param>
+    /// <param name="page">The requested, 1-based page.</param>
+    /// <returns>The packets to send in order.</returns>
+    internal static IReadOnlyList<byte[]> StoragePage(IReadOnlyList<CashShopStorageItem> items, int page)
+    {
+        var totalPages = (items.Count + StoragePageSize - 1) / StoragePageSize;
+        page = Math.Clamp(page, 1, Math.Max(1, totalPages));
+        var pageItems = items.Skip((page - 1) * StoragePageSize).Take(StoragePageSize).ToList();
+        var count = Create(0x06, 12);
+        BinaryPrimitives.WriteUInt16LittleEndian(count.AsSpan(4), (ushort)Math.Min(items.Count, ushort.MaxValue));
+        BinaryPrimitives.WriteUInt16LittleEndian(count.AsSpan(6), (ushort)pageItems.Count);
+        BinaryPrimitives.WriteUInt16LittleEndian(count.AsSpan(8), (ushort)page);
+        BinaryPrimitives.WriteUInt16LittleEndian(count.AsSpan(10), (ushort)totalPages);
+        var result = new List<byte[]> { count };
+        foreach (var item in pageItems)
+        {
+            var entry = Create(0x0D, 33);
+            BinaryPrimitives.WriteInt32LittleEndian(entry.AsSpan(4), unchecked((int)item.Id));
+            BinaryPrimitives.WriteInt32LittleEndian(entry.AsSpan(8), unchecked((int)item.Id));
+            BinaryPrimitives.WriteInt32LittleEndian(entry.AsSpan(12), 0);
+            BinaryPrimitives.WriteInt32LittleEndian(entry.AsSpan(16), item.ProductSeq);
+            BinaryPrimitives.WriteInt32LittleEndian(entry.AsSpan(20), item.PriceSeq);
+            entry[32] = (byte)'P';
+            result.Add(entry);
+        }
+
         return result;
     }
 

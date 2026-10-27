@@ -61,12 +61,11 @@ public class CashShopProtocolTests
         repository.Setup(r => r.GetBalanceAsync(accountId, (byte)0, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CashShopBalance(10_000, 20_000, 30_000));
 
-        var response = await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 4, 0xD2, 1 }, repository.Object);
+        var response = (await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 4, 0xD2, 1 }, repository.Object, CashShopCatalog.Default)).Single();
 
-        Assert.That(response, Is.Not.Null);
-        Assert.That(ReadDouble(response!, 13), Is.EqualTo(10_000));
-        Assert.That(ReadDouble(response!, 21), Is.EqualTo(20_000));
-        Assert.That(ReadDouble(response!, 37), Is.EqualTo(30_000));
+        Assert.That(ReadDouble(response, 13), Is.EqualTo(10_000));
+        Assert.That(ReadDouble(response, 21), Is.EqualTo(20_000));
+        Assert.That(ReadDouble(response, 37), Is.EqualTo(30_000));
         repository.VerifyAll();
     }
 
@@ -78,9 +77,15 @@ public class CashShopProtocolTests
         GiveIdentifiableAccount(player);
         var repository = new Mock<ICashShopRepository>(MockBehavior.Strict);
 
-        Assert.That(await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 5, 0xD2, 2, 1 }, repository.Object), Is.Null);
-        Assert.That(await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 5, 0xD2, 3, 0 }, repository.Object),
-            Is.EqualTo(CashShopProtocol.Refused(3)));
+        Assert.That(await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 5, 0xD2, 2, 1 }, repository.Object, CashShopCatalog.Default), Is.Empty);
+
+        var unknownPackage = new byte[23];
+        unknownPackage[0] = 0xC1;
+        unknownPackage[1] = 23;
+        unknownPackage[2] = 0xD2;
+        unknownPackage[3] = 3;
+        Assert.That((await CashShopRequests.HandleAsync(player, unknownPackage, repository.Object, CashShopCatalog.Default)).Single(),
+            Is.EqualTo(CashShopProtocol.BuyResult(4)));
         repository.VerifyNoOtherCalls();
     }
 
@@ -92,13 +97,13 @@ public class CashShopProtocolTests
         player.Account = null;
         var repository = new Mock<ICashShopRepository>(MockBehavior.Strict);
 
-        Assert.That(await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 5, 0xD2, 2, 0 }, repository.Object),
+        Assert.That((await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 5, 0xD2, 2, 0 }, repository.Object, CashShopCatalog.Default)).Single(),
             Is.EqualTo(CashShopProtocol.Open(false)));
-        Assert.That(await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 4, 0xD2, 1 }, repository.Object), Is.Null);
+        Assert.That(await CashShopRequests.HandleAsync(player, new byte[] { 0xC1, 4, 0xD2, 1 }, repository.Object, CashShopCatalog.Default), Is.Empty);
         repository.VerifyNoOtherCalls();
     }
 
-    private static Guid GiveIdentifiableAccount(Player player)
+    internal static Guid GiveIdentifiableAccount(Player player)
     {
         var id = Guid.NewGuid();
         var account = new Mock<Account>();

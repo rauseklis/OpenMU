@@ -31,16 +31,14 @@ internal sealed class CashShopPacketHandlerPlugIn : IPacketHandlerPlugIn
         }
 
         var repository = player.GameContext.PersistenceContextProvider.CreateCashShopRepository();
-        var response = await CashShopRequests.HandleAsync(player, packet, repository).ConfigureAwait(false);
-        if (response is null)
+        var responses = await CashShopRequests.HandleAsync(player, packet, repository, CashShopCatalog.Default).ConfigureAwait(false);
+        foreach (var response in responses)
         {
-            return;
+            await connection.SendAsync(() =>
+            {
+                response.AsSpan().CopyTo(connection.Output.GetSpan(response.Length));
+                return response.Length;
+            }).ConfigureAwait(false);
         }
-
-        await connection.SendAsync(() =>
-        {
-            response.AsSpan().CopyTo(connection.Output.GetSpan(response.Length));
-            return response.Length;
-        }).ConfigureAwait(false);
     }
 }

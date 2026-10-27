@@ -118,4 +118,69 @@ public class CashShopRepositoryTests
     public void NegativeCreditIsRejected()
         => Assert.ThrowsAsync<ArgumentException>(async () =>
             await this._repository.CreditAsync(this._accountId, 0, Guid.NewGuid(), new CashShopBalance(-1, 2, 3), "invalid"));
+    /// <summary>A purchase debits exactly the price in its currency and stores the item; it never goes below zero.</summary>
+    [Test]
+    public async Task PurchaseDebitsOneCurrencyAndStoresTheItem()
+    {
+        await this._repository.CreditAsync(this._accountId, 0, Guid.NewGuid(), new CashShopBalance(100, 50, 30), "purchase setup");
+        var item = new CashShopStorageItem(0, 122, 7, 9, 13, 44, 0, 1);
+
+        Assert.That(await this._repository.PurchaseAsync(this._accountId, 0, CashShopCurrency.WCoinP, 20, item), Is.EqualTo(CashShopPurchaseResult.Success));
+        Assert.That(await this._repository.GetBalanceAsync(this._accountId, 0), Is.EqualTo(new CashShopBalance(100, 30, 30)));
+        Assert.That(await this._repository.PurchaseAsync(this._accountId, 0, CashShopCurrency.WCoinP, 31, item), Is.EqualTo(CashShopPurchaseResult.InsufficientFunds));
+        Assert.That(await this._repository.PurchaseAsync(this._accountId, 1, CashShopCurrency.WCoinC, 1, item), Is.EqualTo(CashShopPurchaseResult.InsufficientFunds), "other server");
+
+        var stored = await this._repository.ListStorageAsync(this._accountId, 0);
+        Assert.That(stored, Has.Count.EqualTo(1));
+        Assert.That(stored[0] with { Id = 0 }, Is.EqualTo(item));
+        Assert.That(await this._repository.ListStorageAsync(this._otherAccountId, 0), Is.Empty);
+    }
+
+    /// <summary>Parallel purchases cannot spend more than the balance.</summary>
+    [Test]
+    public async Task ConcurrentPurchasesCannotOverspend()
+    {
+        await this._repository.CreditAsync(this._accountId, 0, Guid.NewGuid(), new CashShopBalance(100, 0, 0), "overspend setup");
+        var item = new CashShopStorageItem(0, 122, 7, 9, 13, 44, 0, 1);
+
+        var results = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ =>
+            this._repository.PurchaseAsync(this._accountId, 0, CashShopCurrency.WCoinC, 30, item)));
+
+        Assert.That(results.Count(r => r == CashShopPurchaseResult.Success), Is.EqualTo(3));
+        Assert.That(await this._repository.GetBalanceAsync(this._accountId, 0), Is.EqualTo(new CashShopBalance(10, 0, 0)));
+        Assert.That(await this._repository.ListStorageAsync(this._accountId, 0), Has.Count.EqualTo(3));
+    }
+
+    /// <summary>The storage is capped, and a full storage costs nothing.</summary>
+    [Test]
+    public async Task FullStorageRefusesAndKeepsTheBalance()
+    {
+        await this._repository.CreditAsync(this._accountId, 0, Guid.NewGuid(), new CashShopBalance(1_000_000, 0, 0), "capacity setup");
+        var item = new CashShopStorageItem(0, 122, 7, 9, 13, 44, 0, 1);
+        for (var i = 0; i < CashShopRepository.MaximumStorageItems; i++)
+        {
+            Assert.That(await this._repository.PurchaseAsync(this._accountId, 0, CashShopCurrency.WCoinC, 1, item), Is.EqualTo(CashShopPurchaseResult.Success));
+        }
+
+        Assert.That(await this._repository.PurchaseAsync(this._accountId, 0, CashShopCurrency.WCoinC, 1, item), Is.EqualTo(CashShopPurchaseResult.StorageFull));
+        Assert.That((await this._repository.GetBalanceAsync(this._accountId, 0)).WCoinC, Is.EqualTo(1_000_000 - CashShopRepository.MaximumStorageItems));
+    }
+
+    /// <summary>An item can be taken once only; another account cannot take it; a failed delivery can restore it.</summary>
+    [Test]
+    public async Task TakeIsExclusiveAndRestoreKeepsTheIdentifier()
+    {
+        await this._repository.CreditAsync(this._accountId, 0, Guid.NewGuid(), new CashShopBalance(10, 0, 0), "take setup");
+        await this._repository.PurchaseAsync(this._accountId, 0, CashShopCurrency.WCoinC, 5, new CashShopStorageItem(0, 122, 7, 9, 13, 44, 0, 1));
+        var id = (await this._repository.ListStorageAsync(this._accountId, 0)).Single().Id;
+
+        Assert.That(await this._repository.TakeStorageItemAsync(this._otherAccountId, 0, id), Is.Null);
+        var taken = await Task.WhenAll(Enumerable.Range(0, 6).Select(_ => this._repository.TakeStorageItemAsync(this._accountId, 0, id)));
+        Assert.That(taken.Count(t => t is not null), Is.EqualTo(1));
+        Assert.That(await this._repository.ListStorageAsync(this._accountId, 0), Is.Empty);
+
+        await this._repository.RestoreStorageItemAsync(this._accountId, 0, taken.Single(t => t is not null)!);
+        await this._repository.RestoreStorageItemAsync(this._accountId, 0, taken.Single(t => t is not null)!);
+        Assert.That((await this._repository.ListStorageAsync(this._accountId, 0)).Select(i => i.Id), Is.EqualTo(new[] { id }));
+    }
 }
