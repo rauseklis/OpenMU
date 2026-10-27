@@ -38,19 +38,19 @@ public class ChocolateEndgameTests
     public void PinkCategoriesAndClassesHaveExactWeights()
     {
         var groups = this.Groups(32);
-        Assert.That(this.Category(groups, "Armor"), Is.EqualTo(.60).Within(1e-12));
-        Assert.That(this.Category(groups, "Weapon"), Is.EqualTo(.30).Within(1e-12));
+        Assert.That(this.Category(groups, "Armor"), Is.EqualTo(.70).Within(1e-12));
+        Assert.That(this.Category(groups, "Weapon"), Is.EqualTo(.20).Within(1e-12));
         Assert.That(this.Category(groups, "Shield"), Is.EqualTo(.10).Within(1e-12));
         foreach (var name in new[] { "DW", "DK", "Elf", "MG", "DL", "SUM", "RF" })
         {
             var armor = groups.Where(group => group.Description.Value!.Contains($"/ Armor / {name} /", StringComparison.Ordinal)).Sum(group => group.Chance);
-            Assert.That(armor, Is.EqualTo(name is "SUM" or "RF" ? .10 : .08).Within(1e-12), name);
-            Assert.That(groups.Where(group => group.Description.Value!.Contains($"/ Weapon / {name} /", StringComparison.Ordinal)).Sum(group => group.Chance), Is.EqualTo(.30 / 7).Within(1e-12), name);
+            Assert.That(armor, Is.EqualTo((name is "SUM" or "RF" ? .10 : .08) * .70 / .60).Within(1e-12), name);
+            Assert.That(groups.Where(group => group.Description.Value!.Contains($"/ Weapon / {name} /", StringComparison.Ordinal)).Sum(group => group.Chance), Is.EqualTo(.20 / 7).Within(1e-12), name);
         }
 
         Assert.That(groups.All(group => group.MinimumLevel == 6 && group.MaximumLevel == 9), Is.True);
         Assert.That(groups.All(group => group.ItemType == SpecialItemType.RandomItem && group.SkillChance is null && group.LuckChance is null), Is.True);
-        Assert.That(groups.Where(group => group.Description.Value!.Contains("/ Armor / DK /", StringComparison.Ordinal)).Select(group => group.Chance), Is.EqualTo(new[] { .04, .04 }));
+        Assert.That(groups.Where(group => group.Description.Value!.Contains("/ Armor / DK /", StringComparison.Ordinal)).Select(group => group.Chance), Is.EqualTo(new[] { .04 * .70 / .60, .04 * .70 / .60 }).Within(1e-12));
         Assert.That(groups.Where(group => group.PossibleItems.All(item => item.Group == 6)).Select(group => group.Chance), Is.EqualTo(Enumerable.Repeat(.02, 5)));
     }
 
@@ -58,8 +58,8 @@ public class ChocolateEndgameTests
     public void BlueHasSingleGlobalRareMaceAndSixNormalClasses()
     {
         var groups = this.Groups(34);
-        Assert.That(this.Category(groups, "Armor"), Is.EqualTo(.70).Within(1e-12));
-        Assert.That(this.Category(groups, "Weapon"), Is.EqualTo(.25).Within(1e-12));
+        Assert.That(this.Category(groups, "Armor"), Is.EqualTo(.80).Within(1e-12));
+        Assert.That(this.Category(groups, "Weapon"), Is.EqualTo(.15).Within(1e-12));
         var rare = groups.Single(group => group.Description.Value!.Contains("/ Rare /", StringComparison.Ordinal));
         Assert.That(rare.Chance, Is.EqualTo(.05));
         Assert.That(rare.PossibleItems.Select(item => ((int)item.Group, (int)item.Number)), Is.EqualTo(new[] { (2, 22) }));
@@ -67,8 +67,8 @@ public class ChocolateEndgameTests
         Assert.That(rare.MaximumLevel, Is.Zero);
         foreach (var name in new[] { "DW", "DK", "Elf", "MG", "DL", "SUM" })
         {
-            Assert.That(groups.Where(group => group.Description.Value!.Contains($"/ Armor / {name} /", StringComparison.Ordinal)).Sum(group => group.Chance), Is.EqualTo(.70 / 6).Within(1e-12));
-            Assert.That(groups.Where(group => group.Description.Value!.Contains($"/ Weapon / {name} /", StringComparison.Ordinal)).Sum(group => group.Chance), Is.EqualTo(.25 / 6).Within(1e-12));
+            Assert.That(groups.Where(group => group.Description.Value!.Contains($"/ Armor / {name} /", StringComparison.Ordinal)).Sum(group => group.Chance), Is.EqualTo(.80 / 6).Within(1e-12));
+            Assert.That(groups.Where(group => group.Description.Value!.Contains($"/ Weapon / {name} /", StringComparison.Ordinal)).Sum(group => group.Chance), Is.EqualTo(.15 / 6).Within(1e-12));
         }
 
         Assert.That(groups.SelectMany(group => group.PossibleItems).Any(item => item.Group == 5 && item.Number == 20), Is.True);
@@ -129,7 +129,7 @@ public class ChocolateEndgameTests
             Assert.That(item.Level, owner.Category == "Rare" ? Is.Zero : Is.InRange(6, 9));
         }
 
-        foreach (var category in number == 32 ? new[] { ("Armor", .60), ("Weapon", .30), ("Shield", .10) } : new[] { ("Armor", .70), ("Weapon", .25), ("Rare", .05) })
+        foreach (var category in number == 32 ? new[] { ("Armor", .70), ("Weapon", .20), ("Shield", .10) } : new[] { ("Armor", .80), ("Weapon", .15), ("Rare", .05) })
         {
             var observed = (double)counts[category.Item1] / openings;
             TestContext.WriteLine($"Box {number}: {category.Item1} observed {observed:P4}, expected {category.Item2:P4}");
@@ -231,6 +231,7 @@ public class ChocolateEndgameTests
         new ChocolateEndgameRewards(context, this._configuration).Initialize();
         new ChocolateEndgameItemBalance(context, this._configuration).Initialize();
         new DisabledSocketSystem(context, this._configuration).Initialize();
+        new RewardCategoryRatios(context, this._configuration).Initialize();
         Assert.That(this.UnrelatedBoxFingerprint(), Is.EqualTo(preserved));
     }
 

@@ -717,4 +717,14 @@ public enum UpdateVersion
     /// Installs weighted Red pets and the Golden Silver/Luck split.
     /// </summary>
     CherryWeightedExchanges = 153,
+
+    /// <summary>
+    /// Removes duplicate class-route contributions from global equipment reward weights.
+    /// </summary>
+    UniqueRewardWeights = 154,
+
+    /// <summary>
+    /// Scales equipment categories toward armor without changing normalized internal weights.
+    /// </summary>
+    RewardCategoryRatios = 155,
 }
