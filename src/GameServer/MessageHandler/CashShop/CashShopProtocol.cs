@@ -121,6 +121,17 @@ internal static class CashShopProtocol
         return packet;
     }
 
+    /// <summary>Builds the announcement of the banner version. The client has an (empty) banner list for it, so it never tries to download one.</summary>
+    /// <returns>The 10-byte packet.</returns>
+    internal static byte[] BannerVersion()
+    {
+        var packet = Create(0x15, 10);
+        BinaryPrimitives.WriteUInt16LittleEndian(packet.AsSpan(4), CashShopCatalog.BannerZone);
+        BinaryPrimitives.WriteUInt16LittleEndian(packet.AsSpan(6), CashShopCatalog.BannerYear);
+        BinaryPrimitives.WriteUInt16LittleEndian(packet.AsSpan(8), CashShopCatalog.BannerYearIdentifier);
+        return packet;
+    }
+
     /// <summary>Builds one page of the storage: the count packet, followed by one packet per item.</summary>
     /// <param name="items">All stored items of the account.</param>
     /// <param name="page">The requested, 1-based page.</param>

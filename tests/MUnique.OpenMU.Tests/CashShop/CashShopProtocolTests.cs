@@ -51,6 +51,14 @@ public class CashShopProtocolTests
         Assert.That(new CashShopPacketHandlerPlugIn().IsEncryptionExpected, Is.False);
     }
 
+    /// <summary>The client gets the script and the banner version in the layout its structs expect.</summary>
+    [Test]
+    public void VersionAnnouncementsMatchNativeClientLayout()
+    {
+        Assert.That(CashShopProtocol.ScriptVersion(), Is.EqualTo(new byte[] { 0xC1, 10, 0xD2, 0x0C, 0x00, 0x02, 0xDC, 0x07, 85, 0 }));
+        Assert.That(CashShopProtocol.BannerVersion(), Is.EqualTo(new byte[] { 0xC1, 10, 0xD2, 0x15, 0x47, 0x02, 0xDC, 0x07, 1, 0 }));
+    }
+
     /// <summary>A valid request reads the authenticated account and builds the actual response.</summary>
     [Test]
     public async Task BalanceRequestUsesAuthenticatedIdentity()
