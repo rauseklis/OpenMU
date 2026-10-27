@@ -686,6 +686,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed attack speed 50 for the Divine Archangel weapons and the Absolute Scepter.");
         }
 
+        if (await CherryWeightedExchangesInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed weighted Red and Golden Cherry Blossom exchanges.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

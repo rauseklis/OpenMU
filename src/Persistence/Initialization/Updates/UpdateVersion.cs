@@ -712,4 +712,9 @@ public enum UpdateVersion
     /// Sets the attack speed of the Divine Archangel weapons and the Absolute Scepter to 50.
     /// </summary>
     ArchangelWeaponSpeed = 152,
+
+    /// <summary>
+    /// Installs weighted Red pets and the Golden Silver/Luck split.
+    /// </summary>
+    CherryWeightedExchanges = 153,
 }

@@ -70,22 +70,36 @@ public class CherryBlossomRewardTests
         var expected = branchNumber switch
         {
             88 => new[] { (14, 13), (12, 15), (14, 16), (14, 14), (13, 48), (13, 65) },
-            89 => new[] { (14, 11), (13, 46), (13, 47), (13, 123), (13, 106), (13, 80) },
+            89 => new[] { (14, 11), (12, 33), (13, 46), (13, 47), (13, 123), (13, 106), (13, 80) },
             _ => new[] { (13, 47), (13, 46), (12, 30), (12, 31), (14, 124), (14, 11) },
         };
         Assert.That(results.Select(result => ((int)result.ItemDefinition!.Group, (int)result.ItemDefinition.Number)).Distinct(), Is.EquivalentTo(expected));
-        Assert.That(results, Has.Length.EqualTo(6), "One equally likely result entry per reward.");
-        foreach (var outcome in results.GroupBy(result => (result.ItemDefinition!.Group, result.ItemDefinition.Number)))
+        Assert.That(results, Has.Length.EqualTo(branchNumber == 89 ? 900 : branchNumber == 90 ? 12 : 6), "Exact weighted selection slots.");
+        foreach (var outcome in results.GroupBy(result => (result.ItemDefinition!.Group, result.ItemDefinition.Number, result.RandomMinimumLevel)))
         {
-            var expectedChance = 1.0 / 6;
-            Assert.That((double)outcome.Count() / results.Length, Is.EqualTo(expectedChance).Within(0.000000001));
+            var expectedWeight = branchNumber switch
+            {
+                89 when outcome.Key.Group == 13 && outcome.Key.Number == 80 => 29,
+                89 when outcome.Key.Group == 13 && outcome.Key.Number == 123 => 47,
+                89 when outcome.Key.Group == 13 && outcome.Key.Number == 106 => 74,
+                89 => 150,
+                90 when outcome.Key.Number == 124 || (outcome.Key.Group == 14 && outcome.Key.RandomMinimumLevel == 0) => 1,
+                90 => 2,
+                _ => 1,
+            };
+            Assert.That(outcome.Count(), Is.EqualTo(expectedWeight));
         }
+
+        var wrapperLevels = results.Where(result => result.ItemDefinition is { Group: 14, Number: 11 })
+            .Select(result => result.RandomMinimumLevel).Distinct();
+        Assert.That(wrapperLevels, Is.EquivalentTo(branchNumber == 89 ? new byte[] { 8, 2 } : branchNumber == 90 ? new byte[] { 10, 0 } : Array.Empty<byte>()));
 
         Assert.That(results.Where(result => result.ItemDefinition!.Group == 13 && result.ItemDefinition.Number is >= 46 and <= 48)
             .All(result => result.Durability == (branchNumber == 90 ? 10 : 1)), Is.True);
         foreach (var result in results)
         {
-            var level = result.ItemDefinition is { Group: 14, Number: 11 } ? branchNumber == 89 ? 8 : 10 : 0;
+            var level = result.ItemDefinition is { Group: 14, Number: 11 } ? result.RandomMinimumLevel : 0;
+            Assert.That(level, Is.AnyOf(0, 2, 8, 10));
             Assert.That(result.RandomMinimumLevel, Is.EqualTo(level));
             Assert.That(result.RandomMaximumLevel, Is.EqualTo(level));
         }
@@ -119,7 +133,7 @@ public class CherryBlossomRewardTests
         Assert.That(player.TemporaryStorage.Items, Has.Exactly(1).Items);
         Assert.That(player.TemporaryStorage.Items, Does.Not.Contain(branch));
         Assert.That(reward!.Durability, Is.GreaterThan(0));
-        Assert.That(reward.Level, Is.EqualTo(reward.Definition is { Group: 14, Number: 11 } ? number == 89 ? 8 : 10 : 0));
+        Assert.That(settings.ResultItems.Any(result => result.ItemDefinition == reward.Definition && result.RandomMinimumLevel == reward.Level), Is.True);
         Assert.That((await handler.DoMixAsync(player, 0).ConfigureAwait(false)).Result, Is.Not.EqualTo(CraftingResult.Success));
         Assert.That(player.TemporaryStorage.Items.Single(), Is.SameAs(reward));
     }
@@ -159,7 +173,7 @@ public class CherryBlossomRewardTests
         await new DataInitialization(provider, NullLoggerFactory.Instance).CreateInitialDataAsync(1, false).ConfigureAwait(false);
         using var context = provider.CreateNewContext();
         foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false))
-            .Where(update => update.Version == (int)UpdateVersion.CherryExchangeRevision).ToArray())
+            .Where(update => update.Version == (int)UpdateVersion.CherryWeightedExchanges).ToArray())
         {
             await context.DeleteAsync(update).ConfigureAwait(false);
         }
@@ -168,8 +182,8 @@ public class CherryBlossomRewardTests
         var before = BoxFingerprint(configuration);
         var shop = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items.ToArray();
         await context.SaveChangesAsync().ConfigureAwait(false);
-        Assert.That(await CherryExchangeRevisionInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
-        Assert.That(await CherryExchangeRevisionInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
+        Assert.That(await CherryWeightedExchangesInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
+        Assert.That(await CherryWeightedExchangesInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
         Assert.That(BoxFingerprint(configuration), Is.EqualTo(before), "Ancient, Kundun, Chocolate, Play-Box and all other box contents stay unchanged.");
         Assert.That(configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!.Items, Is.EquivalentTo(shop));
     }
@@ -214,7 +228,7 @@ public class CherryBlossomRewardTests
         foreach (var recipe in configuration.Monsters.Single(monster => monster.Number == 450).ItemCraftings)
         {
             var sourceSettings = recipe.SimpleCraftingSettings!;
-            foreach (var result in sourceSettings.ResultItems.DistinctBy(result => result.ItemDefinition))
+            foreach (var result in sourceSettings.ResultItems.DistinctBy(result => (result.ItemDefinition, result.RandomMinimumLevel)))
             {
                 var settings = context.CreateNew<SimpleCraftingSettings>();
                 settings.SuccessPercent = 100;
