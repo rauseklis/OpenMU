@@ -1,6 +1,6 @@
 # Chocolate Boxes
 
-**Prepared category update - not deployed.** The category ratios below are the final prepared values. Existing item pools and item rules are unchanged.
+The category ratios below apply to Chocolate rewards. Existing item pools and item rules are unchanged.
 
 One box gives one ordinary item. No Excellent, Ancient or socket rewards. Pink and Blue equipment is +6–+9; the two rare maces always drop +0. Luck, ADD and applicable weapon Skill use the shared server chances.
 

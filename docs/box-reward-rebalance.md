@@ -61,7 +61,7 @@ Examples of the single bonus roll:
 
 Firecracker uses an 80% armor / 20% weapon split within its unchanged 40% equipment share. Silver and Gold use a 75% armor / 20% weapon / 5% shield split within their unchanged 55% and 70% equipment shares. Boxes without an armor or shield category do not gain one. Other boxes keep their existing non-equipment category chances.
 
-**Prepared reward update - not deployed.** Silver, Gold and Firecracker select one unique armor set equally, then one of its included pieces equally. Silver's six sets are approximately 6.88% each per opening; Gold's six sets are 8.75% each; Firecracker's seven sets are approximately 4.57% each. Shared equip eligibility does not add probability. All item pools and non-equipment probabilities stay unchanged.
+Silver, Gold and Firecracker select one unique armor set equally, then one of its included pieces equally. Silver's six sets are approximately 6.88% each per opening; Gold's six sets are 8.75% each; Firecracker's seven sets are approximately 4.57% each. Shared equip eligibility does not add probability. All item pools and non-equipment probabilities stay unchanged.
 
 ## Equipment levels and options
 
