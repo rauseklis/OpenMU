@@ -732,4 +732,9 @@ public enum UpdateVersion
     /// Installs the approved Chaos Castle Ancient box rewards on both worlds.
     /// </summary>
     ChaosCastleBoxRewards = 156,
+
+    /// <summary>
+    /// Restores Scroll of Flame's original 1.5-tile target radius.
+    /// </summary>
+    FlameAreaRadius = 157,
 }
