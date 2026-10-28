@@ -21,6 +21,79 @@ using MUnique.OpenMU.PlugIns;
 [TestFixture]
 public class ExperienceRateSplitTest
 {
+    /// <summary>One normal reward stops at one level-up and ninety percent of the following bar.</summary>
+    /// <param name="percent">Progress before the reward.</param>
+    [TestCase(0)]
+    [TestCase(50)]
+    [TestCase(95)]
+    public async Task NormalRewardStopsAtOneLevelAndNinetyPercentAsync(int percent)
+    {
+        var context = this.CreateGameServerContext(1, 1, 400, 200);
+        var player = await this.CreatePlayerAsync(context, 100, 100, false).ConfigureAwait(false);
+        var table = context.ExperienceTable;
+        player.SelectedCharacter!.Experience = table[100] + ((table[101] - table[100]) * percent / 100);
+
+        await player.AddExperienceAsync(int.MaxValue, null).ConfigureAwait(false);
+
+        Assert.That(player.Attributes![Stats.Level], Is.EqualTo(101));
+        Assert.That(player.SelectedCharacter.Experience, Is.EqualTo(table[101] + ((table[102] - table[101]) * 90 / 100)));
+        await player.AddExperienceAsync(int.MaxValue, null).ConfigureAwait(false);
+        Assert.That(player.Attributes[Stats.Level], Is.EqualTo(102));
+        Assert.That(player.SelectedCharacter.Experience, Is.EqualTo(table[102] + ((table[103] - table[102]) * 90 / 100)));
+    }
+
+    /// <summary>Reaching the exact boundary grants a normal or Master level immediately.</summary>
+    /// <param name="master">Whether to award Master experience.</param>
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task ExactExperienceBoundaryLevelsUpAsync(bool master)
+    {
+        var context = this.CreateGameServerContext(1, 1, 400, 200);
+        var player = await this.CreatePlayerAsync(context, master ? (short)400 : (short)1, 1, master).ConfigureAwait(false);
+        if (master)
+        {
+            await player.AddMasterExperienceAsync((int)context.MasterExperienceTable[1], null).ConfigureAwait(false);
+            Assert.That(player.Attributes![Stats.MasterLevel], Is.EqualTo(1));
+        }
+        else
+        {
+            await player.AddExperienceAsync((int)context.ExperienceTable[2], null).ConfigureAwait(false);
+            Assert.That(player.Attributes![Stats.Level], Is.EqualTo(2));
+        }
+    }
+
+    /// <summary>Monster and event Master rewards discard everything above one level-up.</summary>
+    /// <param name="percent">Progress before the reward.</param>
+    /// <param name="eventReward">Whether to use the event reward entry point.</param>
+    [TestCase(0, false)]
+    [TestCase(50, false)]
+    [TestCase(95, false)]
+    [TestCase(0, true)]
+    [TestCase(50, true)]
+    [TestCase(95, true)]
+    public async Task MasterRewardStopsAtNextLevelAsync(int percent, bool eventReward)
+    {
+        var context = this.CreateGameServerContext(1, 1, 400, 200);
+        var player = await this.CreatePlayerAsync(context, 400, 400, true).ConfigureAwait(false);
+        player.Attributes![Stats.MasterLevel] = 1;
+        var table = context.MasterExperienceTable;
+        player.SelectedCharacter!.MasterExperience = table[1] + ((table[2] - table[1]) * percent / 100);
+        for (var level = 2; level <= 3; level++)
+        {
+            if (eventReward)
+            {
+                await player.AddMasterExperienceRewardAsync(int.MaxValue).ConfigureAwait(false);
+            }
+            else
+            {
+                await player.AddMasterExperienceAsync(int.MaxValue, null).ConfigureAwait(false);
+            }
+
+            Assert.That(player.Attributes[Stats.MasterLevel], Is.EqualTo(level));
+            Assert.That(player.SelectedCharacter.MasterExperience, Is.EqualTo(table[level]));
+        }
+    }
+
     /// <summary>
     /// Verifies that master classes receive master experience at the global master rate,
     /// while non-master classes receive normal experience.

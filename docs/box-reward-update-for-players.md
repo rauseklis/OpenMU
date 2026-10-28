@@ -84,9 +84,20 @@ The fixed completion EXP table is:
 DS +7 grants Master EXP only to promoted Master-class characters at the normal
 level cap. Below that cap, its reward remains normal EXP. DS +1 through +6
 and other events keep normal completion EXP. Completion rewards are fixed;
-server, map and premium monster-EXP multipliers do not multiply them. Master
-rewards can carry across Master level-ups unless experience overflow is
-disabled. The maximum Master level and EXP-block setting still apply.
+server, map and premium monster-EXP multipliers do not multiply them.
+
+Every individual normal EXP award, including monster and event rewards, can
+grant at most one level-up and fill the following EXP bar to 90%. For example,
+level 100 at 50% can reach at most level 101 at 90% from one award. The 90% is
+calculated using the EXP required from level 101 to 102, rounded down to whole
+EXP. Excess EXP is discarded, not saved for a later award. A later award can
+level the character again. If overflow prevention is enabled, normal EXP stops
+at the level-up with no progress into the following bar.
+
+Each Master EXP award can grant at most one Master level-up, with no overflow
+into the next bar. This also applies to DS +7 completion rewards. Normal level
+400, Master level 200 and EXP blocking still apply. Reaching an exact EXP
+threshold grants the level immediately.
 
 These are event completion payouts in addition to ordinary monster EXP and loot.
 

@@ -52,7 +52,10 @@ public class ExperiencePlugInTests
         var gained = await player.AddExpAfterKillAsync(killedObject).ConfigureAwait(false);
 
         Assert.That(gained, Is.GreaterThan(0));
-        Assert.That(player.SelectedCharacter!.Experience, Is.EqualTo(gained));
+        var table = player.GameContext.ExperienceTable;
+        var rewardLimit = table[2] + ((table[3] - table[2]) * 90 / 100);
+        Assert.That(player.SelectedCharacter!.Experience, Is.EqualTo(Math.Min(gained, rewardLimit)));
+        Assert.That(player.Attributes![Stats.Level], Is.EqualTo(2));
     }
 
     /// <summary>
