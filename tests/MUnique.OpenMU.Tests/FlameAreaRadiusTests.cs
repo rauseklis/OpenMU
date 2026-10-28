@@ -17,6 +17,7 @@ using SeasonSixDataInitialization = MUnique.OpenMU.Persistence.Initialization.Ve
 public class FlameAreaRadiusTests
 {
     private const float ExpectedDiameter = 3.0f;
+    private const int ExpectedMinimumHitsPerTarget = 1;
 
     /// <summary>
     /// Existing configurations are corrected without replacing the skill or its other area settings.
@@ -30,12 +31,37 @@ public class FlameAreaRadiusTests
         flame.Number = 5; // Flame
         flame.AreaSkillSettings = context.CreateNew<AreaSkillSettings>();
         flame.AreaSkillSettings.TargetAreaDiameter = 2.0f;
+        flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget = 0;
         flame.AreaSkillSettings.DelayBetweenHits = TimeSpan.FromMilliseconds(500);
         configuration.Skills.Add(flame);
 
         await new FlameAreaRadiusUpdatePlugIn().ApplyUpdateAsync(context, configuration);
 
         Assert.That(flame.AreaSkillSettings.TargetAreaDiameter, Is.EqualTo(ExpectedDiameter));
+        Assert.That(flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget, Is.Zero);
+        Assert.That(flame.AreaSkillSettings.DelayBetweenHits, Is.EqualTo(TimeSpan.FromMilliseconds(500)));
+    }
+
+    /// <summary>
+    /// Existing configurations gain one guaranteed attempt without changing their radius or cadence.
+    /// </summary>
+    [Test]
+    public async Task MinimumHitUpdateCorrectsExistingFlameSkill()
+    {
+        using var context = new InMemoryPersistenceContextProvider().CreateNewContext();
+        var configuration = context.CreateNew<GameConfiguration>();
+        var flame = context.CreateNew<Skill>();
+        flame.Number = 5; // Flame
+        flame.AreaSkillSettings = context.CreateNew<AreaSkillSettings>();
+        flame.AreaSkillSettings.TargetAreaDiameter = ExpectedDiameter;
+        flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget = 0;
+        flame.AreaSkillSettings.DelayBetweenHits = TimeSpan.FromMilliseconds(500);
+        configuration.Skills.Add(flame);
+
+        await new FlameMinimumHitUpdatePlugIn().ApplyUpdateAsync(context, configuration);
+
+        Assert.That(flame.AreaSkillSettings.TargetAreaDiameter, Is.EqualTo(ExpectedDiameter));
+        Assert.That(flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget, Is.EqualTo(ExpectedMinimumHitsPerTarget));
         Assert.That(flame.AreaSkillSettings.DelayBetweenHits, Is.EqualTo(TimeSpan.FromMilliseconds(500)));
     }
 
@@ -56,5 +82,6 @@ public class FlameAreaRadiusTests
 
         Assert.That(flame.AreaSkillSettings, Is.Not.Null);
         Assert.That(flame.AreaSkillSettings!.TargetAreaDiameter, Is.EqualTo(ExpectedDiameter));
+        Assert.That(flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget, Is.EqualTo(ExpectedMinimumHitsPerTarget));
     }
 }

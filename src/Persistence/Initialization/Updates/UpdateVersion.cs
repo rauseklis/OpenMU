@@ -740,4 +740,9 @@ public enum UpdateVersion
 
     /// <summary>Matches ordinary bonus drops across worlds without changing EXP or player storage.</summary>
     WorldGameplayParity = 158,
+
+    /// <summary>
+    /// Guarantees Scroll of Flame one hit attempt per target before distance falloff applies.
+    /// </summary>
+    FlameMinimumHit = 159,
 }
