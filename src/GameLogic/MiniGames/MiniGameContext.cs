@@ -1,4 +1,4 @@
-﻿// <copyright file="MiniGameContext.cs" company="MUnique">
+// <copyright file="MiniGameContext.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -58,10 +58,8 @@ public class MiniGameContext : AsyncDisposable, IEventStateProvider
 
         this._players = new MiniGamePlayerRegistry(this.Definition);
 
-        // Rewards intentionally follow the game's (possibly overridden) drop generator
-        // instead of the game context one: ChaosCastleDropGenerator only overrides monster
-        // kill drops and delegates reward generation back to the context generator,
-        // so this is behavior-preserving while staying correct for custom generators.
+        // Rewards follow the game's selected generator, so Chaos Castle keeps both
+        // its monster jewel drops and its mixed winner-box selection in its own generator.
         this._rewards = new MiniGameRewardService(this.Definition, this._gameContext, this.Map, () => this.DropGenerator, () => this.RemainingTime, () => this.Winner, this.Logger, this);
 
         this._changeEvents = new MiniGameChangeEventProcessor(
