@@ -727,4 +727,9 @@ public enum UpdateVersion
     /// Scales equipment categories toward armor without changing normalized internal weights.
     /// </summary>
     RewardCategoryRatios = 155,
+
+    /// <summary>
+    /// Installs the approved Chaos Castle Ancient box rewards on both worlds.
+    /// </summary>
+    ChaosCastleBoxRewards = 156,
 }

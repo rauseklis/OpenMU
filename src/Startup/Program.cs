@@ -701,6 +701,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed armor-focused reward category ratios with normalized internal weights preserved.");
         }
 
+        if (await ChaosCastleBoxRewardsInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed approved Chaos Castle Ancient box rewards on both worlds.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

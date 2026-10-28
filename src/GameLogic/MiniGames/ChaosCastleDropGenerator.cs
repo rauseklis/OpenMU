@@ -29,6 +29,7 @@ public class ChaosCastleDropGenerator : IDropGenerator
 
     private readonly Dictionary<int, ItemDefinition> _monsterDrops = new();
     private readonly IGameContext _gameContext;
+    private readonly Dictionary<DropItemGroup, DropItemGroup> _rewardGroups;
     private int _killedMonsters;
 
     /// <summary>
@@ -38,13 +39,24 @@ public class ChaosCastleDropGenerator : IDropGenerator
     /// <param name="context">The context.</param>
     /// <param name="spawnedMonstersCount">The spawned monsters count.</param>
     public ChaosCastleDropGenerator(IGameContext gameContext, ChaosCastleContext context, int spawnedMonstersCount)
+        : this(gameContext, context.Definition, spawnedMonstersCount)
+    {
+    }
+
+    /// <summary>Creates the generator directly from the event definition.</summary>
+    /// <param name="gameContext">The owning game context.</param>
+    /// <param name="definition">The event and winner reward configuration.</param>
+    /// <param name="spawnedMonstersCount">The number of event monsters.</param>
+    internal ChaosCastleDropGenerator(IGameContext gameContext, MiniGameDefinition definition, int spawnedMonstersCount)
     {
         this._gameContext = gameContext;
+        this._rewardGroups = definition.Rewards.Select(reward => reward.ItemReward).OfType<DropItemGroup>()
+            .Distinct().ToDictionary(group => group, group => ChaosCastleBoxRewardGroup.Create(group, definition.GameLevel));
 
         // TODO: This should rather be configurable...
         var blessDefinition = this._gameContext.Configuration.Items.First(item => item is { Group: 14, Number: 13 });
         var soulDefinition = this._gameContext.Configuration.Items.First(item => item is { Group: 14, Number: 14 });
-        var drops = MonsterJewelDropsPerLevel[context.Definition.GameLevel];
+        var drops = MonsterJewelDropsPerLevel[definition.GameLevel];
         AddItems(drops.Blesses, blessDefinition);
         AddItems(drops.Souls, soulDefinition);
 
@@ -84,7 +96,7 @@ public class ChaosCastleDropGenerator : IDropGenerator
     /// <inheritdoc />
     public Item? GenerateItemDrop(DropItemGroup group)
     {
-        return this._gameContext.DropGenerator.GenerateItemDrop(group);
+        return this._gameContext.DropGenerator.GenerateItemDrop(this._rewardGroups.GetValueOrDefault(group, group));
     }
 
     /// <inheritdoc />
