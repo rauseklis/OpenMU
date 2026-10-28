@@ -706,6 +706,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed approved Chaos Castle Ancient box rewards on both worlds.");
         }
 
+        if (await WorldGameplayParityInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed matching bonus progression on all worlds, preserving EXP and player data.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

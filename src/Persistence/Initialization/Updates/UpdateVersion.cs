@@ -737,4 +737,7 @@ public enum UpdateVersion
     /// Restores Scroll of Flame's original 1.5-tile target radius.
     /// </summary>
     FlameAreaRadius = 157,
+
+    /// <summary>Matches ordinary bonus drops across worlds without changing EXP or player storage.</summary>
+    WorldGameplayParity = 158,
 }

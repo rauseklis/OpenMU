@@ -52,11 +52,8 @@ public class DataInitialization : DataInitializationBase
     /// <inheritdoc />
     protected override void ConfigureGameServer(GameServerDefinition server)
     {
-        if (server.ServerID == 0)
-        {
-            server.SmallBonusDropsEnabled = true;
-            server.SmallBonusDropChance = null;
-        }
+        server.SmallBonusDropsEnabled = true;
+        server.SmallBonusDropChance = null;
     }
 
     /// <inheritdoc />
