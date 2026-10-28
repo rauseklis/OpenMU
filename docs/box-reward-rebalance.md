@@ -1,3 +1,4 @@
+> World scope: the 50x and 5x worlds use the same gameplay, equipment and reward configuration. Ordinary monster bonus progression is enabled on both worlds with the same absolute chances. Only their EXP multipliers differ; characters, warehouses, Jewel Bank, Auction House and Cash Shop balances remain isolated by world. Update 158 enables the existing progression on previously opted-out worlds without changing the reward tables or player items.
 # Monster bonuses and equipment progression
 
 The monster-drop and Box of Heaven rules below define the configured progression. Other reward systems retain their existing configuration.
