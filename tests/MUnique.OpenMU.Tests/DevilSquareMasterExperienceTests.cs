@@ -21,20 +21,20 @@ using MUnique.OpenMU.PlugIns;
 public class DevilSquareMasterExperienceTests
 {
     /// <summary>
-    /// DS seven grants the full fixed amount across Master level-ups without rate multiplication.
+    /// DS seven stops at one Master level and discards excess experience.
     /// </summary>
     /// <param name="amount">The proposed rank reward.</param>
     [TestCase(60_000_000)]
     [TestCase(55_000_000)]
     [TestCase(50_000_000)]
     [TestCase(45_000_000)]
-    public async Task SevenGrantsFullMasterRewardAsync(int amount)
+    public async Task SevenStopsAtOneMasterLevelAsync(int amount)
     {
         var player = await CreatePlayerAsync(true, 400).ConfigureAwait(false);
         await GiveRewardAsync(player, MiniGameType.DevilSquare, 7, amount).ConfigureAwait(false);
-        Assert.That(player.SelectedCharacter!.MasterExperience, Is.EqualTo(amount));
+        Assert.That(player.SelectedCharacter!.MasterExperience, Is.EqualTo(player.GameContext.MasterExperienceTable[1]));
         Assert.That(player.SelectedCharacter.Experience, Is.Zero);
-        Assert.That(player.Attributes![Stats.MasterLevel], Is.GreaterThan(0));
+        Assert.That(player.Attributes![Stats.MasterLevel], Is.EqualTo(1));
     }
 
     /// <summary>
