@@ -88,6 +88,7 @@ public static class PlayerTestHelper
                 new (Stats.BaseEnergy, 10, true),
                 new (Stats.CurrentHealth, 0, false),
                 new (Stats.CurrentMana, 0, false),
+                new (Stats.CurrentAbility, 0, false),
                 new (Stats.CurrentShield, 0, false),
                 new (Stats.Resets, 0, false),
                 new (Stats.PointsPerReset, 0, false),

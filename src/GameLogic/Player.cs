@@ -1124,7 +1124,7 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
             return false;
         }
 
-        if (skill.Requirements.Any(r => r.MinimumValue > this.Attributes![r.Attribute]))
+        if (!SkillCastingRequirements.AreMet(skill, attribute => this.Attributes![attribute]))
         {
             return false;
         }
