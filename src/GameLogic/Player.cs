@@ -1,4 +1,4 @@
-﻿// <copyright file="Player.cs" company="MUnique">
+// <copyright file="Player.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -102,6 +102,8 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     private SkillHitValidator? _skillHitValidator;
 
     private IPetCommandManager? _petCommandManager;
+
+    private PetRentalLifetime? _petRentalLifetime;
 
     private Lazy<ComboStateMachine>? _comboStateLazy;
 
@@ -644,6 +646,10 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
                 await this._muHelperLazy.Value.StopAsync().ConfigureAwait(false);
             }
 
+            if (this._petRentalLifetime is { } rentalLifetime)
+            {
+                await rentalLifetime.StopAsync().ConfigureAwait(false);
+            }
             this.RemovePetCommandManager();
             this.LastAttackedTarget.SetTarget(null);
             this._comboStateLazy = null;
@@ -834,6 +840,8 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         }
     }
 
+    internal void SchedulePetRentalExpiry() => (this._petRentalLifetime ??= new PetRentalLifetime(this)).Schedule();
+
     /// <summary>
     /// Resets the appearance cache.
     /// </summary>
@@ -935,6 +943,7 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
                 return;
             }
 
+            await this.RunPersistenceExclusiveAsync(() => PetRentalLifetime.ExpireAsync(this)).ConfigureAwait(false);
             var now = DateTime.UtcNow;
             foreach (var r in Stats.IntervalRegenerationAttributes)
             {
@@ -1119,6 +1128,11 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     /// </returns>
     public async ValueTask<bool> TryConsumeForSkillAsync(SkillEntry skillEntry)
     {
+        if (skillEntry.Skill is { } mountSkill && !PetDurabilityPolicy.CanUseMountSkill(this, mountSkill.Number))
+        {
+            return false;
+        }
+
         if (skillEntry.Skill is not { } skill)
         {
             return false;
@@ -1385,6 +1399,10 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         }
 
         await this._muHelperLazy.DisposeIfCreatedAsync().ConfigureAwait(false);
+        if (this._petRentalLifetime is { } rentalLifetime)
+        {
+            await rentalLifetime.StopAsync().ConfigureAwait(false);
+        }
 
         this._petCommandManager?.Dispose();
         this._petCommandManager = null;
@@ -1842,6 +1860,8 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
             this._comboStateLazy = new Lazy<ComboStateMachine>(() => ComboStateMachine.Create(comboDefinition));
         }
 
+        await PetRentalLifetime.ExpireAsync(this).ConfigureAwait(false);
+        this.SchedulePetRentalExpiry();
         await this.InvokeViewPlugInAsync<IUpdateCharacterStatsPlugIn>(p => p.UpdateCharacterStatsAsync()).ConfigureAwait(false);
         await this.InvokeViewPlugInAsync<IUpdateInventoryListPlugIn>(p => p.UpdateInventoryListAsync()).ConfigureAwait(false);
         await this.InvokeViewPlugInAsync<ISkillListViewPlugIn>(p => p.UpdateSkillListAsync()).ConfigureAwait(false);
@@ -1993,18 +2013,6 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         if (this.Inventory?.GetItem(InventoryConstants.PetSlot) is { Durability: > 0.0 } pet)
         {
             await this.DecreaseDefenseItemDurabilityAsync(pet, hitInfo).ConfigureAwait(false);
-            if (pet.Durability == 0.0)
-            {
-                if (pet.IsTrainablePet())
-                {
-                    var minimumExp = pet.Definition!.GetExperienceOfPetLevel(pet.Level, pet.Definition!.MaximumItemLevel);
-                    pet.PetExperience = (int)Math.Max((int)(pet.PetExperience * 0.9), minimumExp);
-                }
-                else
-                {
-                    await this.DestroyInventoryItemAsync(pet).ConfigureAwait(false);
-                }
-            }
         }
     }
 
@@ -2014,19 +2022,16 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         {
             return;
         }
-        var itemDurationIncrease = targetItem.IsTrainablePet() ? this.Attributes?[Stats.PetDurationIncrease] : this.Attributes?[Stats.ItemDurationIncrease];
-        if (itemDurationIncrease == 0)
+        var protection = DurabilityProtection.Percent(this, targetItem);
+        if (PetDurabilityPolicy.IsPet(targetItem))
         {
-            itemDurationIncrease = 1;
+            await PetDurabilityPolicy.ApplyLossAsync(this, targetItem, PetDurabilityPolicy.DamageLoss(targetItem, hitInfo.HealthDamage, protection)).ConfigureAwait(false);
+            return;
         }
 
-        var damageDivisor = targetItem.IsTrainablePet() ? this.GameContext.Configuration.DamagePerOnePetDurability : this.GameContext.Configuration.DamagePerOneItemDurability;
-        if (itemDurationIncrease.HasValue)
-        {
-            damageDivisor *= (double)itemDurationIncrease;
-        }
-
-        var decrement = hitInfo.HealthDamage / damageDivisor;
+        var duration = this.Attributes?[Stats.ItemDurationIncrease] ?? 1;
+        var divisor = this.GameContext.Configuration.DamagePerOneItemDurability * (duration == 0 ? 1 : duration);
+        var decrement = hitInfo.HealthDamage / divisor * PetDurabilityPolicy.ProtectionMultiplier(protection);
         if (targetItem.DecreaseDurability(decrement))
         {
             await this.InvokeViewPlugInAsync<IItemDurabilityChangedPlugIn>(p => p.ItemDurabilityChangedAsync(targetItem, false)).ConfigureAwait(false);
@@ -2046,17 +2051,17 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
             return;
         }
 
-        var decrement = 1.0 / this.GameContext.Configuration.HitsPerOneItemDurability;
+        if (PetDurabilityPolicy.IsPet(targetItem))
+        {
+            await PetDurabilityPolicy.ApplyLossAsync(this, targetItem, PetDurabilityPolicy.RavenLoss(targetItem, DurabilityProtection.Percent(this, targetItem))).ConfigureAwait(false);
+            return;
+        }
+
+        var decrement = 1.0 / this.GameContext.Configuration.HitsPerOneItemDurability
+            * PetDurabilityPolicy.ProtectionMultiplier(DurabilityProtection.Percent(this, targetItem));
         if (targetItem.DecreaseDurability(decrement))
         {
             await this.InvokeViewPlugInAsync<IItemDurabilityChangedPlugIn>(p => p.ItemDurabilityChangedAsync(targetItem, false)).ConfigureAwait(false);
-
-            if (targetItem is { Durability: 0.0 } pet && pet.IsTrainablePet())
-            {
-                var minimumExp = pet.Definition!.GetExperienceOfPetLevel(pet.Level, pet.Definition!.MaximumItemLevel);
-                pet.PetExperience = (int)Math.Max((int)(pet.PetExperience * 0.9), minimumExp);
-                await this.ResetPetBehaviorAsync().ConfigureAwait(false);
-            }
         }
     }
 

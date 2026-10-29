@@ -35,7 +35,7 @@ public class ItemPowerUpFactory : IItemPowerUpFactory
             yield break;
         }
 
-        if (item.Durability <= 0)
+        if (item.Durability <= 0 || item.IsRentalExpired())
         {
             yield break;
         }
@@ -95,7 +95,7 @@ public class ItemPowerUpFactory : IItemPowerUpFactory
         GameConfiguration gameConfiguration)
     {
         var activeItems = equippedItems
-            .Where(i => i.Durability > 0)
+            .Where(i => i.Durability > 0 && !i.IsRentalExpired())
             .ToList();
         var itemGroups = activeItems
             .SelectMany(i => i.ItemSetGroups)

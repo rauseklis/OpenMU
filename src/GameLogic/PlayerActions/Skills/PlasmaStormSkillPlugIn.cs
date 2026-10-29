@@ -24,12 +24,33 @@ public class PlasmaStormSkillPlugIn : IAreaSkillPlugIn
     /// <inheritdoc />
     public async ValueTask AfterTargetGotAttackedAsync(IAttacker attacker, IAttackable target, SkillEntry skillEntry, Point targetAreaCenter, HitInfo? hitInfo)
     {
+        if (attacker is Player owner && !Pet.PetDurabilityPolicy.CanUseMountSkill(owner, this.Key))
+        {
+            return;
+        }
+
         if (target is Player targetPlayer
             && Rand.NextRandomBool(25)
             && targetPlayer.Inventory?.EquippedItems.SelectRandom() is { } randomItem)
         {
-            randomItem.Durability /= 2;
+            if (!TryReduceEquipmentDurability(randomItem))
+            {
+                return;
+            }
+
             await targetPlayer.InvokeViewPlugInAsync<IItemDurabilityChangedPlugIn>(p => p.ItemDurabilityChangedAsync(randomItem, false)).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Preserves the generic equipment effect while excluding pets from direct halving.</summary>
+    internal static bool TryReduceEquipmentDurability(Item item)
+    {
+        if (Pet.PetDurabilityPolicy.IsPet(item))
+        {
+            return false;
+        }
+
+        item.Durability /= 2;
+        return true;
     }
 }

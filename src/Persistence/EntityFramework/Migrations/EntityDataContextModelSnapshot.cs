@@ -2459,6 +2459,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<int>("PetExperience")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("RentalExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("SocketCount")
                         .HasColumnType("integer");
 

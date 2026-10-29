@@ -55,9 +55,9 @@ public class RavenCommandManager : Disposable, IPetCommandManager
         this._attackCts?.Dispose();
         this._attackCts = null;
 
-        if (this._pet.Durability == 0.0)
+        if (!PetDurabilityPolicy.IsUsable(this._pet))
         {
-            this._currentBehaviour = PetBehaviour.Idle;
+            newBehaviour = PetBehaviour.Idle;
         }
 
         this._currentBehaviour = newBehaviour;
@@ -101,7 +101,7 @@ public class RavenCommandManager : Disposable, IPetCommandManager
             this._owner.Logger.LogDebug($"Pet attacks target: {target}");
         }
 
-        if (this._owner.IsAtSafezone())
+        if (this._owner.IsAtSafezone() || !PetDurabilityPolicy.IsUsable(this._pet) || cancellationToken.IsCancellationRequested)
         {
             return;
         }
@@ -115,7 +115,10 @@ public class RavenCommandManager : Disposable, IPetCommandManager
 
         if (attackType == PetAttackType.SingleTarget)
         {
-            await target.AttackByAsync(this._petAttackerSurrogate, null, false).ConfigureAwait(false);
+            if (PetDurabilityPolicy.IsUsable(this._pet) && !cancellationToken.IsCancellationRequested)
+            {
+                await target.AttackByAsync(this._petAttackerSurrogate, null, false).ConfigureAwait(false);
+            }
         }
         else
         {
@@ -133,6 +136,11 @@ public class RavenCommandManager : Disposable, IPetCommandManager
         try
         {
             using var l = await this._rangeAttackLock.LockAsync(cancellationToken);
+            if (!PetDurabilityPolicy.IsUsable(this._pet))
+            {
+                return;
+            }
+
             var delay = this.AttackDelay / 4;
             this._targetBuffer.Clear();
             this._targetBuffer.Add(mainTarget);
@@ -146,11 +154,21 @@ public class RavenCommandManager : Disposable, IPetCommandManager
             this._targetBuffer.AddRange(targets);
             for (int i = 0; i < 3; i++)
             {
+                if (!PetDurabilityPolicy.IsUsable(this._pet) || cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 var target = this._targetBuffer[i % this._targetBuffer.Count];
                 await this._owner.ForEachWorldObserverAsync<IPetAttackViewPlugIn>(
                         p => p.ShowPetAttackAnimationAsync(this._owner, this._pet, target, PetAttackType.RangeAttack),
                         true)
                     .ConfigureAwait(false);
+
+                if (!PetDurabilityPolicy.IsUsable(this._pet) || cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
 
                 await target.AttackByAsync(this._petAttackerSurrogate, null, false).ConfigureAwait(false);
                 await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
@@ -292,7 +310,8 @@ public class RavenCommandManager : Disposable, IPetCommandManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsValidTarget([NotNullWhen(true)] IAttackable? target)
     {
-        return target is not null
+        return PetDurabilityPolicy.IsUsable(this._pet)
+               && target is not null
                && target is not Monster { Definition.ObjectKind: NpcObjectKind.Guard }
                && target.IsActive()
                && target.IsInRange(this._owner.Position, AttackRange);

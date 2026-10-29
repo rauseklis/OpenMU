@@ -23,6 +23,11 @@ public static class PlayerItemExtensions
     {
         item.ThrowNotInitializedProperty(item.Definition is null, nameof(item.Definition));
 
+        if (item.IsRentalExpired())
+        {
+            return false;
+        }
+
         foreach (var requirement in item.Definition.Requirements.Select(item.GetRequirement))
         {
             if (player.Attributes![requirement.Attr] < requirement.Value)

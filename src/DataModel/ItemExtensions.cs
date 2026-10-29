@@ -169,11 +169,14 @@ public static class ItemExtensions
                && item.Level < item.Definition.MaximumItemLevel;
     }
 
-    /// <summary>
-    /// Gets the <see cref="Item.Durability"/> as byte value, rounded off.
-    /// </summary>
-    /// <param name="item">The item.</param>
-    /// <returns>The durability.</returns>
+    /// <summary>Determines whether an identified rental has expired in UTC.</summary>
+    /// <param name="item">The item instance.</param>
+    /// <returns>Whether the non-null rental deadline has passed.</returns>
+    public static bool IsRentalExpired(this Item item) => item.RentalExpiresAt is { } expiry && expiry <= DateTimeOffset.UtcNow;
+
+    /// <summary>Gets the integer durability for the wire protocol.</summary>
+    /// <param name="item">The item instance.</param>
+    /// <returns>The durability rounded down.</returns>
     public static byte Durability(this Item item) => (byte)Math.Floor(item.Durability);
 
     /// <summary>

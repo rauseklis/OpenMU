@@ -88,7 +88,7 @@ internal static class CashShopRequests
             return CashShopProtocol.BuyResult(4);
         }
 
-        var item = new CashShopStorageItem(0, offer.PackageSeq, offer.ProductSeq, offer.PriceSeq, offer.ItemGroup, offer.ItemNumber, offer.ItemLevel, offer.Quantity);
+        var item = new CashShopStorageItem(0, offer.PackageSeq, offer.ProductSeq, offer.PriceSeq, offer.ItemGroup, offer.ItemNumber, offer.ItemLevel, offer.Quantity, offer.RentalDurationSeconds);
         var result = await repository.PurchaseAsync(accountId, serverId, offer.Currency, offer.Price, item).ConfigureAwait(false);
         return CashShopProtocol.BuyResult(result switch
         {

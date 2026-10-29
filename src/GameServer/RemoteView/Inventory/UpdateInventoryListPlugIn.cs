@@ -87,5 +87,6 @@ public class UpdateInventoryListPlugIn : IUpdateInventoryListPlugIn
         }
 
         await connection.SendAsync(Write).ConfigureAwait(false);
+        await PetRentalPackets.SendAsync(this._player).ConfigureAwait(false);
     }
 }

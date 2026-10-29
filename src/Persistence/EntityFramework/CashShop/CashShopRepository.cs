@@ -143,7 +143,7 @@ public sealed class CashShopRepository : ICashShopRepository
     {
         await using var context = this._contextFactory();
         var rows = await context.Database.SqlQuery<StorageRow>($"""
-            SELECT "Id", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity"
+            SELECT "Id", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity", "RentalDurationSeconds"
             FROM data."CashShopStorage"
             WHERE "AccountId"={accountId} AND "GameServerId"={(short)serverId}
             ORDER BY "Id"
@@ -158,7 +158,7 @@ public sealed class CashShopRepository : ICashShopRepository
         var rows = await context.Database.SqlQuery<StorageRow>($"""
             DELETE FROM data."CashShopStorage"
             WHERE "Id"={storageItemId} AND "AccountId"={accountId} AND "GameServerId"={(short)serverId}
-            RETURNING "Id", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity"
+            RETURNING "Id", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity", "RentalDurationSeconds"
             """).ToListAsync(cancellationToken).ConfigureAwait(false);
         return rows.Count == 0 ? null : rows[0].ToItem();
     }
@@ -170,9 +170,9 @@ public sealed class CashShopRepository : ICashShopRepository
         await using var context = this._contextFactory();
         await context.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO data."CashShopStorage"
-                ("Id", "AccountId", "GameServerId", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity", "PurchasedAt")
+                ("Id", "AccountId", "GameServerId", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity", "RentalDurationSeconds", "PurchasedAt")
             VALUES ({item.Id}, {accountId}, {(short)serverId}, {item.PackageSeq}, {item.ProductSeq}, {item.PriceSeq},
-                    {(short)item.ItemGroup}, {item.ItemNumber}, {(short)item.ItemLevel}, {item.Quantity}, {DateTimeOffset.UtcNow})
+                    {(short)item.ItemGroup}, {item.ItemNumber}, {(short)item.ItemLevel}, {item.Quantity}, {item.RentalDurationSeconds}, {DateTimeOffset.UtcNow})
             ON CONFLICT DO NOTHING
             """, cancellationToken).ConfigureAwait(false);
     }
@@ -180,9 +180,9 @@ public sealed class CashShopRepository : ICashShopRepository
     private static Task<int> InsertAsync(EntityDataContext context, Guid accountId, byte serverId, CashShopStorageItem item, CancellationToken cancellationToken)
         => context.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO data."CashShopStorage"
-                ("AccountId", "GameServerId", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity", "PurchasedAt")
+                ("AccountId", "GameServerId", "PackageSeq", "ProductSeq", "PriceSeq", "ItemGroup", "ItemNumber", "ItemLevel", "Quantity", "RentalDurationSeconds", "PurchasedAt")
             VALUES ({accountId}, {(short)serverId}, {item.PackageSeq}, {item.ProductSeq}, {item.PriceSeq},
-                    {(short)item.ItemGroup}, {item.ItemNumber}, {(short)item.ItemLevel}, {item.Quantity}, {DateTimeOffset.UtcNow})
+                    {(short)item.ItemGroup}, {item.ItemNumber}, {(short)item.ItemLevel}, {item.Quantity}, {item.RentalDurationSeconds}, {DateTimeOffset.UtcNow})
             """, cancellationToken);
 
     private static async Task<CashShopBalance> ReadAsync(EntityDataContext context, Guid accountId, byte serverId, CancellationToken cancellationToken)
@@ -221,8 +221,10 @@ public sealed class CashShopRepository : ICashShopRepository
 
         public int Quantity { get; set; }
 
+        public int? RentalDurationSeconds { get; set; }
+
         public CashShopStorageItem ToItem()
-            => new(this.Id, this.PackageSeq, this.ProductSeq, this.PriceSeq, (byte)this.ItemGroup, this.ItemNumber, (byte)this.ItemLevel, this.Quantity);
+            => new(this.Id, this.PackageSeq, this.ProductSeq, this.PriceSeq, (byte)this.ItemGroup, this.ItemNumber, (byte)this.ItemLevel, this.Quantity, this.RentalDurationSeconds);
     }
 
     private sealed class CreditRow

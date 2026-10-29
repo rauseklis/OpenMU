@@ -12,7 +12,9 @@ using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.Persistence.EntityFramework;
+using MUnique.OpenMU.Persistence.EntityFramework.Json;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix;
+using MUnique.OpenMU.PlugIns;
 using MUnique.OpenMU.Tests.AuctionHouse;
 
 /// <summary>Seeds a disposable server and checks a real shifted connect-server listener without logging in.</summary>
@@ -47,6 +49,8 @@ public class CashShopServerSmokeTests
         Assert.That(testConnection.Port, Is.EqualTo(55432));
         Assert.That(testConnection.Database, Does.StartWith("cash_shop_ci"));
         AuctionPostgresTestEnvironment.EnsureConfigured();
+        // Match Startup.Program before loading PostgreSQL bytea values from configuration JSON.
+        JsonConverterRegistry.RegisterConverter(new BinaryAsHexJsonConverter());
         var provider = new PersistenceContextProvider(NullLoggerFactory.Instance, null);
         await provider.ApplyAllPendingUpdatesAsync();
         await new DataInitialization(provider, NullLoggerFactory.Instance).CreateInitialDataAsync(1, false);

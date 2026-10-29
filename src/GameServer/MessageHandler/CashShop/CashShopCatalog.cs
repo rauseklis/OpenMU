@@ -36,6 +36,8 @@ internal sealed class CashShopCatalog
 
     private const int ProductPropertyQuantity = 7;
 
+    private const int ProductPropertyDuration = 10;
+
     private readonly Dictionary<int, Package> _packages = new();
 
     private CashShopCatalog()
@@ -98,6 +100,11 @@ internal sealed class CashShopCatalog
                 list.Add(option);
             }
 
+            if (Int(fields[14]) == ProductPropertyDuration && fields[4] == "Sec.")
+            {
+                option.DurationSeconds = Int(fields[3]);
+            }
+
             if (Int(fields[14]) == ProductPropertyQuantity)
             {
                 option.Quantity = Math.Max(1, Int(fields[3]));
@@ -154,6 +161,12 @@ internal sealed class CashShopCatalog
             return false;
         }
 
+        var isPet = package.Group == 13 && package.Number is 0 or 1 or 2 or 3 or 4 or 5 or 37 or 64 or 65 or 67 or 80 or 106 or 123;
+        if (isPet && option.DurationSeconds is not > 0)
+        {
+            return false; // Never charge for a new pet rental with an unknown duration.
+        }
+
         offer = new CashShopOffer(
             package.Seq,
             package.ProductSeq,
@@ -163,7 +176,8 @@ internal sealed class CashShopCatalog
             package.Group,
             package.Number,
             package.Level,
-            option.Quantity);
+            option.Quantity,
+            isPet ? option.DurationSeconds : null);
         return true;
     }
 
@@ -232,6 +246,8 @@ internal sealed class CashShopCatalog
         public int Price { get; } = price;
 
         public int Quantity { get; set; } = 1;
+
+        public int? DurationSeconds { get; set; }
     }
 
     private sealed record Package(int Seq, int CategorySeq, CashShopCurrency Currency, int ProductSeq, int Price, List<Option> Options, byte Group, short Number, byte Level);
@@ -247,4 +263,4 @@ internal sealed class CashShopCatalog
 /// <param name="ItemNumber">The delivered item number.</param>
 /// <param name="ItemLevel">The delivered item level.</param>
 /// <param name="Quantity">The number of items.</param>
-internal sealed record CashShopOffer(int PackageSeq, int ProductSeq, int PriceSeq, CashShopCurrency Currency, long Price, byte ItemGroup, short ItemNumber, byte ItemLevel, int Quantity);
+internal sealed record CashShopOffer(int PackageSeq, int ProductSeq, int PriceSeq, CashShopCurrency Currency, long Price, byte ItemGroup, short ItemNumber, byte ItemLevel, int Quantity, int? RentalDurationSeconds = null);

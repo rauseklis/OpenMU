@@ -80,7 +80,7 @@ public class PetHandlerTests
             },
             Durability = 0,
         };
-        await player.Inventory!.AddItemAsync(InventoryConstants.PetSlot, petItem).ConfigureAwait(false);
+        await player.Inventory!.AddItemAsync(InventoryConstants.RightHandSlot, petItem).ConfigureAwait(false);
 
         var handler = new PetHandler(player, new MuHelperSettings(), petCommandManagerMock.Object);
 

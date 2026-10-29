@@ -1,4 +1,4 @@
-﻿// <copyright file="AppearanceChangedPlugIn.cs" company="MUnique">
+// <copyright file="AppearanceChangedPlugIn.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -49,7 +49,8 @@ public class AppearanceChangedPlugIn : IAppearanceChangedPlugIn
                 ChangedPlayerId = changedPlayer.GetId(this._player),
             };
 
-            if (inventory!.EquippedItems.Contains(item))
+            if (inventory!.EquippedItems.Contains(item)
+                && (!GameLogic.Pet.PetDurabilityPolicy.IsPet(item) || GameLogic.Pet.PetDurabilityPolicy.IsUsable(item)))
             {
                 itemSerializer.SerializeItem(packet.ItemData, item);
             }

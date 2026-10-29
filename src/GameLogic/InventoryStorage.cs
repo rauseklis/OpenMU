@@ -94,6 +94,11 @@ public class InventoryStorage : Storage, IInventoryStorage
     /// <remarks>Additionally we need to make a temporary item persistent with the context of the player.</remarks>
     public override async ValueTask<bool> AddItemAsync(byte slot, Item item)
     {
+        if (item.IsRentalExpired())
+        {
+            return false;
+        }
+
         Item? convertedItem = null;
         if (item is TemporaryItem temporaryItem)
         {
@@ -115,6 +120,11 @@ public class InventoryStorage : Storage, IInventoryStorage
             }
         }
 
+        if (success && (convertedItem ?? item).RentalExpiresAt.HasValue)
+        {
+            this._player.SchedulePetRentalExpiry();
+        }
+
         return success;
     }
 
@@ -128,6 +138,8 @@ public class InventoryStorage : Storage, IInventoryStorage
             await eventHandler(new ItemEventArgs(item, false)).ConfigureAwait(false);
         }
     }
+
+    internal ValueTask RefreshPetAsync(Item item) => this.UpdateItemsOnChangeAsync(item, true);
 
     private bool IsWearingSlot(int slot)
     {

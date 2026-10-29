@@ -183,4 +183,46 @@ public class CashShopRepositoryTests
         await this._repository.RestoreStorageItemAsync(this._accountId, 0, taken.Single(t => t is not null)!);
         Assert.That((await this._repository.ListStorageAsync(this._accountId, 0)).Select(i => i.Id), Is.EqualTo(new[] { id }));
     }
+    [TestCase(0, 86400)]
+    [TestCase(1, 604800)]
+    [TestCase(1, 2592000)]
+    public async Task RentalDurationSurvivesRepositoryReloadAndRestore(byte world, int seconds)
+    {
+        await this._repository.CreditAsync(this._accountId, world, Guid.NewGuid(), new CashShopBalance(100), "rental test");
+        var entry = new CashShopStorageItem(0, 102, 20, 31, 13, 64, 0, 1, seconds);
+        Assert.That(await this._repository.PurchaseAsync(this._accountId, world, CashShopCurrency.WCoinC, 10, entry), Is.EqualTo(CashShopPurchaseResult.Success));
+        var stored = (await new CashShopRepository().ListStorageAsync(this._accountId, world)).Single();
+        Assert.That(stored.RentalDurationSeconds, Is.EqualTo(seconds));
+        var taken = await this._repository.TakeStorageItemAsync(this._accountId, world, stored.Id);
+        await this._repository.RestoreStorageItemAsync(this._accountId, world, taken!);
+        Assert.That((await this._repository.ListStorageAsync(this._accountId, world)).Single().RentalDurationSeconds, Is.EqualTo(seconds));
+    }
+
+    [Test]
+    public async Task ItemExpiryPersistsAndLegacyItemRemainsPermanent()
+    {
+        var rentalId = Guid.NewGuid();
+        var legacyId = Guid.NewGuid();
+        var expiry = DateTimeOffset.UtcNow.AddDays(30);
+        // PostgreSQL timestamp precision is microseconds.
+        expiry = new DateTimeOffset(expiry.Ticks - expiry.Ticks % 10, TimeSpan.Zero);
+        await using (var context = new EntityDataContext())
+        {
+            context.Set<Item>().AddRange(new Item { Id = rentalId, RentalExpiresAt = expiry, Level = 33, PetExperience = 1234567 }, new Item { Id = legacyId });
+            await context.SaveChangesAsync();
+        }
+
+        await using (var context = new EntityDataContext())
+        {
+            var rental = await context.Set<Item>().SingleAsync(i => i.Id == rentalId);
+            var legacy = await context.Set<Item>().SingleAsync(i => i.Id == legacyId);
+            Assert.That(rental.RentalExpiresAt, Is.EqualTo(expiry));
+            Assert.That(rental.Level, Is.EqualTo(33));
+            Assert.That(rental.PetExperience, Is.EqualTo(1234567));
+            Assert.That(legacy.RentalExpiresAt, Is.Null);
+            context.RemoveRange(rental, legacy);
+            await context.SaveChangesAsync();
+        }
+    }
+
 }

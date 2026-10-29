@@ -64,7 +64,7 @@ internal sealed class PetHandler
 
         try
         {
-            if (this._player.Inventory?.GetItem(InventoryConstants.PetSlot) is { Durability: 0 })
+            if (this._player.Inventory?.GetItem(InventoryConstants.RightHandSlot) is { } raven && !PetDurabilityPolicy.IsUsable(raven))
             {
                 await this.PetCommandManager.SetBehaviourAsync(PetBehaviour.Idle, null).ConfigureAwait(false);
             }
@@ -101,6 +101,13 @@ internal sealed class PetHandler
     {
         if (this._config is not { UseDarkRaven: true } || this.PetCommandManager is not { } petCommandManager)
         {
+            return;
+        }
+
+        var raven = this._player.Inventory?.GetItem(InventoryConstants.RightHandSlot);
+        if (raven is not null && !PetDurabilityPolicy.IsUsable(raven))
+        {
+            await petCommandManager.SetBehaviourAsync(PetBehaviour.Idle, null).ConfigureAwait(false);
             return;
         }
 
