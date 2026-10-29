@@ -750,4 +750,7 @@ public enum UpdateVersion
     /// Enlarges Scroll of Flame's target area and guarantees both attack rounds.
     /// </summary>
     FlameRangeAndCadence = 160,
+
+    /// <summary>Installs the approved shared item upgrade probabilities and Luck bonus.</summary>
+    ChaosItemUpgradeRates = 161,
 }

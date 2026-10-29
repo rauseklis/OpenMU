@@ -68,30 +68,30 @@ public class SimpleItemCraftingHandler : BaseItemCraftingHandler
                     if (this._settings.SuccessPercentageAdditionForLuck != default
                         && item.ItemOptions.Any(o => o.ItemOption?.OptionType == ItemOptionTypes.Luck))
                     {
-                        rate = (byte)(rate + this._settings.SuccessPercentageAdditionForLuck);
+                        rate += this._settings.SuccessPercentageAdditionForLuck;
                     }
 
                     if (this._settings.SuccessPercentageAdditionForExcellentItem != default
                         && item.IsExcellent())
                     {
-                        rate = (byte)(rate + this._settings.SuccessPercentageAdditionForExcellentItem);
+                        rate += this._settings.SuccessPercentageAdditionForExcellentItem;
                     }
 
                     if (this._settings.SuccessPercentageAdditionForAncientItem != default
                         && item.IsAncient())
                     {
-                        rate = (byte)(rate + this._settings.SuccessPercentageAdditionForAncientItem);
+                        rate += this._settings.SuccessPercentageAdditionForAncientItem;
                     }
 
                     if (this._settings.SuccessPercentageAdditionForGuardianItem != default
                         && item.IsGuardian())
                     {
-                        rate = (byte)(rate + this._settings.SuccessPercentageAdditionForGuardianItem);
+                        rate += this._settings.SuccessPercentageAdditionForGuardianItem;
                     }
 
                     if (this._settings.SuccessPercentageAdditionForSocketItem != default && item.SocketCount > 0 && item.Definition?.MaximumSockets > 0)
                     {
-                        rate = (byte)(rate + this._settings.SuccessPercentageAdditionForSocketItem);
+                        rate += this._settings.SuccessPercentageAdditionForSocketItem;
                     }
                 }
             }
@@ -116,7 +116,7 @@ public class SimpleItemCraftingHandler : BaseItemCraftingHandler
             rate = Math.Min(this._settings.MaximumSuccessPercent, rate);
         }
 
-        successRate = (byte)Math.Min(100, rate);
+        successRate = (byte)Math.Clamp(rate, 0, 100);
 
         return default;
     }

@@ -716,6 +716,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed the enlarged Scroll of Flame area and two guaranteed hits.");
         }
 
+        if (await ChaosItemUpgradeRatesInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed item upgrade bases 60/60/55/55/20/20 and Luck +20 for both worlds.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
