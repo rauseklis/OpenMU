@@ -745,4 +745,9 @@ public enum UpdateVersion
     /// Guarantees Scroll of Flame one hit attempt per target before distance falloff applies.
     /// </summary>
     FlameMinimumHit = 159,
+
+    /// <summary>
+    /// Enlarges Scroll of Flame's target area and guarantees both attack rounds.
+    /// </summary>
+    FlameRangeAndCadence = 160,
 }
