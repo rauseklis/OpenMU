@@ -44,7 +44,7 @@ internal sealed class PlayerAppearanceData : IAppearanceData
         {
             if (this._player.Inventory != null)
             {
-                return this._player.Inventory.EquippedItems.Select(item => item.GetAppearance());
+                return this._player.Inventory.EquippedItems.Where(item => !Pet.PetDurabilityPolicy.IsPet(item) || Pet.PetDurabilityPolicy.IsUsable(item)).Select(item => item.GetAppearance());
             }
 
             return Enumerable.Empty<ItemAppearance>();

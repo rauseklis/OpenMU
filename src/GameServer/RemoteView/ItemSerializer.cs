@@ -112,6 +112,14 @@ public class ItemSerializer : IItemSerializer
         }
 
         target[5] = (byte)(item.Definition.Group << 4);
+        if (item.RentalExpiresAt.HasValue)
+        {
+            target[5] |= 0x02; // Existing S6 WithExpiration flag; D2:12 supplies the timestamp.
+            if (item.IsRentalExpired())
+            {
+                target[5] |= 0x04;
+            }
+        }
         if (item.ItemOptions.Any(o => o.ItemOption?.OptionType == ItemOptionTypes.GuardianOption))
         {
             target[5] |= GuardianOptionFlag;

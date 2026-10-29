@@ -95,7 +95,7 @@ public enum CashShopPurchaseResult
 /// <param name="ItemNumber">The item number of the delivered item.</param>
 /// <param name="ItemLevel">The item level of the delivered item.</param>
 /// <param name="Quantity">The number of items (stack size) to deliver.</param>
-public sealed record CashShopStorageItem(long Id, int PackageSeq, int ProductSeq, int PriceSeq, byte ItemGroup, short ItemNumber, byte ItemLevel, int Quantity);
+public sealed record CashShopStorageItem(long Id, int PackageSeq, int ProductSeq, int PriceSeq, byte ItemGroup, short ItemNumber, byte ItemLevel, int Quantity, int? RentalDurationSeconds = null);
 
 /// <summary>Integer currency units; all fields are nonnegative and capped for the existing client.</summary>
 /// <param name="WCoinC">WCoinC units.</param>

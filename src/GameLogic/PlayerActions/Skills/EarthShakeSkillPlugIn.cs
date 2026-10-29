@@ -24,6 +24,11 @@ public class EarthShakeSkillPlugIn : IAreaSkillPlugIn
     /// <inheritdoc />
     public async ValueTask AfterTargetGotAttackedAsync(IAttacker attacker, IAttackable target, SkillEntry skillEntry, Point targetAreaCenter, HitInfo? hitInfo)
     {
+        if (attacker is Player owner && !Pet.PetDurabilityPolicy.CanUseMountSkill(owner, this.Key))
+        {
+            return;
+        }
+
         if (!target.IsAlive || target is not IMovable movableTarget || target.CurrentMap is not { } currentMap)
         {
             return;

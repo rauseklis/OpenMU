@@ -67,6 +67,17 @@ public static class AttackableExtensions
     /// </returns>
     public static async ValueTask<HitInfo> CalculateDamageAsync(this IAttacker attacker, IAttackable defender, SkillEntry? skill, bool isCombo, double damageFactor = 1.0)
     {
+        var petOwner = attacker as Player ?? (attacker as IPlayerSurrogate)?.Owner;
+        if (petOwner is not null)
+        {
+            await PetRentalLifetime.ExpireAsync(petOwner).ConfigureAwait(false);
+            if ((attacker is AttackerSurrogate { Attributes: RavenAttributeSystem } && (petOwner.Inventory?.GetItem(InventoryConstants.RightHandSlot) is not { } raven || !PetDurabilityPolicy.IsUsable(raven)))
+                || (skill?.Skill is { } mountSkill && !PetDurabilityPolicy.CanUseMountSkill(petOwner, mountSkill.Number)))
+            {
+                return new HitInfo(0, 0, DamageAttributes.Undefined);
+            }
+        }
+
         if (!attacker.IsAttackSuccessfulTo(defender))
         {
             return new HitInfo(0, 0, DamageAttributes.Undefined);

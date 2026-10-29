@@ -53,6 +53,11 @@ public class ItemRepairAction
         if (IsMoneySufficient(player, item))
         {
             item.Durability = item.GetMaximumDurabilityOfOnePiece();
+            if (Pet.PetDurabilityPolicy.IsPet(item))
+            {
+                await Pet.PetDurabilityPolicy.RefreshAsync(player, item).ConfigureAwait(false);
+            }
+
             await player.InvokeViewPlugInAsync<IItemDurabilityChangedPlugIn>(p => p.ItemDurabilityChangedAsync(item, false)).ConfigureAwait(false);
         }
         else
@@ -100,6 +105,11 @@ public class ItemRepairAction
             if (IsMoneySufficient(player, item))
             {
                 item.Durability = item.GetMaximumDurabilityOfOnePiece();
+                if (Pet.PetDurabilityPolicy.IsPet(item))
+                {
+                    await Pet.PetDurabilityPolicy.RefreshAsync(player, item).ConfigureAwait(false);
+                }
+
                 await player.InvokeViewPlugInAsync<IItemDurabilityChangedPlugIn>(p => p.ItemDurabilityChangedAsync(item, false)).ConfigureAwait(false);
             }
             else

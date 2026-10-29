@@ -31,6 +31,9 @@ public partial class Item
     /// </summary>
     public double Durability { get; set; }
 
+    /// <summary>Gets or sets the UTC expiry of a positively identified Cash Shop rental. Null preserves legacy/permanent items.</summary>
+    public DateTimeOffset? RentalExpiresAt { get; set; }
+
     /// <summary>
     /// Gets or sets the level of the item.
     /// </summary>
@@ -80,6 +83,7 @@ public partial class Item
         this.HasSkill = otherItem.HasSkill;
         this.SocketCount = otherItem.SocketCount;
         this.PetExperience = otherItem.PetExperience;
+        this.RentalExpiresAt = otherItem.RentalExpiresAt;
         if (otherItem.ItemOptions != null && otherItem.ItemOptions.Any())
         {
             this.ItemOptions.Clear();

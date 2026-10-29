@@ -246,9 +246,14 @@ public sealed class SkillList : ISkillList, IDisposable
             return;
         }
 
-        var passiveBoost = new PassiveSkillBoostPowerUp(skillEntry);
-        this.PassivePowerUps.Add(passiveBoost);
-        this.PassivePowerUps.Add(new PowerUpWrapper(passiveBoost, masterDefinition.TargetAttribute, this._player.Attributes!));
+        // Durability percentages are evaluated by category at wear time. Never multiply raw
+        // display percentages (12..90) into duration attributes, including after a relog.
+        if (!Pet.DurabilityProtection.Handles(skillEntry.Skill))
+        {
+            var passiveBoost = new PassiveSkillBoostPowerUp(skillEntry);
+            this.PassivePowerUps.Add(passiveBoost);
+            this.PassivePowerUps.Add(new PowerUpWrapper(passiveBoost, masterDefinition.TargetAttribute, this._player.Attributes!));
+        }
 
         if (skillEntry.Skill.Number == DurabilityReduction1SkillId || skillEntry.Skill.Number == DurabilityReduction1FistMasterSkillId)
         {

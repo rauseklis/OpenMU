@@ -62,5 +62,6 @@ public class ItemMovedPlugIn : IItemMovedPlugIn
         }
 
         await connection.SendAsync(Write).ConfigureAwait(false);
+        await PetRentalPackets.SendAsync(this._player).ConfigureAwait(false);
     }
 }

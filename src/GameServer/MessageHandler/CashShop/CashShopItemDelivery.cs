@@ -40,6 +40,10 @@ internal static class CashShopItemDelivery
         var item = player.PersistenceContext.CreateNew<Item>();
         item.Definition = definition;
         item.Level = stored.ItemLevel;
+        if (stored.RentalDurationSeconds is > 0)
+        {
+            item.RentalExpiresAt = DateTimeOffset.UtcNow.AddSeconds(stored.RentalDurationSeconds.Value);
+        }
         item.Durability = item.IsStackable() ? stored.Quantity : definition.Durability;
         if (await player.Inventory.AddItemAsync(item).ConfigureAwait(false))
         {

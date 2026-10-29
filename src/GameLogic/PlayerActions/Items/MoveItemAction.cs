@@ -49,9 +49,9 @@ public class MoveItemAction
         var fromItemStorage = fromStorageInfo?.Storage;
         var item = fromItemStorage?.GetItem(fromSlot);
 
-        if (item is null)
+        if (item is null || item.IsRentalExpired())
         {
-            // Item not found
+            // Item not found or expired; an expired rental can never be equipped/used.
             await player.InvokeViewPlugInAsync<IItemMoveFailedPlugIn>(p => p.ItemMoveFailedAsync(null)).ConfigureAwait(false);
             return;
         }
