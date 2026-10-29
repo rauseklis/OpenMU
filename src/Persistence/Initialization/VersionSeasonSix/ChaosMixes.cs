@@ -91,8 +91,8 @@ public class ChaosMixes : InitializerBase
 
         crafting.SimpleCraftingSettings = craftingSettings;
         craftingSettings.Money = 2_000_000 * (targetLevel - 9);
-        craftingSettings.SuccessPercent = (byte)(60 - ((targetLevel - 10) / 2 * 5));
-        craftingSettings.SuccessPercentageAdditionForLuck = 25;
+        craftingSettings.SuccessPercent = ChaosItemUpgradeRates.GetBaseRate(targetLevel);
+        craftingSettings.SuccessPercentageAdditionForLuck = ChaosItemUpgradeRates.LuckBonus;
         craftingSettings.SuccessPercentageAdditionForExcellentItem = -10;
         craftingSettings.SuccessPercentageAdditionForAncientItem = -10;
         craftingSettings.SuccessPercentageAdditionForGuardianItem = -10;
