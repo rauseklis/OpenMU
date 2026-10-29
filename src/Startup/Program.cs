@@ -711,6 +711,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed matching bonus progression on all worlds, preserving EXP and player data.");
         }
 
+        if (await FlameRangeAndCadenceInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the enlarged Scroll of Flame area and two guaranteed hits.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

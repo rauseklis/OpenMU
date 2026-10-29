@@ -70,6 +70,43 @@ public class FlameRangeAndCadenceTests
         Assert.That(flame.AreaSkillSettings.DelayBetweenHits, Is.EqualTo(ExpectedDelay));
     }
 
+    /// <summary>
+    /// An existing database receives the update during startup, exactly once.
+    /// </summary>
+    [Test]
+    public async Task StartupInstallerUpgradesExistingDatabaseExactlyOnce()
+    {
+        var contextProvider = new InMemoryPersistenceContextProvider();
+        await new SeasonSixDataInitialization(contextProvider, NullLoggerFactory.Instance)
+            .CreateInitialDataAsync(1, false)
+            .ConfigureAwait(false);
+
+        using var context = contextProvider.CreateNewContext();
+        var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
+        var flame = configuration.Skills.Single(skill => skill.Number == 5);
+        flame.AreaSkillSettings!.TargetAreaDiameter = 2.0f;
+        flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget = 0;
+        foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false))
+                     .Where(update => update.Version == (int)UpdateVersion.FlameRangeAndCadence)
+                     .ToArray())
+        {
+            await context.DeleteAsync(update).ConfigureAwait(false);
+        }
+
+        await context.SaveChangesAsync().ConfigureAwait(false);
+
+        Assert.That(await FlameRangeAndCadenceInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false), Is.True);
+        Assert.That(flame.AreaSkillSettings.TargetAreaDiameter, Is.EqualTo(ExpectedDiameter));
+        Assert.That(flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget, Is.EqualTo(ExpectedHitsPerTarget));
+        Assert.That(flame.AreaSkillSettings.MaximumNumberOfHitsPerTarget, Is.EqualTo(ExpectedHitsPerTarget));
+        Assert.That(flame.AreaSkillSettings.DelayBetweenHits, Is.EqualTo(ExpectedDelay));
+
+        flame.AreaSkillSettings.TargetAreaDiameter = 7.0f;
+        await context.SaveChangesAsync().ConfigureAwait(false);
+        Assert.That(await FlameRangeAndCadenceInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false), Is.False);
+        Assert.That(flame.AreaSkillSettings.TargetAreaDiameter, Is.EqualTo(7.0f));
+    }
+
     private static Skill CreateFlameSkill(IContext context, short number)
     {
         var skill = context.CreateNew<Skill>();
