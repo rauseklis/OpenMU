@@ -41,7 +41,13 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(ci)'!='true'">
+  <ItemGroup Condition="'$(ci)'!='true'">
+    <!-- Builds the generator before it is run (it is only used as a tool, so its assembly is not referenced). -->
+    <ProjectReference Include="SourceGenerator/MUnique.OpenMU.Persistence.SourceGenerator.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- After the references are built (which includes the generator), but before the compilation uses the generated files. -->
+  <Target Name="PreBuild" AfterTargets="ResolveProjectReferences" BeforeTargets="CoreCompile" Condition="'$(ci)'!='true'">
     <Exec Command="dotnet run --project SourceGenerator/MUnique.OpenMU.Persistence.SourceGenerator.csproj -c:$(ConfigurationName) MUnique.OpenMU.Persistence &quot;$(ProjectDir)BasicModel&quot; --no-build" />
   </Target>
 

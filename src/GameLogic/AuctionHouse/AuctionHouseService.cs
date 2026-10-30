@@ -310,7 +310,7 @@ public sealed class AuctionHouseService
             request.ListingId,
             request.ExpectedVersion,
             request.BidAmount,
-            AuctionRules.GetMinimumBid(AuctionCurrencyMode.Zen, listing.StartingPrice, listing.CurrentBid ?? 0),
+            AuctionRules.GetMinimumBid((AuctionCurrencyMode)listing.Currency, listing.StartingPrice, listing.CurrentBid ?? 0),
             request.BidderIp,
             now,
             AuctionRules.ApplyAntiSniping(listing.EndsAt, listing.OriginalEndsAt, now));

@@ -6,6 +6,8 @@ namespace MUnique.OpenMU.Tests.CashShop;
 
 using System.Buffers.Binary;
 using System.IO;
+using Moq;
+using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Pet;
@@ -75,6 +77,21 @@ public class PetRentalTests
         await PetDurabilityPolicy.ApplyLossAsync(player, purchased, 1000);
         Assert.That(purchased.Durability, Is.EqualTo(255));
         Assert.That(PetDurabilityPolicy.DamageLoss(normal, 180000), Is.GreaterThan(0));
+    }
+
+    [Test]
+    public async Task DeliveryCountsAsDoneWhenOnlyTheClientNotificationFails()
+    {
+        await using var player = await PlayerTestHelper.CreatePlayerAsync();
+        player.GameContext.Configuration.Items.Add(PetDurabilityBalanceTests.CreatePet(64).Definition!);
+        var view = player.ViewPlugIns.GetPlugIn<IItemAppearPlugIn>()!;
+        Mock.Get(view).Setup(v => v.ItemAppearAsync(It.IsAny<Item>())).ThrowsAsync(new InvalidOperationException("client gone"));
+
+        // The caller restores the storage entry when this is false; the item is in the inventory, so that would duplicate it.
+        var delivered = await CashShopItemDelivery.TryDeliverAsync(player, new CashShopStorageItem(1, 102, 20, 31, 13, 64, 0, 1));
+
+        Assert.That(delivered, Is.True);
+        Assert.That(player.Inventory!.Items.Count(i => i.Definition?.Number == 64), Is.EqualTo(1));
     }
 
     [Test]

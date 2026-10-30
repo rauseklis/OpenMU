@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameLogic.Resets;
 
+using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.JewelBank;
 using MUnique.OpenMU.GameLogic.NPC;
@@ -132,6 +133,7 @@ public class ResetCharacterAction
         this._player.Attributes[Stats.Level] = configuration.LevelAfterReset;
         this._player.SelectedCharacter.Experience = 0;
         this.UpdateStats(configuration, resetProgression);
+        await this.SaveResetAsync().ConfigureAwait(false);
         if (this._onResetDone is not null)
         {
             await this._onResetDone().ConfigureAwait(false);
@@ -152,6 +154,24 @@ public class ResetCharacterAction
         }
 
         return ResetNpcOutcome.Done;
+    }
+
+    /// <summary>
+    /// Saves the player right after the costs were paid and the reset was applied. The Zen, the destroyed items and the new reset state
+    /// are changes of the same persistence context and so are written together; the Jewel Bank fruits were already committed by their own
+    /// transaction. Without this save, a crash before the next periodic save would keep the payment but lose the reset.
+    /// </summary>
+    private async ValueTask SaveResetAsync()
+    {
+        try
+        {
+            await this._player.SaveProgressAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // The reset is done in memory and will be saved with the next save; it must not be undone or reported as failed.
+            this._player.Logger.LogError(ex, "The reset of {Player} could not be saved right away.", this._player);
+        }
     }
 
     private async ValueTask ShowMessageAsync(string messageKey, params object?[] args)

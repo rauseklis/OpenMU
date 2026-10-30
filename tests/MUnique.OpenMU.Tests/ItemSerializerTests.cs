@@ -180,6 +180,12 @@ public class ItemSerializerTests<T>
     [Test]
     public void Sockets()
     {
+        // This server runs with the socket system switched off (see DisabledSocketSystem): the socket option definitions are removed from
+        // the configuration, so there is nothing to serialize. The serializer itself still supports sockets and is covered whenever a
+        // configuration which defines them is used.
+        Assume.That(
+            this._gameConfiguration.Items.Any(i => i.PossibleItemOptions.SelectMany(o => o.PossibleOptions).Any(o => o.OptionType == ItemOptionTypes.SocketOption)),
+            "The socket system is disabled in this server's game configuration.");
         var tuple = this.SerializeAndDeserializeBraveHelm();
         var item = tuple.Item1;
         var deserializedItem = tuple.Item2;

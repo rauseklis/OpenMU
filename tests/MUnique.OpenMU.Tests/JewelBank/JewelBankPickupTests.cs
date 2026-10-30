@@ -117,6 +117,27 @@ public class JewelBankPickupTests
     }
 
     /// <summary>
+    /// Verifies the limiter still refuses an account inside the interval after it forgot thousands of other, long idle accounts.
+    /// </summary>
+    [Test]
+    public void RateLimiterKeepsLimitingAfterPruningIdleAccounts()
+    {
+        var now = new DateTimeOffset(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
+        var limiter = new JewelBankRateLimiter(() => now, TimeSpan.FromMilliseconds(250));
+        for (var i = 0; i < 3000; i++)
+        {
+            limiter.TryAcquire(Guid.NewGuid());
+        }
+
+        now = now.AddSeconds(10);
+        var account = Guid.NewGuid();
+        Assert.That(limiter.TryAcquire(account), Is.True);
+        Assert.That(limiter.TryAcquire(account), Is.False);
+        now = now.AddMilliseconds(300);
+        Assert.That(limiter.TryAcquire(account), Is.True);
+    }
+
+    /// <summary>
     /// The rate limiter lets the first request pass and refuses a second one inside the interval, per account.
     /// </summary>
     [Test]
