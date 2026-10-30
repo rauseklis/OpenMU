@@ -29,6 +29,11 @@ internal class VaultSwitchHandlerPlugIn : IPacketHandlerPlugIn
     /// <inheritdoc/>
     public async ValueTask HandlePacketAsync(Player player, Memory<byte> packet)
     {
+        if (packet.Length < VaultSwitchRequest.Length)
+        {
+            return;
+        }
+
         VaultSwitchRequest request = packet;
         await this._switchAction.SwitchVaultAsync(player, request.VaultNumber).ConfigureAwait(false);
     }

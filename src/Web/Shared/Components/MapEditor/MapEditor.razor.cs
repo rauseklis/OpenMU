@@ -832,6 +832,9 @@ public partial class MapEditor : IAsyncDisposable
         }
     }
 
+    /// <summary>A map export is a few hundred KB of JSON; anything beyond this is not one.</summary>
+    private const long MaximumImportFileSize = 20 * 1024 * 1024;
+
     private async Task TriggerFileImportAsync()
     {
         if (this._jsModule is not null)
@@ -853,6 +856,11 @@ public partial class MapEditor : IAsyncDisposable
             return;
         }
 
+        if (file.Size > MaximumImportFileSize)
+        {
+            return;
+        }
+
         this._isImporting = true;
         using var loading = this.LoadingOverlay.ShowLoadingIndicator();
         try
@@ -861,6 +869,11 @@ public partial class MapEditor : IAsyncDisposable
 
             await using var memoryStream = new MemoryStream();
             await file.Data.CopyToAsync(memoryStream).ConfigureAwait(true);
+            if (memoryStream.Length > MaximumImportFileSize)
+            {
+                return;
+            }
+
             memoryStream.Position = 0;
             using var reader = new StreamReader(memoryStream);
             var json = await reader.ReadToEndAsync().ConfigureAwait(true);

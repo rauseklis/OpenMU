@@ -29,6 +29,9 @@ public sealed class AuctionRateLimiter
     private readonly Func<DateTimeOffset> _clock;
     private readonly ConcurrentDictionary<(Guid AccountId, AuctionRequestCost Cost), Bucket> _buckets = new();
 
+    /// <summary>Above this many buckets, those which have refilled completely are dropped.</summary>
+    private const int PruneThreshold = 2048;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="AuctionRateLimiter"/> class.
     /// </summary>
@@ -48,6 +51,11 @@ public sealed class AuctionRateLimiter
     {
         var (ratePerSecond, burst) = Limits(cost);
         var now = this._clock();
+        if (this._buckets.Count >= PruneThreshold)
+        {
+            this.PruneRefilledBuckets(now);
+        }
+
         var bucket = this._buckets.GetOrAdd((accountId, cost), _ => new Bucket(burst, now));
         lock (bucket)
         {
@@ -62,6 +70,24 @@ public sealed class AuctionRateLimiter
 
             bucket.Tokens -= 1;
             return true;
+        }
+    }
+
+    private void PruneRefilledBuckets(DateTimeOffset now)
+    {
+        foreach (var entry in this._buckets)
+        {
+            var (ratePerSecond, burst) = Limits(entry.Key.Cost);
+            lock (entry.Value)
+            {
+                // A bucket which has refilled completely behaves exactly like a new one. Removing it under its lock keeps a concurrent
+                // request from taking a token from a bucket which is no longer in the dictionary.
+                var elapsed = Math.Max(0, (now - entry.Value.Updated).TotalSeconds);
+                if (entry.Value.Tokens + (elapsed * ratePerSecond) >= burst)
+                {
+                    this._buckets.TryRemove(entry.Key, out _);
+                }
+            }
         }
     }
 

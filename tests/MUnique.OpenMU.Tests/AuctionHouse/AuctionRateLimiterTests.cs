@@ -67,4 +67,28 @@ public class AuctionRateLimiterTests
 
         Assert.That(allowed, Is.EqualTo(10));
     }
+
+    /// <summary>
+    /// Verifies that dropping refilled buckets of many other accounts never gives an exhausted account a fresh budget.
+    /// </summary>
+    [Test]
+    public void PruningManyAccountsKeepsAnExhaustedBudget()
+    {
+        var now = new DateTimeOffset(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
+        var limiter = new AuctionRateLimiter(() => now);
+        var busy = Guid.NewGuid();
+        Assert.That(limiter.TryAcquire(busy, AuctionRequestCost.Create), Is.True);
+        Assert.That(limiter.TryAcquire(busy, AuctionRequestCost.Create), Is.True);
+        Assert.That(limiter.TryAcquire(busy, AuctionRequestCost.Create), Is.False);
+
+        for (var i = 0; i < 5000; i++)
+        {
+            limiter.TryAcquire(Guid.NewGuid(), AuctionRequestCost.Create);
+        }
+
+        Assert.That(limiter.TryAcquire(busy, AuctionRequestCost.Create), Is.False);
+
+        now = now.AddHours(1);
+        Assert.That(limiter.TryAcquire(busy, AuctionRequestCost.Create), Is.True);
+    }
 }

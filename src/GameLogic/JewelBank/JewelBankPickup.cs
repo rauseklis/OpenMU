@@ -60,7 +60,17 @@ public static class JewelBankPickup
                 return false;
             }
 
-            await player.InvokeViewPlugInAsync<IJewelBankPickupPlugIn>(p => p.JewelBankPickupAsync(kind.Code, 1, (ulong)count)).ConfigureAwait(false);
+            // From here on the jewel is in the bank and the drop is gone: telling the client is only a courtesy. If it fails, the pickup
+            // is still a success, otherwise the normal pickup would run for a drop that no longer exists.
+            try
+            {
+                await player.InvokeViewPlugInAsync<IJewelBankPickupPlugIn>(p => p.JewelBankPickupAsync(kind.Code, 1, (ulong)count)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                player.Logger.LogWarning(ex, "The Jewel Bank pickup of {Player} succeeded, but the client could not be notified.", player);
+            }
+
             return true;
         }
         catch (Exception ex)

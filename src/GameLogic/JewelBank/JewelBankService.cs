@@ -98,6 +98,7 @@ public sealed class JewelBankService
     public async Task<JewelBankState> GetStateAsync(Guid accountId)
     {
         var state = await this._repository.GetStateAsync(accountId).ConfigureAwait(false);
+        PruneAutoDepositCache();
         AutoDepositCache[accountId] = (state.AutoDeposit, DateTimeOffset.UtcNow);
         return state;
     }
@@ -259,6 +260,24 @@ public sealed class JewelBankService
         }
 
         return (await this.GetStateAsync(accountId).ConfigureAwait(false)).AutoDeposit;
+    }
+
+    private static void PruneAutoDepositCache()
+    {
+        if (AutoDepositCache.Count < 1024)
+        {
+            return;
+        }
+
+        // Expired entries are ignored by IsAutoDepositEnabledAsync anyway, so dropping them only frees memory.
+        var now = DateTimeOffset.UtcNow;
+        foreach (var entry in AutoDepositCache)
+        {
+            if (now - entry.Value.LoadedAt >= SettingCacheLifetime)
+            {
+                AutoDepositCache.TryRemove(entry.Key, out _);
+            }
+        }
     }
 
     /// <summary>

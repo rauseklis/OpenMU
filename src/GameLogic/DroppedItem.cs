@@ -66,7 +66,7 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
         this._dropper = dropper;
         this._owners = owners;
         this._wasItemPersisted = wasItemPersisted;
-        this._removeTimer = new Timer(this.DisposeAndDelete, null, (int)map.ItemDropDuration.TotalMilliseconds, Timeout.Infinite);
+        this._removeTimer = new Timer(this.OnRemoveTimerElapsed, null, (int)map.ItemDropDuration.TotalMilliseconds, Timeout.Infinite);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
         }
 
         player.Logger.LogInformation("Item '{0}' got picked up by player '{1}' and went into the Jewel Bank.", this, player);
-        this.DisposeAndDelete(null);
+        await this.DisposeAndDeleteAsync().ConfigureAwait(false);
         return true;
     }
 
@@ -201,8 +201,21 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
         await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "Catching all Exceptions.")]
-    private async void DisposeAndDelete(object? state)
+    /// <summary>
+    /// The timer callback. It is the only place which has to be <c>async void</c>, because a timer cannot await; everything it does is awaitable
+    /// in <see cref="DisposeAndDeleteAsync"/>, which callers with a result to protect (the Jewel Bank pickup) await directly.
+    /// </summary>
+    /// <param name="state">The timer state, not used.</param>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "Timer callback; DisposeAndDeleteAsync catches all exceptions.")]
+    private async void OnRemoveTimerElapsed(object? state)
+    {
+        await this.DisposeAndDeleteAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Disposes this dropped item and deletes its persisted item. Never throws, because it may run under a pooled thread without a safety net.
+    /// </summary>
+    private async ValueTask DisposeAndDeleteAsync()
     {
         var player = this._dropper;
         try
@@ -215,7 +228,6 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
         }
         catch (Exception ex)
         {
-            // we have to catch all errors, because it runs under a pooled thread without an additional safety net ;-)
             player?.Logger.LogError(ex, "Error during DroppedItem.DisposeAndDeleteAsync");
         }
     }
@@ -290,7 +302,7 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
         }
 
         player.Logger.LogInformation("Item '{0}' got picked up by player '{1}'. Durability of available stack {2} increased to {3}", this, player, stackTarget, stackTarget.Durability);
-        this.DisposeAndDelete(null);
+        await this.DisposeAndDeleteAsync().ConfigureAwait(false);
         if (player.GameContext.PlugInManager.GetPlugInPoint<PlugIns.IItemStackedPlugIn>() is { } itemStackedPlugIn)
         {
             await itemStackedPlugIn.ItemStackedAsync(player, this.Item, stackTarget).ConfigureAwait(false);
