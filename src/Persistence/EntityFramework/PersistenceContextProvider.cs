@@ -236,7 +236,7 @@ public class PersistenceContextProvider : IMigratableDatabaseContextProvider
 
     /// <inheritdoc />
     /// <inheritdoc />
-    public IAuctionHouseRepository CreateAuctionHouseRepository() => new AuctionHouseRepository();
+    public IAuctionHouseRepository CreateAuctionHouseRepository() => new AuctionHouseRepository(logger: this._loggerFactory.CreateLogger<AuctionHouseRepository>());
 
     /// <inheritdoc />
     public Persistence.JewelBank.IJewelBankRepository CreateJewelBankRepository() => new JewelBank.JewelBankRepository();

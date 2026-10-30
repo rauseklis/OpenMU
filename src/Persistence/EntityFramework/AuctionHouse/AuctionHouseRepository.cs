@@ -6,6 +6,8 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.DataModel.Configuration.Items;
 using MUnique.OpenMU.GameLogic.AuctionHouse;
@@ -47,16 +49,19 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
 
     private readonly int _moneyLimit;
     private readonly Func<EntityDataContext> _contextFactory;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuctionHouseRepository"/> class.
     /// </summary>
     /// <param name="contextFactory">Creates a context for each operation of the interface. The default creates a new context.</param>
     /// <param name="moneyLimit">The maximum Zen an inventory may hold; the server's configured limit.</param>
-    public AuctionHouseRepository(Func<EntityDataContext>? contextFactory = null, int moneyLimit = DefaultMoneyLimit)
+    /// <param name="logger">The logger for problems which are retried, such as a listing which could not be finalized; a null logger when not given.</param>
+    public AuctionHouseRepository(Func<EntityDataContext>? contextFactory = null, int moneyLimit = DefaultMoneyLimit, ILogger? logger = null)
     {
         this._contextFactory = contextFactory ?? (() => new EntityDataContext());
         this._moneyLimit = moneyLimit;
+        this._logger = logger ?? NullLogger.Instance;
     }
 
     /// <inheritdoc />
@@ -1148,14 +1153,23 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBidResult(AuctionBidOutcome.CharacterNotOwned);
         }
 
-        if (!await PayAsync(context, listing.Currency, draft.BidderAccountId, draft.BidderCharacterId, draft.OperationId, listing.Id, draft.BidAmount, draft.Now, cancellationToken))
+        // A bidder who raises their own high bid already has the old amount in escrow, so only the difference is paid
+        // and nothing is sent back through the Mailbox.
+        var previous = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
+        var raisesOwnBid = previous is not null && previous.BidderAccountId == draft.BidderAccountId;
+        var payment = raisesOwnBid ? draft.BidAmount - (previous!.ScalarAmount ?? 0) : draft.BidAmount;
+        if (!await PayAsync(context, listing.Currency, draft.BidderAccountId, draft.BidderCharacterId, draft.OperationId, listing.Id, payment, draft.Now, cancellationToken))
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBidResult(AuctionBidOutcome.InsufficientCurrency);
         }
 
-        var previous = await context.Set<AuctionBid>().SingleOrDefaultAsync(b => b.ListingId == listing.Id && b.Status == 0, cancellationToken);
-        if (previous is not null)
+        if (previous is not null && raisesOwnBid)
+        {
+            previous.Status = 1;
+            previous.ClosedAt = draft.Now;
+        }
+        else if (previous is not null)
         {
             previous.Status = 1;
             previous.ClosedAt = draft.Now;
@@ -1189,7 +1203,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             Status = 0,
             CreatedAt = draft.Now,
         });
-        context.Set<AuctionCurrencyMovement>().Add(Movement(draft.BidderAccountId, draft.OperationId, listing.Id, bidId, draft.BidAmount, 2, draft.Now));
+        context.Set<AuctionCurrencyMovement>().Add(Movement(draft.BidderAccountId, draft.OperationId, listing.Id, bidId, payment, 2, draft.Now));
         listing.CurrentBid = draft.BidAmount;
         listing.CurrentBidderAccountId = draft.BidderAccountId;
         listing.CurrentBidderCharacterId = draft.BidderCharacterId;
@@ -1247,6 +1261,12 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             return true;
         }
 
+        if (amount > int.MaxValue)
+        {
+            // The inventory money column is a 32 bit number; a larger amount must never wrap around into a negative debit.
+            return false;
+        }
+
         var money = (int)amount;
         var rows = await context.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE data.\"ItemStorage\" s SET \"Money\" = s.\"Money\" - {money} FROM data.\"Character\" c WHERE c.\"Id\" = {characterId} AND s.\"Id\" = c.\"InventoryId\" AND s.\"Money\" >= {money}",
@@ -1262,6 +1282,11 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         if (amount <= 0)
         {
             return true;
+        }
+
+        if (amount > int.MaxValue)
+        {
+            return false;
         }
 
         var money = (int)amount;
@@ -1297,6 +1322,11 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         if (listing.SellerAccountId == draft.BidderAccountId)
         {
             return AuctionBidOutcome.SelfBid;
+        }
+
+        if (draft.BidAmount > int.MaxValue || listing.BuyoutPrice is { } buyout && draft.BidAmount >= buyout)
+        {
+            return AuctionBidOutcome.NotBiddable;
         }
 
         return draft.BidAmount < draft.MinimumBid ? AuctionBidOutcome.BidTooLow : null;
@@ -1646,6 +1676,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
+                this._logger.LogError(exception, "Auction House listing {ListingId} could not be finalized; it is retried on the next run.", listing.Id);
                 await transaction.RollbackToSavepointAsync(ExpirySavepoint, cancellationToken);
                 await transaction.ReleaseSavepointAsync(ExpirySavepoint, cancellationToken);
                 context.ChangeTracker.Clear();
@@ -1687,6 +1718,21 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
                 context.Set<AuctionCollection>().Add(MixedCollection(listing.SellerAccountId, listing.Id, ProceedsCollectionKind, PriceBasket.Parse(escrow.AmountVector) ?? PriceBasket.Empty, now));
                 context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, BoughtNotificationKind, listing.Currency, null, now));
                 context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, listing.Currency, null, now));
+            }
+            else if (listing.Currency == FruitsCurrency)
+            {
+                var won = new FruitBasket(escrow.StrengthAmount ?? 0, escrow.AgilityAmount ?? 0, escrow.VitalityAmount ?? 0, escrow.EnergyAmount ?? 0, escrow.CommandAmount ?? 0);
+                var proceeds = new FruitBasket(
+                    won.Strength - FeeOf(won.Strength),
+                    won.Agility - FeeOf(won.Agility),
+                    won.Vitality - FeeOf(won.Vitality),
+                    won.Energy - FeeOf(won.Energy),
+                    won.Command - FeeOf(won.Command));
+                context.Set<AuctionCollection>().Add(FruitCollection(listing.SellerAccountId, listing.Id, 2, proceeds, now));
+                context.Set<AuctionNotification>().Add(Notify(escrow.BidderAccountId, listing.Id, BoughtNotificationKind, listing.Currency, null, now));
+                context.Set<AuctionNotification>().Add(Notify(listing.SellerAccountId, listing.Id, SoldNotificationKind, listing.Currency, null, now));
+
+                long FeeOf(long component) => component <= 0 ? 0 : Math.Min(successFee(component), component);
             }
             else
             {
@@ -2475,7 +2521,8 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             throw new ArgumentException("Fruit baskets have no price order.", nameof(search));
         }
 
-        var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.Status == 0);
+        var browseNow = DateTimeOffset.UtcNow;
+        var query = context.Set<AuctionListing>().AsNoTracking().Where(l => l.Status == 0 && l.EndsAt > browseNow);
         if (search.GameServerId is { } gameServerId)
         {
             query = query.Where(l => l.GameServerId == gameServerId);
@@ -2674,6 +2721,12 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         if (item is null)
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.ItemNotFound, Guid.Empty, 0);
+        }
+
+        if (item.RentalExpiresAt.HasValue)
+        {
+            // A rental belongs to the account which rented it and runs out in its inventory; it cannot be sold on.
+            return new AuctionItemListingResult(AuctionItemListingOutcome.NotEligible, Guid.Empty, 0);
         }
 
         var referenced = await context.Set<AuctionListing>().AnyAsync(l => l.ItemId == item.Id && l.Status == 0, cancellationToken)

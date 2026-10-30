@@ -303,6 +303,16 @@ public sealed class AuctionHouseService
             return new AuctionMutationResult(MapBidOutcome(fruitResult.Outcome), now);
         }
 
+        // A bid must stay within the price range of its currency, and a bid at or above the buyout price is a buyout:
+        // paying more than the buyout price for the same item is never what the bidder wants.
+        var bidCurrency = (AuctionCurrencyMode)listing.Currency;
+        if (!AuctionRules.IsPriceInRange(bidCurrency, request.BidAmount)
+            || listing.BuyoutPrice is { } buyoutLimit && request.BidAmount >= buyoutLimit)
+        {
+            AuctionHouseMetrics.RecordOperation("bid", nameof(AuctionResultCode.InvalidPrice));
+            return new AuctionMutationResult(AuctionResultCode.InvalidPrice, now);
+        }
+
         var draft = new ScalarBidDraft(
             request.OperationId,
             request.AccountId,
