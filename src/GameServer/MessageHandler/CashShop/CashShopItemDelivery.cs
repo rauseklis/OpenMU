@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameServer.MessageHandler.CashShop;
 
+using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.GameLogic;
@@ -45,13 +46,54 @@ internal static class CashShopItemDelivery
             item.RentalExpiresAt = DateTimeOffset.UtcNow.AddSeconds(stored.RentalDurationSeconds.Value);
         }
         item.Durability = item.IsStackable() ? stored.Quantity : definition.Durability;
-        if (await player.Inventory.AddItemAsync(item).ConfigureAwait(false))
+
+        bool added;
+        try
         {
-            await player.InvokeViewPlugInAsync<IItemAppearPlugIn>(plugIn => plugIn.ItemAppearAsync(item)).ConfigureAwait(false);
-            return true;
+            added = await player.Inventory.AddItemAsync(item).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (player.Inventory.Items.Contains(item))
+            {
+                // The grant went through although something after it failed: the item is the player's now, the storage entry must not come back.
+                added = true;
+            }
+            else
+            {
+                await player.PersistenceContext.DeleteAsync(item).ConfigureAwait(false);
+                throw;
+            }
         }
 
-        await player.PersistenceContext.DeleteAsync(item).ConfigureAwait(false);
-        return false;
+        if (!added)
+        {
+            await player.PersistenceContext.DeleteAsync(item).ConfigureAwait(false);
+            return false;
+        }
+
+        // From here on the item belongs to the player. Neither a failing client notification nor a failing save may report "not delivered":
+        // the caller would put the storage entry back, and the player would get the item twice.
+        try
+        {
+            await player.InvokeViewPlugInAsync<IItemAppearPlugIn>(plugIn => plugIn.ItemAppearAsync(item)).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            player.Logger.LogWarning(ex, "The Cash Shop item was delivered to {Player}, but the client could not be notified.", player);
+        }
+
+        // The storage entry is already deleted for good. Save the new item right away, so that it does not exist only in memory until the
+        // next periodic save (a crash in between would lose a paid item).
+        try
+        {
+            await player.SaveProgressAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            player.Logger.LogError(ex, "The Cash Shop item was delivered to {Player}, but the character could not be saved right away.", player);
+        }
+
+        return true;
     }
 }
