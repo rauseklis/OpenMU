@@ -398,7 +398,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
     {
         var items = await context.Set<Item>().AsNoTracking()
             .Include(i => i.RawDefinition)
-            .Include(i => i.RawItemOptions).ThenInclude(o => o.RawItemOption)
+            .Include(i => i.RawItemOptions).ThenInclude(o => o.RawItemOption).ThenInclude(o => o.RawOptionType)
             .Include(i => i.JoinedItemSetGroups).ThenInclude(link => link.ItemOfItemSet)
             .Where(i => itemIds.Contains(i.Id))
             .ToListAsync(cancellationToken);
