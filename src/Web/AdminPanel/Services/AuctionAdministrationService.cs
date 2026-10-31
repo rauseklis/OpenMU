@@ -37,7 +37,18 @@ public sealed class AuctionAdministrationService
     /// <returns>The broken invariants, or <c>null</c> when the database is not available.</returns>
     public async Task<IReadOnlyList<AuctionReconciliationFinding>?> ReconcileAsync()
     {
-        return this.CreateService() is not { } service ? null : await service.ReconcileAsync();
+        if (this.CreateService() is not { } service)
+        {
+            return null;
+        }
+
+        var findings = (await service.ReconcileAsync()).ToList();
+        if (this._contextProvider.CreateJewelBankRepository() is { } jewelBank)
+        {
+            findings.AddRange((await jewelBank.ReconcileAsync()).Select(message => new AuctionReconciliationFinding("JewelBankBalance", message)));
+        }
+
+        return findings;
     }
 
     /// <summary>

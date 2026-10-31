@@ -42,6 +42,12 @@ public sealed class JewelBankService
     public static JewelBankRateLimiter RateLimiter { get; } = new(() => DateTimeOffset.UtcNow, JewelBankOptions.MinimumRequestInterval);
 
     /// <summary>
+    /// Gets the limiter for the requests which only read the state (opening and refreshing the window). The window asks every
+    /// second and a half, so this only stops a client which asks much faster.
+    /// </summary>
+    public static JewelBankRateLimiter OpenRateLimiter { get; } = new(() => DateTimeOffset.UtcNow, JewelBankOptions.MinimumOpenInterval);
+
+    /// <summary>
     /// Creates the service for a player, or returns <c>null</c> when the game context has no Jewel Bank database.
     /// </summary>
     /// <param name="player">The player.</param>
@@ -233,6 +239,21 @@ public sealed class JewelBankService
 
         return await this._repository.SpendAsync(who.AccountId, who.CharacterId, operationId, plan).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Checks the stored balances against their movements.
+    /// </summary>
+    /// <returns>A description of each broken invariant; empty when the data is consistent.</returns>
+    public Task<IReadOnlyList<string>> ReconcileAsync() => this._repository.ReconcileAsync();
+
+    /// <summary>
+    /// Deletes request records which are older than the retention time.
+    /// </summary>
+    /// <param name="retention">How long request records are kept.</param>
+    /// <param name="batchSize">The most records to delete in one call.</param>
+    /// <returns>The number of deleted records.</returns>
+    public Task<int> PurgeOperationsAsync(TimeSpan retention, int batchSize)
+        => this._repository.PurgeOperationsAsync(DateTimeOffset.UtcNow - retention, batchSize);
 
     /// <summary>
     /// Stores the auto-deposit choice of an account.

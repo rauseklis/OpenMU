@@ -1807,6 +1807,24 @@ namespace MUnique.OpenMU.GameLogic.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Stand in a safe zone next to Raymond, with no other window or fight going on, to reset..
+        /// </summary>
+        public static string ResetNotInSafezone {
+            get {
+                return ResourceManager.GetString("ResetNotInSafezone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The reset could not be completed right now. Your Zen was not taken. Please check your Jewel Bank and try again..
+        /// </summary>
+        public static string ResetTemporarilyUnavailable {
+            get {
+                return ResourceManager.GetString("ResetTemporarilyUnavailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You don&apos;t have enough required items for reset, required {0} x {1}..
         /// </summary>
         public static string NotEnoughItemsForReset {

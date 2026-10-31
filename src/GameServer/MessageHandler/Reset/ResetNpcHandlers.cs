@@ -117,14 +117,24 @@ internal sealed class ResetNpcInfoHandlerPlugIn : ISubPacketHandlerPlugIn
             return;
         }
 
-        if (!ResetNpcRequests.IsAllowed(player)
-            || await new ResetCharacterAction(player, player.OpenedNpc).GetStatusAsync().ConfigureAwait(false) is not { } status)
+        try
         {
-            await ResetNpcRequests.SendRefusedAsync(player).ConfigureAwait(false);
-            return;
-        }
+            if (!ResetNpcRequests.IsAllowed(player)
+                || player.OpenedNpc is not { } npc
+                || await new ResetCharacterAction(player, npc).GetStatusAsync().ConfigureAwait(false) is not { } status)
+            {
+                await ResetNpcRequests.SendRefusedAsync(player).ConfigureAwait(false);
+                return;
+            }
 
-        await ResetNpcRequests.SendAsync(player, status).ConfigureAwait(false);
+            await ResetNpcRequests.SendAsync(player, status).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // The window waits for an answer, so it always gets one.
+            player.Logger.LogError(ex, "The reset information for {Player} could not be answered.", player);
+            await ResetNpcRequests.SendRefusedAsync(player).ConfigureAwait(false);
+        }
     }
 }
 
@@ -150,24 +160,33 @@ internal sealed class ResetNpcResetHandlerPlugIn : ISubPacketHandlerPlugIn
             return;
         }
 
-        if (!ResetNpcRequests.IsAllowed(player))
+        if (!ResetNpcRequests.IsAllowed(player) || player.OpenedNpc is not { } npc)
         {
             await ResetNpcRequests.SendRefusedAsync(player).ConfigureAwait(false);
             return;
         }
 
-        // The reset may log the player out, so the client is told before that happens.
-        var action = new ResetCharacterAction(
-            player,
-            player.OpenedNpc,
-            () => ResetNpcRequests.SendAsync(player, new ResetNpcStatus(ResetNpcOutcome.Done, 0, 0, 0, 0, 0, 0, 0, 0)));
-        var outcome = await action.ResetCharacterAsync().ConfigureAwait(false);
-        if (outcome == ResetNpcOutcome.Done)
+        try
         {
-            return;
-        }
+            // The reset may log the player out, so the client is told before that happens.
+            var action = new ResetCharacterAction(
+                player,
+                npc,
+                () => ResetNpcRequests.SendAsync(player, new ResetNpcStatus(ResetNpcOutcome.Done, 0, 0, 0, 0, 0, 0, 0, 0)));
+            var outcome = await action.ResetCharacterAsync().ConfigureAwait(false);
+            if (outcome == ResetNpcOutcome.Done)
+            {
+                return;
+            }
 
-        var status = await action.GetStatusAsync().ConfigureAwait(false);
-        await ResetNpcRequests.SendAsync(player, status?.WithOutcome(outcome) ?? new ResetNpcStatus(outcome, 0, 0, 0, 0, 0, 0, 0, 0)).ConfigureAwait(false);
+            var status = await action.GetStatusAsync().ConfigureAwait(false);
+            await ResetNpcRequests.SendAsync(player, status?.WithOutcome(outcome) ?? new ResetNpcStatus(outcome, 0, 0, 0, 0, 0, 0, 0, 0)).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // The window waits for an answer, so it always gets one, even when something went wrong.
+            player.Logger.LogError(ex, "The reset of {Player} failed unexpectedly.", player);
+            await ResetNpcRequests.SendRefusedAsync(player).ConfigureAwait(false);
+        }
     }
 }

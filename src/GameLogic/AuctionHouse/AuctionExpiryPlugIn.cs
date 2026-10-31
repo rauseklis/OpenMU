@@ -18,6 +18,9 @@ using MUnique.OpenMU.PlugIns;
 public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfiguration<AuctionHouseConfiguration>, ISupportDefaultCustomConfiguration
 {
     private static readonly TimeSpan IniCheckInterval = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan JewelBankMaintenanceInterval = TimeSpan.FromHours(1);
+    private static readonly TimeSpan JewelBankOperationRetention = TimeSpan.FromDays(30);
+    private const int JewelBankPurgeBatchSize = 500;
 
     /// <summary>
     /// The environment variable which moves <c>AuctionHouse.ini</c> to another place, for example a volume of a container.
@@ -27,6 +30,7 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
     private readonly AuctionHouseIniFile _iniFile = new(Environment.GetEnvironmentVariable(IniPathVariable) is { Length: > 0 } iniPath ? iniPath : Path.Combine(AppContext.BaseDirectory, "AuctionHouse.ini"));
     private DateTime _nextRunUtc = DateTime.MinValue;
     private DateTime _nextIniCheckUtc = DateTime.MinValue;
+    private DateTime _nextJewelBankMaintenanceUtc = DateTime.MinValue;
 
     /// <inheritdoc />
     public AuctionHouseConfiguration? Configuration { get; set; }
@@ -70,6 +74,47 @@ public class AuctionExpiryPlugIn : IPeriodicTaskPlugIn, ISupportCustomConfigurat
         catch (Exception exception)
         {
             gameContext.LoggerFactory.CreateLogger<AuctionExpiryPlugIn>().LogError(exception, "Auction House expiry batch failed; it is retried on the next run.");
+        }
+
+        await this.RunJewelBankMaintenanceAsync(gameContext, now).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Once an hour, checks the Jewel Bank balances against their movements (a problem is logged as a warning) and deletes old
+    /// request records, so that neither a mistake in the data nor a growing table goes unnoticed.
+    /// </summary>
+    private async ValueTask RunJewelBankMaintenanceAsync(GameContext gameContext, DateTime now)
+    {
+        if (now < this._nextJewelBankMaintenanceUtc)
+        {
+            return;
+        }
+
+        this._nextJewelBankMaintenanceUtc = now + JewelBankMaintenanceInterval;
+        var logger = gameContext.LoggerFactory.CreateLogger<AuctionExpiryPlugIn>();
+        try
+        {
+            if (gameContext.PersistenceContextProvider.CreateJewelBankRepository() is not { } repository)
+            {
+                return;
+            }
+
+            var service = new JewelBank.JewelBankService(repository, null);
+            foreach (var finding in await service.ReconcileAsync().ConfigureAwait(false))
+            {
+                logger.LogWarning("Jewel Bank check: {Finding}", finding);
+            }
+
+            int purged;
+            do
+            {
+                purged = await service.PurgeOperationsAsync(JewelBankOperationRetention, JewelBankPurgeBatchSize).ConfigureAwait(false);
+            }
+            while (purged >= JewelBankPurgeBatchSize);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "The Jewel Bank maintenance failed; it is retried in an hour.");
         }
     }
 
