@@ -2358,24 +2358,6 @@ namespace MUnique.OpenMU.GameLogic.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Handles the chat command &apos;/reset&apos;..
-        /// </summary>
-        public static string ResetChatCommandPlugIn_Description {
-            get {
-                return ResourceManager.GetString("ResetChatCommandPlugIn_Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Reset chat command.
-        /// </summary>
-        public static string ResetChatCommandPlugIn_Name {
-            get {
-                return ResourceManager.GetString("ResetChatCommandPlugIn_Name", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Level after reset.
         /// </summary>
         public static string ResetConfiguration_LevelAfterReset_Name {

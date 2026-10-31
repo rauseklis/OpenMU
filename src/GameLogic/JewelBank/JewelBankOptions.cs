@@ -24,4 +24,9 @@ public static class JewelBankOptions
     /// Gets the shortest time between two mutating requests of one account.
     /// </summary>
     public static TimeSpan MinimumRequestInterval { get; } = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// Gets the shortest time between two requests of one account which only read the state. The window asks every 1.5 seconds.
+    /// </summary>
+    public static TimeSpan MinimumOpenInterval { get; } = TimeSpan.FromMilliseconds(750);
 }

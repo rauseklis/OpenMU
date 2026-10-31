@@ -657,6 +657,12 @@
   <data name="ResetEquipmentWorn" xml:space="preserve">
     <value>Take off everything you wear before you reset. The items may stay in your inventory.</value>
   </data>
+  <data name="ResetNotInSafezone" xml:space="preserve">
+    <value>Stand in a safe zone next to Raymond, with no other window or fight going on, to reset.</value>
+  </data>
+  <data name="ResetTemporarilyUnavailable" xml:space="preserve">
+    <value>The reset could not be completed right now. Your Zen was not taken. Please check your Jewel Bank and try again.</value>
+  </data>
   <data name="ResetNotEnabled" xml:space="preserve">
     <value>Reset is not enabled.</value>
   </data>

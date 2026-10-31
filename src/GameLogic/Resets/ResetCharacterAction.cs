@@ -6,20 +6,28 @@ namespace MUnique.OpenMU.GameLogic.Resets;
 
 using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.GameLogic.Attributes;
+using MUnique.OpenMU.GameLogic.AuctionHouse;
+using MUnique.OpenMU.GameLogic.GuildWar;
 using MUnique.OpenMU.GameLogic.JewelBank;
 using MUnique.OpenMU.GameLogic.NPC;
 using MUnique.OpenMU.GameLogic.PlayerActions;
 using MUnique.OpenMU.GameLogic.Views.Character;
 using MUnique.OpenMU.GameLogic.Views.Login;
 using MUnique.OpenMU.GameLogic.Views.NPC;
+using MUnique.OpenMU.Persistence.JewelBank;
 
 /// <summary>
-/// Action to reset a character.
+/// Action to reset a character at the reset NPC.
 /// </summary>
 public class ResetCharacterAction
 {
+    /// <summary>
+    /// The most tiles the player may be away from the reset NPC to reset.
+    /// </summary>
+    public const int MaximumNpcDistance = 8;
+
     private readonly Player _player;
-    private readonly NonPlayerCharacter? _npc;
+    private readonly NonPlayerCharacter _npc;
     private readonly Func<ValueTask>? _onResetDone;
     private readonly LogoutAction _logoutAction = new();
 
@@ -29,11 +37,37 @@ public class ResetCharacterAction
     /// <param name="player">Player to reset.</param>
     /// <param name="npc">NPC which the player talks to to initiate the reset action.</param>
     /// <param name="onResetDone">Called when the costs are paid and the reset is done, before the player is moved home or logged out.</param>
-    public ResetCharacterAction(Player player, NonPlayerCharacter? npc = null, Func<ValueTask>? onResetDone = null)
+    public ResetCharacterAction(Player player, NonPlayerCharacter npc, Func<ValueTask>? onResetDone = null)
     {
         this._player = player;
         this._npc = npc;
         this._onResetDone = onResetDone;
+    }
+
+    /// <summary>
+    /// Determines whether the player may reset right now: alive, in a safe zone, next to the reset NPC and not busy with a trade,
+    /// a personal store, a duel, a mini game, a guild war or a teleport. Like this a reset can never be used to leave a fight.
+    /// </summary>
+    /// <param name="player">The player.</param>
+    /// <param name="npc">The reset NPC.</param>
+    /// <returns><c>true</c> when the reset may start.</returns>
+    public static bool IsStateAllowed(Player player, NonPlayerCharacter npc)
+    {
+        var currentState = player.PlayerState.CurrentState;
+        var state = new AuctionMutationState(
+            HasEnteredWorld: currentState == PlayerState.EnteredWorld || currentState == PlayerState.NpcDialogOpened,
+            IsAlive: player.IsAlive,
+            IsInSafeZone: player.IsAtSafezone(),
+            IsTeleporting: player.IsTeleporting,
+            IsTrading: player.TradingPartner is not null,
+            IsVending: player.ShopStorage?.StoreOpen ?? false,
+            HasOpenedNpc: false,
+            IsDueling: player.DuelRoom is not null,
+            IsInMiniGame: player.CurrentMiniGame is not null,
+            IsInGuildWar: player.GuildWarContext?.State is GuildWarState.Requested or GuildWarState.Started);
+        return AuctionMutationEligibility.IsAllowed(state)
+               && player.CurrentMap == npc.CurrentMap
+               && player.IsInRange(npc, MaximumNpcDistance);
     }
 
     /// <summary>
@@ -50,12 +84,13 @@ public class ResetCharacterAction
         }
 
         var progression = ResetProgressionCalculator.Calculate(this.GetResetCount(), (int)this._player.Attributes[Stats.PointsPerReset], configuration);
-        long bankFruits = 0;
-        if (configuration.PayItemCostsWithJewelBankFruits
-            && JewelBankService.Create(this._player) is { } bank
-            && JewelBankService.GetIdentity(this._player) is { } who)
+        long availableItems = 0;
+        if (progression.RequiredItemAmount > 0)
         {
-            bankFruits = await bank.GetFruitCountAsync(who.AccountId).ConfigureAwait(false);
+            // The window shows what the player can pay with: the fruits in the Jewel Bank, or the items in the inventory.
+            availableItems = configuration.PayItemCostsWithJewelBankFruits
+                ? await this.GetBankFruitsAsync().ConfigureAwait(false) ?? 0
+                : this.FindRequiredItems(configuration).Count;
         }
 
         return new ResetNpcStatus(
@@ -64,10 +99,10 @@ public class ResetCharacterAction
             configuration.ResetLimit ?? 0,
             configuration.RequiredLevel,
             this._player.Level,
-            progression.RequiredZen,
+            this.GetRequiredZen(progression),
             this._player.Money,
             progression.RequiredItemAmount,
-            bankFruits,
+            availableItems,
             this.CountWornItems(),
             configuration.RequireNoEquipment);
     }
@@ -85,15 +120,15 @@ public class ResetCharacterAction
             return ResetNpcOutcome.Refused;
         }
 
-        if (this._player.PlayerState.CurrentState != PlayerState.EnteredWorld && this._npc is null)
-        {
-            await this.ShowMessageAsync(nameof(PlayerMessage.CantResetWithOpenedWindows)).ConfigureAwait(false);
-            return ResetNpcOutcome.Refused;
-        }
-
         if (this._player.Attributes is null || this._player.SelectedCharacter is null)
         {
             await this.ShowMessageAsync(nameof(PlayerMessage.NotEnteredTheGame)).ConfigureAwait(false);
+            return ResetNpcOutcome.Refused;
+        }
+
+        if (!IsStateAllowed(this._player, this._npc))
+        {
+            await this.ShowMessageAsync(nameof(PlayerMessage.ResetNotInSafezone)).ConfigureAwait(false);
             return ResetNpcOutcome.Refused;
         }
 
@@ -124,9 +159,9 @@ public class ResetCharacterAction
             return ResetNpcOutcome.RequirementsNotMet;
         }
 
-        if (!await this.TryConsumeResetCostsAsync(configuration, resetProgression).ConfigureAwait(false))
+        if (await this.TryConsumeResetCostsAsync(configuration, resetProgression).ConfigureAwait(false) is { } failure)
         {
-            return ResetNpcOutcome.RequirementsNotMet;
+            return failure;
         }
 
         this._player.Attributes[Stats.Resets] = resetProgression.NextResetCount;
@@ -141,7 +176,7 @@ public class ResetCharacterAction
 
         if (configuration.MoveHome)
         {
-            await this.MoveHomeAsync().ConfigureAwait(false);
+            await this.MoveHomeAsync(configuration.LogOut).ConfigureAwait(false);
         }
 
         if (configuration.LogOut)
@@ -177,13 +212,6 @@ public class ResetCharacterAction
     private async ValueTask ShowMessageAsync(string messageKey, params object?[] args)
     {
         var message = this._player.GetLocalizedMessage(messageKey, args);
-
-        if (this._npc is null)
-        {
-            await this._player.ShowBlueMessageAsync(message).ConfigureAwait(false);
-            return;
-        }
-
         await this._player.InvokeViewPlugInAsync<IShowMessageOfObjectPlugIn>(p => p.ShowMessageOfObjectAsync(message, this._npc)).ConfigureAwait(false);
     }
 
@@ -194,101 +222,174 @@ public class ResetCharacterAction
         return (int)this._player.Attributes![Stats.Resets];
     }
 
-    private async ValueTask<bool> TryConsumeResetCostsAsync(ResetConfiguration configuration, ResetProgression resetProgression)
+    /// <summary>
+    /// Gets the Zen of the next reset. It never exceeds the most Zen a player can carry, otherwise the reset could never be paid.
+    /// </summary>
+    private int GetRequiredZen(ResetProgression progression)
     {
+        var maximum = this._player.GameContext.Configuration.MaximumInventoryMoney;
+        return maximum > 0 ? Math.Min(progression.RequiredZen, maximum) : progression.RequiredZen;
+    }
+
+    /// <summary>
+    /// Counts the fruits in the Jewel Bank of the player.
+    /// </summary>
+    /// <returns>The number of fruits, or <c>null</c> when the Jewel Bank is not available or could not be read.</returns>
+    private async ValueTask<long?> GetBankFruitsAsync()
+    {
+        if (JewelBankService.Create(this._player) is not { } bank || JewelBankService.GetIdentity(this._player) is not { } who)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await bank.GetFruitCountAsync(who.AccountId).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            this._player.Logger.LogError(ex, "The fruits in the Jewel Bank of {Player} could not be read for a reset.", this._player);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Takes the costs of the reset. The fruits come first because taking them can fail; the Zen is taken only afterwards, and the
+    /// fruits are given back if that does not work. Like this a problem with the database can never cost the player Zen for nothing.
+    /// </summary>
+    /// <returns><c>null</c> when everything is paid; otherwise what to answer instead.</returns>
+    private async ValueTask<ResetNpcOutcome?> TryConsumeResetCostsAsync(ResetConfiguration configuration, ResetProgression resetProgression)
+    {
+        var requiredZen = this.GetRequiredZen(resetProgression);
+        if (this._player.Money < requiredZen)
+        {
+            await this.ShowMessageAsync(nameof(PlayerMessage.NotEnoughMoneyForReset), requiredZen).ConfigureAwait(false);
+            return ResetNpcOutcome.RequirementsNotMet;
+        }
+
         var fruitsFromBank = configuration.PayItemCostsWithJewelBankFruits && resetProgression.RequiredItemAmount > 0;
         JewelBankService? bank = null;
-        IList<Item>? requiredItems = [];
+        (Guid AccountId, Guid CharacterId)? identity = null;
+        IList<Item> requiredItems = [];
         if (fruitsFromBank)
         {
             bank = JewelBankService.Create(this._player);
-            if (bank is null
-                || JewelBankService.GetIdentity(this._player) is not { } who
-                || await bank.GetFruitCountAsync(who.AccountId).ConfigureAwait(false) < resetProgression.RequiredItemAmount)
+            identity = JewelBankService.GetIdentity(this._player);
+            if (bank is null || identity is null || await this.GetBankFruitsAsync().ConfigureAwait(false) is not { } bankFruits)
+            {
+                await this.ShowMessageAsync(nameof(PlayerMessage.ResetTemporarilyUnavailable)).ConfigureAwait(false);
+                return ResetNpcOutcome.Refused;
+            }
+
+            if (bankFruits < resetProgression.RequiredItemAmount)
             {
                 await this.ShowMessageAsync(nameof(PlayerMessage.NotEnoughItemsForReset), resetProgression.RequiredItemAmount, "fruits in the Jewel Bank").ConfigureAwait(false);
-                return false;
+                return ResetNpcOutcome.RequirementsNotMet;
             }
         }
-        else
+        else if (resetProgression.RequiredItemAmount > 0 && configuration.RequiredResetItem is { } requiredDefinition)
         {
-            requiredItems = await this.GetRequiredItemsToConsumeAsync(configuration, resetProgression.RequiredItemAmount).ConfigureAwait(false);
-            if (requiredItems is null)
+            requiredItems = this.FindRequiredItems(configuration).Take(resetProgression.RequiredItemAmount).ToList();
+            if (requiredItems.Count < resetProgression.RequiredItemAmount)
             {
-                return false;
+                await this.ShowMessageAsync(nameof(PlayerMessage.NotEnoughItemsForReset), resetProgression.RequiredItemAmount, requiredDefinition.Name).ConfigureAwait(false);
+                return ResetNpcOutcome.RequirementsNotMet;
             }
         }
 
-        if (this._player.Money < resetProgression.RequiredZen)
-        {
-            await this.ShowMessageAsync(nameof(PlayerMessage.NotEnoughMoneyForReset), resetProgression.RequiredZen).ConfigureAwait(false);
-            return false;
-        }
-
-        if (resetProgression.RequiredZen > 0 && !this._player.TryRemoveMoney(resetProgression.RequiredZen))
-        {
-            await this.ShowMessageAsync(nameof(PlayerMessage.NotEnoughMoneyForReset), resetProgression.RequiredZen).ConfigureAwait(false);
-            return false;
-        }
-
+        IReadOnlyDictionary<byte, long>? spentFruits = null;
         if (bank is not null)
         {
-            var spent = await bank.SpendFruitsAsync(this._player, Guid.NewGuid(), resetProgression.RequiredItemAmount).ConfigureAwait(false);
+            JewelBankOperationResult spent;
+            try
+            {
+                spent = await bank.SpendFruitsAsync(this._player, Guid.NewGuid(), resetProgression.RequiredItemAmount).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Nothing of the Zen was taken yet, so the player loses nothing here.
+                this._player.Logger.LogError(ex, "The fruits for the reset of {Player} could not be taken from the Jewel Bank.", this._player);
+                await this.ShowMessageAsync(nameof(PlayerMessage.ResetTemporarilyUnavailable)).ConfigureAwait(false);
+                return ResetNpcOutcome.Refused;
+            }
+
             if (!spent.IsSuccess)
             {
-                // The fruits went away between the check and now (for example through the Jewel Bank window): give the Zen back.
-                this._player.TryAddMoney(resetProgression.RequiredZen);
                 await this.ShowMessageAsync(nameof(PlayerMessage.NotEnoughItemsForReset), resetProgression.RequiredItemAmount, "fruits in the Jewel Bank").ConfigureAwait(false);
-                return false;
+                return ResetNpcOutcome.RequirementsNotMet;
             }
+
+            spentFruits = spent.Moved;
         }
 
-        foreach (var item in requiredItems!)
+        if (requiredZen > 0 && !this._player.TryRemoveMoney(requiredZen))
+        {
+            await this.GiveFruitsBackAsync(bank, identity, spentFruits).ConfigureAwait(false);
+            await this.ShowMessageAsync(nameof(PlayerMessage.NotEnoughMoneyForReset), requiredZen).ConfigureAwait(false);
+            return ResetNpcOutcome.RequirementsNotMet;
+        }
+
+        foreach (var item in requiredItems)
         {
             await this._player.DestroyInventoryItemAsync(item).ConfigureAwait(false);
         }
 
-        return true;
+        return null;
     }
 
-    private async ValueTask<IList<Item>?> GetRequiredItemsToConsumeAsync(ResetConfiguration configuration, int requiredItemAmount)
+    private async ValueTask GiveFruitsBackAsync(JewelBankService? bank, (Guid AccountId, Guid CharacterId)? identity, IReadOnlyDictionary<byte, long>? spentFruits)
     {
-        if (requiredItemAmount <= 0 || configuration.RequiredResetItem is null)
+        if (bank is null || identity is not { } who || spentFruits is null)
+        {
+            return;
+        }
+
+        foreach (var (kind, units) in spentFruits)
+        {
+            try
+            {
+                await bank.CreditPickupAsync(who.AccountId, who.CharacterId, kind, units).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                this._player.Logger.LogError(ex, "{Units} fruits of kind {Kind} could not be given back to the Jewel Bank of {Player} after a failed reset.", units, kind, this._player);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds the items in the inventory (not the worn ones) which pay the item cost.
+    /// </summary>
+    private IList<Item> FindRequiredItems(ResetConfiguration configuration)
+    {
+        if (configuration.RequiredResetItem is not { } requiredDefinition || this._player.Inventory is null)
         {
             return [];
         }
 
-        if (this._player.Inventory is null)
-        {
-            return null;
-        }
-
-        var requiredDefinition = configuration.RequiredResetItem;
-        var requiredItems = this._player.Inventory.Items
-            .Where(item => item.Definition is { } definition
+        return this._player.Inventory.Items
+            .Where(item => item.ItemSlot >= InventoryConstants.EquippableSlotsCount
+                           && item.Definition is { } definition
                            && definition.Group == requiredDefinition.Group
                            && definition.Number == requiredDefinition.Number)
-            .Take(requiredItemAmount)
             .ToList();
-        if (requiredItems.Count < requiredItemAmount)
-        {
-            await this.ShowMessageAsync(
-                nameof(PlayerMessage.NotEnoughItemsForReset),
-                requiredItemAmount,
-                configuration.RequiredResetItem.Name).ConfigureAwait(false);
-            return null;
-        }
-
-        return requiredItems;
     }
 
     private void UpdateStats(ResetConfiguration configuration, ResetProgression resetProgression)
     {
+        var investedPoints = 0;
         if (configuration.ResetStats)
         {
-            this._player.SelectedCharacter!.CharacterClass!.StatAttributes
-                .Where(s => s.IncreasableByPlayer)
-                .ForEach(s => this._player.Attributes![s.Attribute] = s.BaseValue);
+            foreach (var statDefinition in this._player.SelectedCharacter!.CharacterClass!.StatAttributes.Where(s => s.IncreasableByPlayer))
+            {
+                if (statDefinition.Attribute is not { } attribute)
+                {
+                    continue;
+                }
+
+                investedPoints += Math.Max(0, (int)this._player.Attributes![attribute] - (int)statDefinition.BaseValue);
+                this._player.Attributes[attribute] = statDefinition.BaseValue;
+            }
         }
 
         if (configuration.ReplacePointsPerReset)
@@ -297,21 +398,32 @@ public class ResetCharacterAction
         }
         else
         {
-            this._player.SelectedCharacter!.LevelUpPoints += resetProgression.PointsForReset;
+            // The stats went back to their start values, so the points which were spent on them are given back as well.
+            this._player.SelectedCharacter!.LevelUpPoints += resetProgression.PointsForReset + investedPoints;
         }
     }
 
-    private async ValueTask MoveHomeAsync()
+    private async ValueTask MoveHomeAsync(bool logOut)
     {
         var homeMapDef = this._player.SelectedCharacter!.CharacterClass!.HomeMap;
-        if (homeMapDef is { }
-            && await this._player.GameContext.GetMapAsync((ushort)homeMapDef.Number).ConfigureAwait(false) is { SafeZoneSpawnGate: { } spawnGate })
+        if (homeMapDef is not { }
+            || await this._player.GameContext.GetMapAsync((ushort)homeMapDef.Number).ConfigureAwait(false) is not { SafeZoneSpawnGate: { } spawnGate })
         {
-            this._player.SelectedCharacter.PositionX = (byte)Rand.NextInt(spawnGate.X1, spawnGate.X2);
-            this._player.SelectedCharacter.PositionY = (byte)Rand.NextInt(spawnGate.Y1, spawnGate.Y2);
-            this._player.SelectedCharacter.CurrentMap = spawnGate.Map;
-            this._player.Rotation = spawnGate.Direction;
+            return;
         }
+
+        if (!logOut)
+        {
+            // The player stays in the game, so it has to be moved for real; only changing the saved position would leave the
+            // character standing where it was while its saved position says otherwise.
+            await this._player.WarpToAsync(spawnGate).ConfigureAwait(false);
+            return;
+        }
+
+        this._player.SelectedCharacter.PositionX = (byte)Rand.NextInt(spawnGate.X1, spawnGate.X2);
+        this._player.SelectedCharacter.PositionY = (byte)Rand.NextInt(spawnGate.Y1, spawnGate.Y2);
+        this._player.SelectedCharacter.CurrentMap = spawnGate.Map;
+        this._player.Rotation = spawnGate.Direction;
     }
 
     private async ValueTask UpdateClientStatsAsync(ResetConfiguration configuration)

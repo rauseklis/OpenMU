@@ -41,6 +41,12 @@ internal sealed class JewelBankOpenHandlerPlugIn : ISubPacketHandlerPlugIn
             return;
         }
 
+        if (!JewelBankService.OpenRateLimiter.TryAcquire(who.AccountId))
+        {
+            // The window asks again by itself; answering a client which asks this fast would only cost database queries.
+            return;
+        }
+
         await JewelBankMessages.SendStateAsync(player, JewelBankResultCode.Success, await service.GetStateAsync(who.AccountId).ConfigureAwait(false)).ConfigureAwait(false);
     }
 }

@@ -305,6 +305,20 @@ public sealed class JewelBankRepository : IJewelBankRepository
         return findings;
     }
 
+    /// <inheritdoc />
+    public async Task<int> PurgeOperationsAsync(DateTimeOffset olderThan, int batchSize, CancellationToken cancellationToken = default)
+    {
+        if (batchSize <= 0)
+        {
+            return 0;
+        }
+
+        await using var context = this._contextFactory();
+        return await context.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM data.\"JewelBankOperation\" WHERE \"Id\" IN (SELECT \"Id\" FROM data.\"JewelBankOperation\" WHERE \"CreatedAt\" < {olderThan} AND \"Outcome\" >= 0 ORDER BY \"CreatedAt\" LIMIT {batchSize})",
+            cancellationToken);
+    }
+
     private static JewelBankKind? Classify(Definitions definitions, Guid definitionId, int level)
         => definitions.IdToIdentity.TryGetValue(definitionId, out var identity) ? JewelBankKinds.Find(identity.Group, identity.Number, level) : null;
 

@@ -156,4 +156,14 @@ public interface IJewelBankRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A description of each broken invariant; empty when the data is consistent.</returns>
     Task<IReadOnlyList<string>> ReconcileAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes the request records (which make a repeated request return its first outcome) that are older than the given time.
+    /// The movements are not touched: they are the ledger which the balances are checked against.
+    /// </summary>
+    /// <param name="olderThan">Records created before this time are deleted.</param>
+    /// <param name="batchSize">The most records to delete in one call.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of deleted records.</returns>
+    Task<int> PurgeOperationsAsync(DateTimeOffset olderThan, int batchSize, CancellationToken cancellationToken = default);
 }

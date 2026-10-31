@@ -25,8 +25,9 @@ public static class PlayerTestHelper
     /// <summary>
     /// Gets a test player with a new in-memory game context.
     /// </summary>
+    /// <param name="persistenceContextProvider">The persistence context provider of the game context; a new in-memory provider when not given.</param>
     /// <returns>The test player.</returns>
-    public static async ValueTask<Player> CreatePlayerAsync()
+    public static async ValueTask<Player> CreatePlayerAsync(MUnique.OpenMU.Persistence.IPersistenceContextProvider? persistenceContextProvider = null)
     {
         var gameConfig = new Mock<GameConfiguration>();
         gameConfig.SetupAllProperties();
@@ -50,7 +51,7 @@ public static class PlayerTestHelper
         gameConfig.Object.Maps.Add(map.Object);
 
         var mapInitializer = new MapInitializer(gameConfig.Object, new NullLogger<MapInitializer>(), NullDropGenerator.Instance, null);
-        var gameContext = new GameContext(gameConfig.Object, new InMemoryPersistenceContextProvider(), mapInitializer, new NullLoggerFactory(), new PlugInManager(null, new NullLoggerFactory(), null, null), NullDropGenerator.Instance, new ConfigurationChangeMediator());
+        var gameContext = new GameContext(gameConfig.Object, persistenceContextProvider ?? new InMemoryPersistenceContextProvider(), mapInitializer, new NullLoggerFactory(), new PlugInManager(null, new NullLoggerFactory(), null, null), NullDropGenerator.Instance, new ConfigurationChangeMediator());
         mapInitializer.PlugInManager = gameContext.PlugInManager;
         mapInitializer.PathFinderPool = gameContext.PathFinderPool;
         return await CreatePlayerAsync(gameContext).ConfigureAwait(false);
@@ -65,6 +66,7 @@ public static class PlayerTestHelper
     {
         var characterMock = new Mock<Character>();
         characterMock.SetupAllProperties();
+        characterMock.As<MUnique.OpenMU.Persistence.IIdentifiable>().SetupGet(c => c.Id).Returns(Guid.NewGuid());
         characterMock.Setup(c => c.LearnedSkills).Returns(new List<SkillEntry>());
         characterMock.Setup(c => c.Attributes).Returns(new List<StatAttribute>());
         characterMock.Setup(c => c.DropItemGroups).Returns(new List<DropItemGroup>());
@@ -133,6 +135,7 @@ public static class PlayerTestHelper
         }
 
         var accountMock = new Mock<Account>();
+        accountMock.As<MUnique.OpenMU.Persistence.IIdentifiable>().SetupGet(a => a.Id).Returns(Guid.NewGuid());
         accountMock.Setup(mock => mock.Attributes).Returns(new List<StatAttribute>());
         accountMock.Setup(mock => mock.UnlockedCharacterClasses).Returns(new List<CharacterClass>());
         var player = new TestPlayer(gameContext) { Account = accountMock.Object };
