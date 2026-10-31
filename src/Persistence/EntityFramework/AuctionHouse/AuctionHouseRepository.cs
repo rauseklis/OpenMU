@@ -47,6 +47,12 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
 
     private const string ExpirySavepoint = "expiry_listing";
 
+    /// <summary>
+    /// Listings which could not be finalized are left alone for this long, so they cannot fill every batch. The repository is
+    /// created for each run of the expiry worker, so this is shared by the whole process.
+    /// </summary>
+    private static readonly ExpiryRetryBackoff ExpiryBackoff = new(TimeSpan.FromMinutes(10));
+
     private readonly int _moneyLimit;
     private readonly Func<EntityDataContext> _contextFactory;
     private readonly ILogger _logger;
@@ -1657,8 +1663,9 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
     public async Task<int> ExpireBatchAsync(EntityDataContext context, DateTimeOffset now, int batchSize, Func<long, long> successFee, CancellationToken cancellationToken = default)
     {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var skipped = ExpiryBackoff.GetSkippedIds(now);
         var due = await context.Set<AuctionListing>()
-            .FromSqlInterpolated($"SELECT * FROM data.\"AuctionListing\" WHERE \"Status\" = 0 AND \"EndsAt\" <= {now} ORDER BY \"EndsAt\" LIMIT {batchSize} FOR UPDATE SKIP LOCKED")
+            .FromSqlInterpolated($"SELECT * FROM data.\"AuctionListing\" WHERE \"Status\" = 0 AND \"EndsAt\" <= {now} AND \"Id\" <> ALL({skipped}) ORDER BY \"EndsAt\" LIMIT {batchSize} FOR UPDATE SKIP LOCKED")
             .AsNoTracking().ToListAsync(cancellationToken);
 
         var finalized = 0;
@@ -1673,10 +1680,12 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
                 }
 
                 await transaction.ReleaseSavepointAsync(ExpirySavepoint, cancellationToken);
+                ExpiryBackoff.RecordSuccess(listing.Id);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                this._logger.LogError(exception, "Auction House listing {ListingId} could not be finalized; it is retried on the next run.", listing.Id);
+                this._logger.LogError(exception, "Auction House listing {ListingId} could not be finalized; it is skipped for a while and then retried.", listing.Id);
+                ExpiryBackoff.RecordFailure(listing.Id, now);
                 await transaction.RollbackToSavepointAsync(ExpirySavepoint, cancellationToken);
                 await transaction.ReleaseSavepointAsync(ExpirySavepoint, cancellationToken);
                 context.ChangeTracker.Clear();
