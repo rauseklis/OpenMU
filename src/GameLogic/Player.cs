@@ -57,6 +57,7 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     private static readonly TimeSpan HeroStateDuration = TimeSpan.FromHours(1);
 
     private readonly PlayerExperience _experience;
+    private readonly object _skillCostLock = new();
 
     /// <summary>
     /// Serializes context mutations done by this player's action handlers against the periodic and
@@ -761,7 +762,7 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         var manaFullyRecovered = Rand.NextRandomBool(this.Attributes[Stats.FullyRecoverManaAfterHitChance]);
         if (hitInfo.ManaToll > 0 || manaFullyRecovered)
         {
-            this.Attributes[Stats.CurrentMana] = (manaFullyRecovered ? this.Attributes[Stats.MaximumMana] : this.Attributes[Stats.CurrentMana]) - hitInfo.ManaToll;
+            this.Attributes[Stats.CurrentMana] = Math.Max(0, (manaFullyRecovered ? this.Attributes[Stats.MaximumMana] : this.Attributes[Stats.CurrentMana]) - hitInfo.ManaToll);
         }
 
         await this.HitAsync(hitInfo, attacker, skill?.Skill, isFinalStreakHit).ConfigureAwait(false);
@@ -1143,14 +1144,19 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
             return false;
         }
 
-        if (skill.ConsumeRequirements.Any(r => this.GetRequiredValue(r, skillEntry) > this.Attributes![r.Attribute]))
+        // Casts can arrive at the same time (fast repeated casting). Checking and paying must not be interleaved, or two casts both
+        // pass the check with the same mana and the second payment takes the mana below zero.
+        lock (this._skillCostLock)
         {
-            return false;
-        }
+            if (skill.ConsumeRequirements.Any(r => this.GetRequiredValue(r, skillEntry) > this.Attributes![r.Attribute]))
+            {
+                return false;
+            }
 
-        foreach (var requirement in skill.ConsumeRequirements)
-        {
-            this.Attributes![requirement.Attribute] -= this.GetRequiredValue(requirement, skillEntry);
+            foreach (var requirement in skill.ConsumeRequirements)
+            {
+                this.Attributes![requirement.Attribute] -= this.GetRequiredValue(requirement, skillEntry);
+            }
         }
 
         return true;
@@ -1940,6 +1946,12 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     {
         try
         {
+            if (FloorAtZero(Stats.CurrentMana) || FloorAtZero(Stats.CurrentAbility) || FloorAtZero(Stats.CurrentShield) || FloorAtZero(Stats.CurrentHealth))
+            {
+                // Setting the floored value raises the change again, which sends the corrected value to the client.
+                return;
+            }
+
             _ = LimitCurrentAttribute(Stats.MaximumHealth, Stats.CurrentHealth)
                 || LimitCurrentAttribute(Stats.MaximumMana, Stats.CurrentMana)
                 || LimitCurrentAttribute(Stats.MaximumShield, Stats.CurrentShield)
@@ -1950,6 +1962,17 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         catch (Exception ex)
         {
             this.Logger.LogError(ex, $"{nameof(this.OnAttributeValueChanged)} failed for attribute {attribute.Definition}.");
+        }
+
+        bool FloorAtZero(AttributeDefinition currentDefinition)
+        {
+            if (attribute.Definition == currentDefinition && attribute.Value < 0)
+            {
+                this.Attributes![currentDefinition] = 0;
+                return true;
+            }
+
+            return false;
         }
 
         bool LimitCurrentAttribute(AttributeDefinition maximumDefinition, AttributeDefinition currentDefinition)
