@@ -12,6 +12,16 @@ using MUnique.OpenMU.DataModel.Configuration;
 internal class Lorencia : Version095d.Maps.Lorencia
 {
     /// <summary>
+    /// The X coordinate of the spawn point of Wandering Merchant Zyro.
+    /// </summary>
+    internal const byte ZyroX = 124;
+
+    /// <summary>
+    /// The Y coordinate of the spawn point of Wandering Merchant Zyro.
+    /// </summary>
+    internal const byte ZyroY = 144;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="Lorencia"/> class.
     /// </summary>
     /// <param name="context">The context.</param>
@@ -42,7 +52,7 @@ internal class Lorencia : Version095d.Maps.Lorencia
         yield return this.CreateMonsterSpawn(23, this.NpcDictionary[375], 132, 161, Direction.SouthEast);
         yield return this.CreateMonsterSpawn(24, this.NpcDictionary[543], 141, 143, Direction.South);
         yield return this.CreateMonsterSpawn(25, this.NpcDictionary[371], 130, 126, Direction.SouthEast);
-        yield return this.CreateMonsterSpawn(26, this.NpcDictionary[568], 131, 139, Direction.South, SpawnTrigger.Wandering); // Wandering Merchant Zyro
+        yield return this.CreateMonsterSpawn(26, this.NpcDictionary[568], ZyroX, ZyroY, Direction.South, SpawnTrigger.Wandering); // Wandering Merchant Zyro
         yield return this.CreateMonsterSpawn(27, this.NpcDictionary[547], 139, 138, Direction.SouthEast); // Market Union Member Julia (warps to the Loren Market)
     }
 }

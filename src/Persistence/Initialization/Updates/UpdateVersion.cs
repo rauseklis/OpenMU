@@ -753,4 +753,9 @@ public enum UpdateVersion
 
     /// <summary>Installs the approved shared item upgrade probabilities and Luck bonus.</summary>
     ChaosItemUpgradeRates = 161,
+
+    /// <summary>
+    /// Moves Wandering Merchant Zyro's Lorencia spawn point.
+    /// </summary>
+    ZyroLorenciaSpot = 162,
 }

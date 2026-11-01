@@ -721,6 +721,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed item upgrade bases 60/60/55/55/20/20 and Luck +20 for both worlds.");
         }
 
+        if (await ZyroLorenciaSpotInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Moved Wandering Merchant Zyro's Lorencia spawn point to 124/144.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
