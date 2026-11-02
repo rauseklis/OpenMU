@@ -18,7 +18,7 @@ using SeasonSixDataInitialization = MUnique.OpenMU.Persistence.Initialization.Ve
 public class FlameRangeAndCadenceTests
 {
     private const float ExpectedDiameter = 5.0f;
-    private const float NewDatabaseDiameter = 2.0f;
+    private const float NewDatabaseDiameter = 3.0f;
     private const int ExpectedHitsPerTarget = 2;
     private static readonly TimeSpan ExpectedDelay = TimeSpan.FromMilliseconds(500);
 
