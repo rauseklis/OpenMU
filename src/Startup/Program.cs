@@ -731,6 +731,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Enabled the stat commands, set Scroll of Flame to a 1-tile radius and limited Loch's Feather to Dark Phoenix.");
         }
 
+        if (await FlameRadiusOnePointFiveInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Set the Scroll of Flame radius to 1.5 tiles.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

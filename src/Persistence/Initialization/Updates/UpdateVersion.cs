@@ -763,4 +763,9 @@ public enum UpdateVersion
     /// Enables the single-word stat commands, narrows Scroll of Flame to a 1-tile radius and limits Loch's Feather to Dark Phoenix.
     /// </summary>
     ReportedFixes = 163,
+
+    /// <summary>
+    /// Sets Scroll of Flame to a 1.5-tile target radius.
+    /// </summary>
+    FlameRadiusOnePointFive = 164,
 }
