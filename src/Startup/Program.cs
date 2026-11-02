@@ -726,6 +726,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Moved Wandering Merchant Zyro's Lorencia spawn point to 124/144.");
         }
 
+        if (await ReportedFixesInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Enabled the stat commands, set Scroll of Flame to a 1-tile radius and limited Loch's Feather to Dark Phoenix.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

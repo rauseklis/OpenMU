@@ -455,6 +455,9 @@ public sealed class CombatHandler
         }
 
         await this.ExecuteAttackAsync(target, skill, false).ConfigureAwait(false);
+
+        // One cast, then a pause of one tick (the helper ticks every 500 ms), so a plain attack lands once a second.
+        this._skillCooldownTicks = InterSkillDelayTicks;
     }
 
     private async ValueTask ExecuteAttackAsync(IAttackable target, SkillEntry? skillEntry, bool isCombo)

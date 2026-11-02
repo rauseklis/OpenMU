@@ -18,6 +18,7 @@ using SeasonSixDataInitialization = MUnique.OpenMU.Persistence.Initialization.Ve
 public class FlameRangeAndCadenceTests
 {
     private const float ExpectedDiameter = 5.0f;
+    private const float NewDatabaseDiameter = 2.0f;
     private const int ExpectedHitsPerTarget = 2;
     private static readonly TimeSpan ExpectedDelay = TimeSpan.FromMilliseconds(500);
 
@@ -64,7 +65,7 @@ public class FlameRangeAndCadenceTests
         var flame = configuration.Skills.Single(skill => skill.Number == 5);
 
         Assert.That(flame.AreaSkillSettings, Is.Not.Null);
-        Assert.That(flame.AreaSkillSettings!.TargetAreaDiameter, Is.EqualTo(ExpectedDiameter));
+        Assert.That(flame.AreaSkillSettings!.TargetAreaDiameter, Is.EqualTo(NewDatabaseDiameter));
         Assert.That(flame.AreaSkillSettings.MinimumNumberOfHitsPerTarget, Is.EqualTo(ExpectedHitsPerTarget));
         Assert.That(flame.AreaSkillSettings.MaximumNumberOfHitsPerTarget, Is.EqualTo(ExpectedHitsPerTarget));
         Assert.That(flame.AreaSkillSettings.DelayBetweenHits, Is.EqualTo(ExpectedDelay));

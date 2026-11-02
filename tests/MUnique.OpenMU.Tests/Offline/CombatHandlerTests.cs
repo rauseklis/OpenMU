@@ -104,6 +104,32 @@ public class CombatHandlerTests
     }
 
     /// <summary>
+    /// Tests that a plain attack is followed by a pause of one helper tick, so it lands once a second.
+    /// </summary>
+    [Test]
+    public async ValueTask PerformAttackAsync_PausesOneTickAfterAPlainAttackAsync()
+    {
+        // Arrange
+        var player = await this.CreateOfflinePlayerAsync().ConfigureAwait(false);
+        player.Position = this._origin;
+
+        var monster = await this.CreateMonsterAsync(new Point((byte)(this._origin.X + 1), this._origin.Y)).ConfigureAwait(false);
+        await player.CurrentMap!.AddAsync(monster).ConfigureAwait(false);
+
+        var config = new MuHelperSettings { HuntingRange = 10, FallbackBasicAttack = true };
+        player.HuntingOrigin = this._origin;
+        var handler = new CombatHandler(player, config, new MovementHandler(player, config));
+
+        // Act
+        await handler.PerformAttackAsync().ConfigureAwait(false);
+        await Task.Delay(1000).ConfigureAwait(false);
+        await handler.PerformAttackAsync().ConfigureAwait(false);
+
+        // Assert
+        Assert.That(handler.SkillCooldownTicks, Is.EqualTo(1));
+    }
+
+    /// <summary>
     /// Tests that <see cref="CombatHandler.PerformDrainLifeRecoveryAsync"/> uses Drain Life when HP is low.
     /// </summary>
     [Test]

@@ -11,6 +11,8 @@ using MUnique.OpenMU.DataModel.Configuration;
 /// </summary>
 internal class Icarus : Version095d.Maps.Icarus
 {
+    private const short DarkPhoenixNumber = 77;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Icarus"/> class.
     /// </summary>
@@ -32,6 +34,7 @@ internal class Icarus : Version095d.Maps.Icarus
         feather.Chance = 0.001;
         feather.Description = "Loch's Feather";
         feather.MinimumMonsterLevel = 82;
+        feather.Monster = this.GameConfiguration.Monsters.FirstOrDefault(monster => monster.Number == DarkPhoenixNumber);
         feather.PossibleItems.Add(lochsFeather);
         this.MapDefinition!.DropItemGroups.Add(feather);
         this.GameConfiguration.DropItemGroups.Add(feather);
