@@ -32,6 +32,8 @@ public class MagicEffectTooltipTests
             (5, Stats.CriticalDamageBonus, 45, AggregateType.AddRaw, "Critical damage: +45"),
             (8, Stats.SwellLifeHealthIncrease, 0.5f, AggregateType.AddRaw, "Maximum HP: +50%"),
             (135, Stats.SwellLifeManaIncrease, 0.2f, AggregateType.AddRaw, "Maximum mana: +20%"),
+            (7, Stats.SwellLifeHealthIncrease, 0.5833f, AggregateType.AddRaw, "Maximum HP: +58%"),
+            (3, Stats.GreaterDefenseBonus, 12.4f, AggregateType.AddRaw, "Defense: +12"),
             (82, Stats.MinimumWizBaseDmg, 44, AggregateType.AddRaw, "Minimum wizardry damage: +44"),
             (138, Stats.MaximumWizBaseDmg, 88, AggregateType.AddRaw, "Maximum wizardry damage: +88"),
             (139, Stats.CriticalDamageChance, 0.1f, AggregateType.AddRaw, "Critical hit chance: +10%"),

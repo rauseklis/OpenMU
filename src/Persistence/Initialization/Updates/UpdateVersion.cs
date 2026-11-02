@@ -758,4 +758,9 @@ public enum UpdateVersion
     /// Moves Wandering Merchant Zyro's Lorencia spawn point.
     /// </summary>
     ZyroLorenciaSpot = 162,
+
+    /// <summary>
+    /// Enables the single-word stat commands, narrows Scroll of Flame to a 1-tile radius and limits Loch's Feather to Dark Phoenix.
+    /// </summary>
+    ReportedFixes = 163,
 }

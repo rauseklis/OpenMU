@@ -188,7 +188,7 @@ public static class MagicEffectTooltip
     private static MagicEffectTooltipLine Format(string label, float value, bool percent = false, bool penalty = false)
     {
         var display = percent ? value * 100 : value;
-        var number = display.ToString("+0.##;-0.##;0", CultureInfo.InvariantCulture);
+        var number = MathF.Round(display, MidpointRounding.AwayFromZero).ToString("+0;-0;0", CultureInfo.InvariantCulture);
         return new($"{label}: {number}{(percent ? "%" : string.Empty)}", penalty);
     }
 
