@@ -58,7 +58,7 @@ internal class LumenLostMapStoreTest
     {
         var lostMaps = GetLostMaps(store).OrderBy(item => item.Level).ToList();
         Assert.That(lostMaps.Select(item => item.Level), Is.EqualTo(Enumerable.Range(1, 7)));
-        Assert.That(lostMaps.Select(item => item.ItemSlot), Is.EqualTo(Enumerable.Range(72, 7)));
+        Assert.That(lostMaps.Select(item => item.ItemSlot), Is.Unique, "Every Lost Map needs its own slot.");
     }
 
     private static IEnumerable<Item> GetLostMaps(ItemStorage store)

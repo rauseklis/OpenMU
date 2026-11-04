@@ -29,15 +29,10 @@ public class RibbonBoxShopTests
         using var context = provider.CreateNewConfigurationContext();
         var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
         var store = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
-        var originalStock = store.Items.ToArray();
-        new RibbonBoxShop(context, configuration).Initialize();
-        Assert.That(store.Items, Is.EquivalentTo(originalStock), "Repeated initialization must not duplicate listings.");
-        foreach (var number in new short[] { 32, 33, 34 })
-        {
-            var listings = store.Items.Where(item => item.Definition is { Group: 12 } definition && definition.Number == number && item.Level == 0).ToArray();
-            Assert.That(listings, Has.Length.EqualTo(1), $"Ribbon box 12:{number} must be listed exactly once.");
-            Assert.That(new ItemPriceCalculator().CalculateMerchantBuyingPrice(listings.Single()), Is.EqualTo(1000));
-        }
+        Assert.That(
+            store.Items.Where(item => item.Definition is { Group: 12, Number: >= 32 and <= 34 }),
+            Is.Empty,
+            "Ribbon boxes are no longer sold by any shop.");
     }
 
     /// <summary>

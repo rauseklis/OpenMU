@@ -43,7 +43,7 @@ public class ChocolateBonusStockTests
 
         await context.SaveChangesAsync().ConfigureAwait(false);
         Assert.That(await ChocolateBonusStockInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True);
-        Assert.That(store.Items.Count, Is.EqualTo(original.Length + 5));
+        Assert.That(store.Items.Count, Is.EqualTo(original.Length + 16));
         foreach (var (item, slot, level, durability, price) in original)
         {
             Assert.That(store.Items, Does.Contain(item));
