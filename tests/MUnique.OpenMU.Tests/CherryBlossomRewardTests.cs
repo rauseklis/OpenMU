@@ -210,7 +210,7 @@ public class CherryBlossomRewardTests
 
         foreach (var number in new short[] { 11, 123, 124 })
         {
-            Assert.That(shop.Items.Any(item => item.Definition is { Group: 14 } definition && definition.Number == number), Is.True);
+            Assert.That(shop.Items.Any(item => item.Definition is { Group: 14 } definition && definition.Number == number), Is.False);
         }
         foreach (var number in new short[] { 46, 47, 48 })
         {

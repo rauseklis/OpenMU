@@ -76,14 +76,10 @@ public class AncientBoxRewardTests
         Assert.That(config.ItemSetGroups.Count(set => set.Name == "Chamer"), Is.EqualTo(1));
         Assert.That(config.ItemSetGroups.Count(set => set.Name == "Trite"), Is.EqualTo(1));
         var store = config.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
-        var stockCount = store.Items.Count;
-        new AncientBoxShop(context, config).Initialize();
-        Assert.That(store.Items.Count, Is.EqualTo(stockCount), "Repeated installation must not duplicate shop stock.");
-        foreach (var number in new short[] { 11, 124, 123 })
-        {
-            var listing = store.Items.Single(item => item.Definition is { Group: 14 } definition && definition.Number == number && item.Level == 0);
-            Assert.That(new ItemPriceCalculator().CalculateMerchantBuyingPrice(listing), Is.EqualTo(1000));
-        }
+        Assert.That(
+            store.Items.Where(item => item.Definition is { Group: 14, Number: 11 or 124 or 123 }),
+            Is.Empty,
+            "The Ancient reward boxes are no longer sold by any shop.");
 
         foreach (var item in config.Items.Where(item => item.Number == 72 && item.Group is 7 or 8 or 9 or 11))
         {

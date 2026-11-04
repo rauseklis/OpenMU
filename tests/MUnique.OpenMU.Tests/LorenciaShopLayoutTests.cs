@@ -7,6 +7,7 @@ namespace MUnique.OpenMU.Tests;
 using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix;
+using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix.Items;
 using MUnique.OpenMU.Persistence.Initialization.Updates;
 using MUnique.OpenMU.Persistence.InMemory;
 
@@ -55,19 +56,16 @@ public class LorenciaShopLayoutTests
             Assert.That((item.Definition, item.Level, item.Durability, item.StorePrice), Is.EqualTo((definition, level, durability, price)));
         }
 
-        var star = store.Items.Single(item => item.Definition is { Group: 14, Number: 11 } && item.Level == 1);
-        star.ItemSlot = 119;
+        var scroll = store.Items.Single(item => item.Definition is { Group: 14, Number: 10 });
+        scroll.ItemSlot = 119;
         await context.SaveChangesAsync().ConfigureAwait(false);
         Assert.That(await LorenciaShopLayoutInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False);
-        Assert.That(star.ItemSlot, Is.EqualTo(119));
+        Assert.That(scroll.ItemSlot, Is.EqualTo(119));
     }
 
     internal static void AssertValidLayout(GameConfiguration configuration)
     {
         var store = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
-        var top = store.Items.Where(item => item.ItemSlot < 8).OrderBy(item => item.ItemSlot)
-            .Select(item => ((int)item.Definition!.Group, (int)item.Definition.Number, (int)item.Level)).ToArray();
-        Assert.That(top, Is.EqualTo(new[] { (14, 11, 5), (14, 11, 6), (14, 11, 3), (14, 11, 2), (14, 11, 1), (14, 32, 0), (14, 34, 0), (14, 33, 0) }));
         var occupied = new HashSet<int>();
         foreach (var item in store.Items)
         {
@@ -84,14 +82,6 @@ public class LorenciaShopLayoutTests
             }
         }
 
-        Assert.That(store.Items.Where(item => item.ItemSlot is >= 16 and < 24)
-            .OrderBy(item => item.ItemSlot).Select(item => ((int)item.Definition!.Group, (int)item.Definition.Number, (int)item.Level)),
-            Is.EqualTo(new[] { (12, 33, 0), (12, 34, 0), (12, 32, 0) }));
-        Assert.That(store.Items.Where(item => item.ItemSlot is >= 8 and < 16).OrderBy(item => item.ItemSlot)
-            .Select(item => ((int)item.Definition!.Group, (int)item.Definition.Number, (int)item.Level)),
-            Is.EqualTo(new[] { (14, 11, 7), (14, 11, 8), (14, 11, 9), (14, 11, 10), (14, 11, 11), (14, 11, 12) }));
-        Assert.That(store.Items.Where(item => item.ItemSlot is >= 24 and < 32)
-            .OrderBy(item => item.ItemSlot).Select(item => ((int)item.Definition!.Group, (int)item.Definition.Number, (int)item.Level)),
-            Is.EqualTo(new[] { (14, 11, 0), (14, 124, 0), (14, 123, 0) }));
+        Assert.That(store.Items.Where(item => ShopValuablesCleanup.IsValuable(item.Definition!)), Is.Empty, "No box may be left in the layout rows.");
     }
 }

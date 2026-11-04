@@ -768,4 +768,9 @@ public enum UpdateVersion
     /// Sets Scroll of Flame to a 1.5-tile target radius.
     /// </summary>
     FlameRadiusOnePointFive = 164,
+
+    /// <summary>
+    /// Removes jewels, boxes and other valuables from every merchant store.
+    /// </summary>
+    RemoveShopValuables = 165,
 }
