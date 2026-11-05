@@ -21,15 +21,14 @@ using Npgsql;
 [Category("PostgreSql")]
 public class AuctionFruitBuyoutTests
 {
+    private static readonly byte StrengthFruit = AuctionBankWallet.FruitCode(FruitComponent.Strength);
+    private static readonly byte EnergyFruit = AuctionBankWallet.FruitCode(FruitComponent.Energy);
     private string _connectionString = string.Empty;
     private Guid _sellerAccountId;
     private Guid _buyerAccountId;
     private Guid _buyerCharacterId;
-    private Guid _buyerInventoryId;
     private Guid _bidderAccountId;
     private Guid _bidderCharacterId;
-    private Guid _bidderInventoryId;
-    private Guid _fruitDefinitionId;
     private Guid _listingId;
     private readonly List<Guid> _listings = new();
 
@@ -59,17 +58,15 @@ public class AuctionFruitBuyoutTests
         this._buyerCharacterId = owners[1].CharacterId;
         this._bidderAccountId = owners[2].AccountId;
         this._bidderCharacterId = owners[2].CharacterId;
-        this._fruitDefinitionId = await FruitDefinitionAsync(this._connectionString);
 
         await using var context = new EntityDataContext();
-        this._buyerInventoryId = (await context.Set<Character>().AsNoTracking().Where(c => c.Id == this._buyerCharacterId).Select(c => c.InventoryId).SingleAsync())!.Value;
-        this._bidderInventoryId = (await context.Set<Character>().AsNoTracking().Where(c => c.Id == this._bidderCharacterId).Select(c => c.InventoryId).SingleAsync())!.Value;
-        await context.Set<Item>().Where(i => (i.ItemStorageId == this._buyerInventoryId || i.ItemStorageId == this._bidderInventoryId) && i.DefinitionId == this._fruitDefinitionId).ExecuteDeleteAsync();
+        await AuctionTestBank.ClearAsync(this._connectionString, this._sellerAccountId, this._buyerAccountId, this._bidderAccountId);
 
-        await AddFruitsAsync(context, this._buyerInventoryId, this._fruitDefinitionId, level: 3, count: 5, startSlot: 70);
-        await AddFruitsAsync(context, this._buyerInventoryId, this._fruitDefinitionId, level: 0, count: 3, startSlot: 65);
-        await AddFruitsAsync(context, this._bidderInventoryId, this._fruitDefinitionId, level: 3, count: 2, startSlot: 60);
-        await AddFruitsAsync(context, this._bidderInventoryId, this._fruitDefinitionId, level: 0, count: 1, startSlot: 62);
+        // Fruits are paid from the Jewel Bank.
+        await AuctionTestBank.AddAsync(this._connectionString, this._buyerAccountId, this._buyerCharacterId, StrengthFruit, 5);
+        await AuctionTestBank.AddAsync(this._connectionString, this._buyerAccountId, this._buyerCharacterId, EnergyFruit, 3);
+        await AuctionTestBank.AddAsync(this._connectionString, this._bidderAccountId, this._bidderCharacterId, StrengthFruit, 2);
+        await AuctionTestBank.AddAsync(this._connectionString, this._bidderAccountId, this._bidderCharacterId, EnergyFruit, 1);
 
         this._listingId = await this.InsertListingAsync(context, buyout: new FruitBasket(5, 0, 0, 3, 0));
     }
@@ -86,11 +83,11 @@ public class AuctionFruitBuyoutTests
         await context.Set<AuctionOperation>().Where(o => accounts.Contains(o.AccountId)).ExecuteDeleteAsync();
         await context.Set<AuctionListing>().Where(l => this._listings.Contains(l.Id)).ExecuteDeleteAsync();
         this._listings.Clear();
-        await context.Set<Item>().Where(i => (i.ItemStorageId == this._buyerInventoryId || i.ItemStorageId == this._bidderInventoryId) && i.DefinitionId == this._fruitDefinitionId).ExecuteDeleteAsync();
+        await AuctionTestBank.ClearAsync(this._connectionString, accounts);
     }
 
     /// <summary>
-    /// Verifies a buyout pays the buyout basket from the buyer's fruits, and the seller receives the basket less the fee on each component.
+    /// Verifies a buyout pays the buyout basket from the buyer's Jewel Bank, and the seller receives the basket less the fee on each component.
     /// </summary>
     [Test]
     public async Task BuyoutPaysTheBasketAndCreatesProceeds()
@@ -99,7 +96,8 @@ public class AuctionFruitBuyoutTests
 
         Assert.That(result.Outcome, Is.EqualTo(AuctionBuyoutOutcome.Bought));
         await using var context = new EntityDataContext();
-        Assert.That(await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._buyerInventoryId && i.DefinitionId == this._fruitDefinitionId), Is.EqualTo(0));
+        Assert.That(await AuctionTestBank.CountAsync(this._buyerAccountId, StrengthFruit), Is.EqualTo(0));
+        Assert.That(await AuctionTestBank.CountAsync(this._buyerAccountId, EnergyFruit), Is.EqualTo(0));
         var proceeds = await context.Set<AuctionCollection>().AsNoTracking().SingleAsync(c => c.AccountId == this._sellerAccountId && c.Kind == 2);
         Assert.Multiple(() =>
         {
@@ -199,21 +197,4 @@ public class AuctionFruitBuyoutTests
         return id;
     }
 
-    private static async Task AddFruitsAsync(EntityDataContext context, Guid inventoryId, Guid definitionId, byte level, int count, int startSlot)
-    {
-        for (var index = 0; index < count; index++)
-        {
-            context.Set<Item>().Add(new Item { Id = Guid.NewGuid(), ItemStorageId = inventoryId, ItemSlot = (byte)(startSlot + index), DefinitionId = definitionId, Level = level, Durability = 1 });
-        }
-
-        await context.SaveChangesAsync();
-    }
-
-    private static async Task<Guid> FruitDefinitionAsync(string connectionString)
-    {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
-        await using var command = new NpgsqlCommand("SELECT \"Id\" FROM config.\"ItemDefinition\" WHERE \"Group\" = 13 AND \"Number\" = 15", connection);
-        return (Guid)(await command.ExecuteScalarAsync())!;
-    }
 }

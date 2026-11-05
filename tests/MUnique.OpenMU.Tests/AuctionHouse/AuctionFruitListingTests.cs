@@ -10,6 +10,7 @@ using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework;
 using MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
+using MUnique.OpenMU.Persistence.JewelBank;
 using Npgsql;
 
 /// <summary>
@@ -21,14 +22,14 @@ using Npgsql;
 [Category("PostgreSql")]
 public class AuctionFruitListingTests
 {
+    private static readonly byte StrengthFruit = AuctionBankWallet.FruitCode(FruitComponent.Strength);
+    private static readonly byte EnergyFruit = AuctionBankWallet.FruitCode(FruitComponent.Energy);
     private string _connectionString = string.Empty;
     private Guid _accountId;
     private Guid _characterId;
     private Guid _inventoryId;
-    private Guid _fruitDefinitionId;
     private Guid _listedItemId;
     private Guid _listingId;
-    private readonly List<Guid> _fruits = new();
     private readonly List<Guid> _collections = new();
 
     [OneTimeSetUp]
@@ -56,13 +57,12 @@ public class AuctionFruitListingTests
         this._characterId = owners[0].CharacterId;
         await using var context = new EntityDataContext();
         this._inventoryId = (await context.Set<Character>().AsNoTracking().Where(c => c.Id == this._characterId).Select(c => c.InventoryId).SingleAsync())!.Value;
-        this._fruitDefinitionId = await FruitDefinitionAsync(this._connectionString);
+        await AuctionTestBank.ClearAsync(this._connectionString, this._accountId);
         var listedDefinition = await context.Set<Item>()
-            .Where(i => i.DefinitionId != null && i.DefinitionId != this._fruitDefinitionId)
+            .Where(i => i.DefinitionId != null)
             .Select(i => i.DefinitionId!.Value)
             .FirstAsync();
 
-        await context.Set<Item>().Where(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId).ExecuteDeleteAsync();
         // Against a populated copy of the real database, slots 70-73 of this inventory may already hold
         // real, unrelated items; clear them so these fixed test slots are deterministic.
         await context.Set<Item>().Where(i => i.ItemStorageId == this._inventoryId && i.ItemSlot >= 70 && i.ItemSlot <= 73).ExecuteDeleteAsync();
@@ -78,16 +78,11 @@ public class AuctionFruitListingTests
         await context.Set<AuctionCurrencyMovement>().Where(m => m.AccountId == this._accountId).ExecuteDeleteAsync();
         await context.Set<AuctionOperation>().Where(o => o.AccountId == this._accountId).ExecuteDeleteAsync();
         await context.Set<AuctionListing>().Where(l => l.SellerAccountId == this._accountId).ExecuteDeleteAsync();
-        await context.Set<Item>().Where(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId).ExecuteDeleteAsync();
         await context.Set<Item>().Where(i => i.Id == this._listedItemId).ExecuteDeleteAsync();
-        foreach (var fruit in this._fruits)
-        {
-            await context.Set<Item>().Where(i => i.Id == fruit).ExecuteDeleteAsync();
-        }
+        await AuctionTestBank.ClearAsync(this._connectionString, this._accountId);
 
         await context.Set<AuctionCollection>().Where(c => c.AccountId == this._accountId).ExecuteDeleteAsync();
         this._collections.Clear();
-        this._fruits.Clear();
     }
 
     /// <summary>
@@ -105,8 +100,8 @@ public class AuctionFruitListingTests
 
         Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Success));
         await using var context = new EntityDataContext();
-        var strengthLeft = await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId && i.Level == 3);
-        var energyLeft = await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId && i.Level == 0);
+        var strengthLeft = await AuctionTestBank.CountAsync(this._accountId, StrengthFruit);
+        var energyLeft = await AuctionTestBank.CountAsync(this._accountId, EnergyFruit);
         var listing = await context.Set<AuctionListing>().AsNoTracking().SingleAsync(l => l.Id == this._listingId);
         var feeRows = await context.Set<AuctionCurrencyMovement>().AsNoTracking().Where(m => m.OperationId == this._lastOperation && m.Kind == 5).ToListAsync();
         Assert.Multiple(() =>
@@ -132,8 +127,7 @@ public class AuctionFruitListingTests
         var result = await this.ListAsync(new FruitBasket(Strength: 2, Agility: 0, Vitality: 0, Energy: 1, Command: 0));
 
         Assert.That(result.Result, Is.EqualTo(AuctionResultCode.InsufficientCurrency));
-        await using var context = new EntityDataContext();
-        Assert.That(await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId), Is.EqualTo(2));
+        Assert.That(await AuctionTestBank.CountAsync(this._accountId, StrengthFruit), Is.EqualTo(2));
     }
 
     /// <summary>
@@ -172,11 +166,10 @@ public class AuctionFruitListingTests
     }
 
     /// <summary>
-    /// Verifies a claimed fruit balance materializes as clean fruits at each component's level: two Strength fruits at level 3 and
-    /// one Energy fruit at level 0.
+    /// Verifies a claimed fruit balance is credited to the Jewel Bank: two Strength fruits and one Energy fruit.
     /// </summary>
     [Test]
-    public async Task ClaimingAFruitBalanceMaterializesCleanFruits()
+    public async Task ClaimingAFruitBalanceCreditsTheJewelBank()
     {
         var collection = Guid.NewGuid();
         await using (var context = new EntityDataContext())
@@ -216,9 +209,8 @@ public class AuctionFruitListingTests
             Now: DateTimeOffset.UtcNow));
 
         Assert.That(result.Outcome, Is.EqualTo(AuctionClaimOutcome.Claimed));
-        await using var check = new EntityDataContext();
-        var level3 = await check.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId && i.Level == 3);
-        var level0 = await check.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._fruitDefinitionId && i.Level == 0);
+        var level3 = await AuctionTestBank.CountAsync(this._accountId, StrengthFruit);
+        var level0 = await AuctionTestBank.CountAsync(this._accountId, EnergyFruit);
         Assert.Multiple(() =>
         {
             Assert.That(level3, Is.EqualTo(2));
@@ -228,14 +220,8 @@ public class AuctionFruitListingTests
 
     private Guid _lastOperation;
 
-    private async Task AddFruitAsync(byte level, byte slot)
-    {
-        var id = Guid.NewGuid();
-        this._fruits.Add(id);
-        await using var context = new EntityDataContext();
-        context.Set<Item>().Add(new Item { Id = id, ItemStorageId = this._inventoryId, ItemSlot = slot, DefinitionId = this._fruitDefinitionId, Level = level, Durability = 1 });
-        await context.SaveChangesAsync();
-    }
+    private Task AddFruitAsync(byte level, byte slot)
+        => AuctionTestBank.AddAsync(this._connectionString, this._accountId, this._characterId, (byte)(JewelBankKinds.FirstFruitCode + level), 1);
 
     private async Task<AuctionListItemResult> ListAsync(FruitBasket basket)
     {
@@ -256,13 +242,5 @@ public class AuctionFruitListingTests
             StartingFruits: basket));
         this._listingId = result.ListingId;
         return result;
-    }
-
-    private static async Task<Guid> FruitDefinitionAsync(string connectionString)
-    {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
-        await using var command = new NpgsqlCommand("SELECT \"Id\" FROM config.\"ItemDefinition\" WHERE \"Group\" = 13 AND \"Number\" = 15", connection);
-        return (Guid)(await command.ExecuteScalarAsync())!;
     }
 }

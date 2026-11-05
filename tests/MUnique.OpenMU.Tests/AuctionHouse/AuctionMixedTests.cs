@@ -24,6 +24,9 @@ public class AuctionMixedTests
 {
     private const long SaleFee = 100_000;
     private const int StartingMoney = 1_000_000;
+    private static readonly byte SoulCode = AuctionBankWallet.JewelCode(3)!.Value;
+    private static readonly byte BlessCode = AuctionBankWallet.JewelCode(2)!.Value;
+    private static readonly byte StrengthFruitCode = AuctionBankWallet.FruitCode(FruitComponent.Strength);
     private readonly List<Guid> _listings = new();
     private string _connectionString = string.Empty;
     private Guid _sellerAccount;
@@ -71,11 +74,13 @@ public class AuctionMixedTests
         this._inventoryA = (await context.Set<Character>().Where(c => c.Id == this._characterA).Select(c => c.InventoryId).SingleAsync())!.Value;
         this._inventoryB = (await context.Set<Character>().Where(c => c.Id == this._characterB).Select(c => c.InventoryId).SingleAsync())!.Value;
         await this.ClearInventoriesAsync(context);
-        await AddAsync(context, this._inventoryA, this._soul, 0, 5, 70);
-        await AddAsync(context, this._inventoryA, this._bless, 0, 2, 75);
-        await AddAsync(context, this._inventoryA, this._fruit, FruitRules.GetItemLevel(FruitComponent.Strength), 2, 77);
-        await AddAsync(context, this._inventoryB, this._soul, 0, 6, 70);
-        await AddAsync(context, this._inventoryB, this._bless, 0, 2, 76);
+
+        // Jewels and fruits are paid from the Jewel Bank; only the Zen is in the inventory.
+        await AuctionTestBank.AddAsync(this._connectionString, this._bidderA, this._characterA, SoulCode, 5);
+        await AuctionTestBank.AddAsync(this._connectionString, this._bidderA, this._characterA, BlessCode, 2);
+        await AuctionTestBank.AddAsync(this._connectionString, this._bidderA, this._characterA, StrengthFruitCode, 2);
+        await AuctionTestBank.AddAsync(this._connectionString, this._bidderB, this._characterB, SoulCode, 6);
+        await AuctionTestBank.AddAsync(this._connectionString, this._bidderB, this._characterB, BlessCode, 2);
     }
 
     [TearDown]
@@ -367,7 +372,7 @@ public class AuctionMixedTests
     }
 
     /// <summary>
-    /// Verifies claiming a basket collection credits the Zen and creates the jewels and fruits, all at once.
+    /// Verifies claiming a basket collection credits the Zen to the inventory and the jewels and fruits to the Jewel Bank, all at once.
     /// </summary>
     [Test]
     public async Task ClaimingABasketPaysEveryComponentAtOnce()
@@ -416,10 +421,10 @@ public class AuctionMixedTests
     }
 
     /// <summary>
-    /// Verifies a basket claim which has no room for its items changes nothing: the Zen is not credited either.
+    /// Verifies a basket claim needs no inventory room for its jewels and fruits: they go to the Jewel Bank, even when the backpack is full.
     /// </summary>
     [Test]
-    public async Task ClaimingABasketWithoutRoomChangesNothing()
+    public async Task ClaimingABasketNeedsNoRoomForJewels()
     {
         var collection = await this.InsertCollectionAsync(Basket((PriceKind.Zen, 20_000), (PriceKind.Soul, 3)));
         await using (var context = new EntityDataContext())
@@ -439,9 +444,10 @@ public class AuctionMixedTests
         var stored = await check.Set<AuctionCollection>().AsNoTracking().SingleAsync(c => c.Id == collection.Id);
         Assert.Multiple(async () =>
         {
-            Assert.That(claimed.Outcome, Is.EqualTo(AuctionClaimOutcome.InventoryFull));
-            Assert.That(await this.MoneyAsync(this._inventoryB), Is.EqualTo(StartingMoney));
-            Assert.That(stored.Status, Is.Zero);
+            Assert.That(claimed.Outcome, Is.EqualTo(AuctionClaimOutcome.Claimed));
+            Assert.That(await this.MoneyAsync(this._inventoryB), Is.EqualTo(StartingMoney + 20_000));
+            Assert.That(await this.CountAsync(this._inventoryB, this._soul), Is.EqualTo(6 + 3));
+            Assert.That(stored.Status, Is.EqualTo(2));
         });
     }
 
@@ -532,16 +538,6 @@ public class AuctionMixedTests
     private static PriceBasket Basket(params (PriceKind Kind, long Quantity)[] parts)
         => PriceBasket.FromComponents(parts.Select(p => new PriceComponent(p.Kind, p.Quantity)));
 
-    private static async Task AddAsync(EntityDataContext context, Guid inventory, Guid definition, int level, int count, int startSlot)
-    {
-        for (var index = 0; index < count; index++)
-        {
-            context.Set<Item>().Add(new Item { Id = Guid.NewGuid(), ItemStorageId = inventory, ItemSlot = (byte)(startSlot + index), DefinitionId = definition, Level = (byte)level, Durability = 1 });
-        }
-
-        await context.SaveChangesAsync();
-    }
-
     private MixedBidDraft Bid(Guid account, Guid character, Guid listing, int version, params (PriceKind Kind, long Quantity)[] parts)
         => new(Guid.NewGuid(), account, character, listing, version, Basket(parts), "127.0.0.1", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(24));
 
@@ -610,6 +606,7 @@ public class AuctionMixedTests
         var inventories = new[] { this._inventoryA, this._inventoryB };
         var definitions = new[] { this._soul, this._bless, this._fruit, this._other };
         await context.Set<Item>().Where(i => inventories.Contains(i.ItemStorageId!.Value) && i.DefinitionId != null && definitions.Contains(i.DefinitionId.Value) && i.ItemSlot >= InventoryConstants.EquippableSlotsCount).ExecuteDeleteAsync();
+        await AuctionTestBank.ClearAsync(this._connectionString, this._sellerAccount, this._bidderA, this._bidderB);
     }
 
     private async Task<Guid> DefinitionAsync(int group, int number)
@@ -628,10 +625,12 @@ public class AuctionMixedTests
         return (Guid)found!;
     }
 
-    private async Task<int> CountAsync(Guid inventory, Guid definition)
+    // Reads the Jewel Bank balance of the account which owns the inventory, for the kind of the jewel or fruit definition.
+    private Task<long> CountAsync(Guid inventory, Guid definition)
     {
-        await using var context = new EntityDataContext();
-        return await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == inventory && i.DefinitionId == definition);
+        var account = inventory == this._inventoryA ? this._bidderA : this._bidderB;
+        var code = definition == this._soul ? SoulCode : definition == this._bless ? BlessCode : StrengthFruitCode;
+        return AuctionTestBank.CountAsync(account, code);
     }
 
     private async Task SetMoneyAsync(Guid inventory, int money)
