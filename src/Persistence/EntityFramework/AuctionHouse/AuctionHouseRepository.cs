@@ -1919,11 +1919,11 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             }
             else
             {
-                var materialized = await this.MaterializeJewelsAsync(context, draft.CharacterId, collection.Currency, plan.ClaimedScalar, now, cancellationToken);
+                var materialized = await MaterializeJewelsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, collection.Currency, plan.ClaimedScalar, now, cancellationToken);
                 if (materialized != JewelMaterialization.Materialized)
                 {
                     await transaction.RollbackAsync(cancellationToken);
-                    return new AuctionClaimResult(materialized == JewelMaterialization.InventoryFull ? AuctionClaimOutcome.InventoryFull : AuctionClaimOutcome.UnsupportedCurrency, 0, null, 0);
+                    return new AuctionClaimResult(ClaimOutcomeOf(materialized), 0, null, 0);
                 }
             }
         }
@@ -1944,11 +1944,11 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
                 return new AuctionClaimResult(AuctionClaimOutcome.NotFound, 0, null, 0);
             }
 
-            var placed = await this.MaterializeFruitsAsync(context, draft.CharacterId, claimedFruits, cancellationToken);
+            var placed = await MaterializeFruitsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, claimedFruits, now, cancellationToken);
             if (placed != JewelMaterialization.Materialized)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return new AuctionClaimResult(placed == JewelMaterialization.InventoryFull ? AuctionClaimOutcome.InventoryFull : AuctionClaimOutcome.UnsupportedCurrency, 0, null, 0);
+                return new AuctionClaimResult(ClaimOutcomeOf(placed), 0, null, 0);
             }
         }
 
@@ -2163,32 +2163,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         Materialized,
         InventoryFull,
         NotConfigured,
-    }
-
-    /// <summary>
-    /// Finds the loose jewel definition and the pack definition of a jewel currency, from the jewel-mix configuration.
-    /// </summary>
-    private static async Task<(Guid? Single, Guid? Pack)> JewelDefinitionsAsync(EntityDataContext context, byte currency, CancellationToken cancellationToken)
-    {
-        if (AuctionJewelIdentities.GetLooseJewel(currency) is not { } loose)
-        {
-            return (null, null);
-        }
-
-        var group = (short)loose.Group;
-        var number = loose.Number;
-        var single = await context.Database.SqlQuery<Guid?>(
-            $"SELECT d.\"Id\" AS \"Value\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" = {group} AND d.\"Number\" = {number}")
-            .SingleOrDefaultAsync(cancellationToken);
-        if (single is null)
-        {
-            return (null, null);
-        }
-
-        var pack = await context.Database.SqlQuery<Guid?>(
-            $"SELECT jm.\"MixedJewelId\" AS \"Value\" FROM config.\"JewelMix\" jm WHERE jm.\"SingleJewelId\" = {single.Value}")
-            .SingleOrDefaultAsync(cancellationToken);
-        return (single, pack);
+        BankLimit,
     }
 
     /// <summary>
@@ -2210,253 +2185,45 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
     }
 
     /// <summary>
-    /// Pays a fruit basket from the character's main inventory: for every nonzero component, the exact number of clean fruits at
-    /// the component's level is consumed, lowest slots first. Either every component is paid or none is.
+    /// Pays a fruit basket from the account's Jewel Bank: every nonzero component is taken from its fruit balance. Either every
+    /// component is paid or the caller's transaction is rolled back.
     /// </summary>
-    private async Task<bool> TenderFruitsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, FruitBasket amount, byte kind, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
-    {
-        var fruit = await context.Database.SqlQuery<Guid?>(
-            $"SELECT d.\"Id\" AS \"Value\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" = 13 AND d.\"Number\" = 15")
-            .SingleOrDefaultAsync(cancellationToken);
-        var inventoryId = await context.Set<Character>().AsNoTracking()
-            .Where(c => c.Id == characterId)
-            .Select(c => c.InventoryId)
-            .SingleOrDefaultAsync(cancellationToken);
-        if (fruit is null || inventoryId is null)
-        {
-            return false;
-        }
-
-        var stored = await context.Set<Item>().AsNoTracking()
-            .Include(i => i.RawItemOptions)
-            .Where(i => i.ItemStorageId == inventoryId && i.DefinitionId == fruit)
-            .ToListAsync(cancellationToken);
-        var chosen = new List<(Guid Id, FruitComponent Component, int Count)>();
-        foreach (var component in Enum.GetValues<FruitComponent>())
-        {
-            var count = amount.Get(component);
-            if (count <= 0)
-            {
-                continue;
-            }
-
-            var level = FruitRules.GetItemLevel(component);
-            var candidates = stored
-                .Where(i => i.Id != excludedItemId && i.Level == level && i.ItemSlot >= InventoryConstants.EquippableSlotsCount && i.Durability > 0 && i.SocketCount == 0 && i.RawItemOptions.Count == 0)
-                .Where(i => !chosen.Any(c => c.Id == i.Id))
-                .OrderBy(i => i.ItemSlot)
-                .Take((int)count)
-                .ToList();
-            if (candidates.Count < count)
-            {
-                return false;
-            }
-
-            chosen.AddRange(candidates.Select(c => (c.Id, component, (int)count)));
-        }
-
-        var consumedIds = chosen.Select(c => c.Id).ToList();
-        await context.Set<Item>().Where(i => consumedIds.Contains(i.Id)).ExecuteDeleteAsync(cancellationToken);
-        foreach (var (_, component, count) in chosen)
-        {
-            var movement = Movement(accountId, operationId, listingId, null, count, kind, now);
-            movement.Currency = FruitsCurrency;
-            movement.FruitComponent = (byte)component;
-            context.Set<AuctionCurrencyMovement>().Add(movement);
-        }
-
-        return true;
-    }
+    private Task<bool> TenderFruitsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, FruitBasket amount, byte kind, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
+        => BankPayFruitsAsync(context, accountId, characterId, operationId, listingId, amount, kind, now, cancellationToken);
 
     /// <summary>
-    /// Pays a jewel amount from the character's main inventory. The jewels are chosen by the payment planner; the chosen
-    /// items are consumed, the consumed units are recorded, and any change is issued as a collection in the same transaction.
+    /// Pays a jewel amount from the account's Jewel Bank (loose jewels first, then bundles); any change goes back into the bank.
     /// </summary>
-    private async Task<JewelTender> TenderJewelsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, byte currency, long requiredUnits, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
-    {
-        var (single, pack) = await JewelDefinitionsAsync(context, currency, cancellationToken);
-        if (single is null)
-        {
-            return JewelTender.NotConfigured;
-        }
-
-        var inventoryId = await context.Set<Character>().AsNoTracking()
-            .Where(c => c.Id == characterId)
-            .Select(c => c.InventoryId)
-            .SingleOrDefaultAsync(cancellationToken);
-        if (inventoryId is null)
-        {
-            return JewelTender.Insufficient;
-        }
-
-        var items = await context.Set<Item>().AsNoTracking()
-            .Include(i => i.RawItemOptions)
-            .Where(i => i.ItemStorageId == inventoryId && (i.DefinitionId == single || i.DefinitionId == pack))
-            .ToListAsync(cancellationToken);
-        var candidates = new List<(Guid Id, int Slot, int Units)>();
-        foreach (var item in items)
-        {
-            if (item.Id == excludedItemId || item.ItemSlot < InventoryConstants.EquippableSlotsCount || item.Durability <= 0 || item.SocketCount > 0 || item.RawItemOptions.Count > 0)
-            {
-                continue;
-            }
-
-            if (item.DefinitionId == single && item.Level == 0)
-            {
-                candidates.Add((item.Id, item.ItemSlot, 1));
-            }
-            else if (item.DefinitionId == pack && item.Level <= 2)
-            {
-                candidates.Add((item.Id, item.ItemSlot, JewelPackRules.GetPackUnits(item.Level)));
-            }
-        }
-
-        var payment = JewelPaymentPlanner.Plan(requiredUnits, candidates.Select(c => new JewelStack(c.Slot, c.Units)));
-        if (payment is not { } chosen)
-        {
-            return JewelTender.Insufficient;
-        }
-
-        var consumed = candidates.Where(c => chosen.Slots.Contains(c.Slot)).ToList();
-        var consumedUnits = consumed.Sum(c => (long)c.Units);
-        var consumedIds = consumed.Select(c => c.Id).ToList();
-        await context.Set<Item>().Where(i => consumedIds.Contains(i.Id)).ExecuteDeleteAsync(cancellationToken);
-
-        var tenderIn = Movement(accountId, operationId, listingId, null, consumedUnits, TenderInKind, now);
-        tenderIn.Currency = currency;
-        context.Set<AuctionCurrencyMovement>().Add(tenderIn);
-        if (chosen.ChangeUnits > 0)
-        {
-            var changeOut = Movement(accountId, operationId, listingId, null, chosen.ChangeUnits, ChangeOutKind, now);
-            changeOut.Currency = currency;
-            context.Set<AuctionCurrencyMovement>().Add(changeOut);
-            context.Set<AuctionCollection>().Add(new AuctionCollection
-            {
-                Id = Guid.NewGuid(),
-                AccountId = accountId,
-                ListingId = listingId,
-                Kind = TenderChangeCollectionKind,
-                Currency = currency,
-                OriginalScalar = chosen.ChangeUnits,
-                RemainingScalar = chosen.ChangeUnits,
-                Status = 0,
-                CreatedAt = now,
-                UpdatedAt = now,
-                Version = 0,
-            });
-        }
-
-        return JewelTender.Paid;
-    }
+    private Task<JewelTender> TenderJewelsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, byte currency, long requiredUnits, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
+        => BankPayJewelsAsync(context, accountId, characterId, operationId, listingId, currency, requiredUnits, now, cancellationToken);
 
     /// <summary>
-    /// Materializes a claimed fruit basket as clean fruits: each unit becomes one fruit at its component's level, placed in a free
-    /// main-inventory slot. Either every fruit is placed or none is.
+    /// Credits a claimed fruit basket to the account's Jewel Bank.
     /// </summary>
-    private async Task<JewelMaterialization> MaterializeFruitsAsync(EntityDataContext context, Guid characterId, FruitQuantities claimed, CancellationToken cancellationToken)
-    {
-        var fruit = await context.Database.SqlQuery<Guid?>(
-            $"SELECT d.\"Id\" AS \"Value\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" = 13 AND d.\"Number\" = 15")
-            .SingleOrDefaultAsync(cancellationToken);
-        var inventoryId = await context.Set<Character>().AsNoTracking()
-            .Where(c => c.Id == characterId)
-            .Select(c => c.InventoryId)
-            .SingleOrDefaultAsync(cancellationToken);
-        if (fruit is null || inventoryId is null)
-        {
-            return JewelMaterialization.NotConfigured;
-        }
-
-        var basket = new FruitBasket(claimed.Strength, claimed.Agility, claimed.Vitality, claimed.Energy, claimed.Command);
-        var plan = new List<byte>();
-        foreach (var component in Enum.GetValues<FruitComponent>())
-        {
-            for (var unit = 0; unit < basket.Get(component); unit++)
+    private static Task<JewelMaterialization> MaterializeFruitsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, FruitQuantities claimed, DateTimeOffset now, CancellationToken cancellationToken)
+        => BankCreditAsync(
+            context,
+            accountId,
+            characterId,
+            operationId,
+            new (byte Code, long Units)[]
             {
-                plan.Add((byte)FruitRules.GetItemLevel(component));
-            }
-        }
-
-        var fitSize = await DefinitionSizeAsync(context, fruit, cancellationToken);
-        var freeSlots = await PlaceAsync(context, inventoryId.Value, Enumerable.Repeat(fitSize, plan.Count).ToList(), cancellationToken);
-        if (freeSlots is null)
-        {
-            return JewelMaterialization.InventoryFull;
-        }
-
-        for (var index = 0; index < plan.Count; index++)
-        {
-            context.Set<Item>().Add(new Item
-            {
-                Id = Guid.NewGuid(),
-                ItemStorageId = inventoryId,
-                ItemSlot = (byte)freeSlots[index],
-                DefinitionId = fruit,
-                Level = plan[index],
-                Durability = 1,
-            });
-        }
-
-        return JewelMaterialization.Materialized;
-    }
+                (AuctionBankWallet.FruitCode(FruitComponent.Strength), claimed.Strength),
+                (AuctionBankWallet.FruitCode(FruitComponent.Agility), claimed.Agility),
+                (AuctionBankWallet.FruitCode(FruitComponent.Vitality), claimed.Vitality),
+                (AuctionBankWallet.FruitCode(FruitComponent.Energy), claimed.Energy),
+                (AuctionBankWallet.FruitCode(FruitComponent.Command), claimed.Command),
+            },
+            now,
+            cancellationToken);
 
     /// <summary>
-    /// Materializes a jewel amount as new canonical items: the largest packs first (30, 20, 10), then loose jewels, each in a free
-    /// main-inventory slot. Either all items are placed or none is.
+    /// Credits a claimed jewel amount to the account's Jewel Bank, as loose jewels.
     /// </summary>
-    private async Task<JewelMaterialization> MaterializeJewelsAsync(EntityDataContext context, Guid characterId, byte currency, long units, DateTimeOffset now, CancellationToken cancellationToken)
-    {
-        var (single, pack) = await JewelDefinitionsAsync(context, currency, cancellationToken);
-        if (single is null || pack is null)
-        {
-            return JewelMaterialization.NotConfigured;
-        }
-
-        var inventoryId = await context.Set<Character>().AsNoTracking()
-            .Where(c => c.Id == characterId)
-            .Select(c => c.InventoryId)
-            .SingleOrDefaultAsync(cancellationToken);
-        if (inventoryId is null)
-        {
-            return JewelMaterialization.InventoryFull;
-        }
-
-        var plan = new List<(Guid? Definition, byte Level)>();
-        var remaining = units;
-        foreach (byte level in new byte[] { 2, 1, 0 })
-        {
-            var packUnits = JewelPackRules.GetPackUnits(level);
-            while (remaining >= packUnits)
-            {
-                plan.Add((pack, level));
-                remaining -= packUnits;
-            }
-        }
-
-        plan.AddRange(Enumerable.Repeat<(Guid? Definition, byte Level)>((single, 0), (int)remaining));
-
-        var fitSize = await DefinitionSizeAsync(context, single, cancellationToken);
-        var freeSlots = await PlaceAsync(context, inventoryId.Value, Enumerable.Repeat(fitSize, plan.Count).ToList(), cancellationToken);
-        if (freeSlots is null)
-        {
-            return JewelMaterialization.InventoryFull;
-        }
-
-        for (var index = 0; index < plan.Count; index++)
-        {
-            context.Set<Item>().Add(new Item
-            {
-                Id = Guid.NewGuid(),
-                ItemStorageId = inventoryId,
-                ItemSlot = (byte)freeSlots[index],
-                DefinitionId = plan[index].Definition,
-                Level = plan[index].Level,
-                Durability = 1,
-            });
-        }
-
-        return JewelMaterialization.Materialized;
-    }
+    private static Task<JewelMaterialization> MaterializeJewelsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, byte currency, long units, DateTimeOffset now, CancellationToken cancellationToken)
+        => AuctionBankWallet.JewelCode(currency) is { } code
+            ? BankCreditAsync(context, accountId, characterId, operationId, new (byte Code, long Units)[] { (code, units) }, now, cancellationToken)
+            : Task.FromResult(JewelMaterialization.NotConfigured);
 
     private static ClaimPlan? Plan(AuctionCollection collection, ClaimDraft draft)
     {

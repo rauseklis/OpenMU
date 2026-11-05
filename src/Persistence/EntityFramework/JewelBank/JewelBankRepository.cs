@@ -21,6 +21,13 @@ public sealed class JewelBankRepository : IJewelBankRepository
     private const short WithdrawReason = 1;
     private const short PickupReason = 2;
     private const short SpendReason = 3;
+
+    /// <summary>The ledger reason of units which an Auction House purchase or bid took from the bank.</summary>
+    internal const short AuctionPayReason = 4;
+
+    /// <summary>The ledger reason of units which an Auction House mailbox claim (proceeds or refund) put into the bank.</summary>
+    internal const short AuctionClaimReason = 5;
+
     private const short DepositType = 0;
     private const short WithdrawType = 1;
     private const short SpendType = 2;
@@ -322,7 +329,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
     private static JewelBankKind? Classify(Definitions definitions, Guid definitionId, int level)
         => definitions.IdToIdentity.TryGetValue(definitionId, out var identity) ? JewelBankKinds.Find(identity.Group, identity.Number, level) : null;
 
-    private static async Task<JewelBankState> ReadStateAsync(EntityDataContext context, Guid accountId, CancellationToken cancellationToken)
+    internal static async Task<JewelBankState> ReadStateAsync(EntityDataContext context, Guid accountId, CancellationToken cancellationToken)
     {
         var rows = await context.Database.SqlQuery<BalanceRow>(
                 $"SELECT \"Kind\"::int AS \"Kind\", \"Count\" AS \"Count\" FROM data.\"JewelBankBalance\" WHERE \"AccountId\" = {accountId}")
@@ -383,7 +390,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
             cancellationToken);
     }
 
-    private static async Task<long?> CreditAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, byte kind, long units, long maximumPerKind, short reason, DateTimeOffset now, CancellationToken cancellationToken)
+    internal static async Task<long?> CreditAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, byte kind, long units, long maximumPerKind, short reason, DateTimeOffset now, CancellationToken cancellationToken)
     {
         if (units > maximumPerKind)
         {
@@ -404,7 +411,7 @@ public sealed class JewelBankRepository : IJewelBankRepository
         return balance;
     }
 
-    private static async Task<bool> DebitAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, byte kind, long units, DateTimeOffset now, CancellationToken cancellationToken, short reason = WithdrawReason)
+    internal static async Task<bool> DebitAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, byte kind, long units, DateTimeOffset now, CancellationToken cancellationToken, short reason = WithdrawReason)
     {
         var kindValue = (short)kind;
         var changed = await context.Database.ExecuteSqlInterpolatedAsync(

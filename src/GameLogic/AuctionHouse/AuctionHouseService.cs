@@ -501,7 +501,7 @@ public sealed class AuctionHouseService
             AuctionClaimOutcome.NotFound => AuctionResultCode.CollectionNotFound,
             AuctionClaimOutcome.Stale => AuctionResultCode.StaleListing,
             AuctionClaimOutcome.AlreadyClaimed => AuctionResultCode.AlreadyProcessed,
-            AuctionClaimOutcome.MoneyLimit => AuctionResultCode.MoneyLimit,
+            AuctionClaimOutcome.MoneyLimit or AuctionClaimOutcome.BankLimit => AuctionResultCode.MoneyLimit,
             AuctionClaimOutcome.InvalidClaimQuantity => AuctionResultCode.InvalidClaimQuantity,
             AuctionClaimOutcome.InventoryFull => AuctionResultCode.InventoryFull,
             AuctionClaimOutcome.UnsupportedCurrency => AuctionResultCode.UnsupportedCurrency,

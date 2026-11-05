@@ -4,6 +4,8 @@
 
 namespace MUnique.OpenMU.GameLogic.JewelBank;
 
+using MUnique.OpenMU.Persistence.JewelBank;
+
 /// <summary>
 /// The settings of the Jewel Bank.
 /// </summary>
@@ -18,7 +20,11 @@ public static class JewelBankOptions
     /// Gets or sets the most units the bank holds of one kind of jewel or fruit. A deposit or pickup which would exceed it
     /// is refused, so the item stays where it is.
     /// </summary>
-    public static long MaximumPerKind { get; set; } = DefaultMaximumPerKind;
+    public static long MaximumPerKind
+    {
+        get => JewelBankLimits.MaximumPerKind;
+        set => JewelBankLimits.MaximumPerKind = value;
+    }
 
     /// <summary>
     /// Gets the shortest time between two mutating requests of one account.
