@@ -32,10 +32,10 @@ public class AuctionCreateFieldsTests
     }
 
     /// <summary>
-    /// Verifies a created listing returns the fee that was charged, so the client shows the committed amount.
+    /// Verifies a created listing reports no fee in the price currency: the only fee is the flat Zen sale fee.
     /// </summary>
     [Test]
-    public async Task CreatedListingReturnsTheCommittedFee()
+    public async Task CreatedListingChargesNoFeeInThePriceCurrency()
     {
         var repository = new Mock<IAuctionHouseRepository>();
         repository.Setup(r => r.ListItemAsync(It.IsAny<ItemListingDraft>(), It.IsAny<Func<ItemListingFacts, bool>>(), It.IsAny<CancellationToken>()))
@@ -47,7 +47,7 @@ public class AuctionCreateFieldsTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Success));
-            Assert.That(result.FeeScalar, Is.EqualTo(10));
+            Assert.That(result.FeeScalar, Is.Zero);
         });
     }
 

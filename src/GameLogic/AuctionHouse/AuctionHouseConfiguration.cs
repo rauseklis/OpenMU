@@ -142,13 +142,12 @@ public class AuctionHouseConfiguration
     public AuctionHouseOptions ToOptions()
     {
         // The flat sale fee is the only tax: while it is on, no percentage fee is ever charged, whatever is stored.
-        var flatFee = this.SaleFeeAmount > 0;
         return new AuctionHouseOptions
         {
             Enabled = this.Enabled,
             PageSize = this.PageSize,
-            ListingFeeBasisPoints = flatFee ? 0 : this.ListingFeeBasisPoints,
-            SuccessFeeBasisPoints = flatFee ? 0 : this.SuccessFeeBasisPoints,
+            ListingFeeBasisPoints = 0,
+            SuccessFeeBasisPoints = 0,
             SaleFee = new SaleFee(this.SaleFeeCurrency, this.SaleFeeAmount),
             MixedPricesEnabled = this.MixedPricesEnabled,
             PriceLimits = new PriceLimits

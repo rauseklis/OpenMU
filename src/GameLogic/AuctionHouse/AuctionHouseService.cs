@@ -17,6 +17,12 @@ using MUnique.OpenMU.Persistence.AuctionHouse;
 /// </summary>
 public sealed class AuctionHouseService
 {
+    /// <summary>
+    /// The only fee the Auction House charges is the flat sale fee in Zen. A percentage fee taken from the price currency
+    /// (jewels, fruits or Zen) is never charged, whatever the configuration says, so this is always 0.
+    /// </summary>
+    private const int NoPercentageFee = 0;
+
     private readonly IAuctionHouseRepository _repository;
     private readonly AuctionHouseOptions _options;
     private readonly Func<DateTimeOffset> _clock;
@@ -123,7 +129,7 @@ public sealed class AuctionHouseService
             return new AuctionListItemResult(AuctionResultCode.InvalidFruitBasket, Guid.Empty, 0, now);
         }
 
-        var feeFruits = isFruits ? FruitRules.CalculateFees(request.StartingFruits!.Value, this._options.ListingFeeBasisPoints) : (FruitBasket?)null;
+        var feeFruits = isFruits ? FruitRules.CalculateFees(request.StartingFruits!.Value, NoPercentageFee) : (FruitBasket?)null;
         var draft = new ItemListingDraft(
             request.OperationId,
             request.AccountId,
@@ -137,7 +143,7 @@ public sealed class AuctionHouseService
             request.BuyoutPrice,
             now,
             now.AddHours(request.DurationHours),
-            isFruits ? 0 : AuctionRules.CalculateFee(request.StartingPrice, this._options.ListingFeeBasisPoints),
+            isFruits ? 0 : AuctionRules.CalculateFee(request.StartingPrice, NoPercentageFee),
             this._options.MaximumActiveListingsPerAccount,
             this._options.MaximumActiveListingsPerCharacter,
             request.StartingFruits,
@@ -363,7 +369,7 @@ public sealed class AuctionHouseService
 
         if (listing.Currency == (byte)AuctionCurrencyMode.Fruits)
         {
-            var fruitBuyout = new FruitBuyoutDraft(request.OperationId, request.AccountId, request.CharacterId, request.ListingId, request.ExpectedVersion, request.BuyerIp, now, this._options.SuccessFeeBasisPoints);
+            var fruitBuyout = new FruitBuyoutDraft(request.OperationId, request.AccountId, request.CharacterId, request.ListingId, request.ExpectedVersion, request.BuyerIp, now, NoPercentageFee);
             var fruitResult = await this._repository.PlaceFruitBuyoutAsync(fruitBuyout, cancellationToken).ConfigureAwait(false);
             AuctionHouseMetrics.RecordOperation("buyout", fruitResult.Outcome.ToString());
             LogOperation("buyout", fruitResult.Outcome.ToString(), request.AccountId, request.ListingId, started);
@@ -381,7 +387,7 @@ public sealed class AuctionHouseService
             request.CharacterId,
             request.ListingId,
             request.ExpectedVersion,
-            AuctionRules.CalculateFee(buyoutPrice, this._options.SuccessFeeBasisPoints),
+            AuctionRules.CalculateFee(buyoutPrice, NoPercentageFee),
             request.BuyerIp,
             now);
         var result = await this._repository.BuyoutAsync(draft, cancellationToken);
@@ -517,7 +523,7 @@ public sealed class AuctionHouseService
     /// <returns>The number of listings finalized.</returns>
     public async Task<int> FinalizeDueListingsAsync(int batchSize, CancellationToken cancellationToken = default)
     {
-        var finalized = await this._repository.ExpireBatchAsync(this._clock(), batchSize, price => AuctionRules.CalculateFee(price, this._options.SuccessFeeBasisPoints), cancellationToken);
+        var finalized = await this._repository.ExpireBatchAsync(this._clock(), batchSize, price => AuctionRules.CalculateFee(price, NoPercentageFee), cancellationToken);
         AuctionHouseMetrics.RecordExpiries(finalized);
         return finalized;
     }

@@ -76,7 +76,7 @@ public class AuctionMetricsTests
     }
 
     /// <summary>
-    /// Verifies a new Zen listing records its fee under the Zen currency and its operation under the create operation.
+    /// Verifies a new Zen listing records no percentage fee, and its operation under the create operation.
     /// </summary>
     [Test]
     public async Task NewListingRecordsItsFeeOnceAndItsOperation()
@@ -90,7 +90,7 @@ public class AuctionMetricsTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(this.Sum("auction.fees.removed", "currency", "Zen"), Is.EqualTo(10));
+            Assert.That(this.Sum("auction.fees.removed", "currency", "Zen"), Is.EqualTo(0));
             Assert.That(this.Count("auction.operation.results", "operation", "create", "outcome", "Created"), Is.EqualTo(1));
         });
     }

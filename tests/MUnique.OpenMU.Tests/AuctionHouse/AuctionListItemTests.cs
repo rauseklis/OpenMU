@@ -92,7 +92,7 @@ public class AuctionListItemTests
     }
 
     /// <summary>
-    /// Verifies a successful listing charges the 1% fee in Zen, takes the item out of the inventory, and records the listing and the fee.
+    /// Verifies a successful listing charges the flat sale fee in Zen, takes the item out of the inventory, and records the listing and the fee.
     /// </summary>
     [Test]
     public async Task ListingChargesFeeAndTakesTheItemOutOfTheInventory()
@@ -107,7 +107,7 @@ public class AuctionListItemTests
             .Include(d => d.JoinedQualifiedCharacters).ThenInclude(link => link.CharacterClass)
             .SingleAsync(d => d.Id == item.DefinitionId);
         var expectedClassMask = definition.JoinedQualifiedCharacters.Aggregate(0L, (mask, link) => mask | (1L << (link.CharacterClass.Number / 4)));
-        var movement = await context.Set<AuctionCurrencyMovement>().AsNoTracking().SingleAsync(m => m.OperationId == this._operationForLastRequest);
+        var movements = await context.Set<AuctionCurrencyMovement>().AsNoTracking().Where(m => m.OperationId == this._operationForLastRequest).ToListAsync();
         Assert.Multiple(() =>
         {
             Assert.That(item.ItemStorageId, Is.Null);
@@ -120,8 +120,10 @@ public class AuctionListItemTests
             Assert.That(listing.OptionFlags, Is.EqualTo((int)(AuctionItemOptionFlags.HasSkill | AuctionItemOptionFlags.HasSockets)));
             Assert.That(listing.OptionLevel, Is.Zero);
             Assert.That(listing.NormalizedName, Is.EqualTo(definition.Name.ValueInNeutralLanguage.ToUpperInvariant()));
-            Assert.That(movement.Kind, Is.EqualTo(FeeRemovedKind));
-            Assert.That(movement.Amount, Is.EqualTo(10));
+            Assert.That(listing.SaleFeeHeld, Is.EqualTo(10));
+
+            // Only the flat Zen sale fee is taken: no percentage fee in the price currency is added to it.
+            Assert.That(movements.Where(m => m.Kind == FeeRemovedKind).Sum(m => m.Amount), Is.EqualTo(10));
         });
         Assert.That(await this.GetMoneyAsync(), Is.EqualTo(10_000_000 - 10));
     }
@@ -260,6 +262,9 @@ public class AuctionListItemTests
         {
             Enabled = enabled,
             MaximumActiveListingsPerCharacter = perCharacter,
+
+            // The flat sale fee in Zen is the only fee; a small amount keeps the expectations below simple.
+            SaleFee = new SaleFee(SaleFeeCurrency.Zen, 10),
         });
     }
 
