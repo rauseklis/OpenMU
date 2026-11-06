@@ -50,6 +50,11 @@ public enum AuctionClaimOutcome
     InventoryFull,
 
     /// <summary>
+    /// The Jewel Bank would exceed its limit for a jewel or fruit kind, so nothing was claimed.
+    /// </summary>
+    BankLimit,
+
+    /// <summary>
     /// The collection's currency has no configured loose jewel, so it cannot be materialized.
     /// </summary>
     UnsupportedCurrency,

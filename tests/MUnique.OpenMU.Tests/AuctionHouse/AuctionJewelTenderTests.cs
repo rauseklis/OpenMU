@@ -10,6 +10,7 @@ using MUnique.OpenMU.Persistence.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework;
 using MUnique.OpenMU.Persistence.EntityFramework.AuctionHouse;
 using MUnique.OpenMU.Persistence.EntityFramework.Model;
+using MUnique.OpenMU.Persistence.JewelBank;
 using Npgsql;
 
 /// <summary>
@@ -21,6 +22,7 @@ using Npgsql;
 [Category("PostgreSql")]
 public class AuctionJewelTenderTests
 {
+    private static readonly byte Chaos = AuctionBankWallet.JewelCode(1)!.Value;
     private string _connectionString = string.Empty;
     private Guid _accountId;
     private Guid _characterId;
@@ -82,8 +84,8 @@ public class AuctionJewelTenderTests
             .Select(i => i.DefinitionId!.Value)
             .FirstAsync();
 
-        // The character starts with no jewels, so the planner's choice is deterministic.
-        await context.Set<Item>().Where(i => i.ItemStorageId == this._inventoryId && (i.DefinitionId == this._looseDefinitionId || i.DefinitionId == this._packDefinitionId)).ExecuteDeleteAsync();
+        // The account starts with an empty Jewel Bank, so the planner's choice is deterministic.
+        await AuctionTestBank.ClearAsync(this._connectionString, this._accountId);
     }
 
     [TearDown]
@@ -99,22 +101,23 @@ public class AuctionJewelTenderTests
         this._listingIds.Clear();
         await context.Set<Item>().Where(i => this._items.Contains(i.Id)).ExecuteDeleteAsync();
         this._items.Clear();
+        await AuctionTestBank.ClearAsync(this._connectionString, this._accountId);
     }
 
     /// <summary>
-    /// Verifies a jewel listing pays its one-unit fee from a loose jewel, and the consumed jewel is recorded in the ledger.
+    /// Verifies a jewel listing pays its one-unit fee from a loose jewel of the Jewel Bank, and the payment is recorded in the ledger.
     /// </summary>
     [Test]
     public async Task ListingFeeIsPaidFromALooseJewel()
     {
-        var jewel = await this.AddItemAsync(this._looseDefinitionId, level: 0, slot: 70);
+        await AuctionTestBank.AddAsync(this._connectionString, this._accountId, this._characterId, Chaos, 1);
         var listed = await this.AddItemAsync(this._otherDefinitionId, level: 0, slot: 71);
 
         var result = await this.ListAsync(listed, startingPrice: 2);
 
         Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Success));
         await using var context = new EntityDataContext();
-        Assert.That(await context.Set<Item>().AsNoTracking().AnyAsync(i => i.Id == jewel), Is.False);
+        Assert.That(await AuctionTestBank.CountAsync(this._accountId, Chaos), Is.EqualTo(0));
         var tender = await context.Set<AuctionCurrencyMovement>().AsNoTracking().SingleAsync(m => m.OperationId == this._lastOperation && m.Kind == 0);
         Assert.Multiple(() =>
         {
@@ -124,32 +127,34 @@ public class AuctionJewelTenderTests
     }
 
     /// <summary>
-    /// Verifies paying with a pack returns the difference as a change collection.
+    /// Verifies paying with a bank pack returns the difference to the bank as loose jewels.
     /// </summary>
     [Test]
     public async Task OverpaymentIsReturnedAsChange()
     {
-        var pack = await this.AddItemAsync(this._packDefinitionId, level: 1, slot: 70);
+        var pack = AuctionBankWallet.PackCode(Chaos, 1);
+        await AuctionTestBank.AddAsync(this._connectionString, this._accountId, this._characterId, pack, 1);
         var listed = await this.AddItemAsync(this._otherDefinitionId, level: 0, slot: 71);
 
         var result = await this.ListAsync(listed, startingPrice: 2);
 
         Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Success));
         await using var context = new EntityDataContext();
-        Assert.That(await context.Set<Item>().AsNoTracking().AnyAsync(i => i.Id == pack), Is.False);
-        var change = await context.Set<AuctionCollection>().AsNoTracking().SingleAsync(c => c.AccountId == this._accountId && c.Kind == 4);
-        Assert.Multiple(() =>
+        Assert.Multiple(async () =>
         {
-            Assert.That(change.OriginalScalar, Is.EqualTo(19));
-            Assert.That(change.Currency, Is.EqualTo(1));
+            Assert.That(await AuctionTestBank.CountAsync(this._accountId, pack), Is.EqualTo(0));
+
+            // The change goes back into the bank as loose jewels instead of a Mailbox collection.
+            Assert.That(await AuctionTestBank.CountAsync(this._accountId, Chaos), Is.EqualTo(19));
+            Assert.That(await context.Set<AuctionCollection>().AsNoTracking().CountAsync(c => c.AccountId == this._accountId && c.Kind == 4), Is.EqualTo(0));
         });
     }
 
     /// <summary>
-    /// Verifies claiming a jewel balance creates the largest packs first and loose jewels for the rest.
+    /// Verifies claiming a jewel balance credits the Jewel Bank with loose jewels and creates no items.
     /// </summary>
     [Test]
-    public async Task ClaimingJewelsMaterializesPacksThenLooseJewels()
+    public async Task ClaimingJewelsCreditsTheJewelBank()
     {
         var collection = Guid.NewGuid();
         await using (var context = new EntityDataContext())
@@ -181,18 +186,11 @@ public class AuctionJewelTenderTests
             Now: DateTimeOffset.UtcNow));
 
         Assert.That(result.Outcome, Is.EqualTo(AuctionClaimOutcome.Claimed));
-        await using var check = new EntityDataContext();
-        var packs = await check.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._packDefinitionId && i.Level == 1);
-        var loose = await check.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._inventoryId && i.DefinitionId == this._looseDefinitionId);
-        Assert.Multiple(() =>
-        {
-            Assert.That(packs, Is.EqualTo(1));
-            Assert.That(loose, Is.EqualTo(5));
-        });
+        Assert.That(await AuctionTestBank.CountAsync(this._accountId, Chaos), Is.EqualTo(25));
     }
 
     /// <summary>
-    /// Verifies a jewel listing is refused when the seller has no jewels to pay the fee, and nothing is listed.
+    /// Verifies a jewel listing is refused when the seller's Jewel Bank holds no jewels to pay the fee, and nothing is listed.
     /// </summary>
     [Test]
     public async Task ListingWithoutJewelsIsRefused()
@@ -222,7 +220,7 @@ public class AuctionJewelTenderTests
     }
 
     /// <summary>
-    /// Verifies a jewel bid is escrowed from the bidder's own jewels: the consumed loose jewels leave the bidder's inventory,
+    /// Verifies a jewel bid is escrowed from the bidder's Jewel Bank: the consumed loose jewels leave the bank,
     /// and the bid is placed at the listing.
     /// </summary>
     [Test]
@@ -235,23 +233,9 @@ public class AuctionJewelTenderTests
         }
 
         var bidder = owners[1];
-        var bidderInventory = await this.InventoryOfAsync(bidder.CharacterId);
         var now = DateTimeOffset.UtcNow;
-        var jewels = new List<Guid>();
-        await using (var context = new EntityDataContext())
-        {
-            // Clear by slot, not just by definition: against a populated copy of the real database, these
-            // fixed slots may already hold some other, unrelated real item.
-            await context.Set<Item>().Where(i => i.ItemStorageId == bidderInventory && i.ItemSlot >= 70 && i.ItemSlot < 72).ExecuteDeleteAsync();
-            for (var slot = 70; slot < 72; slot++)
-            {
-                var id = Guid.NewGuid();
-                jewels.Add(id);
-                context.Set<Item>().Add(new Item { Id = id, ItemStorageId = bidderInventory, ItemSlot = (byte)slot, DefinitionId = this._looseDefinitionId, Level = 0, Durability = 1 });
-            }
-
-            await context.SaveChangesAsync();
-        }
+        await AuctionTestBank.ClearAsync(this._connectionString, bidder.AccountId);
+        await AuctionTestBank.AddAsync(this._connectionString, bidder.AccountId, bidder.CharacterId, Chaos, 2);
 
         var listing = await new AuctionHouseRepository().CreateListingAsync(new EntityDataContext(), new AuctionListingDraft(
             OperationId: Guid.NewGuid(),
@@ -280,8 +264,8 @@ public class AuctionJewelTenderTests
             NewEndsAt: now.AddHours(24)));
 
         Assert.That(bid.Outcome, Is.EqualTo(AuctionBidOutcome.Placed));
-        await using var check = new EntityDataContext();
-        Assert.That(await check.Set<Item>().AsNoTracking().CountAsync(i => jewels.Contains(i.Id)), Is.EqualTo(0));
+        Assert.That(await AuctionTestBank.CountAsync(bidder.AccountId, Chaos), Is.EqualTo(0));
+        await AuctionTestBank.ClearAsync(this._connectionString, bidder.AccountId);
     }
 
     private readonly List<Guid> _listingIds = new();

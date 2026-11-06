@@ -418,11 +418,11 @@ public sealed partial class AuctionHouseRepository
                 return new AuctionClaimResult(AuctionClaimOutcome.MoneyLimit, 0, null, 0);
             }
 
-            var placed = await this.MaterializeBasketAsync(context, draft.CharacterId, remaining, cancellationToken);
+            var placed = await MaterializeBasketAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, remaining, now, cancellationToken);
             if (placed != JewelMaterialization.Materialized)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return new AuctionClaimResult(placed == JewelMaterialization.InventoryFull ? AuctionClaimOutcome.InventoryFull : AuctionClaimOutcome.UnsupportedCurrency, 0, null, 0);
+                return new AuctionClaimResult(ClaimOutcomeOf(placed), 0, null, 0);
             }
 
             foreach (var component in remaining.Components)
@@ -462,87 +462,30 @@ public sealed partial class AuctionHouseRepository
     }
 
     /// <summary>
-    /// Creates the items of a claimed basket in one pass: the jewels as the largest packs first and then loose jewels, the fruits as
-    /// clean fruits at the level of their kind. All items share one search for free main-inventory slots, so two kinds never
-    /// take the same slot. Either every item is placed or none is.
+    /// Credits the jewels and fruits of a claimed basket to the account's Jewel Bank as loose units. Zen is credited separately.
+    /// Either every unit is credited or the caller rolls back.
     /// </summary>
-    private async Task<JewelMaterialization> MaterializeBasketAsync(EntityDataContext context, Guid characterId, PriceBasket basket, CancellationToken cancellationToken)
+    private static Task<JewelMaterialization> MaterializeBasketAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, PriceBasket basket, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        var inventoryId = await context.Set<Character>().AsNoTracking()
-            .Where(c => c.Id == characterId)
-            .Select(c => c.InventoryId)
-            .SingleOrDefaultAsync(cancellationToken);
-        if (inventoryId is null)
-        {
-            return JewelMaterialization.InventoryFull;
-        }
-
-        var plan = new List<(Guid? Definition, byte Level)>();
+        var units = new List<(byte Code, long Units)>();
         for (var kind = PriceKind.Chaos; kind <= PriceKind.Harmony; kind++)
         {
-            var units = basket.Get(kind);
-            if (units <= 0)
+            if (basket.Get(kind) > 0)
             {
-                continue;
-            }
-
-            var (single, pack) = await JewelDefinitionsAsync(context, (byte)kind, cancellationToken);
-            if (single is null || pack is null)
-            {
-                return JewelMaterialization.NotConfigured;
-            }
-
-            foreach (byte level in new byte[] { 2, 1, 0 })
-            {
-                var packUnits = JewelPackRules.GetPackUnits(level);
-                while (units >= packUnits)
+                if (AuctionBankWallet.JewelCode((byte)kind) is not { } code)
                 {
-                    plan.Add((pack, level));
-                    units -= packUnits;
+                    return Task.FromResult(JewelMaterialization.NotConfigured);
                 }
-            }
 
-            plan.AddRange(Enumerable.Repeat<(Guid? Definition, byte Level)>((single, 0), (int)units));
-        }
-
-        if (Enum.GetValues<PriceKind>().Any(k => PriceRules.IsFruit(k) && basket.Get(k) > 0))
-        {
-            var fruit = await context.Database.SqlQuery<Guid?>(
-                $"SELECT d.\"Id\" AS \"Value\" FROM config.\"ItemDefinition\" d WHERE d.\"Group\" = 13 AND d.\"Number\" = 15")
-                .SingleOrDefaultAsync(cancellationToken);
-            if (fruit is null)
-            {
-                return JewelMaterialization.NotConfigured;
-            }
-
-            foreach (var component in Enum.GetValues<FruitComponent>())
-            {
-                var count = basket.Get(PriceKind.StrengthFruit + (int)component);
-                plan.AddRange(Enumerable.Repeat<(Guid? Definition, byte Level)>((fruit, (byte)FruitRules.GetItemLevel(component)), (int)count));
+                units.Add((code, basket.Get(kind)));
             }
         }
 
-        var freeSlots = await context.Database.SqlQuery<int>(
-            $"SELECT s.n AS \"Value\" FROM generate_series({InventoryConstants.EquippableSlotsCount}, {InventoryConstants.EquippableSlotsCount + 63}) AS s(n) WHERE s.n NOT IN (SELECT i.\"ItemSlot\" FROM data.\"Item\" i WHERE i.\"ItemStorageId\" = {inventoryId}) ORDER BY s.n")
-            .ToListAsync(cancellationToken);
-        if (freeSlots.Count < plan.Count)
+        foreach (var component in Enum.GetValues<FruitComponent>())
         {
-            return JewelMaterialization.InventoryFull;
+            units.Add((AuctionBankWallet.FruitCode(component), basket.Get(PriceKind.StrengthFruit + (int)component)));
         }
 
-        for (var index = 0; index < plan.Count; index++)
-        {
-            context.Set<Item>().Add(new Item
-            {
-                Id = Guid.NewGuid(),
-                ItemStorageId = inventoryId,
-                ItemSlot = (byte)freeSlots[index],
-                DefinitionId = plan[index].Definition,
-                Level = plan[index].Level,
-                Durability = 1,
-            });
-        }
-
-        return JewelMaterialization.Materialized;
+        return BankCreditAsync(context, accountId, characterId, operationId, units, now, cancellationToken);
     }
 }

@@ -21,15 +21,14 @@ using Npgsql;
 [Category("PostgreSql")]
 public class AuctionFruitBidTests
 {
+    private static readonly byte StrengthFruit = AuctionBankWallet.FruitCode(FruitComponent.Strength);
+    private static readonly byte EnergyFruit = AuctionBankWallet.FruitCode(FruitComponent.Energy);
     private string _connectionString = string.Empty;
     private Guid _sellerAccountId;
     private Guid _firstAccountId;
     private Guid _firstCharacterId;
-    private Guid _firstInventoryId;
     private Guid _secondAccountId;
     private Guid _secondCharacterId;
-    private Guid _secondInventoryId;
-    private Guid _fruitDefinitionId;
     private Guid _listingId;
 
     [OneTimeSetUp]
@@ -58,17 +57,15 @@ public class AuctionFruitBidTests
         this._firstCharacterId = owners[1].CharacterId;
         this._secondAccountId = owners[2].AccountId;
         this._secondCharacterId = owners[2].CharacterId;
-        this._fruitDefinitionId = await FruitDefinitionAsync(this._connectionString);
 
         await using var context = new EntityDataContext();
-        this._firstInventoryId = (await context.Set<Character>().AsNoTracking().Where(c => c.Id == this._firstCharacterId).Select(c => c.InventoryId).SingleAsync())!.Value;
-        this._secondInventoryId = (await context.Set<Character>().AsNoTracking().Where(c => c.Id == this._secondCharacterId).Select(c => c.InventoryId).SingleAsync())!.Value;
-        await context.Set<Item>().Where(i => (i.ItemStorageId == this._firstInventoryId || i.ItemStorageId == this._secondInventoryId) && i.DefinitionId == this._fruitDefinitionId).ExecuteDeleteAsync();
+        await AuctionTestBank.ClearAsync(this._connectionString, this._firstAccountId, this._secondAccountId, this._sellerAccountId);
 
-        await AddFruitsAsync(context, this._firstInventoryId, this._fruitDefinitionId, level: 3, count: 2, startSlot: 70);
-        await AddFruitsAsync(context, this._firstInventoryId, this._fruitDefinitionId, level: 0, count: 1, startSlot: 72);
-        await AddFruitsAsync(context, this._secondInventoryId, this._fruitDefinitionId, level: 3, count: 3, startSlot: 70);
-        await AddFruitsAsync(context, this._secondInventoryId, this._fruitDefinitionId, level: 0, count: 2, startSlot: 73);
+        // Fruits are paid from the Jewel Bank: level 3 is the Strength fruit, level 0 the Energy fruit.
+        await AuctionTestBank.AddAsync(this._connectionString, this._firstAccountId, this._firstCharacterId, StrengthFruit, 2);
+        await AuctionTestBank.AddAsync(this._connectionString, this._firstAccountId, this._firstCharacterId, EnergyFruit, 1);
+        await AuctionTestBank.AddAsync(this._connectionString, this._secondAccountId, this._secondCharacterId, StrengthFruit, 3);
+        await AuctionTestBank.AddAsync(this._connectionString, this._secondAccountId, this._secondCharacterId, EnergyFruit, 2);
 
         var now = DateTimeOffset.UtcNow;
         this._listingId = Guid.NewGuid();
@@ -109,11 +106,11 @@ public class AuctionFruitBidTests
         await context.Set<AuctionBid>().Where(b => b.ListingId == this._listingId).ExecuteDeleteAsync();
         await context.Set<AuctionOperation>().Where(o => accounts.Contains(o.AccountId)).ExecuteDeleteAsync();
         await context.Set<AuctionListing>().Where(l => l.Id == this._listingId).ExecuteDeleteAsync();
-        await context.Set<Item>().Where(i => (i.ItemStorageId == this._firstInventoryId || i.ItemStorageId == this._secondInventoryId) && i.DefinitionId == this._fruitDefinitionId).ExecuteDeleteAsync();
+        await AuctionTestBank.ClearAsync(this._connectionString, accounts);
     }
 
     /// <summary>
-    /// Verifies a first bid at the starting basket is placed, and its fruits leave the bidder's inventory.
+    /// Verifies a first bid at the starting basket is placed, and its fruits leave the bidder's Jewel Bank.
     /// </summary>
     [Test]
     public async Task FirstBidAtTheStartingBasketIsPlaced()
@@ -121,8 +118,11 @@ public class AuctionFruitBidTests
         var result = await PlaceAsync(this._firstAccountId, this._firstCharacterId, version: 0, new FruitBasket(2, 0, 0, 1, 0));
 
         Assert.That(result.Outcome, Is.EqualTo(AuctionBidOutcome.Placed));
-        await using var context = new EntityDataContext();
-        Assert.That(await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._firstInventoryId && i.DefinitionId == this._fruitDefinitionId), Is.EqualTo(0));
+        Assert.Multiple(async () =>
+        {
+            Assert.That(await AuctionTestBank.CountAsync(this._firstAccountId, StrengthFruit), Is.EqualTo(0));
+            Assert.That(await AuctionTestBank.CountAsync(this._firstAccountId, EnergyFruit), Is.EqualTo(0));
+        });
     }
 
     /// <summary>
@@ -136,8 +136,11 @@ public class AuctionFruitBidTests
         var result = await PlaceAsync(this._secondAccountId, this._secondCharacterId, version: 1, new FruitBasket(3, 0, 0, 1, 0));
 
         Assert.That(result.Outcome, Is.EqualTo(AuctionBidOutcome.BidTooLow));
-        await using var context = new EntityDataContext();
-        Assert.That(await context.Set<Item>().AsNoTracking().CountAsync(i => i.ItemStorageId == this._secondInventoryId && i.DefinitionId == this._fruitDefinitionId), Is.EqualTo(5));
+        Assert.Multiple(async () =>
+        {
+            Assert.That(await AuctionTestBank.CountAsync(this._secondAccountId, StrengthFruit), Is.EqualTo(3));
+            Assert.That(await AuctionTestBank.CountAsync(this._secondAccountId, EnergyFruit), Is.EqualTo(2));
+        });
     }
 
     /// <summary>
@@ -173,24 +176,6 @@ public class AuctionFruitBidTests
             BidderIp: "127.0.0.1",
             Now: DateTimeOffset.UtcNow,
             NewEndsAt: DateTimeOffset.UtcNow.AddHours(24)));
-    }
-
-    private static async Task AddFruitsAsync(EntityDataContext context, Guid inventoryId, Guid definitionId, byte level, int count, int startSlot)
-    {
-        for (var index = 0; index < count; index++)
-        {
-            context.Set<Item>().Add(new Item { Id = Guid.NewGuid(), ItemStorageId = inventoryId, ItemSlot = (byte)(startSlot + index), DefinitionId = definitionId, Level = level, Durability = 1 });
-        }
-
-        await context.SaveChangesAsync();
-    }
-
-    private static async Task<Guid> FruitDefinitionAsync(string connectionString)
-    {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
-        await using var command = new NpgsqlCommand("SELECT \"Id\" FROM config.\"ItemDefinition\" WHERE \"Group\" = 13 AND \"Number\" = 15", connection);
-        return (Guid)(await command.ExecuteScalarAsync())!;
     }
 
     /// <summary>

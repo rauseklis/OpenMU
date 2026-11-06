@@ -12,6 +12,8 @@ using MUnique.OpenMU.Network;
 using MUnique.OpenMU.Network.Packets;
 using MUnique.OpenMU.Network.Packets.ServerToClient;
 using MUnique.OpenMU.PlugIns;
+using MUnique.OpenMU.Persistence.AuctionHouse;
+using MUnique.OpenMU.Persistence.JewelBank;
 using Wire = MUnique.OpenMU.Network.Packets.ClientToServer;
 
 /// <summary>
@@ -59,6 +61,12 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
             .ToArray();
         var fruitSnapshot = AuctionFruitInventorySnapshot.Create(configuration.Items, inventoryItems);
 
+        // Jewels and fruits are spent from, and claimed into, the Jewel Bank, so that is what the window shows as spendable.
+        var bank = identity is { } owner && player.GameContext.PersistenceContextProvider.CreateJewelBankRepository() is { } bankRepository
+            ? await bankRepository.GetStateAsync(owner.AccountId).ConfigureAwait(false)
+            : new JewelBankState(new Dictionary<byte, long>(), false);
+        var bankFruits = AuctionBankWallet.Fruits(bank);
+
         int WritePacket()
         {
             var length = AuctionOpenResponseRef.GetRequiredSize(CurrencyCount);
@@ -84,6 +92,7 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
                     and <= (int)MUnique.OpenMU.GameLogic.AuctionHouse.AuctionCurrencyMode.Harmony;
                 var isFruits = index == (int)MUnique.OpenMU.GameLogic.AuctionHouse.AuctionCurrencyMode.Fruits;
                 var jewel = isJewel ? jewelSnapshots[index - 1] : null;
+                var bankJewel = isJewel ? AuctionBankWallet.Jewels(bank, (byte)index) : (Loose: 0L, Packs: new long[3], Total: 0L);
                 descriptor.CurrencyMode = (MUnique.OpenMU.Network.Packets.AuctionCurrencyMode)index;
                 descriptor.Enabled = isZen || jewel?.IsConfigured == true || (isFruits && fruitSnapshot.IsConfigured);
                 descriptor.MinimumStartingPrice = isZen
@@ -96,21 +105,21 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
                     ? (uint)AuctionRules.MinimumZenBidIncrement
                     : isJewel ? (uint)AuctionRules.MinimumJewelBidIncrement : 0;
                 descriptor.IncrementPercent = (byte)AuctionRules.BidIncrementPercent;
-                descriptor.SpendableScalar = isZen ? money : jewel?.TotalUnits ?? 0;
-                descriptor.SpendableStrength = isFruits ? Clamp(fruitSnapshot.Spendable.Strength) : 0;
-                descriptor.SpendableAgility = isFruits ? Clamp(fruitSnapshot.Spendable.Agility) : 0;
-                descriptor.SpendableVitality = isFruits ? Clamp(fruitSnapshot.Spendable.Vitality) : 0;
-                descriptor.SpendableEnergy = isFruits ? Clamp(fruitSnapshot.Spendable.Energy) : 0;
-                descriptor.SpendableCommand = isFruits ? Clamp(fruitSnapshot.Spendable.Command) : 0;
+                descriptor.SpendableScalar = isZen ? money : isJewel ? Clamp(bankJewel.Total) : 0;
+                descriptor.SpendableStrength = isFruits ? Clamp(bankFruits.Strength) : 0;
+                descriptor.SpendableAgility = isFruits ? Clamp(bankFruits.Agility) : 0;
+                descriptor.SpendableVitality = isFruits ? Clamp(bankFruits.Vitality) : 0;
+                descriptor.SpendableEnergy = isFruits ? Clamp(bankFruits.Energy) : 0;
+                descriptor.SpendableCommand = isFruits ? Clamp(bankFruits.Command) : 0;
                 descriptor.SmallPackUnits = isJewel ? (ushort)JewelPackRules.GetPackUnits(0) : (ushort)0;
                 descriptor.MediumPackUnits = isJewel ? (ushort)JewelPackRules.GetPackUnits(1) : (ushort)0;
                 descriptor.LargePackUnits = isJewel ? (ushort)JewelPackRules.GetPackUnits(2) : (ushort)0;
                 descriptor.LooseItemType = jewel?.LooseItemType ?? 0;
                 descriptor.PackItemType = jewel?.PackItemType ?? 0;
-                descriptor.LooseItemCount = jewel?.LooseCount ?? 0;
-                descriptor.SmallPackCount = jewel?.PackCounts[0] ?? 0;
-                descriptor.MediumPackCount = jewel?.PackCounts[1] ?? 0;
-                descriptor.LargePackCount = jewel?.PackCounts[2] ?? 0;
+                descriptor.LooseItemCount = ClampCount(bankJewel.Loose);
+                descriptor.SmallPackCount = ClampCount(bankJewel.Packs[0]);
+                descriptor.MediumPackCount = ClampCount(bankJewel.Packs[1]);
+                descriptor.LargePackCount = ClampCount(bankJewel.Packs[2]);
                 descriptor.StrengthFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
                 descriptor.AgilityFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
                 descriptor.VitalityFruitItemType = isFruits ? fruitSnapshot.FruitItemType : (ushort)0;
@@ -128,6 +137,8 @@ internal sealed class AuctionOpenHandlerPlugIn : ISubPacketHandlerPlugIn
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }
+
+    private static ushort ClampCount(long value) => (ushort)Math.Min(Math.Max(0, value), ushort.MaxValue);
 
     private static uint Clamp(long value) => (uint)Math.Min(Math.Max(0, value), uint.MaxValue);
 }
