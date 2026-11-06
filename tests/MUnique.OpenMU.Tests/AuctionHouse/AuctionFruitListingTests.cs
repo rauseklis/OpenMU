@@ -86,11 +86,11 @@ public class AuctionFruitListingTests
     }
 
     /// <summary>
-    /// Verifies a fruit basket pays one fruit of each nonzero component's fee from the fruit at that component's level, stores the
-    /// starting basket on the listing, and records one fee movement per component.
+    /// Verifies listing a fruit basket takes no fruit fee: the Jewel Bank keeps every fruit, the basket is stored on the listing,
+    /// and no fee movement is recorded.
     /// </summary>
     [Test]
-    public async Task BasketFeeIsPaidPerComponentFromTheMatchingFruit()
+    public async Task BasketListingTakesNoFruitFee()
     {
         await this.AddFruitAsync(level: 3, slot: 70);
         await this.AddFruitAsync(level: 3, slot: 71);
@@ -100,34 +100,27 @@ public class AuctionFruitListingTests
 
         Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Success));
         await using var context = new EntityDataContext();
-        var strengthLeft = await AuctionTestBank.CountAsync(this._accountId, StrengthFruit);
-        var energyLeft = await AuctionTestBank.CountAsync(this._accountId, EnergyFruit);
         var listing = await context.Set<AuctionListing>().AsNoTracking().SingleAsync(l => l.Id == this._listingId);
         var feeRows = await context.Set<AuctionCurrencyMovement>().AsNoTracking().Where(m => m.OperationId == this._lastOperation && m.Kind == 5).ToListAsync();
-        Assert.Multiple(() =>
+        Assert.Multiple(async () =>
         {
-            Assert.That(strengthLeft, Is.EqualTo(1));
-            Assert.That(energyLeft, Is.EqualTo(0));
+            Assert.That(await AuctionTestBank.CountAsync(this._accountId, StrengthFruit), Is.EqualTo(2));
+            Assert.That(await AuctionTestBank.CountAsync(this._accountId, EnergyFruit), Is.EqualTo(1));
             Assert.That(listing.StartingStrength, Is.EqualTo(2));
             Assert.That(listing.StartingEnergy, Is.EqualTo(1));
-            Assert.That(feeRows.Select(m => m.FruitComponent).OrderBy(c => c), Is.EquivalentTo(new byte?[] { 0, 3 }));
-            Assert.That(feeRows.All(m => m.Currency == 8 && m.Amount == 1), Is.True);
+            Assert.That(feeRows, Is.Empty);
         });
     }
 
     /// <summary>
-    /// Verifies a basket the seller cannot pay for is refused, and no fruit is consumed.
+    /// Verifies a basket can be listed without owning any fruit, because the fee is only ever in Zen.
     /// </summary>
     [Test]
-    public async Task BasketWithoutTheFruitsIsRefused()
+    public async Task BasketListingNeedsNoFruits()
     {
-        await this.AddFruitAsync(level: 3, slot: 70);
-        await this.AddFruitAsync(level: 3, slot: 71);
-
         var result = await this.ListAsync(new FruitBasket(Strength: 2, Agility: 0, Vitality: 0, Energy: 1, Command: 0));
 
-        Assert.That(result.Result, Is.EqualTo(AuctionResultCode.InsufficientCurrency));
-        Assert.That(await AuctionTestBank.CountAsync(this._accountId, StrengthFruit), Is.EqualTo(2));
+        Assert.That(result.Result, Is.EqualTo(AuctionResultCode.Success));
     }
 
     /// <summary>

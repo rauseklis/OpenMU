@@ -2565,7 +2565,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
                 return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
             }
         }
-        else if (await this.TenderJewelsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, draft.Currency, draft.ListingFee, item.Id, draft.CreatedAt, cancellationToken) != JewelTender.Paid)
+        else if (draft.ListingFee > 0 && await this.TenderJewelsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, draft.Currency, draft.ListingFee, item.Id, draft.CreatedAt, cancellationToken) != JewelTender.Paid)
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
         }
