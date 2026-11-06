@@ -189,6 +189,30 @@ public class AuctionJewelBankPaymentTests
     }
 
     /// <summary>
+    /// A buyout paid from loose jewels and a bundle together takes both and credits the change in the same transaction, leaving the
+    /// bank reconciled (the loose kind is debited and credited within one operation).
+    /// </summary>
+    /// <returns>A task.</returns>
+    [Test]
+    public async Task BuyoutPaidFromLooseJewelsAndABundleKeepsTheBankReconciled()
+    {
+        await this.SetBankAsync(this._buyer, (Soul, 5), (AuctionBankWallet.PackCode(Soul, 0), 1));
+        var listing = await this.InsertAsync(start: null, buyout: Basket((PriceKind.Soul, 12)));
+
+        var result = await new AuctionHouseRepository().PlaceMixedBuyoutAsync(new EntityDataContext(), this.Buyout(listing, 0));
+
+        Assert.That(result.Outcome, Is.EqualTo(AuctionBuyoutOutcome.Bought));
+        Assert.Multiple(async () =>
+        {
+            Assert.That(await this.BankAsync(this._buyer, AuctionBankWallet.PackCode(Soul, 0)), Is.EqualTo(0));
+
+            // 5 loose + a bundle of 10 = 15 paid for 12, so 3 come back as loose jewels.
+            Assert.That(await this.BankAsync(this._buyer, Soul), Is.EqualTo(3));
+            Assert.That(await new JewelBankRepository().ReconcileAsync(), Is.Empty);
+        });
+    }
+
+    /// <summary>
     /// A buyout leaves the seller's jewels in a Mailbox collection, and claiming that collection credits the seller's bank, not the inventory.
     /// </summary>
     /// <returns>A task.</returns>
