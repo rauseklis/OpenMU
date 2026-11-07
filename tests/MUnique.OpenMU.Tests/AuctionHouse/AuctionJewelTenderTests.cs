@@ -239,12 +239,6 @@ public class AuctionJewelTenderTests
 
     private readonly List<Guid> _listingIds = new();
 
-    private async Task<Guid> InventoryOfAsync(Guid characterId)
-    {
-        await using var context = new EntityDataContext();
-        return (await context.Set<Character>().AsNoTracking().Where(c => c.Id == characterId).Select(c => c.InventoryId).SingleAsync())!.Value;
-    }
-
     private Guid _lastOperation;
 
     private async Task<Guid> AddItemAsync(Guid definitionId, byte level, byte slot)

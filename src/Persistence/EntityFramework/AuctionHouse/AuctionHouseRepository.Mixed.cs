@@ -324,7 +324,7 @@ public sealed partial class AuctionHouseRepository
         for (var kind = PriceKind.Chaos; kind <= PriceKind.Harmony; kind++)
         {
             var quantity = basket.Get(kind);
-            if (quantity > 0 && await this.TenderJewelsAsync(context, accountId, characterId, operationId, listingId, (byte)kind, quantity, null, now, cancellationToken) != JewelTender.Paid)
+            if (quantity > 0 && await this.TenderJewelsAsync(context, accountId, characterId, operationId, listingId, (byte)kind, quantity, now, cancellationToken) != JewelTender.Paid)
             {
                 return false;
             }
@@ -337,7 +337,7 @@ public sealed partial class AuctionHouseRepository
             basket.Get(PriceKind.EnergyFruit),
             basket.Get(PriceKind.CommandFruit));
         return fruits.Strength + fruits.Agility + fruits.Vitality + fruits.Energy + fruits.Command == 0
-            || await this.TenderFruitsAsync(context, accountId, characterId, operationId, listingId, fruits, TenderInKind, null, now, cancellationToken);
+            || await this.TenderFruitsAsync(context, accountId, characterId, operationId, listingId, fruits, TenderInKind, now, cancellationToken);
     }
 
     private static byte CurrencyOf(PriceKind kind) => PriceRules.IsFruit(kind) ? FruitsCurrency : (byte)kind;
