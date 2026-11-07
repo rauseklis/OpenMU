@@ -11,3 +11,5 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyTitle("MUnique.OpenMU.Persistence.EntityFramework")]
 [assembly: InternalsVisibleTo("MUnique.OpenMU.Persistence.Initialization.Tests")]
 [assembly: InternalsVisibleTo("MUnique.OpenMU.Tests")]
+[assembly: InternalsVisibleTo("MUnique.OpenMU.WebsiteApi")]
+[assembly: InternalsVisibleTo("MUnique.OpenMU.WebsiteApi.Tests")]

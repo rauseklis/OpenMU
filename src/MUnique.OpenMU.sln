@@ -174,6 +174,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MUnique.OpenMU.Web.Tests", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MUnique.OpenMU.Network.LoginProbe", "Network\LoginProbe\MUnique.OpenMU.Network.LoginProbe.csproj", "{C9F5A7D2-4B18-4E3C-9A67-5D2B8F41C0E9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MUnique.OpenMU.WebsiteApi", "WebsiteApi\MUnique.OpenMU.WebsiteApi.csproj", "{1A78C088-0F70-43F1-AA2D-A33751221DB7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MUnique.OpenMU.WebsiteApi.Tests", "..\tests\MUnique.OpenMU.WebsiteApi.Tests\MUnique.OpenMU.WebsiteApi.Tests.csproj", "{043633DF-8F0D-413C-A486-F8AA502C4BD0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -394,6 +398,14 @@ Global
 		{C9F5A7D2-4B18-4E3C-9A67-5D2B8F41C0E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9F5A7D2-4B18-4E3C-9A67-5D2B8F41C0E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9F5A7D2-4B18-4E3C-9A67-5D2B8F41C0E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A78C088-0F70-43F1-AA2D-A33751221DB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A78C088-0F70-43F1-AA2D-A33751221DB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A78C088-0F70-43F1-AA2D-A33751221DB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A78C088-0F70-43F1-AA2D-A33751221DB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{043633DF-8F0D-413C-A486-F8AA502C4BD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{043633DF-8F0D-413C-A486-F8AA502C4BD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{043633DF-8F0D-413C-A486-F8AA502C4BD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{043633DF-8F0D-413C-A486-F8AA502C4BD0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

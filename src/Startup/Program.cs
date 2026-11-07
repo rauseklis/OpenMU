@@ -349,6 +349,7 @@ internal sealed class Program : IDisposable
             .AddControllers().AddApplicationPart(typeof(ServerController).Assembly);
 
         this.AddActorControlEndpoint(builder.Services);
+        this.AddWebsiteApi(builder.Services);
 
         var host = builder.Build();
 
@@ -376,6 +377,19 @@ internal sealed class Program : IDisposable
         this._logger.Information("Host started, elapsed time: {elapsed}", stopwatch.Elapsed);
         this._logger.Information("Admin Panel bound to urls: {urls}", string.Join("; ", host.Urls));
         return host;
+    }
+
+    /// <summary>
+    /// Adds the website API (rankings, character pages, account registration and login check for the public website),
+    /// but only when its environment variables are set, see <see cref="MUnique.OpenMU.WebsiteApi.WebsiteApiOptions"/> and docs/website-api.md.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    private void AddWebsiteApi(IServiceCollection services)
+    {
+        MUnique.OpenMU.WebsiteApi.WebsiteApiService.AddIfConfigured(
+            services,
+            provider => new WebsiteApiStatusSource(provider.GetRequiredService<IDictionary<int, IGameServer>>()),
+            message => this._logger.Information(message));
     }
 
     /// <summary>

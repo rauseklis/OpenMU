@@ -1,0 +1,117 @@
+# Website API (v1)
+
+A small HTTPS JSON API inside the game server process, for the public website (muemberion.com). The site shows rankings, character
+and guild pages, and registers players and checks logins through it, so the site never touches the game database.
+**It is off unless configured**: without `OPENMU_WEBSITE_API_PORT` nothing listens and nothing changes.
+
+Code: `src/WebsiteApi` (tests: `tests/MUnique.OpenMU.WebsiteApi.Tests`), started from `src/Startup/Program.cs` (`AddWebsiteApi`).
+The design and the reasons are in the client repository: `docs/superpowers/specs/2026-11-07-website-server-link-design.md`.
+
+## How it runs
+
+- Its own Kestrel listener on its own port. The admin panel (`127.0.0.1:8080`) is not touched. A failure to start (port in use,
+  unreadable certificate) is logged and the game server runs on without the API.
+- TLS with a PFX certificate. Without a certificate the API refuses to start unless `OPENMU_WEBSITE_API_ALLOW_HTTP=true` (tests only).
+- Reads are plain `SELECT`s over Npgsql on a connection that can be a **read-only PostgreSQL role** (see below). The only writes are
+  creating an account and replacing a password hash, through the normal Entity Framework context of the server.
+
+## Environment variables
+
+| Variable | Meaning |
+|---|---|
+| `OPENMU_WEBSITE_API_PORT` | Enables the API; the TCP port, e.g. `8443`. |
+| `OPENMU_WEBSITE_API_KEYS` | `keyId:secret`, several separated by commas. Each secret at least 32 characters. Never commit it. |
+| `OPENMU_WEBSITE_API_CERT_PATH` | Path of the `.pfx` file inside the container. |
+| `OPENMU_WEBSITE_API_CERT_PASSWORD` | Password of the `.pfx` (optional). |
+| `OPENMU_WEBSITE_API_ADDRESS` | Address to bind, default all interfaces (the firewall decides who may connect). |
+| `OPENMU_WEBSITE_API_ALLOWED_IPS` | Optional comma separated list of caller IPs, checked in the application on top of the firewall. |
+| `OPENMU_WEBSITE_API_READ_CONNECTION` | Optional Npgsql connection string of a read-only role; without it reads use the server's own connection. |
+| `OPENMU_WEBSITE_API_ALLOW_HTTP` | `true` allows plain HTTP. Tests and local use only. |
+
+Misconfiguration (bad port, short secret, no TLS) is logged and leaves the API off.
+
+### Optional read-only role
+
+```sql
+CREATE ROLE website_ro LOGIN PASSWORD '<random>';
+GRANT CONNECT ON DATABASE openmu TO website_ro;
+GRANT USAGE ON SCHEMA data, config, guild TO website_ro;
+GRANT SELECT ON data."Account", data."Character", data."StatAttribute", config."CharacterClass", guild."Guild", guild."GuildMember" TO website_ro;
+```
+
+Then `OPENMU_WEBSITE_API_READ_CONNECTION=Host=database;Database=openmu;Username=website_ro;Password=<random>`.
+The reads then cannot change anything, even by a bug. (Registration and password change still use the server's own connection.)
+
+## Request signing
+
+Every request carries `X-Key-Id`, `X-Timestamp` (unix seconds, within 60 s of the server clock) and `X-Signature`:
+
+```
+signature = lowercase hex HMAC-SHA256(secret, METHOD + "\n" + PATH?QUERY + "\n" + TIMESTAMP + "\n" + SHA256hex(body))
+```
+
+`PATH?QUERY` is the request target exactly as sent (including `/api/v1`, query not re-ordered or re-encoded). An empty body hashes as
+the empty string. Optional `X-Client-Ip`: the address of the visitor, used for per-visitor limits (trusted only because the request is signed).
+
+- **Replay protection:** a request that changes something (POST) is accepted once; the same signature again within the window gets
+  `bad_signature`. Consequence for the site: a retry needs a new timestamp, and two identical POSTs in the same second count as a replay.
+  Repeated GETs are allowed (a page that asks for the same list twice in one second is normal and harmless).
+- **Limits:** 120 requests/min per client address; verify and password change: 10 attempts per 10 min per account name (and 50 per client
+  address), cleared by a success; 5 registrations per hour per client address; 20 failed signatures per 10 min per connection;
+  `429 rate_limited` otherwise. Body at most 8 KB.
+- Errors are `{ "error": code, "message": text }`: `bad_signature`, `stale_timestamp` (401), `forbidden` (403, not in the allow list),
+  `not_found`, `invalid_name`/`invalid_password`/`invalid_email` (422), `name_taken`/`email_taken` (409), `invalid_credentials` (401),
+  `rate_limited` (429), `bad_request` (400/413), `server_error` (500). Unsigned requests get the same answer for every path.
+
+## Endpoints (`/api/v1`)
+
+| Request | Answer |
+|---|---|
+| `GET /status` | `{ online, players, maxPlayers, uptimeSince }` (started game servers of this process) |
+| `GET /rankings/players?limit=10..100` | `[{ rank, name, class, level, resets, masterLevel, guild }]`, ordered by resets, master level, level, experience |
+| `GET /rankings/guilds?limit=` | `[{ rank, name, score, members, master }]`, ordered by score |
+| `GET /characters/{name}` | `{ name, class, level, resets, masterLevel, guild, online, lastSeen }`; `lastSeen` is always `null` (the database stores no such time) |
+| `GET /guilds/{name}` | `{ name, score, master, members:[{name,level}], logoPng }`; `logoPng` is base64 of a 64x64 PNG (the 8x8 game logo, enlarged) or `null` |
+| `POST /accounts` | body `{ loginName, password, email }` -> `201 { id, loginName }` |
+| `POST /auth/verify` | body `{ loginName, password }` -> `{ ok, accountId, loginName, state }` or `401 invalid_credentials` |
+| `POST /accounts/password` | body `{ loginName, currentPassword, newPassword }` -> `204` |
+| `GET /accounts/{loginName}/characters` | `[{ name, class, level, resets }]`; `404` for unknown, banned, template and bot accounts |
+
+### Rules that were verified in the code
+
+- Login name: the login packet has 10 bytes for it, the client has `MAX_USERNAME_SIZE 10`, and `data."Account"."LoginName"` is `varchar(10)`.
+  OpenMU has no character rule for login names; the API accepts letters and digits, **3 to 10**, and treats names that differ only in case
+  as the same (the game itself compares exactly, so `Bob` and `bob` would be two accounts).
+- Password: the login packet has 20 bytes (`LoginLongPassword`; the older short packet only 10), client `MAX_PASSWORD_SIZE 20`, game
+  configuration `MaximumPasswordLength = 20`. The API accepts **8 to 20** printable ASCII characters without spaces. The site's "8-64" must become 8-20.
+- E-mail: valid address, at most 100 characters, unique ignoring case.
+- A new account is a normal OpenMU `Account`: state `Normal`, `RegistrationDate` = now (so the Auction House's 24 h rule applies), BCrypt
+  hash from `BCrypt.Net.BCrypt.HashPassword` (what the admin panel creates; the game checks it with `BCrypt.Verify`), no vault yet (created when first used).
+- Hidden from rankings and character pages: accounts that are GM (any GM state), spectator, banned, temporarily banned, template or
+  **bot** accounts, and characters with the GM or banned character status. *Bot accounts are hidden by default; whether bots should
+  appear as players is an owner decision.*
+- `POST /auth/verify` answers identically for unknown name, wrong password, banned and template accounts, and does the same amount of work.
+- Never returned: password hashes, security codes, any e-mail address.
+
+## Deploying it (owner steps; nothing here is done by the code or the PR)
+
+1. A name and a certificate: the site calls `https://api.muemberion.com`. Create a DNS `A` record to the VPS and a certificate (for example
+   Let's Encrypt with `certbot certonly --standalone`, converted: `openssl pkcs12 -export -out api.pfx -inkey privkey.pem -in fullchain.pem`).
+   Put `api.pfx` on the VPS (for example `/opt/openmu/certs/api.pfx`, readable by the container user, uid 1000). Renewal needs a cron job.
+2. `.env` on the VPS (`/opt/openmu/.env`, never in git):
+   `OPENMU_WEBSITE_API_PORT=8443`, `OPENMU_WEBSITE_API_KEYS=site:<64 random characters>`, `OPENMU_WEBSITE_API_CERT_PATH=/app/certs/api.pfx`,
+   `OPENMU_WEBSITE_API_CERT_PASSWORD=...`, optionally `OPENMU_WEBSITE_API_ALLOWED_IPS=<Sovahost egress IP>`.
+   The same key id and secret go into the site's configuration (also not in git).
+3. `deploy/live/docker-compose.yml` needs the variables passed in `environment:` (`${OPENMU_WEBSITE_API_PORT:-}` and so on), the port
+   `"8443:8443"` under `ports:` and a volume `- ./certs:/app/certs:ro`. **Not part of this change**: it is a live configuration change.
+4. **Firewall (owner must approve):** open only the API port to the Sovahost egress IP, nothing else:
+   `sudo ufw allow from <Sovahost egress IP> to any port 8443 proto tcp`. If the provider has an own firewall, the same rule there.
+   Do not open 8443 to everyone.
+5. Check: from the host (or `curl` from an allowed IP) a signed `GET /api/v1/status`; without the headers the answer must be `401 bad_signature`.
+6. Roll back: remove the variables (the API is off again) or the firewall rule.
+
+## Tests
+
+`dotnet test tests/MUnique.OpenMU.WebsiteApi.Tests`. Unit and HTTP tests (real Kestrel on a loopback port, in-memory store) always run.
+The PostgreSQL tests are skipped unless `WEBSITE_API_TEST_CONNECTION_STRING` names a **throwaway** database whose name contains `test`;
+it is dropped, created and filled with the seeded game data. Never point it at a real database.
