@@ -795,7 +795,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBidResult(AuctionBidOutcome.CharacterNotOwned);
         }
 
-        if (!await this.TenderFruitsAsync(context, draft.BidderAccountId, draft.BidderCharacterId, draft.OperationId, listing.Id, draft.Bid, TenderInKind, null, draft.Now, cancellationToken))
+        if (!await this.TenderFruitsAsync(context, draft.BidderAccountId, draft.BidderCharacterId, draft.OperationId, listing.Id, draft.Bid, TenderInKind, draft.Now, cancellationToken))
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBidResult(AuctionBidOutcome.InsufficientCurrency);
@@ -969,7 +969,7 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.CharacterNotOwned);
         }
 
-        if (!await this.TenderFruitsAsync(context, draft.BuyerAccountId, draft.BuyerCharacterId, draft.OperationId, listing.Id, debit, TenderInKind, null, draft.Now, cancellationToken))
+        if (!await this.TenderFruitsAsync(context, draft.BuyerAccountId, draft.BuyerCharacterId, draft.OperationId, listing.Id, debit, TenderInKind, draft.Now, cancellationToken))
         {
             await transaction.RollbackAsync(cancellationToken);
             return new AuctionBuyoutResult(AuctionBuyoutOutcome.InsufficientCurrency);
@@ -2181,20 +2181,20 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
             return await DebitZenAsync(context, characterId, amount, cancellationToken);
         }
 
-        return await this.TenderJewelsAsync(context, accountId, characterId, operationId, listingId, currency, amount, null, now, cancellationToken) == JewelTender.Paid;
+        return await this.TenderJewelsAsync(context, accountId, characterId, operationId, listingId, currency, amount, now, cancellationToken) == JewelTender.Paid;
     }
 
     /// <summary>
     /// Pays a fruit basket from the account's Jewel Bank: every nonzero component is taken from its fruit balance. Either every
     /// component is paid or the caller's transaction is rolled back.
     /// </summary>
-    private Task<bool> TenderFruitsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, FruitBasket amount, byte kind, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
+    private Task<bool> TenderFruitsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, FruitBasket amount, byte kind, DateTimeOffset now, CancellationToken cancellationToken)
         => BankPayFruitsAsync(context, accountId, characterId, operationId, listingId, amount, kind, now, cancellationToken);
 
     /// <summary>
     /// Pays a jewel amount from the account's Jewel Bank (loose jewels first, then bundles); any change goes back into the bank.
     /// </summary>
-    private Task<JewelTender> TenderJewelsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, byte currency, long requiredUnits, Guid? excludedItemId, DateTimeOffset now, CancellationToken cancellationToken)
+    private Task<JewelTender> TenderJewelsAsync(EntityDataContext context, Guid accountId, Guid characterId, Guid operationId, Guid listingId, byte currency, long requiredUnits, DateTimeOffset now, CancellationToken cancellationToken)
         => BankPayJewelsAsync(context, accountId, characterId, operationId, listingId, currency, requiredUnits, now, cancellationToken);
 
     /// <summary>
@@ -2560,12 +2560,12 @@ public sealed partial class AuctionHouseRepository : IAuctionHouseRepository
         }
         else if (draft.Currency == FruitsCurrency)
         {
-            if (draft.FeeFruits is not { } feeFruits || !await this.TenderFruitsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, feeFruits, FeeRemovedKind, item.Id, draft.CreatedAt, cancellationToken))
+            if (draft.FeeFruits is not { } feeFruits || !await this.TenderFruitsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, feeFruits, FeeRemovedKind, draft.CreatedAt, cancellationToken))
             {
                 return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
             }
         }
-        else if (draft.ListingFee > 0 && await this.TenderJewelsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, draft.Currency, draft.ListingFee, item.Id, draft.CreatedAt, cancellationToken) != JewelTender.Paid)
+        else if (draft.ListingFee > 0 && await this.TenderJewelsAsync(context, draft.AccountId, draft.CharacterId, draft.OperationId, listingId, draft.Currency, draft.ListingFee, draft.CreatedAt, cancellationToken) != JewelTender.Paid)
         {
             return new AuctionItemListingResult(AuctionItemListingOutcome.InsufficientCurrency, Guid.Empty, 0);
         }
