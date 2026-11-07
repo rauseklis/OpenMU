@@ -22,6 +22,9 @@ services:
       - "55980:55980"
       # The admin panel is only reachable from the server itself; open it through an SSH tunnel (see README.md).
       - "127.0.0.1:8080:8080"
+      # The website API (docs/website-api.md). Nothing listens unless OPENMU_WEBSITE_API_PORT is set in .env. Docker publishes this port
+      # past ufw, so the real lock is OPENMU_WEBSITE_API_ALLOWED_IPS (checked by the application) plus the request signature.
+      - "8443:8443"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -34,10 +37,17 @@ services:
       OPENMU_ADMIN_PASSWORD: ${OPENMU_ADMIN_PASSWORD}
       # AuctionHouse.ini lives in a volume, because /app itself is not writable for the application.
       AUCTION_HOUSE_INI_PATH: /app/config/AuctionHouse.ini
+      # Website API: off while OPENMU_WEBSITE_API_PORT is empty.
+      OPENMU_WEBSITE_API_PORT: ${OPENMU_WEBSITE_API_PORT:-}
+      OPENMU_WEBSITE_API_KEYS: ${OPENMU_WEBSITE_API_KEYS:-}
+      OPENMU_WEBSITE_API_CERT_PATH: ${OPENMU_WEBSITE_API_CERT_PATH:-}
+      OPENMU_WEBSITE_API_CERT_PASSWORD: ${OPENMU_WEBSITE_API_CERT_PASSWORD:-}
+      OPENMU_WEBSITE_API_ALLOWED_IPS: ${OPENMU_WEBSITE_API_ALLOWED_IPS:-}
     volumes:
       - adminpanel-keys:/app/data-protection-keys
       - logs:/app/logs
       - auctionhouse-config:/app/config
+      - ./certs:/app/certs:ro
     working_dir: /app/
 
   database:

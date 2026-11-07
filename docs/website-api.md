@@ -102,11 +102,11 @@ the empty string. Optional `X-Client-Ip`: the address of the visitor, used for p
    `OPENMU_WEBSITE_API_PORT=8443`, `OPENMU_WEBSITE_API_KEYS=site:<64 random characters>`, `OPENMU_WEBSITE_API_CERT_PATH=/app/certs/api.pfx`,
    `OPENMU_WEBSITE_API_CERT_PASSWORD=...`, optionally `OPENMU_WEBSITE_API_ALLOWED_IPS=<Sovahost egress IP>`.
    The same key id and secret go into the site's configuration (also not in git).
-3. `deploy/live/docker-compose.yml` needs the variables passed in `environment:` (`${OPENMU_WEBSITE_API_PORT:-}` and so on), the port
-   `"8443:8443"` under `ports:` and a volume `- ./certs:/app/certs:ro`. **Not part of this change**: it is a live configuration change.
-4. **Firewall (owner must approve):** open only the API port to the Sovahost egress IP, nothing else:
-   `sudo ufw allow from <Sovahost egress IP> to any port 8443 proto tcp`. If the provider has an own firewall, the same rule there.
-   Do not open 8443 to everyone.
+3. `deploy/live/docker-compose.yml` passes the variables, publishes `8443:8443` and mounts `./certs` (done; the compose file is overwritten by every deploy).
+   A self-signed certificate works if the site pins it (`CURLOPT_CAINFO` = the public `api.crt`, `CURLOPT_SSL_VERIFYPEER` on); it is valid 10 years.
+4. **Who may connect:** Docker publishes ports *past* `ufw`, so a `ufw allow from` rule does **not** restrict 8443. The lock is
+   `OPENMU_WEBSITE_API_ALLOWED_IPS=<Sovahost IP>` (checked by the application: others get 403) plus the signature. For a network-level lock add a rule in
+   the `DOCKER-USER` iptables chain (needs root).
 5. Check: from the host (or `curl` from an allowed IP) a signed `GET /api/v1/status`; without the headers the answer must be `401 bad_signature`.
 6. Roll back: remove the variables (the API is off again) or the firewall rule.
 
