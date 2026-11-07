@@ -88,3 +88,19 @@ public enum CreateAccountOutcome
 /// <param name="MaxPlayers">The number of players the started servers can hold.</param>
 /// <param name="UptimeSince">When the server process started.</param>
 public sealed record ServerStatus(bool Online, int Players, int MaxPlayers, DateTimeOffset UptimeSince);
+
+/// <summary>The e-mail data of an account, for the account page of the website.</summary>
+/// <param name="Email">The e-mail address (may be empty for old accounts).</param>
+/// <param name="EmailVerified">Whether the owner confirmed the address.</param>
+/// <param name="RegisteredAt">When the account was created (UTC).</param>
+public sealed record AccountDetails(string Email, bool EmailVerified, DateTime RegisteredAt);
+
+/// <summary>What a single-use token is for.</summary>
+public enum TokenPurpose : short
+{
+    /// <summary>Confirms the e-mail address of an account.</summary>
+    VerifyEmail = 1,
+
+    /// <summary>Allows setting a new password.</summary>
+    ResetPassword = 2,
+}

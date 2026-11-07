@@ -241,6 +241,74 @@ public sealed class FakeStore : IWebsiteStore
         this.Accounts[entry.Record.LoginName] = (entry.Record with { PasswordHash = passwordHash }, entry.Email);
         return Task.FromResult(true);
     }
+
+    /// <summary>Gets the ids of the accounts with a verified e-mail address.</summary>
+    public HashSet<Guid> Verified { get; } = new();
+
+    /// <summary>Gets the stored tokens (hashes only).</summary>
+    public List<(Guid AccountId, TokenPurpose Purpose, string Hash, DateTimeOffset Expires)> Tokens { get; } = new();
+
+    /// <inheritdoc />
+    public Task<AccountRecord?> FindAccountByIdAsync(Guid accountId, CancellationToken cancellationToken)
+        => Task.FromResult<AccountRecord?>(this.Accounts.Values.Select(a => a.Record).FirstOrDefault(r => r.Id == accountId));
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<AccountRecord>> FindAccountsByEmailAsync(string email, CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<AccountRecord>>(this.Accounts.Values.Where(a => a.Email.Length > 0 && a.Email.Equals(email, StringComparison.OrdinalIgnoreCase)).Select(a => a.Record).ToList());
+
+    /// <inheritdoc />
+    public Task<AccountDetails?> GetAccountDetailsAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var entry = this.Accounts.Values.FirstOrDefault(a => a.Record.Id == accountId);
+        return Task.FromResult<AccountDetails?>(entry.Record is null ? null : new AccountDetails(entry.Email, this.Verified.Contains(accountId), new DateTime(2026, 11, 2, 10, 0, 0, DateTimeKind.Utc)));
+    }
+
+    /// <inheritdoc />
+    public Task UpdateEmailAsync(Guid accountId, string email, CancellationToken cancellationToken)
+    {
+        var entry = this.Accounts.Values.First(a => a.Record.Id == accountId);
+        this.Accounts[entry.Record.LoginName] = (entry.Record, email);
+        this.Verified.Remove(accountId);
+        this.Tokens.RemoveAll(t => t.AccountId == accountId);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task SetEmailVerifiedAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        this.Verified.Add(accountId);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task SetTokenAsync(Guid accountId, TokenPurpose purpose, string tokenHash, DateTimeOffset expiresAt, CancellationToken cancellationToken)
+    {
+        this.Tokens.RemoveAll(t => t.AccountId == accountId && t.Purpose == purpose);
+        this.Tokens.Add((accountId, purpose, tokenHash, expiresAt));
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<Guid?> FindTokenAccountAsync(TokenPurpose purpose, string tokenHash, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var token = this.Tokens.FirstOrDefault(t => t.Purpose == purpose && t.Hash == tokenHash && t.Expires > now);
+        return Task.FromResult<Guid?>(token.Hash is null ? null : token.AccountId);
+    }
+
+    /// <inheritdoc />
+    public async Task<Guid?> ConsumeTokenAsync(TokenPurpose purpose, string tokenHash, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var id = await this.FindTokenAccountAsync(purpose, tokenHash, now, cancellationToken);
+        this.Tokens.RemoveAll(t => t.Purpose == purpose && t.Hash == tokenHash);
+        return id;
+    }
+
+    /// <inheritdoc />
+    public Task VoidTokensAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        this.Tokens.RemoveAll(t => t.AccountId == accountId);
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>

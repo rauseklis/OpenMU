@@ -350,6 +350,64 @@ public class PostgresIntegrationTests
         return result;
     }
 
+    /// <summary>
+    /// The e-mail and reset flows against the real database: the tables of the API are created on first use, tokens are
+    /// stored hashed, single use, and the new password works in the game.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task AccountMailFlowsWorkOnPostgreSql()
+    {
+        await this.ExecuteAsync("DELETE FROM data.\"Account\" WHERE \"LoginName\" IN ('MailTst1', 'MailTst2')");
+        await this.ExecuteAsync("DROP SCHEMA IF EXISTS website CASCADE");
+        var ip = "203.0.113.50";
+
+        Assert.That((await this._api.SendAsync("POST", "/api/v1/accounts", new { loginName = "MailTst1", password = "game-pass-1", email = "mailtst1@example.com" }, clientIp: ip)).Status, Is.EqualTo(201));
+
+        // The first access creates the tables.
+        var page = (await this._api.SendAsync("GET", "/api/v1/accounts/MailTst1")).Json;
+        Assert.That(page.GetProperty("email").GetString(), Is.EqualTo("mailtst1@example.com"));
+        Assert.That(page.GetProperty("emailVerified").GetBoolean(), Is.False);
+        Assert.That(page.GetProperty("registeredAt").GetDateTime(), Is.GreaterThan(DateTime.UtcNow.AddMinutes(-2)).And.LessThan(DateTime.UtcNow.AddMinutes(2)));
+
+        var verification = await this._api.SendAsync("POST", "/api/v1/accounts/verify-email/request", new { loginName = "MailTst1" }, clientIp: ip);
+        Assert.That(verification.Status, Is.EqualTo(200), verification.Body);
+        var verifyToken = verification.Json.GetProperty("token").GetString()!;
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token WHERE token_hash = '" + verifyToken + "'"), Is.EqualTo(0L), "the token itself is not stored");
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(1L));
+
+        var confirmed = await this._api.SendAsync("POST", "/api/v1/accounts/verify-email/confirm", new { token = verifyToken }, clientIp: ip);
+        Assert.That(confirmed.Json.GetProperty("loginName").GetString(), Is.EqualTo("MailTst1"));
+        Assert.That((await this._api.SendAsync("GET", "/api/v1/accounts/MailTst1")).Json.GetProperty("emailVerified").GetBoolean(), Is.True);
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(0L), "single use");
+
+        // Changing the address un-verifies it.
+        var change = await this._api.SendAsync("POST", "/api/v1/accounts/email", new { loginName = "MailTst1", password = "game-pass-1", newEmail = "mailtst2@example.com" }, clientIp: ip);
+        Assert.That(change.Status, Is.EqualTo(204), change.Body);
+        var changedPage = (await this._api.SendAsync("GET", "/api/v1/accounts/MailTst1")).Json;
+        Assert.That(changedPage.GetProperty("email").GetString(), Is.EqualTo("mailtst2@example.com"));
+        Assert.That(changedPage.GetProperty("emailVerified").GetBoolean(), Is.False);
+
+        // Reset, then log in to the game with the new password.
+        var reset = await this._api.SendAsync("POST", "/api/v1/accounts/reset/request", new { email = "MAILTST2@example.com" }, clientIp: ip);
+        Assert.That(reset.Json.GetProperty("found").GetBoolean(), Is.True, reset.Body);
+        Assert.That(reset.Json.GetProperty("loginName").GetString(), Is.EqualTo("MailTst1"));
+        var resetToken = reset.Json.GetProperty("token").GetString()!;
+        var done = await this._api.SendAsync("POST", "/api/v1/accounts/reset/confirm", new { token = resetToken, newPassword = "game-pass-3" }, clientIp: ip);
+        Assert.That(done.Status, Is.EqualTo(204), done.Body);
+        Assert.That((await this._api.SendAsync("POST", "/api/v1/accounts/reset/confirm", new { token = resetToken, newPassword = "game-pass-4" }, clientIp: ip)).Error, Is.EqualTo("invalid_token"));
+
+        using var gameContext = await this.CreatePlayerContextAsync();
+        Assert.That(await gameContext.AuthenticateAsync("MailTst1", "game-pass-3"), Is.EqualTo(AccountState.Normal));
+        Assert.That(await gameContext.AuthenticateAsync("MailTst1", "game-pass-1"), Is.Null);
+
+        // Deleting the account removes its rows in the API tables (foreign key with cascade).
+        await this._api.SendAsync("POST", "/api/v1/accounts/reset/request", new { email = "mailtst2@example.com" }, clientIp: "203.0.113.51");
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(1L));
+        await this.ExecuteAsync("DELETE FROM data.\"Account\" WHERE \"LoginName\" = 'MailTst1'");
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(0L));
+    }
+
     private async Task ExecuteAsync(string sql)
     {
         await using var command = this._sql.CreateCommand(sql);

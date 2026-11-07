@@ -43,7 +43,9 @@ public sealed class PostgresWebsiteStore : IWebsiteStore, IAsyncDisposable
         LEFT JOIN guild.""Guild"" g ON g.""Id"" = gm.""GuildId""";
 
     private readonly string? _readConnectionString;
+    private readonly SemaphoreSlim _schemaLock = new(1, 1);
     private NpgsqlDataSource? _dataSource;
+    private NpgsqlDataSource? _writeDataSource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PostgresWebsiteStore"/> class.
@@ -66,6 +68,23 @@ public sealed class PostgresWebsiteStore : IWebsiteStore, IAsyncDisposable
             }
 
             return this._dataSource;
+        }
+    }
+
+    // Tokens and the verified flag live in tables of this API (schema "website"), through the server's own connection:
+    // the optional read-only role can neither write nor create them. OpenMU's own tables are not changed.
+    private NpgsqlDataSource WriteDataSource
+    {
+        get
+        {
+            if (this._writeDataSource is null)
+            {
+                var connectionString = ConnectionConfigurator.GetConnectionString<EntityDataContext>();
+                var builder = new NpgsqlConnectionStringBuilder(connectionString) { ApplicationName = "openmu-website-api-write" };
+                this._writeDataSource = NpgsqlDataSource.Create(builder.ConnectionString);
+            }
+
+            return this._writeDataSource;
         }
     }
 
@@ -223,15 +242,133 @@ public sealed class PostgresWebsiteStore : IWebsiteStore, IAsyncDisposable
     /// <inheritdoc />
     public async Task<AccountRecord?> FindAccountAsync(string loginName, CancellationToken cancellationToken)
     {
-        await using var command = this.DataSource.CreateCommand(@"SELECT ""Id"", ""LoginName"", ""PasswordHash"", ""State"", ""IsTemplate"", ""IsBot"" FROM data.""Account"" WHERE ""LoginName"" = @name");
-        command.Parameters.AddWithValue("name", loginName);
+        var result = await this.QueryAccountsAsync(@"WHERE ""LoginName"" = @p", loginName, cancellationToken).ConfigureAwait(false);
+        return result.FirstOrDefault();
+    }
+
+    /// <inheritdoc />
+    public async Task<AccountRecord?> FindAccountByIdAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var result = await this.QueryAccountsAsync(@"WHERE ""Id"" = @p", accountId, cancellationToken).ConfigureAwait(false);
+        return result.FirstOrDefault();
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<AccountRecord>> FindAccountsByEmailAsync(string email, CancellationToken cancellationToken)
+        => this.QueryAccountsAsync(@"WHERE ""EMail"" <> '' AND lower(""EMail"") = lower(@p)", email, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<AccountDetails?> GetAccountDetailsAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        await this.EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = this.WriteDataSource.CreateCommand(@"
+            SELECT a.""EMail"", COALESCE(e.verified, false), a.""RegistrationDate""
+            FROM data.""Account"" a LEFT JOIN website.account_email e ON e.account_id = a.""Id""
+            WHERE a.""Id"" = @id");
+        command.Parameters.AddWithValue("id", accountId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             return null;
         }
 
-        return new AccountRecord(reader.GetGuid(0), reader.GetString(1), reader.GetString(2), (AccountState)reader.GetInt32(3), reader.GetBoolean(4), reader.GetBoolean(5));
+        var registered = reader.GetDateTime(2);
+        return new AccountDetails(reader.GetString(0), reader.GetBoolean(1), registered.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(registered, DateTimeKind.Utc) : registered.ToUniversalTime());
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateEmailAsync(Guid accountId, string email, CancellationToken cancellationToken)
+    {
+        await this.EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await this.WriteDataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (var update = new NpgsqlCommand(@"UPDATE data.""Account"" SET ""EMail"" = @email WHERE ""Id"" = @id", connection, transaction))
+        {
+            update.Parameters.AddWithValue("email", email);
+            update.Parameters.AddWithValue("id", accountId);
+            await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (var flag = new NpgsqlCommand(@"INSERT INTO website.account_email (account_id, verified) VALUES (@id, false) ON CONFLICT (account_id) DO UPDATE SET verified = false", connection, transaction))
+        {
+            flag.Parameters.AddWithValue("id", accountId);
+            await flag.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (var tokens = new NpgsqlCommand(@"DELETE FROM website.token WHERE account_id = @id", connection, transaction))
+        {
+            tokens.Parameters.AddWithValue("id", accountId);
+            await tokens.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task SetEmailVerifiedAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        await this.EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = this.WriteDataSource.CreateCommand(@"INSERT INTO website.account_email (account_id, verified) VALUES (@id, true) ON CONFLICT (account_id) DO UPDATE SET verified = true");
+        command.Parameters.AddWithValue("id", accountId);
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task SetTokenAsync(Guid accountId, TokenPurpose purpose, string tokenHash, DateTimeOffset expiresAt, CancellationToken cancellationToken)
+    {
+        await this.EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await this.WriteDataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (var delete = new NpgsqlCommand(@"DELETE FROM website.token WHERE (account_id = @id AND purpose = @purpose) OR expires_at < now()", connection, transaction))
+        {
+            delete.Parameters.AddWithValue("id", accountId);
+            delete.Parameters.AddWithValue("purpose", (short)purpose);
+            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (var insert = new NpgsqlCommand(@"INSERT INTO website.token (token_hash, account_id, purpose, expires_at) VALUES (@hash, @id, @purpose, @expires)", connection, transaction))
+        {
+            insert.Parameters.AddWithValue("hash", tokenHash);
+            insert.Parameters.AddWithValue("id", accountId);
+            insert.Parameters.AddWithValue("purpose", (short)purpose);
+            insert.Parameters.AddWithValue("expires", expiresAt.UtcDateTime);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<Guid?> FindTokenAccountAsync(TokenPurpose purpose, string tokenHash, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        await this.EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = this.WriteDataSource.CreateCommand(@"SELECT account_id FROM website.token WHERE token_hash = @hash AND purpose = @purpose AND expires_at > @now");
+        command.Parameters.AddWithValue("hash", tokenHash);
+        command.Parameters.AddWithValue("purpose", (short)purpose);
+        command.Parameters.AddWithValue("now", now.UtcDateTime);
+        return await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as Guid?;
+    }
+
+    /// <inheritdoc />
+    public async Task<Guid?> ConsumeTokenAsync(TokenPurpose purpose, string tokenHash, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        await this.EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+
+        // One statement: of two simultaneous requests with the same token only one gets the row.
+        await using var command = this.WriteDataSource.CreateCommand(@"DELETE FROM website.token WHERE token_hash = @hash AND purpose = @purpose AND expires_at > @now RETURNING account_id");
+        command.Parameters.AddWithValue("hash", tokenHash);
+        command.Parameters.AddWithValue("purpose", (short)purpose);
+        command.Parameters.AddWithValue("now", now.UtcDateTime);
+        return await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as Guid?;
+    }
+
+    /// <inheritdoc />
+    public async Task VoidTokensAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        await this.EnsureSchemaAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = this.WriteDataSource.CreateCommand(@"DELETE FROM website.token WHERE account_id = @id");
+        command.Parameters.AddWithValue("id", accountId);
+        await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -293,6 +430,60 @@ public sealed class PostgresWebsiteStore : IWebsiteStore, IAsyncDisposable
         if (this._dataSource is { } dataSource)
         {
             await dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+
+        if (this._writeDataSource is { } writeDataSource)
+        {
+            await writeDataSource.DisposeAsync().ConfigureAwait(false);
+        }
+
+        this._schemaLock.Dispose();
+    }
+
+    private async Task<IReadOnlyList<AccountRecord>> QueryAccountsAsync(string where, object parameter, CancellationToken cancellationToken)
+    {
+        await using var command = this.DataSource.CreateCommand(@"SELECT ""Id"", ""LoginName"", ""PasswordHash"", ""State"", ""IsTemplate"", ""IsBot"" FROM data.""Account"" " + where);
+        command.Parameters.AddWithValue("p", parameter);
+        var result = new List<AccountRecord>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            result.Add(new AccountRecord(reader.GetGuid(0), reader.GetString(1), reader.GetString(2), (AccountState)reader.GetInt32(3), reader.GetBoolean(4), reader.GetBoolean(5)));
+        }
+
+        return result;
+    }
+
+    // Creates the tables of this API when they are missing (also after the database was recreated).
+    private async Task EnsureSchemaAsync(CancellationToken cancellationToken)
+    {
+        await using (var check = this.WriteDataSource.CreateCommand("SELECT to_regclass('website.token') IS NOT NULL AND to_regclass('website.account_email') IS NOT NULL"))
+        {
+            if ((bool)(await check.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!)
+            {
+                return;
+            }
+        }
+
+        await this._schemaLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await using var create = this.WriteDataSource.CreateCommand(@"
+                CREATE SCHEMA IF NOT EXISTS website;
+                CREATE TABLE IF NOT EXISTS website.account_email (
+                    account_id uuid PRIMARY KEY REFERENCES data.""Account""(""Id"") ON DELETE CASCADE,
+                    verified boolean NOT NULL DEFAULT false);
+                CREATE TABLE IF NOT EXISTS website.token (
+                    token_hash text PRIMARY KEY,
+                    account_id uuid NOT NULL REFERENCES data.""Account""(""Id"") ON DELETE CASCADE,
+                    purpose smallint NOT NULL,
+                    expires_at timestamptz NOT NULL);
+                CREATE INDEX IF NOT EXISTS ix_token_account ON website.token (account_id);");
+            await create.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            this._schemaLock.Release();
         }
     }
 

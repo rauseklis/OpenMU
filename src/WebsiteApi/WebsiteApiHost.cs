@@ -62,7 +62,7 @@ public static class WebsiteApiHost
         builder.Services.AddSingleton(options);
         builder.Services.AddSingleton(store);
         builder.Services.AddSingleton(status);
-        builder.Services.AddSingleton(new WebsiteAccountService(store));
+        builder.Services.AddSingleton(new WebsiteAccountService(store, clock));
         builder.Services.AddSingleton<ReplayCache>();
         builder.Services.AddSingleton(new RateLimiter(clock));
         builder.Services.ConfigureHttpJsonOptions(json =>

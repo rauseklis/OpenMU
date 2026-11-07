@@ -21,6 +21,8 @@ public static class WebsiteApiEndpoints
     private const int DefaultRankingLimit = 10;
     private const int MaximumRankingLimit = 100;
     private const int MaximumNameLength = 10;
+    private const int MailTokensPerHour = 3;
+    private const int ResetRequestsPerHourPerClient = 5;
 
     /// <summary>
     /// Maps the endpoints below <c>/api/v1</c>.
@@ -38,6 +40,12 @@ public static class WebsiteApiEndpoints
         api.MapPost("/auth/verify", VerifyAsync);
         api.MapPost("/accounts/password", ChangePasswordAsync);
         api.MapGet("/accounts/{loginName}/characters", GetAccountCharactersAsync);
+        api.MapGet("/accounts/{loginName}", GetAccountAsync);
+        api.MapPost("/accounts/email", ChangeEmailAsync);
+        api.MapPost("/accounts/verify-email/request", RequestEmailVerificationAsync);
+        api.MapPost("/accounts/verify-email/confirm", ConfirmEmailVerificationAsync);
+        api.MapPost("/accounts/reset/request", RequestPasswordResetAsync);
+        api.MapPost("/accounts/reset/confirm", ConfirmPasswordResetAsync);
     }
 
     private static IResult GetStatus(IWebsiteStatusSource status)
@@ -181,6 +189,107 @@ public static class WebsiteApiEndpoints
         return Results.Ok(await store.GetAccountCharactersAsync(account.Id, context.RequestAborted).ConfigureAwait(false));
     }
 
+    private static async Task<IResult> GetAccountAsync(string loginName, HttpContext context, WebsiteAccountService accounts)
+    {
+        if (await accounts.GetAccountAsync(loginName, context.RequestAborted).ConfigureAwait(false) is not { } found)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            loginName = found.Account.LoginName,
+            email = found.Details.Email,
+            emailVerified = found.Details.EmailVerified,
+            registeredAt = found.Details.RegisteredAt,
+        });
+    }
+
+    private static async Task<IResult> ChangeEmailAsync(HttpContext context, WebsiteAccountService accounts, RateLimiter limiter, WebsiteApiOptions options)
+    {
+        var request = await ReadJsonAsync<EmailRequest>(context).ConfigureAwait(false);
+        var limited = CheckAccountAttemptLimit(request?.LoginName, context, limiter, options, out var accountKey, out var clientKey);
+        if (limited is not null)
+        {
+            return limited;
+        }
+
+        var outcome = await accounts.ChangeEmailAsync(request?.LoginName, request?.Password, request?.NewEmail, context.RequestAborted).ConfigureAwait(false);
+        switch (outcome)
+        {
+            case EmailChangeOutcome.Changed:
+                limiter.Reset(accountKey);
+                limiter.Reset(clientKey);
+                return Results.NoContent();
+            case EmailChangeOutcome.InvalidEmail:
+                return Error(StatusCodes.Status422UnprocessableEntity, "invalid_email", "The e-mail address is not valid.");
+            case EmailChangeOutcome.EmailTaken:
+                return Error(StatusCodes.Status409Conflict, "email_taken", "This e-mail address is already used.");
+            default:
+                return InvalidCredentials();
+        }
+    }
+
+    private static async Task<IResult> RequestEmailVerificationAsync(HttpContext context, WebsiteAccountService accounts, RateLimiter limiter)
+    {
+        var request = await ReadJsonAsync<LoginNameRequest>(context).ConfigureAwait(false);
+
+        // Counted before the lookup, so unknown names count, too.
+        if (!limiter.TryHit("verify-mail:" + (request?.LoginName ?? string.Empty).ToLowerInvariant(), MailTokensPerHour, TimeSpan.FromHours(1)))
+        {
+            return Error(StatusCodes.Status429TooManyRequests, "rate_limited", "Too many requests, try again later.");
+        }
+
+        var (outcome, email, token) = await accounts.RequestEmailVerificationAsync(request?.LoginName, context.RequestAborted).ConfigureAwait(false);
+        return outcome switch
+        {
+            VerificationRequestOutcome.Issued => Results.Ok(new { email, token }),
+            VerificationRequestOutcome.AlreadyVerified => Error(StatusCodes.Status409Conflict, "already_verified", "The e-mail address is verified already."),
+            VerificationRequestOutcome.NoEmail => Error(StatusCodes.Status422UnprocessableEntity, "invalid_email", "The account has no e-mail address."),
+            _ => NotFound(),
+        };
+    }
+
+    private static async Task<IResult> ConfirmEmailVerificationAsync(HttpContext context, WebsiteAccountService accounts)
+    {
+        var request = await ReadJsonAsync<TokenRequest>(context).ConfigureAwait(false);
+        var loginName = await accounts.ConfirmEmailVerificationAsync(request?.Token, context.RequestAborted).ConfigureAwait(false);
+        return loginName is null ? InvalidToken() : Results.Ok(new { loginName });
+    }
+
+    private static async Task<IResult> RequestPasswordResetAsync(HttpContext context, WebsiteAccountService accounts, RateLimiter limiter)
+    {
+        var request = await ReadJsonAsync<ResetRequest>(context).ConfigureAwait(false);
+
+        // Counted before the lookup, so unknown addresses count, too.
+        if (!limiter.TryHit("reset-ip:" + WebsiteApiHost.GetClientAddress(context), ResetRequestsPerHourPerClient, TimeSpan.FromHours(1))
+            || !limiter.TryHit("reset-mail:" + (request?.Email ?? string.Empty).ToLowerInvariant(), MailTokensPerHour, TimeSpan.FromHours(1)))
+        {
+            return Error(StatusCodes.Status429TooManyRequests, "rate_limited", "Too many requests, try again later.");
+        }
+
+        if (await accounts.RequestPasswordResetAsync(request?.Email, context.RequestAborted).ConfigureAwait(false) is not { } reset)
+        {
+            return Results.Ok(new { found = false });
+        }
+
+        return Results.Ok(new { found = true, loginName = reset.LoginName, email = reset.Email, token = reset.Token });
+    }
+
+    private static async Task<IResult> ConfirmPasswordResetAsync(HttpContext context, WebsiteAccountService accounts)
+    {
+        var request = await ReadJsonAsync<ResetConfirmRequest>(context).ConfigureAwait(false);
+        var outcome = await accounts.ConfirmPasswordResetAsync(request?.Token, request?.NewPassword, context.RequestAborted).ConfigureAwait(false);
+        return outcome switch
+        {
+            PasswordResetOutcome.Changed => Results.NoContent(),
+            PasswordResetOutcome.InvalidPassword => Error(StatusCodes.Status422UnprocessableEntity, "invalid_password", $"The new password needs {AccountRules.MinimumPasswordLength} to {AccountRules.MaximumPasswordLength} printable characters without spaces."),
+            _ => InvalidToken(),
+        };
+    }
+
+    private static IResult InvalidToken() => Error(StatusCodes.Status422UnprocessableEntity, "invalid_token", "The token is unknown, used or expired.");
+
     /// <summary>
     /// Counts an attempt to log in. Limited per account name (so one account cannot be guessed at) and per client address.
     /// Both counters are cleared by a success.
@@ -237,6 +346,16 @@ public static class WebsiteApiEndpoints
     private sealed record RegisterRequest(string? LoginName, string? Password, string? Email);
 
     private sealed record VerifyRequest(string? LoginName, string? Password);
+
+    private sealed record EmailRequest(string? LoginName, string? Password, string? NewEmail);
+
+    private sealed record LoginNameRequest(string? LoginName);
+
+    private sealed record TokenRequest(string? Token);
+
+    private sealed record ResetRequest(string? Email);
+
+    private sealed record ResetConfirmRequest(string? Token, string? NewPassword);
 
     private sealed record PasswordRequest(string? LoginName, string? CurrentPassword, string? NewPassword);
 }

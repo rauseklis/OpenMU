@@ -76,6 +76,20 @@ the empty string. Optional `X-Client-Ip`: the address of the visitor, used for p
 | `POST /auth/verify` | body `{ loginName, password }` -> `{ ok, accountId, loginName, state }` or `401 invalid_credentials` |
 | `POST /accounts/password` | body `{ loginName, currentPassword, newPassword }` -> `204` |
 | `GET /accounts/{loginName}/characters` | `[{ name, class, level, resets }]`; `404` for unknown, banned, template and bot accounts |
+| `GET /accounts/{loginName}` | `{ loginName, email, emailVerified, registeredAt }` (ISO UTC); `404` for unknown, banned, template and bot accounts |
+| `POST /accounts/email` | body `{ loginName, password, newEmail }` -> `204`; `401 invalid_credentials`, `422 invalid_email`, `409 email_taken`. Sets `emailVerified=false`, voids the account's open tokens. The same address (any case) is a `204` without changes. |
+| `POST /accounts/verify-email/request` | body `{ loginName }` -> `{ email, token }`; `404` unknown/banned/template/bot, `409 already_verified`, `422 invalid_email` (no address), `429` after 3 per hour per account |
+| `POST /accounts/verify-email/confirm` | body `{ token }` -> `{ loginName }`; `422 invalid_token`. Sets `emailVerified=true` |
+| `POST /accounts/reset/request` | body `{ email }` -> `{ found:false }` or `{ found:true, loginName, email, token }`; only normal accounts (not GM, spectator, banned, template, bot) and only if exactly one account has the address (verified or not); `429` after 5 per hour per client address or 3 per hour per address |
+| `POST /accounts/reset/confirm` | body `{ token, newPassword }` -> `204`; `422 invalid_token` or `invalid_password` (a wrong new password does not use the token up). Voids all tokens of the account |
+
+**Mail tokens.** The website sends the e-mails; the server only creates and checks tokens. A token is 32 random bytes as 64 lowercase hex
+characters, valid 24 h (e-mail verification) or 1 h (password reset), single use, one active token per account and purpose (a new one replaces the
+old one). Only its SHA-256 is stored; the token appears only in the response of the two `request` endpoints and is never logged.
+A verified e-mail address is **not** required to log in or play. Tokens and the verified flag live in two tables of their own (schema `website`:
+`account_email`, `token`, with foreign keys to `data."Account"` that delete their rows with the account). They are created on first use by the
+server's own database connection (not by the optional read-only role); OpenMU's own tables are not changed and there is no migration. Existing
+accounts start with `emailVerified=false`.
 
 ### Rules that were verified in the code
 
