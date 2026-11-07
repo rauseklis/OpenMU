@@ -156,6 +156,9 @@ public sealed class FakeStatus : IWebsiteStatusSource
     public HashSet<string> Online { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <inheritdoc />
+    public ValueTask<IReadOnlyCollection<string>> GetOnlineCharacterNamesAsync() => new(this.Online.ToList());
+
+    /// <inheritdoc />
     public ServerStatus GetStatus() => new(true, 12, 400, new DateTimeOffset(2026, 11, 1, 8, 0, 0, TimeSpan.Zero));
 
     /// <inheritdoc />
@@ -212,7 +215,7 @@ public sealed class FakeStore : IWebsiteStore
 
     /// <inheritdoc />
     public Task<IReadOnlyList<AccountCharacter>> GetAccountCharactersAsync(Guid accountId, CancellationToken cancellationToken)
-        => Task.FromResult<IReadOnlyList<AccountCharacter>>(new[] { new AccountCharacter("Hero", "Blade Master", 400, 3) });
+        => Task.FromResult<IReadOnlyList<AccountCharacter>>(new[] { new AccountCharacter("Hero", "Blade Master", 400, 3, 120, new CharacterStats(1000, 800, 600, 400, 0), 25, 7, "PlayerKillWarning") });
 
     /// <inheritdoc />
     public Task<AccountRecord?> FindAccountAsync(string loginName, CancellationToken cancellationToken)
@@ -241,6 +244,26 @@ public sealed class FakeStore : IWebsiteStore
         this.Accounts[entry.Record.LoginName] = (entry.Record with { PasswordHash = passwordHash }, entry.Email);
         return Task.FromResult(true);
     }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ValueRankEntry>> GetKillersRankingAsync(int limit, CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<ValueRankEntry>>(new[] { new ValueRankEntry(1, "Hero", "Blade Master", 7, "Guild1") }.Take(limit).ToList());
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<OnlineCharacter>> GetCharactersByNamesAsync(IReadOnlyCollection<string> names, CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<OnlineCharacter>>(names.Contains("Hero") ? new[] { new OnlineCharacter("Hero", "Blade Master", 400, "Guild1") } : []);
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<string>> GetBannedCharacterNamesAsync(CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<string>>(["Cheater"]);
+
+    /// <inheritdoc />
+    public Task<SearchResult> SearchAsync(string text, CancellationToken cancellationToken)
+        => Task.FromResult(new SearchResult(text.Contains("er", StringComparison.OrdinalIgnoreCase) ? ["Hero"] : [], text.Contains("Gu", StringComparison.OrdinalIgnoreCase) ? ["Guild1"] : []));
+
+    /// <inheritdoc />
+    public Task<CastleSiegeInfo> GetCastleSiegeAsync(CancellationToken cancellationToken)
+        => Task.FromResult(new CastleSiegeInfo(new SiegeGuild("Guild1", "Hero"), [new SiegeGuild("Guild2", null)]));
 
     /// <summary>Gets the ids of the accounts with a verified e-mail address.</summary>
     public HashSet<Guid> Verified { get; } = new();

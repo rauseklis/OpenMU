@@ -134,6 +134,34 @@ public interface IWebsiteStore
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The task.</returns>
     Task VoidTokensAsync(Guid accountId, CancellationToken cancellationToken);
+
+    /// <summary>Gets the ranking by player kills (characters without kills are left out).</summary>
+    /// <param name="limit">The maximum number of entries.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The ranking.</returns>
+    Task<IReadOnlyList<ValueRankEntry>> GetKillersRankingAsync(int limit, CancellationToken cancellationToken);
+
+    /// <summary>Gets the visible characters with the given names (the online ones).</summary>
+    /// <param name="names">The exact character names.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The characters, the highest level first.</returns>
+    Task<IReadOnlyList<OnlineCharacter>> GetCharactersByNamesAsync(IReadOnlyCollection<string> names, CancellationToken cancellationToken);
+
+    /// <summary>Gets the names of banned characters: banned character status, or an account which is banned.</summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The character names (never account names).</returns>
+    Task<IReadOnlyList<string>> GetBannedCharacterNamesAsync(CancellationToken cancellationToken);
+
+    /// <summary>Searches visible character names and guild names (contains, ignoring the case).</summary>
+    /// <param name="text">The text, without wildcards.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>At most 10 characters and 10 guilds.</returns>
+    Task<SearchResult> SearchAsync(string text, CancellationToken cancellationToken);
+
+    /// <summary>Gets the castle owner and the guilds registered for the next siege.</summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The state.</returns>
+    Task<CastleSiegeInfo> GetCastleSiegeAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -144,6 +172,10 @@ public interface IWebsiteStatusSource
     /// <summary>Gets the current status.</summary>
     /// <returns>The status.</returns>
     ServerStatus GetStatus();
+
+    /// <summary>Gets the names of all characters which are currently online.</summary>
+    /// <returns>The names.</returns>
+    ValueTask<IReadOnlyCollection<string>> GetOnlineCharacterNamesAsync();
 
     /// <summary>Tells whether a character is currently online.</summary>
     /// <param name="characterName">The character name.</param>

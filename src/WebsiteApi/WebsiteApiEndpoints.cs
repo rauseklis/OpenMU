@@ -21,6 +21,7 @@ public static class WebsiteApiEndpoints
     private const int DefaultRankingLimit = 10;
     private const int MaximumRankingLimit = 100;
     private const int MaximumNameLength = 10;
+    private const int MaximumOnlineList = 200;
     private const int MailTokensPerHour = 3;
     private const int ResetRequestsPerHourPerClient = 5;
 
@@ -34,6 +35,13 @@ public static class WebsiteApiEndpoints
         api.MapGet("/status", GetStatus);
         api.MapGet("/rankings/players", GetPlayerRanking);
         api.MapGet("/rankings/guilds", GetGuildRanking);
+        api.MapGet("/rankings/killers", GetKillersRankingAsync);
+        api.MapGet("/rankings/{kind}", GetUnsupportedRanking);
+        api.MapGet("/online", GetOnlineAsync);
+        api.MapGet("/bans", GetBansAsync);
+        api.MapGet("/search", SearchAsync);
+        api.MapGet("/castle-siege", GetCastleSiegeAsync);
+        api.MapGet("/events", GetEvents);
         api.MapGet("/characters/{name}", GetCharacterAsync);
         api.MapGet("/guilds/{name}", GetGuildAsync);
         api.MapPost("/accounts", RegisterAsync);
@@ -178,7 +186,7 @@ public static class WebsiteApiEndpoints
         }
     }
 
-    private static async Task<IResult> GetAccountCharactersAsync(string loginName, HttpContext context, IWebsiteStore store)
+    private static async Task<IResult> GetAccountCharactersAsync(string loginName, HttpContext context, IWebsiteStore store, IWebsiteStatusSource status)
     {
         var account = AccountRules.IsValidLoginName(loginName) ? await store.FindAccountAsync(loginName, context.RequestAborted).ConfigureAwait(false) : null;
         if (account is null || !account.CanLogIn)
@@ -186,8 +194,76 @@ public static class WebsiteApiEndpoints
             return NotFound();
         }
 
-        return Results.Ok(await store.GetAccountCharactersAsync(account.Id, context.RequestAborted).ConfigureAwait(false));
+        var characters = await store.GetAccountCharactersAsync(account.Id, context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(characters.Select(c => new
+        {
+            name = c.Name,
+            @class = c.Class,
+            level = c.Level,
+            resets = c.Resets,
+            masterLevel = c.MasterLevel,
+            stats = new { str = c.Stats.Str, agi = c.Stats.Agi, vit = c.Stats.Vit, ene = c.Stats.Ene, cmd = c.Stats.Cmd },
+            points = c.Points,
+            hidden = false,
+            online = status.IsCharacterOnline(c.Name),
+            pk = c.PkKills,
+            pkState = c.PkState,
+        }));
     }
+
+    private static async Task<IResult> GetKillersRankingAsync(HttpContext context, IWebsiteStore store)
+    {
+        var ranking = await store.GetKillersRankingAsync(ParseLimit(context), context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(ranking.Select(e => new { rank = e.Rank, name = e.Name, @class = e.Class, value = e.Value, guild = e.Guild }));
+    }
+
+    // Rankings of things the database does not count; the site hides them.
+    private static IResult GetUnsupportedRanking(string kind)
+    {
+        return kind is "online-time" or "gens" or "bc" or "ds" or "cc" or "duel" ? NotSupported() : NotFound();
+    }
+
+    private static IResult GetEvents() => NotSupported();
+
+    private static async Task<IResult> GetOnlineAsync(HttpContext context, IWebsiteStore store, IWebsiteStatusSource status)
+    {
+        var names = (await status.GetOnlineCharacterNamesAsync().ConfigureAwait(false)).Take(MaximumOnlineList * 4).ToList();
+        var characters = await store.GetCharactersByNamesAsync(names, context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(characters.Take(MaximumOnlineList).Select(c => new { name = c.Name, @class = c.Class, level = c.Level, guild = c.Guild }));
+    }
+
+    // Accounts store no ban reason and no end date, so those are always null.
+    private static async Task<IResult> GetBansAsync(HttpContext context, IWebsiteStore store)
+    {
+        var names = await store.GetBannedCharacterNamesAsync(context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(names.Select(n => new { name = n, reason = (string?)null, until = (DateTimeOffset?)null }));
+    }
+
+    private static async Task<IResult> SearchAsync(HttpContext context, IWebsiteStore store)
+    {
+        string text = context.Request.Query["q"].ToString().Trim();
+        if (text.Length is < 2 or > 20 || text.Any(char.IsControl))
+        {
+            return Error(StatusCodes.Status422UnprocessableEntity, "invalid_input", "The search text needs 2 to 20 characters.");
+        }
+
+        var result = await store.SearchAsync(text, context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(new { characters = result.Characters, guilds = result.Guilds });
+    }
+
+    // nextSiege is always null: the schedule is a configuration of the game server, not stored with the castle data.
+    private static async Task<IResult> GetCastleSiegeAsync(HttpContext context, IWebsiteStore store)
+    {
+        var info = await store.GetCastleSiegeAsync(context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(new
+        {
+            owner = info.Owner is { } owner ? new { guild = owner.Guild, master = owner.Master } : null,
+            nextSiege = (DateTimeOffset?)null,
+            registered = info.Registered.Select(g => new { guild = g.Guild, master = g.Master }),
+        });
+    }
+
+    private static IResult NotSupported() => Error(StatusCodes.Status404NotFound, "not_supported", "This is not supported by the server.");
 
     private static async Task<IResult> GetAccountAsync(string loginName, HttpContext context, WebsiteAccountService accounts)
     {

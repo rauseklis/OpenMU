@@ -372,7 +372,14 @@ public class HttpApiTests
         this._store.Add("banned1", "password1", AccountState.Banned);
 
         var list = (await this._api.SendAsync("GET", "/api/v1/accounts/alice/characters")).Json;
-        Assert.That(list[0].EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "name", "class", "level", "resets" }));
+        Assert.That(list[0].EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "name", "class", "level", "resets", "masterLevel", "stats", "points", "hidden", "online", "pk", "pkState" }));
+        Assert.That(list[0].GetProperty("stats").EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "str", "agi", "vit", "ene", "cmd" }));
+        Assert.That(list[0].GetProperty("stats").GetProperty("cmd").GetInt32(), Is.EqualTo(0));
+        Assert.That(list[0].GetProperty("points").GetInt32(), Is.EqualTo(25));
+        Assert.That(list[0].GetProperty("pk").GetInt32(), Is.EqualTo(7));
+        Assert.That(list[0].GetProperty("online").GetBoolean(), Is.False);
+        this._status.Online.Add("Hero");
+        Assert.That((await this._api.SendAsync("GET", "/api/v1/accounts/alice/characters")).Json[0].GetProperty("online").GetBoolean(), Is.True);
 
         Assert.That((await this._api.SendAsync("GET", "/api/v1/accounts/banned1/characters")).Status, Is.EqualTo(404));
         Assert.That((await this._api.SendAsync("GET", "/api/v1/accounts/nobody/characters")).Status, Is.EqualTo(404));
