@@ -29,7 +29,15 @@ internal sealed class WebsiteApiStatusSource : IWebsiteStatusSource
     public ServerStatus GetStatus()
     {
         var started = this._gameServers.Values.Where(s => s.ServerState == ServerState.Started).ToList();
-        return new ServerStatus(started.Count > 0, started.Sum(s => s.CurrentConnections), started.Sum(s => s.MaximumConnections), this._startedAt);
+        var realms = this._gameServers.Values
+            .OrderBy(s => s.Id)
+            .Select(s =>
+            {
+                var isStarted = s.ServerState == ServerState.Started;
+                return new RealmStatus(s.Id, s.Description, isStarted, isStarted ? s.CurrentConnections : 0, s.MaximumConnections);
+            })
+            .ToList();
+        return new ServerStatus(started.Count > 0, started.Sum(s => s.CurrentConnections), started.Sum(s => s.MaximumConnections), this._startedAt, realms);
     }
 
     /// <inheritdoc />
