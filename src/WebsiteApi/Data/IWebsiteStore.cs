@@ -5,8 +5,8 @@
 namespace MUnique.OpenMU.WebsiteApi.Data;
 
 /// <summary>
-/// The data access of the website API. Everything except <see cref="CreateAccountAsync"/> and
-/// <see cref="UpdatePasswordHashAsync"/> only reads.
+/// The data access of the website API. The methods which create or change an account, an
+/// e-mail address or a token write; all others only read.
 /// </summary>
 public interface IWebsiteStore
 {
@@ -72,6 +72,96 @@ public interface IWebsiteStore
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns><c>true</c> if the account was found and changed.</returns>
     Task<bool> UpdatePasswordHashAsync(Guid accountId, string passwordHash, CancellationToken cancellationToken);
+
+    /// <summary>Finds an account by its id.</summary>
+    /// <param name="accountId">The account id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The record, or <c>null</c>.</returns>
+    Task<AccountRecord?> FindAccountByIdAsync(Guid accountId, CancellationToken cancellationToken);
+
+    /// <summary>Finds all accounts with an e-mail address, ignoring the case.</summary>
+    /// <param name="email">The e-mail address.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The accounts (normally none or one).</returns>
+    Task<IReadOnlyList<AccountRecord>> FindAccountsByEmailAsync(string email, CancellationToken cancellationToken);
+
+    /// <summary>Gets the e-mail address, its verified flag and the registration time of an account.</summary>
+    /// <param name="accountId">The account id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The details, or <c>null</c> if the account does not exist.</returns>
+    Task<AccountDetails?> GetAccountDetailsAsync(Guid accountId, CancellationToken cancellationToken);
+
+    /// <summary>Sets a new e-mail address, marks it as not verified and voids all open tokens of the account.</summary>
+    /// <param name="accountId">The account id.</param>
+    /// <param name="email">The new address.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The task.</returns>
+    Task UpdateEmailAsync(Guid accountId, string email, CancellationToken cancellationToken);
+
+    /// <summary>Marks the e-mail address of an account as verified.</summary>
+    /// <param name="accountId">The account id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The task.</returns>
+    Task SetEmailVerifiedAsync(Guid accountId, CancellationToken cancellationToken);
+
+    /// <summary>Stores a token (by its hash) for an account and purpose, replacing an older one of the same purpose.</summary>
+    /// <param name="accountId">The account id.</param>
+    /// <param name="purpose">The purpose.</param>
+    /// <param name="tokenHash">The SHA-256 hash of the token.</param>
+    /// <param name="expiresAt">When the token stops working.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The task.</returns>
+    Task SetTokenAsync(Guid accountId, TokenPurpose purpose, string tokenHash, DateTimeOffset expiresAt, CancellationToken cancellationToken);
+
+    /// <summary>Looks up the account of a valid (known, not expired) token without using it up.</summary>
+    /// <param name="purpose">The purpose.</param>
+    /// <param name="tokenHash">The SHA-256 hash of the token.</param>
+    /// <param name="now">The current time.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The account id, or <c>null</c>.</returns>
+    Task<Guid?> FindTokenAccountAsync(TokenPurpose purpose, string tokenHash, DateTimeOffset now, CancellationToken cancellationToken);
+
+    /// <summary>Uses up a valid token: atomically removes it and returns its account.</summary>
+    /// <param name="purpose">The purpose.</param>
+    /// <param name="tokenHash">The SHA-256 hash of the token.</param>
+    /// <param name="now">The current time.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The account id, or <c>null</c> if the token is unknown, used or expired.</returns>
+    Task<Guid?> ConsumeTokenAsync(TokenPurpose purpose, string tokenHash, DateTimeOffset now, CancellationToken cancellationToken);
+
+    /// <summary>Voids all open tokens of an account.</summary>
+    /// <param name="accountId">The account id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The task.</returns>
+    Task VoidTokensAsync(Guid accountId, CancellationToken cancellationToken);
+
+    /// <summary>Gets the ranking by player kills (characters without kills are left out).</summary>
+    /// <param name="limit">The maximum number of entries.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The ranking.</returns>
+    Task<IReadOnlyList<ValueRankEntry>> GetKillersRankingAsync(int limit, CancellationToken cancellationToken);
+
+    /// <summary>Gets the visible characters with the given names (the online ones).</summary>
+    /// <param name="names">The exact character names.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The characters, the highest level first.</returns>
+    Task<IReadOnlyList<OnlineCharacter>> GetCharactersByNamesAsync(IReadOnlyCollection<string> names, CancellationToken cancellationToken);
+
+    /// <summary>Gets the names of banned characters: banned character status, or an account which is banned.</summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The character names (never account names).</returns>
+    Task<IReadOnlyList<string>> GetBannedCharacterNamesAsync(CancellationToken cancellationToken);
+
+    /// <summary>Searches visible character names and guild names (contains, ignoring the case).</summary>
+    /// <param name="text">The text, without wildcards.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>At most 10 characters and 10 guilds.</returns>
+    Task<SearchResult> SearchAsync(string text, CancellationToken cancellationToken);
+
+    /// <summary>Gets the castle owner and the guilds registered for the next siege.</summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The state.</returns>
+    Task<CastleSiegeInfo> GetCastleSiegeAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -82,6 +172,10 @@ public interface IWebsiteStatusSource
     /// <summary>Gets the current status.</summary>
     /// <returns>The status.</returns>
     ServerStatus GetStatus();
+
+    /// <summary>Gets the names of all characters which are currently online.</summary>
+    /// <returns>The names.</returns>
+    ValueTask<IReadOnlyCollection<string>> GetOnlineCharacterNamesAsync();
 
     /// <summary>Tells whether a character is currently online.</summary>
     /// <param name="characterName">The character name.</param>

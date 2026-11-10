@@ -65,6 +65,11 @@ public class PostgresIntegrationTests
         Assert.That(PostgresWebsiteStore.LevelId, Is.EqualTo(Stats.Level.Id));
         Assert.That(PostgresWebsiteStore.MasterLevelId, Is.EqualTo(Stats.MasterLevel.Id));
         Assert.That(PostgresWebsiteStore.ResetsId, Is.EqualTo(Stats.Resets.Id));
+        Assert.That(PostgresWebsiteStore.StrengthId, Is.EqualTo(Stats.BaseStrength.Id));
+        Assert.That(PostgresWebsiteStore.AgilityId, Is.EqualTo(Stats.BaseAgility.Id));
+        Assert.That(PostgresWebsiteStore.VitalityId, Is.EqualTo(Stats.BaseVitality.Id));
+        Assert.That(PostgresWebsiteStore.EnergyId, Is.EqualTo(Stats.BaseEnergy.Id));
+        Assert.That(PostgresWebsiteStore.LeadershipId, Is.EqualTo(Stats.BaseLeadership.Id));
     }
 
     /// <summary>
@@ -348,6 +353,132 @@ public class PostgresIntegrationTests
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// The e-mail and reset flows against the real database: the tables of the API are created on first use, tokens are
+    /// stored hashed, single use, and the new password works in the game.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task AccountMailFlowsWorkOnPostgreSql()
+    {
+        await this.ExecuteAsync("DELETE FROM data.\"Account\" WHERE \"LoginName\" IN ('MailTst1', 'MailTst2')");
+        await this.ExecuteAsync("DROP SCHEMA IF EXISTS website CASCADE");
+        var ip = "203.0.113.50";
+
+        Assert.That((await this._api.SendAsync("POST", "/api/v1/accounts", new { loginName = "MailTst1", password = "game-pass-1", email = "mailtst1@example.com" }, clientIp: ip)).Status, Is.EqualTo(201));
+
+        // The first access creates the tables.
+        var page = (await this._api.SendAsync("GET", "/api/v1/accounts/MailTst1")).Json;
+        Assert.That(page.GetProperty("email").GetString(), Is.EqualTo("mailtst1@example.com"));
+        Assert.That(page.GetProperty("emailVerified").GetBoolean(), Is.False);
+        Assert.That(page.GetProperty("registeredAt").GetDateTime(), Is.GreaterThan(DateTime.UtcNow.AddMinutes(-2)).And.LessThan(DateTime.UtcNow.AddMinutes(2)));
+
+        var verification = await this._api.SendAsync("POST", "/api/v1/accounts/verify-email/request", new { loginName = "MailTst1" }, clientIp: ip);
+        Assert.That(verification.Status, Is.EqualTo(200), verification.Body);
+        var verifyToken = verification.Json.GetProperty("token").GetString()!;
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token WHERE token_hash = '" + verifyToken + "'"), Is.EqualTo(0L), "the token itself is not stored");
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(1L));
+
+        var confirmed = await this._api.SendAsync("POST", "/api/v1/accounts/verify-email/confirm", new { token = verifyToken }, clientIp: ip);
+        Assert.That(confirmed.Json.GetProperty("loginName").GetString(), Is.EqualTo("MailTst1"));
+        Assert.That((await this._api.SendAsync("GET", "/api/v1/accounts/MailTst1")).Json.GetProperty("emailVerified").GetBoolean(), Is.True);
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(0L), "single use");
+
+        // Changing the address un-verifies it.
+        var change = await this._api.SendAsync("POST", "/api/v1/accounts/email", new { loginName = "MailTst1", password = "game-pass-1", newEmail = "mailtst2@example.com" }, clientIp: ip);
+        Assert.That(change.Status, Is.EqualTo(204), change.Body);
+        var changedPage = (await this._api.SendAsync("GET", "/api/v1/accounts/MailTst1")).Json;
+        Assert.That(changedPage.GetProperty("email").GetString(), Is.EqualTo("mailtst2@example.com"));
+        Assert.That(changedPage.GetProperty("emailVerified").GetBoolean(), Is.False);
+
+        // Reset, then log in to the game with the new password.
+        var reset = await this._api.SendAsync("POST", "/api/v1/accounts/reset/request", new { email = "MAILTST2@example.com" }, clientIp: ip);
+        Assert.That(reset.Json.GetProperty("found").GetBoolean(), Is.True, reset.Body);
+        Assert.That(reset.Json.GetProperty("loginName").GetString(), Is.EqualTo("MailTst1"));
+        var resetToken = reset.Json.GetProperty("token").GetString()!;
+        var done = await this._api.SendAsync("POST", "/api/v1/accounts/reset/confirm", new { token = resetToken, newPassword = "game-pass-3" }, clientIp: ip);
+        Assert.That(done.Status, Is.EqualTo(204), done.Body);
+        Assert.That((await this._api.SendAsync("POST", "/api/v1/accounts/reset/confirm", new { token = resetToken, newPassword = "game-pass-4" }, clientIp: ip)).Error, Is.EqualTo("invalid_token"));
+
+        using var gameContext = await this.CreatePlayerContextAsync();
+        Assert.That(await gameContext.AuthenticateAsync("MailTst1", "game-pass-3"), Is.EqualTo(AccountState.Normal));
+        Assert.That(await gameContext.AuthenticateAsync("MailTst1", "game-pass-1"), Is.Null);
+
+        // Deleting the account removes its rows in the API tables (foreign key with cascade).
+        await this._api.SendAsync("POST", "/api/v1/accounts/reset/request", new { email = "mailtst2@example.com" }, clientIp: "203.0.113.51");
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(1L));
+        await this.ExecuteAsync("DELETE FROM data.\"Account\" WHERE \"LoginName\" = 'MailTst1'");
+        Assert.That(await this.ScalarAsync("SELECT count(*) FROM website.token"), Is.EqualTo(0L));
+    }
+
+    /// <summary>
+    /// Batch A against the real database: killers ranking, online list, bans, search, castle siege and the extended character list.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task BatchAQueriesWorkOnPostgreSql()
+    {
+        // The seeded test accounts have characters; give one of them kills and a banned neighbour.
+        await using var names = this._sql.CreateCommand("SELECT c.\"Name\" FROM data.\"Character\" c JOIN data.\"Account\" a ON a.\"Id\" = c.\"AccountId\" WHERE a.\"IsTemplate\" = false AND a.\"IsBot\" = false AND a.\"State\" = 0 AND c.\"CharacterStatus\" = 0 ORDER BY c.\"Name\" LIMIT 2");
+        var characterNames = new List<string>();
+        await using (var reader = await names.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                characterNames.Add(reader.GetString(0));
+            }
+        }
+
+        Assert.That(characterNames, Is.Not.Empty, "the seeded data has characters of normal accounts");
+        var hero = characterNames[0];
+        await this.ExecuteAsync($"UPDATE data.\"Character\" SET \"PlayerKillCount\" = 42, \"State\" = 4 WHERE \"Name\" = '{hero}'");
+
+        var killers = (await this._api.SendAsync("GET", "/api/v1/rankings/killers?limit=5")).Json;
+        Assert.That(killers[0].GetProperty("name").GetString(), Is.EqualTo(hero));
+        Assert.That(killers[0].GetProperty("value").GetInt32(), Is.EqualTo(42));
+        Assert.That(killers[0].GetProperty("rank").GetInt32(), Is.EqualTo(1));
+        Assert.That(killers[0].EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "rank", "name", "class", "value", "guild" }));
+
+        // /search: contains, ignoring the case; wildcards typed by the user do not match everything.
+        var found = (await this._api.SendAsync("GET", "/api/v1/search?q=" + hero[..2].ToUpperInvariant())).Json;
+        Assert.That(found.GetProperty("characters").EnumerateArray().Select(e => e.GetString()), Does.Contain(hero));
+        Assert.That((await this._api.SendAsync("GET", "/api/v1/search?q=%25%25")).Json.GetProperty("characters").GetArrayLength(), Is.EqualTo(0));
+        Assert.That((await this._api.SendAsync("GET", "/api/v1/search?q=a")).Error, Is.EqualTo("invalid_input"));
+
+        // /bans: character names of banned characters and of banned accounts, nothing else.
+        if (characterNames.Count > 1)
+        {
+            await this.ExecuteAsync($"UPDATE data.\"Character\" SET \"CharacterStatus\" = 1 WHERE \"Name\" = '{characterNames[1]}'");
+            var bans = (await this._api.SendAsync("GET", "/api/v1/bans")).Json;
+            var banned = bans.EnumerateArray().Select(e => e.GetProperty("name").GetString()).ToList();
+            Assert.That(banned, Does.Contain(characterNames[1]));
+            Assert.That(banned, Does.Not.Contain(hero));
+            Assert.That(bans[0].GetProperty("reason").ValueKind, Is.EqualTo(System.Text.Json.JsonValueKind.Null));
+            Assert.That((await this._api.SendAsync("GET", "/api/v1/rankings/killers")).Body, Does.Not.Contain(characterNames[1]).Or.Contain(hero));
+            await this.ExecuteAsync($"UPDATE data.\"Character\" SET \"CharacterStatus\" = 0 WHERE \"Name\" = '{characterNames[1]}'");
+        }
+
+        // /online uses the names of the running server (here: the fake status source is empty, so nothing).
+        Assert.That((await this._api.SendAsync("GET", "/api/v1/online")).Json.GetArrayLength(), Is.EqualTo(0));
+
+        // /castle-siege: the tables are read; a fresh database has no owner and no registrations.
+        var siege = (await this._api.SendAsync("GET", "/api/v1/castle-siege")).Json;
+        Assert.That(siege.GetProperty("owner").ValueKind, Is.EqualTo(System.Text.Json.JsonValueKind.Null));
+        Assert.That(siege.GetProperty("nextSiege").ValueKind, Is.EqualTo(System.Text.Json.JsonValueKind.Null));
+        Assert.That(siege.GetProperty("registered").GetArrayLength(), Is.EqualTo(0));
+
+        // Extended character list of an account.
+        await using var owner = this._sql.CreateCommand("SELECT a.\"LoginName\" FROM data.\"Account\" a JOIN data.\"Character\" c ON c.\"AccountId\" = a.\"Id\" WHERE c.\"Name\" = @n");
+        owner.Parameters.AddWithValue("n", hero);
+        var login = (string)(await owner.ExecuteScalarAsync())!;
+        var list = (await this._api.SendAsync("GET", "/api/v1/accounts/" + login + "/characters")).Json;
+        var item = list.EnumerateArray().First(e => e.GetProperty("name").GetString() == hero);
+        Assert.That(item.GetProperty("pk").GetInt32(), Is.EqualTo(42));
+        Assert.That(item.GetProperty("pkState").GetString(), Is.EqualTo("PlayerKillWarning"));
+        Assert.That(item.GetProperty("stats").GetProperty("str").GetInt32(), Is.GreaterThan(0), "base strength comes from the stat attributes");
+        Assert.That(item.GetProperty("points").GetInt32(), Is.GreaterThanOrEqualTo(0));
     }
 
     private async Task ExecuteAsync(string sql)

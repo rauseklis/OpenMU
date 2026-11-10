@@ -21,6 +21,9 @@ public static class WebsiteApiEndpoints
     private const int DefaultRankingLimit = 10;
     private const int MaximumRankingLimit = 100;
     private const int MaximumNameLength = 10;
+    private const int MaximumOnlineList = 200;
+    private const int MailTokensPerHour = 3;
+    private const int ResetRequestsPerHourPerClient = 5;
 
     /// <summary>
     /// Maps the endpoints below <c>/api/v1</c>.
@@ -32,12 +35,25 @@ public static class WebsiteApiEndpoints
         api.MapGet("/status", GetStatus);
         api.MapGet("/rankings/players", GetPlayerRanking);
         api.MapGet("/rankings/guilds", GetGuildRanking);
+        api.MapGet("/rankings/killers", GetKillersRankingAsync);
+        api.MapGet("/rankings/{kind}", GetUnsupportedRanking);
+        api.MapGet("/online", GetOnlineAsync);
+        api.MapGet("/bans", GetBansAsync);
+        api.MapGet("/search", SearchAsync);
+        api.MapGet("/castle-siege", GetCastleSiegeAsync);
+        api.MapGet("/events", GetEvents);
         api.MapGet("/characters/{name}", GetCharacterAsync);
         api.MapGet("/guilds/{name}", GetGuildAsync);
         api.MapPost("/accounts", RegisterAsync);
         api.MapPost("/auth/verify", VerifyAsync);
         api.MapPost("/accounts/password", ChangePasswordAsync);
         api.MapGet("/accounts/{loginName}/characters", GetAccountCharactersAsync);
+        api.MapGet("/accounts/{loginName}", GetAccountAsync);
+        api.MapPost("/accounts/email", ChangeEmailAsync);
+        api.MapPost("/accounts/verify-email/request", RequestEmailVerificationAsync);
+        api.MapPost("/accounts/verify-email/confirm", ConfirmEmailVerificationAsync);
+        api.MapPost("/accounts/reset/request", RequestPasswordResetAsync);
+        api.MapPost("/accounts/reset/confirm", ConfirmPasswordResetAsync);
     }
 
     private static IResult GetStatus(IWebsiteStatusSource status)
@@ -170,7 +186,7 @@ public static class WebsiteApiEndpoints
         }
     }
 
-    private static async Task<IResult> GetAccountCharactersAsync(string loginName, HttpContext context, IWebsiteStore store)
+    private static async Task<IResult> GetAccountCharactersAsync(string loginName, HttpContext context, IWebsiteStore store, IWebsiteStatusSource status)
     {
         var account = AccountRules.IsValidLoginName(loginName) ? await store.FindAccountAsync(loginName, context.RequestAborted).ConfigureAwait(false) : null;
         if (account is null || !account.CanLogIn)
@@ -178,8 +194,177 @@ public static class WebsiteApiEndpoints
             return NotFound();
         }
 
-        return Results.Ok(await store.GetAccountCharactersAsync(account.Id, context.RequestAborted).ConfigureAwait(false));
+        var characters = await store.GetAccountCharactersAsync(account.Id, context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(characters.Select(c => new
+        {
+            name = c.Name,
+            @class = c.Class,
+            level = c.Level,
+            resets = c.Resets,
+            masterLevel = c.MasterLevel,
+            stats = new { str = c.Stats.Str, agi = c.Stats.Agi, vit = c.Stats.Vit, ene = c.Stats.Ene, cmd = c.Stats.Cmd },
+            points = c.Points,
+            hidden = false,
+            online = status.IsCharacterOnline(c.Name),
+            pk = c.PkKills,
+            pkState = c.PkState,
+        }));
     }
+
+    private static async Task<IResult> GetKillersRankingAsync(HttpContext context, IWebsiteStore store)
+    {
+        var ranking = await store.GetKillersRankingAsync(ParseLimit(context), context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(ranking.Select(e => new { rank = e.Rank, name = e.Name, @class = e.Class, value = e.Value, guild = e.Guild }));
+    }
+
+    // Rankings of things the database does not count; the site hides them.
+    private static IResult GetUnsupportedRanking(string kind)
+    {
+        return kind is "online-time" or "gens" or "bc" or "ds" or "cc" or "duel" ? NotSupported() : NotFound();
+    }
+
+    private static IResult GetEvents() => NotSupported();
+
+    private static async Task<IResult> GetOnlineAsync(HttpContext context, IWebsiteStore store, IWebsiteStatusSource status)
+    {
+        var names = (await status.GetOnlineCharacterNamesAsync().ConfigureAwait(false)).Take(MaximumOnlineList * 4).ToList();
+        var characters = await store.GetCharactersByNamesAsync(names, context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(characters.Take(MaximumOnlineList).Select(c => new { name = c.Name, @class = c.Class, level = c.Level, guild = c.Guild }));
+    }
+
+    // Accounts store no ban reason and no end date, so those are always null.
+    private static async Task<IResult> GetBansAsync(HttpContext context, IWebsiteStore store)
+    {
+        var names = await store.GetBannedCharacterNamesAsync(context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(names.Select(n => new { name = n, reason = (string?)null, until = (DateTimeOffset?)null }));
+    }
+
+    private static async Task<IResult> SearchAsync(HttpContext context, IWebsiteStore store)
+    {
+        string text = context.Request.Query["q"].ToString().Trim();
+        if (text.Length is < 2 or > 20 || text.Any(char.IsControl))
+        {
+            return Error(StatusCodes.Status422UnprocessableEntity, "invalid_input", "The search text needs 2 to 20 characters.");
+        }
+
+        var result = await store.SearchAsync(text, context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(new { characters = result.Characters, guilds = result.Guilds });
+    }
+
+    // nextSiege is always null: the schedule is a configuration of the game server, not stored with the castle data.
+    private static async Task<IResult> GetCastleSiegeAsync(HttpContext context, IWebsiteStore store)
+    {
+        var info = await store.GetCastleSiegeAsync(context.RequestAborted).ConfigureAwait(false);
+        return Results.Ok(new
+        {
+            owner = info.Owner is { } owner ? new { guild = owner.Guild, master = owner.Master } : null,
+            nextSiege = (DateTimeOffset?)null,
+            registered = info.Registered.Select(g => new { guild = g.Guild, master = g.Master }),
+        });
+    }
+
+    private static IResult NotSupported() => Error(StatusCodes.Status404NotFound, "not_supported", "This is not supported by the server.");
+
+    private static async Task<IResult> GetAccountAsync(string loginName, HttpContext context, WebsiteAccountService accounts)
+    {
+        if (await accounts.GetAccountAsync(loginName, context.RequestAborted).ConfigureAwait(false) is not { } found)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            loginName = found.Account.LoginName,
+            email = found.Details.Email,
+            emailVerified = found.Details.EmailVerified,
+            registeredAt = found.Details.RegisteredAt,
+        });
+    }
+
+    private static async Task<IResult> ChangeEmailAsync(HttpContext context, WebsiteAccountService accounts, RateLimiter limiter, WebsiteApiOptions options)
+    {
+        var request = await ReadJsonAsync<EmailRequest>(context).ConfigureAwait(false);
+        var limited = CheckAccountAttemptLimit(request?.LoginName, context, limiter, options, out var accountKey, out var clientKey);
+        if (limited is not null)
+        {
+            return limited;
+        }
+
+        var outcome = await accounts.ChangeEmailAsync(request?.LoginName, request?.Password, request?.NewEmail, context.RequestAborted).ConfigureAwait(false);
+        switch (outcome)
+        {
+            case EmailChangeOutcome.Changed:
+                limiter.Reset(accountKey);
+                limiter.Reset(clientKey);
+                return Results.NoContent();
+            case EmailChangeOutcome.InvalidEmail:
+                return Error(StatusCodes.Status422UnprocessableEntity, "invalid_email", "The e-mail address is not valid.");
+            case EmailChangeOutcome.EmailTaken:
+                return Error(StatusCodes.Status409Conflict, "email_taken", "This e-mail address is already used.");
+            default:
+                return InvalidCredentials();
+        }
+    }
+
+    private static async Task<IResult> RequestEmailVerificationAsync(HttpContext context, WebsiteAccountService accounts, RateLimiter limiter)
+    {
+        var request = await ReadJsonAsync<LoginNameRequest>(context).ConfigureAwait(false);
+
+        // Counted before the lookup, so unknown names count, too.
+        if (!limiter.TryHit("verify-mail:" + (request?.LoginName ?? string.Empty).ToLowerInvariant(), MailTokensPerHour, TimeSpan.FromHours(1)))
+        {
+            return Error(StatusCodes.Status429TooManyRequests, "rate_limited", "Too many requests, try again later.");
+        }
+
+        var (outcome, email, token) = await accounts.RequestEmailVerificationAsync(request?.LoginName, context.RequestAborted).ConfigureAwait(false);
+        return outcome switch
+        {
+            VerificationRequestOutcome.Issued => Results.Ok(new { email, token }),
+            VerificationRequestOutcome.AlreadyVerified => Error(StatusCodes.Status409Conflict, "already_verified", "The e-mail address is verified already."),
+            VerificationRequestOutcome.NoEmail => Error(StatusCodes.Status422UnprocessableEntity, "invalid_email", "The account has no e-mail address."),
+            _ => NotFound(),
+        };
+    }
+
+    private static async Task<IResult> ConfirmEmailVerificationAsync(HttpContext context, WebsiteAccountService accounts)
+    {
+        var request = await ReadJsonAsync<TokenRequest>(context).ConfigureAwait(false);
+        var loginName = await accounts.ConfirmEmailVerificationAsync(request?.Token, context.RequestAborted).ConfigureAwait(false);
+        return loginName is null ? InvalidToken() : Results.Ok(new { loginName });
+    }
+
+    private static async Task<IResult> RequestPasswordResetAsync(HttpContext context, WebsiteAccountService accounts, RateLimiter limiter)
+    {
+        var request = await ReadJsonAsync<ResetRequest>(context).ConfigureAwait(false);
+
+        // Counted before the lookup, so unknown addresses count, too.
+        if (!limiter.TryHit("reset-ip:" + WebsiteApiHost.GetClientAddress(context), ResetRequestsPerHourPerClient, TimeSpan.FromHours(1))
+            || !limiter.TryHit("reset-mail:" + (request?.Email ?? string.Empty).ToLowerInvariant(), MailTokensPerHour, TimeSpan.FromHours(1)))
+        {
+            return Error(StatusCodes.Status429TooManyRequests, "rate_limited", "Too many requests, try again later.");
+        }
+
+        if (await accounts.RequestPasswordResetAsync(request?.Email, context.RequestAborted).ConfigureAwait(false) is not { } reset)
+        {
+            return Results.Ok(new { found = false });
+        }
+
+        return Results.Ok(new { found = true, loginName = reset.LoginName, email = reset.Email, token = reset.Token });
+    }
+
+    private static async Task<IResult> ConfirmPasswordResetAsync(HttpContext context, WebsiteAccountService accounts)
+    {
+        var request = await ReadJsonAsync<ResetConfirmRequest>(context).ConfigureAwait(false);
+        var outcome = await accounts.ConfirmPasswordResetAsync(request?.Token, request?.NewPassword, context.RequestAborted).ConfigureAwait(false);
+        return outcome switch
+        {
+            PasswordResetOutcome.Changed => Results.NoContent(),
+            PasswordResetOutcome.InvalidPassword => Error(StatusCodes.Status422UnprocessableEntity, "invalid_password", $"The new password needs {AccountRules.MinimumPasswordLength} to {AccountRules.MaximumPasswordLength} printable characters without spaces."),
+            _ => InvalidToken(),
+        };
+    }
+
+    private static IResult InvalidToken() => Error(StatusCodes.Status422UnprocessableEntity, "invalid_token", "The token is unknown, used or expired.");
 
     /// <summary>
     /// Counts an attempt to log in. Limited per account name (so one account cannot be guessed at) and per client address.
@@ -237,6 +422,16 @@ public static class WebsiteApiEndpoints
     private sealed record RegisterRequest(string? LoginName, string? Password, string? Email);
 
     private sealed record VerifyRequest(string? LoginName, string? Password);
+
+    private sealed record EmailRequest(string? LoginName, string? Password, string? NewEmail);
+
+    private sealed record LoginNameRequest(string? LoginName);
+
+    private sealed record TokenRequest(string? Token);
+
+    private sealed record ResetRequest(string? Email);
+
+    private sealed record ResetConfirmRequest(string? Token, string? NewPassword);
 
     private sealed record PasswordRequest(string? LoginName, string? CurrentPassword, string? NewPassword);
 }
