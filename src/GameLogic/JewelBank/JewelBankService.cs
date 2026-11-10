@@ -79,7 +79,7 @@ public sealed class JewelBankService
     /// Determines whether the player's state permits moving items to or from the bank by hand.
     /// </summary>
     /// <param name="player">The player.</param>
-    /// <returns><c>true</c> when the player stands in a safe zone and does nothing which conflicts.</returns>
+    /// <returns><c>true</c> when the player does nothing which conflicts. The bank works everywhere, not only in safe zones.</returns>
     public static bool IsStateAllowed(Player player)
     {
         var state = new AuctionMutationState(
@@ -93,7 +93,18 @@ public sealed class JewelBankService
             IsDueling: player.DuelRoom is not null,
             IsInMiniGame: player.CurrentMiniGame is not null,
             IsInGuildWar: player.GuildWarContext?.State is GuildWarState.Requested or GuildWarState.Started);
-        return AuctionMutationEligibility.IsAllowed(state);
+        return IsStateAllowed(state);
+    }
+
+    /// <summary>
+    /// Determines whether a gameplay state permits moving items to or from the bank by hand. Unlike the Auction House, the bank also works outside
+    /// safe zones (in the fields, where the jewels drop); only states which conflict with moving items block it.
+    /// </summary>
+    /// <param name="state">The gameplay state snapshot.</param>
+    /// <returns><c>true</c> when no state conflicts with the operation.</returns>
+    public static bool IsStateAllowed(AuctionMutationState state)
+    {
+        return AuctionMutationEligibility.IsAllowed(state with { IsInSafeZone = true });
     }
 
     /// <summary>
