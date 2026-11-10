@@ -46,12 +46,55 @@ public sealed record GuildMemberEntry(string Name, int Level);
 /// <param name="Logo">The raw logo (32 bytes, two 4-bit pixels per byte), or <c>null</c>.</param>
 public sealed record GuildProfile(string Name, int Score, string? Master, IReadOnlyList<GuildMemberEntry> Members, byte[]? Logo);
 
+/// <summary>The base stats of a character.</summary>
+/// <param name="Str">Strength.</param>
+/// <param name="Agi">Agility.</param>
+/// <param name="Vit">Vitality.</param>
+/// <param name="Ene">Energy.</param>
+/// <param name="Cmd">Command (leadership).</param>
+public sealed record CharacterStats(int Str, int Agi, int Vit, int Ene, int Cmd);
+
 /// <summary>A character of the account's own list.</summary>
 /// <param name="Name">The character name.</param>
 /// <param name="Class">The name of the character class.</param>
 /// <param name="Level">The level.</param>
 /// <param name="Resets">The number of resets.</param>
-public sealed record AccountCharacter(string Name, string Class, int Level, int Resets);
+/// <param name="MasterLevel">The master level.</param>
+/// <param name="Stats">The base stats.</param>
+/// <param name="Points">The unspent level-up points.</param>
+/// <param name="PkKills">The number of killed players.</param>
+/// <param name="PkState">The player killer state (Normal, PlayerKillWarning, ...).</param>
+public sealed record AccountCharacter(string Name, string Class, int Level, int Resets, int MasterLevel, CharacterStats Stats, int Points, int PkKills, string PkState);
+
+/// <summary>An entry of a ranking by a single value (for example the player kills).</summary>
+/// <param name="Rank">The rank, starting with 1.</param>
+/// <param name="Name">The character name.</param>
+/// <param name="Class">The name of the character class.</param>
+/// <param name="Value">The value which orders the ranking.</param>
+/// <param name="Guild">The guild name, or <c>null</c>.</param>
+public sealed record ValueRankEntry(int Rank, string Name, string Class, long Value, string? Guild);
+
+/// <summary>A character which is online.</summary>
+/// <param name="Name">The character name.</param>
+/// <param name="Class">The name of the character class.</param>
+/// <param name="Level">The level.</param>
+/// <param name="Guild">The guild name, or <c>null</c>.</param>
+public sealed record OnlineCharacter(string Name, string Class, int Level, string? Guild);
+
+/// <summary>The result of a search.</summary>
+/// <param name="Characters">Matching visible character names.</param>
+/// <param name="Guilds">Matching guild names.</param>
+public sealed record SearchResult(IReadOnlyList<string> Characters, IReadOnlyList<string> Guilds);
+
+/// <summary>A guild with its master, for the castle siege.</summary>
+/// <param name="Guild">The guild name.</param>
+/// <param name="Master">The guild master, or <c>null</c>.</param>
+public sealed record SiegeGuild(string Guild, string? Master);
+
+/// <summary>The castle siege state which the database knows.</summary>
+/// <param name="Owner">The guild which owns the castle, or <c>null</c>.</param>
+/// <param name="Registered">The guilds registered for the next siege.</param>
+public sealed record CastleSiegeInfo(SiegeGuild? Owner, IReadOnlyList<SiegeGuild> Registered);
 
 /// <summary>What the API needs to know to check a login. Never leaves the server.</summary>
 /// <param name="Id">The account id.</param>

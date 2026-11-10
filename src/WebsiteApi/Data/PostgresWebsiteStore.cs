@@ -22,6 +22,11 @@ public sealed class PostgresWebsiteStore : IWebsiteStore, IAsyncDisposable
     internal static readonly Guid LevelId = new("560931AD-0901-4342-B7F4-FD2E2FCC0563");
     internal static readonly Guid MasterLevelId = new("70CD8C10-391A-4C51-9AA4-A854600E3A9F");
     internal static readonly Guid ResetsId = new("89A891A7-F9F9-4AB5-AF36-12056E53A5F7");
+    internal static readonly Guid StrengthId = new("123282FE-FEAD-448E-AD2C-BAECE939B4B1");
+    internal static readonly Guid AgilityId = new("1AE9C014-E3CD-4703-BD05-1B65F5F94CEB");
+    internal static readonly Guid VitalityId = new("6CA5C3A6-B109-45A5-87A7-FDCB107B4982");
+    internal static readonly Guid EnergyId = new("01B0EF28-F7A0-46B5-97BA-2B624A54CD75");
+    internal static readonly Guid LeadershipId = new("6AF2C9DF-3AE4-4721-8462-9A8EC7F56FE4");
 
     // Public lists show normal players only: no GMs (account or character), no banned, template or bot accounts.
     private const string VisibleCharacter = "a.\"IsTemplate\" = false AND a.\"IsBot\" = false AND a.\"State\" = 0 AND c.\"CharacterStatus\" = 0";
@@ -217,26 +222,184 @@ public sealed class PostgresWebsiteStore : IWebsiteStore, IAsyncDisposable
     public async Task<IReadOnlyList<AccountCharacter>> GetAccountCharactersAsync(Guid accountId, CancellationToken cancellationToken)
     {
         const string Sql = @"
-            SELECT c.""Name"", cc.""Name"", COALESCE(lv.""Value"", 1)::int, COALESCE(rs.""Value"", 0)::int
+            SELECT c.""Name"", cc.""Name"", COALESCE(lv.""Value"", 1)::int, COALESCE(rs.""Value"", 0)::int, COALESCE(ml.""Value"", 0)::int,
+                COALESCE(st.""Value"", 0)::int, COALESCE(ag.""Value"", 0)::int, COALESCE(vi.""Value"", 0)::int,
+                COALESCE(en.""Value"", 0)::int, COALESCE(ld.""Value"", 0)::int,
+                c.""LevelUpPoints"", c.""PlayerKillCount"", c.""State""
             FROM data.""Character"" c
             JOIN config.""CharacterClass"" cc ON cc.""Id"" = c.""CharacterClassId""
             LEFT JOIN data.""StatAttribute"" lv ON lv.""CharacterId"" = c.""Id"" AND lv.""DefinitionId"" = @level
             LEFT JOIN data.""StatAttribute"" rs ON rs.""CharacterId"" = c.""Id"" AND rs.""DefinitionId"" = @resets
+            LEFT JOIN data.""StatAttribute"" ml ON ml.""CharacterId"" = c.""Id"" AND ml.""DefinitionId"" = @master
+            LEFT JOIN data.""StatAttribute"" st ON st.""CharacterId"" = c.""Id"" AND st.""DefinitionId"" = @str
+            LEFT JOIN data.""StatAttribute"" ag ON ag.""CharacterId"" = c.""Id"" AND ag.""DefinitionId"" = @agi
+            LEFT JOIN data.""StatAttribute"" vi ON vi.""CharacterId"" = c.""Id"" AND vi.""DefinitionId"" = @vit
+            LEFT JOIN data.""StatAttribute"" en ON en.""CharacterId"" = c.""Id"" AND en.""DefinitionId"" = @ene
+            LEFT JOIN data.""StatAttribute"" ld ON ld.""CharacterId"" = c.""Id"" AND ld.""DefinitionId"" = @cmd
             WHERE c.""AccountId"" = @account
             ORDER BY c.""CharacterSlot""";
 
         var result = new List<AccountCharacter>();
         await using var command = this.DataSource.CreateCommand(Sql);
         command.Parameters.AddWithValue("account", accountId);
-        command.Parameters.AddWithValue("level", LevelId);
-        command.Parameters.AddWithValue("resets", ResetsId);
+        AddStatParameters(command);
+        command.Parameters.AddWithValue("str", StrengthId);
+        command.Parameters.AddWithValue("agi", AgilityId);
+        command.Parameters.AddWithValue("vit", VitalityId);
+        command.Parameters.AddWithValue("ene", EnergyId);
+        command.Parameters.AddWithValue("cmd", LeadershipId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            result.Add(new AccountCharacter(reader.GetString(0), reader.GetString(1), reader.GetInt32(2), reader.GetInt32(3)));
+            var stats = new CharacterStats(reader.GetInt32(5), reader.GetInt32(6), reader.GetInt32(7), reader.GetInt32(8), reader.GetInt32(9));
+            result.Add(new AccountCharacter(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetInt32(2),
+                reader.GetInt32(3),
+                reader.GetInt32(4),
+                stats,
+                reader.GetInt32(10),
+                reader.GetInt32(11),
+                ((HeroState)reader.GetInt32(12)).ToString()));
         }
 
         return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ValueRankEntry>> GetKillersRankingAsync(int limit, CancellationToken cancellationToken)
+    {
+        var sql = "SELECT c.\"Name\", cc.\"Name\" AS class, c.\"PlayerKillCount\" AS kills, g.\"Name\" AS guild" + PlayerJoins + $@"
+            WHERE {VisibleCharacter} AND c.""PlayerKillCount"" > 0
+            ORDER BY kills DESC, c.""Name""
+            LIMIT @limit";
+
+        var result = new List<ValueRankEntry>();
+        await using var command = this.DataSource.CreateCommand(sql);
+        AddStatParameters(command);
+        command.Parameters.AddWithValue("limit", limit);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            result.Add(new ValueRankEntry(result.Count + 1, reader.GetString(0), reader.GetString(1), reader.GetInt32(2), await GetNullableStringAsync(reader, 3, cancellationToken).ConfigureAwait(false)));
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<OnlineCharacter>> GetCharactersByNamesAsync(IReadOnlyCollection<string> names, CancellationToken cancellationToken)
+    {
+        var result = new List<OnlineCharacter>();
+        if (names.Count == 0)
+        {
+            return result;
+        }
+
+        var sql = "SELECT" + PlayerColumns + PlayerJoins + $@"
+            WHERE {VisibleCharacter} AND c.""Name"" = ANY(@names)
+            ORDER BY level DESC, c.""Name""";
+        await using var command = this.DataSource.CreateCommand(sql);
+        AddStatParameters(command);
+        command.Parameters.AddWithValue("names", names.ToArray());
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            result.Add(new OnlineCharacter(reader.GetString(0), reader.GetString(1), reader.GetInt32(2), await GetNullableStringAsync(reader, 5, cancellationToken).ConfigureAwait(false)));
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> GetBannedCharacterNamesAsync(CancellationToken cancellationToken)
+    {
+        var sql = $@"
+            SELECT c.""Name"" FROM data.""Character"" c
+            JOIN data.""Account"" a ON a.""Id"" = c.""AccountId""
+            WHERE a.""IsTemplate"" = false AND a.""IsBot"" = false
+              AND (c.""CharacterStatus"" = {(int)CharacterStatus.Banned} OR a.""State"" IN ({(int)AccountState.Banned}, {(int)AccountState.TemporarilyBanned}))
+            ORDER BY c.""Name""
+            LIMIT 500";
+        var result = new List<string>();
+        await using var command = this.DataSource.CreateCommand(sql);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            result.Add(reader.GetString(0));
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<SearchResult> SearchAsync(string text, CancellationToken cancellationToken)
+    {
+        // Wildcards of the text itself are escaped, so the user can only search for what they typed.
+        var pattern = "%" + text.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) + "%";
+        var characters = new List<string>();
+        var sql = $@"
+            SELECT c.""Name"" FROM data.""Character"" c JOIN data.""Account"" a ON a.""Id"" = c.""AccountId""
+            WHERE {VisibleCharacter} AND c.""Name"" ILIKE @pattern ESCAPE '\'
+            ORDER BY (lower(c.""Name"") = lower(@text)) DESC, c.""Name"" LIMIT 10";
+        await using (var command = this.DataSource.CreateCommand(sql))
+        {
+            command.Parameters.AddWithValue("pattern", pattern);
+            command.Parameters.AddWithValue("text", text);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                characters.Add(reader.GetString(0));
+            }
+        }
+
+        var guilds = new List<string>();
+        await using (var command = this.DataSource.CreateCommand(@"SELECT ""Name"" FROM guild.""Guild"" WHERE ""Name"" ILIKE @pattern ESCAPE '\' ORDER BY (lower(""Name"") = lower(@text)) DESC, ""Name"" LIMIT 10"))
+        {
+            command.Parameters.AddWithValue("pattern", pattern);
+            command.Parameters.AddWithValue("text", text);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                guilds.Add(reader.GetString(0));
+            }
+        }
+
+        return new SearchResult(characters, guilds);
+    }
+
+    /// <inheritdoc />
+    public async Task<CastleSiegeInfo> GetCastleSiegeAsync(CancellationToken cancellationToken)
+    {
+        var master = $@"(SELECT mc.""Name"" FROM guild.""GuildMember"" mm
+                    JOIN data.""Character"" mc ON mc.""Id"" = mm.""Id""
+                    JOIN data.""Account"" ma ON ma.""Id"" = mc.""AccountId""
+                    WHERE mm.""GuildId"" = g.""Id"" AND mm.""Status"" = {(int)GuildPosition.GuildMaster}
+                      AND ma.""IsTemplate"" = false AND ma.""IsBot"" = false AND ma.""State"" = 0 AND mc.""CharacterStatus"" = 0
+                    LIMIT 1)";
+
+        SiegeGuild? owner = null;
+        await using (var command = this.DataSource.CreateCommand($@"SELECT g.""Name"", {master} FROM data.""CastleSiegeData"" d JOIN guild.""Guild"" g ON g.""Id"" = d.""OwnerGuildId"" LIMIT 1"))
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                owner = new SiegeGuild(reader.GetString(0), await GetNullableStringAsync(reader, 1, cancellationToken).ConfigureAwait(false));
+            }
+        }
+
+        var registered = new List<SiegeGuild>();
+        await using (var command = this.DataSource.CreateCommand($@"SELECT g.""Name"", {master} FROM data.""CastleSiegeGuildRegistration"" r JOIN guild.""Guild"" g ON g.""Id"" = r.""GuildId"" ORDER BY r.""RegistrationOrder"", g.""Name"""))
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                registered.Add(new SiegeGuild(reader.GetString(0), await GetNullableStringAsync(reader, 1, cancellationToken).ConfigureAwait(false)));
+            }
+        }
+
+        return new CastleSiegeInfo(owner, registered);
     }
 
     /// <inheritdoc />

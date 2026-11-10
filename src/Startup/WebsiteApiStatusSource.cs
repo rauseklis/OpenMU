@@ -33,6 +33,24 @@ internal sealed class WebsiteApiStatusSource : IWebsiteStatusSource
     }
 
     /// <inheritdoc />
+    public async ValueTask<IReadOnlyCollection<string>> GetOnlineCharacterNamesAsync()
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var server in this._gameServers.Values.Where(s => s.ServerState == ServerState.Started).OfType<MUnique.OpenMU.GameServer.GameServer>())
+        {
+            foreach (var player in await server.Context.GetPlayersAsync().ConfigureAwait(false))
+            {
+                if (player.SelectedCharacter?.Name is { } name)
+                {
+                    names.Add(name);
+                }
+            }
+        }
+
+        return names;
+    }
+
+    /// <inheritdoc />
     public bool IsCharacterOnline(string characterName)
     {
         return this._gameServers.Values
