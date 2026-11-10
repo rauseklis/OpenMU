@@ -236,6 +236,16 @@ public class HttpApiTests
         Assert.That(status.GetProperty("maxPlayers").GetInt32(), Is.EqualTo(400));
         Assert.That(status.GetProperty("uptimeSince").GetDateTimeOffset(), Is.EqualTo(new DateTimeOffset(2026, 11, 1, 8, 0, 0, TimeSpan.Zero)));
 
+        // The single game servers: id, configured name, state and counts.
+        var realms = status.GetProperty("realms");
+        Assert.That(realms.GetArrayLength(), Is.EqualTo(2));
+        Assert.That(realms[0].EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "id", "name", "online", "players", "maxPlayers" }));
+        Assert.That(realms[0].GetProperty("name").GetString(), Is.EqualTo("Emberion 50x"));
+        Assert.That(realms[0].GetProperty("online").GetBoolean(), Is.True);
+        Assert.That(realms[0].GetProperty("players").GetInt32(), Is.EqualTo(9));
+        Assert.That(realms[1].GetProperty("online").GetBoolean(), Is.False);
+        Assert.That(realms[1].GetProperty("players").GetInt32(), Is.EqualTo(0));
+
         var players = (await this._api.SendAsync("GET", "/api/v1/rankings/players?limit=50")).Json;
         var first = players[0];
         Assert.That(first.EnumerateObject().Select(p => p.Name), Is.EquivalentTo(new[] { "rank", "name", "class", "level", "resets", "masterLevel", "guild" }));

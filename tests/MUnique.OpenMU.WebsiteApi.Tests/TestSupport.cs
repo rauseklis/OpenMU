@@ -159,7 +159,12 @@ public sealed class FakeStatus : IWebsiteStatusSource
     public ValueTask<IReadOnlyCollection<string>> GetOnlineCharacterNamesAsync() => new(this.Online.ToList());
 
     /// <inheritdoc />
-    public ServerStatus GetStatus() => new(true, 12, 400, new DateTimeOffset(2026, 11, 1, 8, 0, 0, TimeSpan.Zero));
+    public ServerStatus GetStatus() => new(
+        true,
+        12,
+        400,
+        new DateTimeOffset(2026, 11, 1, 8, 0, 0, TimeSpan.Zero),
+        [new RealmStatus(0, "Emberion 50x", true, 9, 200), new RealmStatus(1, "Emberion 5x", false, 0, 200)]);
 
     /// <inheritdoc />
     public bool IsCharacterOnline(string characterName) => this.Online.Contains(characterName);

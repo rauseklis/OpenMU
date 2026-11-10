@@ -125,12 +125,22 @@ public enum CreateAccountOutcome
     EmailTaken,
 }
 
+/// <summary>The status of one game server (a "realm" of the website).</summary>
+/// <param name="Id">The server id (the <c>ServerID</c> of the game server definition).</param>
+/// <param name="Name">The description of the game server as configured.</param>
+/// <param name="Online">Whether this server is started.</param>
+/// <param name="Players">The number of connected players.</param>
+/// <param name="MaxPlayers">The number of players this server can hold.</param>
+public sealed record RealmStatus(int Id, string Name, bool Online, int Players, int MaxPlayers);
+
 /// <summary>The status of the game servers.</summary>
 /// <param name="Online">Whether at least one game server is started.</param>
 /// <param name="Players">The number of connected players.</param>
 /// <param name="MaxPlayers">The number of players the started servers can hold.</param>
 /// <param name="UptimeSince">When the server process started.</param>
-public sealed record ServerStatus(bool Online, int Players, int MaxPlayers, DateTimeOffset UptimeSince);
+/// <param name="Realms">The single game servers.</param>
+public sealed record ServerStatus(bool Online, int Players, int MaxPlayers, DateTimeOffset UptimeSince, IReadOnlyList<RealmStatus> Realms);
+
 
 /// <summary>The e-mail data of an account, for the account page of the website.</summary>
 /// <param name="Email">The e-mail address (may be empty for old accounts).</param>

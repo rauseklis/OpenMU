@@ -59,7 +59,14 @@ public static class WebsiteApiEndpoints
     private static IResult GetStatus(IWebsiteStatusSource status)
     {
         var s = status.GetStatus();
-        return Results.Ok(new { online = s.Online, players = s.Players, maxPlayers = s.MaxPlayers, uptimeSince = s.UptimeSince });
+        return Results.Ok(new
+        {
+            online = s.Online,
+            players = s.Players,
+            maxPlayers = s.MaxPlayers,
+            uptimeSince = s.UptimeSince,
+            realms = s.Realms.Select(r => new { id = r.Id, name = r.Name, online = r.Online, players = r.Players, maxPlayers = r.MaxPlayers }),
+        });
     }
 
     private static async Task<IResult> GetPlayerRanking(HttpContext context, IWebsiteStore store)

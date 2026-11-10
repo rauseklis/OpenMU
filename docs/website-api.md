@@ -67,7 +67,7 @@ the empty string. Optional `X-Client-Ip`: the address of the visitor, used for p
 
 | Request | Answer |
 |---|---|
-| `GET /status` | `{ online, players, maxPlayers, uptimeSince }` (started game servers of this process) |
+| `GET /status` | `{ online, players, maxPlayers, uptimeSince, realms:[{ id, name, online, players, maxPlayers }] }` (started game servers of this process; `realms` has one entry per game server: `id` = its server id, `name` = its configured description, e.g. `Emberion 50x`) |
 | `GET /rankings/players?limit=10..100` | `[{ rank, name, class, level, resets, masterLevel, guild }]`, ordered by resets, master level, level, experience |
 | `GET /rankings/guilds?limit=` | `[{ rank, name, score, members, master }]`, ordered by score |
 | `GET /characters/{name}` | `{ name, class, level, resets, masterLevel, guild, online, lastSeen }`; `lastSeen` is always `null` (the database stores no such time) |

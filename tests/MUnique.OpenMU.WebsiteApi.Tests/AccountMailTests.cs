@@ -22,6 +22,7 @@ public class AccountMailTests
     private FakeStore _store = null!;
     private ApiServer _api = null!;
     private int _requestCounter;
+    private long _lastTimestamp = long.MaxValue;
 
     /// <summary>Starts a fresh API for every test.</summary>
     /// <returns>The task.</returns>
@@ -31,6 +32,7 @@ public class AccountMailTests
         this._store = new FakeStore();
         this._api = await ApiServer.StartAsync(this._store);
         this._requestCounter = 0;
+        this._lastTimestamp = long.MaxValue;
     }
 
     /// <summary>Stops the API.</summary>
@@ -288,7 +290,10 @@ public class AccountMailTests
     {
         // Every request gets another timestamp: an identical signature within the window counts as a replay.
         var bytes = JsonSerializer.SerializeToUtf8Bytes(body);
-        var timestamp = (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - this._requestCounter++).ToString();
+        // Strictly decreasing, so two requests never share a timestamp even when the clock ticks between them.
+        this._lastTimestamp = Math.Min(DateTimeOffset.UtcNow.ToUnixTimeSeconds(), this._lastTimestamp - 1);
+        this._requestCounter++;
+        var timestamp = this._lastTimestamp.ToString();
         return await this._api.SendRawAsync("POST", path, bytes, ApiServer.KeyId, timestamp, RequestSigner.Sign(ApiServer.Secret, "POST", path, timestamp, bytes), clientIp);
     }
 }
