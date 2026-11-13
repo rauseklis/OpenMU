@@ -12,7 +12,7 @@ using MUnique.OpenMU.Persistence.Initialization.Skills;
 
 /// <summary>
 /// Defines the eleven Arena Warrior monsters (1100-1110), ported with the exact values of the
-/// "Aetherion S6E19" Monster.txt. They spawn on one spot of the Arena map, one of each.
+/// "Aetherion S6E19" Monster.txt. They spawn in the cages of the Arena map.
 /// </summary>
 internal static class ArenaWarriorMonsters
 {
@@ -45,21 +45,27 @@ internal static class ArenaWarriorMonsters
         new(1110, "Dragon Knight Warrior", 140, 237000, 1741, 2317, 785, 2240, 1440, 3, 0, 2, 9, 700, 2500, 10, 2, 20, 20, 150, 2, null),
     ];
 
-    // One of each Arena Warrior, all on the same spot of the Arena map (decided by the owner for testing):
-    // monster, X1, X2, Y1, Y2, quantity, direction (0 = random).
+    // Eight monsters in each cage of the Arena (the walled cells of the map), spawning in a small cluster: the area is a
+    // 4x4 patch placed at a different spot of its cage, and every monster picks a random tile of it. The cages nearest the
+    // entrance in the south hold the weaker monsters, the north ones the stronger: 6 weak, 5 medium and 4 hard cages.
+    // Monsters repeat. Monster, X1, X2, Y1, Y2, quantity, direction (0 = random).
     private static readonly ArenaSpawn[] Spawns =
     [
-        new(1100, 62, 62, 150, 150, 1, 0),
-        new(1101, 62, 62, 150, 150, 1, 0),
-        new(1102, 62, 62, 150, 150, 1, 0),
-        new(1103, 62, 62, 150, 150, 1, 0),
-        new(1104, 62, 62, 150, 150, 1, 0),
-        new(1105, 62, 62, 150, 150, 1, 0),
-        new(1106, 62, 62, 150, 150, 1, 0),
-        new(1107, 62, 62, 150, 150, 1, 0),
-        new(1108, 62, 62, 150, 150, 1, 0),
-        new(1109, 62, 62, 150, 150, 1, 0),
-        new(1110, 62, 62, 150, 150, 1, 0),
+        new(1100, 9, 12, 88, 91, 8, 0),
+        new(1107, 27, 30, 90, 93, 8, 0),
+        new(1101, 48, 51, 93, 96, 8, 0),
+        new(1102, 10, 13, 75, 78, 8, 0),
+        new(1108, 29, 32, 73, 76, 8, 0),
+        new(1103, 46, 49, 71, 74, 8, 0),
+        new(1106, 10, 13, 55, 58, 8, 0),
+        new(1104, 26, 29, 53, 56, 8, 0),
+        new(1105, 48, 51, 54, 57, 8, 0),
+        new(1109, 9, 12, 37, 40, 8, 0),
+        new(1110, 26, 29, 39, 42, 8, 0),
+        new(1105, 45, 48, 37, 40, 8, 0),
+        new(1100, 66, 69, 83, 86, 8, 0),
+        new(1107, 65, 68, 73, 76, 8, 0),
+        new(1103, 67, 70, 65, 67, 8, 0),
     ];
 
     /// <summary>
