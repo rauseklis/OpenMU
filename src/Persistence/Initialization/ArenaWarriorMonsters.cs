@@ -27,20 +27,22 @@ internal static class ArenaWarriorMonsters
 
     // Columns of the source file: Level, MaxLife, DamageMin, DamageMax, Defense, AttackRate, DefenseRate,
     // MoveRange, AttackType, AttackRange, ViewRange, MoveSpeed, AttackSpeed, RegenTime, Attribute,
-    // Resi(Poison), Resi(Ice), Resi(Light), Resis(Fire). MaxMana, MagicDefense and MonsterSkill are 0 for all of them.
+    // Resi(Poison), Resi(Ice), Resi(Light), Resis(Fire), then the attack skill the owner chose: Guardian Elf Triple Shot (the
+    // crossbow skill), Sphinx Wizzard Meteorite, Soul Wizzard Lightning; the knights have none (plain melee).
+    // MaxMana and MagicDefense are 0 for all of them.
     private static readonly ArenaWarrior[] Warriors =
     [
-        new(1100, "Scale Warrior", 82, 19000, 305, 350, 230, 1095, 187, 3, 0, 2, 5, 400, 1400, 10, 2, 9, 9, 11, 9),
-        new(1101, "Brass Warrior", 96, 41000, 560, 610, 425, 1473, 326, 3, 0, 2, 5, 400, 1400, 10, 2, 9, 9, 12, 9),
-        new(1102, "Plate Warrior", 92, 34500, 489, 540, 360, 1182, 287, 3, 0, 2, 5, 400, 1400, 10, 2, 12, 12, 13, 1),
-        new(1103, "Red Dragon Warrior", 105, 48500, 640, 675, 515, 1191, 358, 4, 0, 2, 7, 450, 1500, 10, 2, 21, 21, 21, 2),
-        new(1104, "Black Dragon Knight", 117, 87500, 830, 1085, 865, 1642, 555, 4, 0, 2, 7, 450, 1700, 10, 2, 22, 22, 22, 2),
-        new(1105, "Phoenix Knight", 123, 184370, 915, 990, 543, 1557, 755, 6, 0, 2, 10, 600, 2000, 10, 2, 50, 50, 50, 5),
-        new(1106, "Guardian Elf", 108, 72000, 685, 735, 545, 1120, 315, 3, 0, 5, 5, 400, 1400, 10, 2, 14, 14, 16, 1),
-        new(1107, "Sphinx Wizzard", 86, 29000, 425, 480, 305, 1134, 248, 3, 11, 5, 5, 400, 1400, 10, 2, 9, 11, 12, 9),
-        new(1108, "Soul Wizzard", 100, 50000, 650, 700, 495, 1966, 372, 4, 3, 5, 7, 450, 1700, 10, 2, 22, 22, 22, 2),
-        new(1109, "Great Dragon Warrior", 128, 203000, 1046, 1181, 630, 1575, 750, 3, 0, 2, 7, 500, 1500, 10, 2, 25, 25, 25, 2),
-        new(1110, "Dragon Knight Warrior", 140, 237000, 1741, 2317, 785, 2240, 1440, 3, 0, 2, 9, 700, 2500, 10, 2, 20, 20, 150, 2),
+        new(1100, "Scale Warrior", 82, 19000, 305, 350, 230, 1095, 187, 3, 0, 2, 5, 400, 1400, 10, 2, 9, 9, 11, 9, null),
+        new(1101, "Brass Warrior", 96, 41000, 560, 610, 425, 1473, 326, 3, 0, 2, 5, 400, 1400, 10, 2, 9, 9, 12, 9, null),
+        new(1102, "Plate Warrior", 92, 34500, 489, 540, 360, 1182, 287, 3, 0, 2, 5, 400, 1400, 10, 2, 12, 12, 13, 1, null),
+        new(1103, "Red Dragon Warrior", 105, 48500, 640, 675, 515, 1191, 358, 4, 0, 2, 7, 450, 1500, 10, 2, 21, 21, 21, 2, null),
+        new(1104, "Black Dragon Knight", 117, 87500, 830, 1085, 865, 1642, 555, 4, 0, 2, 7, 450, 1700, 10, 2, 22, 22, 22, 2, null),
+        new(1105, "Phoenix Knight", 123, 184370, 915, 990, 543, 1557, 755, 6, 0, 2, 10, 600, 2000, 10, 2, 50, 50, 50, 5, null),
+        new(1106, "Guardian Elf", 108, 72000, 685, 735, 545, 1120, 315, 3, 0, 5, 5, 400, 1400, 10, 2, 14, 14, 16, 1, SkillNumber.TripleShot),
+        new(1107, "Sphinx Wizzard", 86, 29000, 425, 480, 305, 1134, 248, 3, 11, 5, 5, 400, 1400, 10, 2, 9, 11, 12, 9, SkillNumber.Meteorite),
+        new(1108, "Soul Wizzard", 100, 50000, 650, 700, 495, 1966, 372, 4, 3, 5, 7, 450, 1700, 10, 2, 22, 22, 22, 2, SkillNumber.Lightning),
+        new(1109, "Great Dragon Warrior", 128, 203000, 1046, 1181, 630, 1575, 750, 3, 0, 2, 7, 500, 1500, 10, 2, 25, 25, 25, 2, null),
+        new(1110, "Dragon Knight Warrior", 140, 237000, 1741, 2317, 785, 2240, 1440, 3, 0, 2, 9, 700, 2500, 10, 2, 20, 20, 150, 2, null),
     ];
 
     // One of each Arena Warrior, all on the same spot of the Arena map (decided by the owner for testing):
@@ -134,10 +136,10 @@ internal static class ArenaWarriorMonsters
         monster.RespawnDelay = TimeSpan.FromSeconds(warrior.RegenTime);
         monster.Attribute = warrior.Attribute;
         monster.NumberOfMaximumItemDrops = 1;
-        if (warrior.AttackType != 0)
+        if (warrior.Skill is { } skillNumber)
         {
-            // Ranged attackers (attack types 3 and 11): same generic monster skill as the White Wizard.
-            monster.AttackSkill = gameConfiguration.Skills.FirstOrDefault(s => s.Number == (short)SkillNumber.MonsterSkill);
+            // The hit itself is the normal monster attack; the skill only decides what is shown (magic, meteor, shot).
+            monster.AttackSkill = gameConfiguration.Skills.FirstOrDefault(s => s.Number == (short)skillNumber);
         }
 
         var attributes = new Dictionary<AttributeDefinition, float>
@@ -180,5 +182,6 @@ internal static class ArenaWarriorMonsters
         int PoisonResistance,
         int IceResistance,
         int LightningResistance,
-        int FireResistance);
+        int FireResistance,
+        SkillNumber? Skill);
 }
