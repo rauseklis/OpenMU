@@ -40,7 +40,7 @@ public class AddArenaWarriorMonstersUpdatePlugIn : UpdatePlugInBase
     public override string Description => PlugInDescription;
 
     /// <inheritdoc />
-    public override bool IsMandatory => false;
+    public override bool IsMandatory => true;
 
     /// <inheritdoc />
     public override DateTime CreatedAt => new(2026, 11, 13, 0, 0, 0, DateTimeKind.Utc);
