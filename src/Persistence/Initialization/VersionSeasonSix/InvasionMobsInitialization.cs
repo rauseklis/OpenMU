@@ -30,6 +30,7 @@ internal class InvasionMobsInitialization : Version095d.InvasionMobsInitializati
     {
         base.Initialize();
         this.InitializeWhiteWizardInvasionMobs();
+        ArenaWarriorMonsters.AddMissing(this.Context, this.GameConfiguration);
     }
 
     /// <inheritdoc />

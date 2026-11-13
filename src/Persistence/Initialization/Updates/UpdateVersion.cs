@@ -773,4 +773,9 @@ public enum UpdateVersion
     /// Removes jewels, boxes and other valuables from every merchant store.
     /// </summary>
     RemoveShopValuables = 165,
+
+    /// <summary>
+    /// Adds the Arena Warrior monsters 1100-1110 (definitions only).
+    /// </summary>
+    AddArenaWarriorMonsters = 166,
 }
