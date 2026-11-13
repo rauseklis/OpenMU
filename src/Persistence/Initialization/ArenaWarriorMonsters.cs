@@ -12,7 +12,7 @@ using MUnique.OpenMU.Persistence.Initialization.Skills;
 
 /// <summary>
 /// Defines the eleven Arena Warrior monsters (1100-1110), ported with the exact values of the
-/// "Aetherion S6E19" Monster.txt. The spawn spots on the Arena map come from the old server.
+/// "Aetherion S6E19" Monster.txt. They spawn on one spot of the Arena map, one of each.
 /// </summary>
 internal static class ArenaWarriorMonsters
 {
@@ -43,35 +43,21 @@ internal static class ArenaWarriorMonsters
         new(1110, "Dragon Knight Warrior", 140, 237000, 1741, 2317, 785, 2240, 1440, 3, 0, 2, 9, 700, 2500, 10, 2, 20, 20, 150, 2),
     ];
 
-    // Spawn spots copied from the old server's "006 - Arena.txt": monster, X1, X2, Y1, Y2, quantity, direction (0 = random).
+    // One of each Arena Warrior, all on the same spot of the Arena map (decided by the owner for testing):
+    // monster, X1, X2, Y1, Y2, quantity, direction (0 = random).
     private static readonly ArenaSpawn[] Spawns =
     [
-        new(1100, 52, 52, 73, 73, 7, 0),
-        new(1100, 66, 66, 65, 65, 7, 0),
-        new(1102, 26, 33, 53, 61, 7, 0),
-        new(1102, 63, 69, 30, 34, 4, 0),
-        new(1107, 63, 69, 30, 34, 3, 0),
-        new(1101, 66, 66, 85, 85, 7, 4),
-        new(1101, 51, 51, 97, 97, 7, 4),
-        new(1103, 45, 51, 36, 42, 7, 0),
-        new(1103, 8, 14, 35, 42, 7, 0),
-        new(1104, 26, 33, 71, 78, 7, 0),
-        new(1104, 8, 14, 53, 60, 7, 0),
-        new(1105, 26, 33, 89, 95, 7, 0),
-        new(1105, 102, 102, 115, 115, 7, 0),
-        new(1106, 26, 33, 35, 42, 7, 0),
-        new(1107, 44, 51, 53, 60, 7, 0),
-        new(1109, 9, 9, 60, 71, 7, 0),
-        new(1108, 7, 57, 65, 65, 1, 3),
-        new(1108, 20, 20, 83, 83, 1, 3),
-        new(1108, 38, 38, 83, 85, 1, 3),
-        new(1108, 38, 38, 65, 65, 1, 3),
-        new(1108, 57, 57, 75, 75, 1, 3),
-        new(1108, 90, 91, 59, 60, 1, 3),
-        new(1108, 40, 45, 6, 10, 1, 3),
-        new(1110, 8, 15, 88, 95, 7, 3),
-        new(1109, 9, 9, 7, 7, 7, 3),
-        new(1110, 10, 10, 115, 115, 7, 3),
+        new(1100, 52, 52, 73, 73, 1, 0),
+        new(1101, 52, 52, 73, 73, 1, 0),
+        new(1102, 52, 52, 73, 73, 1, 0),
+        new(1103, 52, 52, 73, 73, 1, 0),
+        new(1104, 52, 52, 73, 73, 1, 0),
+        new(1105, 52, 52, 73, 73, 1, 0),
+        new(1106, 52, 52, 73, 73, 1, 0),
+        new(1107, 52, 52, 73, 73, 1, 0),
+        new(1108, 52, 52, 73, 73, 1, 0),
+        new(1109, 52, 52, 73, 73, 1, 0),
+        new(1110, 52, 52, 73, 73, 1, 0),
     ];
 
     /// <summary>
