@@ -59,6 +59,7 @@ internal class Arena : Initialization.BaseMapInitializer
         battleZone.LeftGoal = this.CreateRectangle(2, 61, 139, 63, 140);
         battleZone.RightGoal = this.CreateRectangle(3, 61, 181, 63, 182);
         mapDefinition.BattleZone = battleZone;
+        ArenaWarriorMonsters.AddSpawns(this.Context, mapDefinition, this.GameConfiguration);
     }
 
     /// <inheritdoc/>
