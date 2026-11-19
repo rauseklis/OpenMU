@@ -144,7 +144,7 @@ public static class AntiCheatState
             }
 
             ConnectionsExpired.Add(1);
-            logger.LogInformation("[AC] rule=conn.{Reason} mode={Mode} server={Server} ip={Ip} action={Action}", reason, mode, connection.ServerId, connection.Address, mode == AntiCheatMode.Enforce ? "close" : "allow");
+            logger.LogInformation("[AC] rule=conn.expired reason={Reason} mode={Mode} server={Server} ip={Ip} action={Action}", reason, mode, connection.ServerId, connection.Address, mode == AntiCheatMode.Enforce ? "close" : "allow");
             if (mode == AntiCheatMode.Enforce && connection.Close is { } close)
             {
                 try
