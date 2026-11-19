@@ -7,6 +7,7 @@ namespace MUnique.OpenMU.GameServer.RemoteView;
 using System.Buffers;
 using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.GameLogic;
+using MUnique.OpenMU.GameLogic.AntiCheat;
 using MUnique.OpenMU.GameLogic.Views;
 using MUnique.OpenMU.GameServer.MessageHandler;
 using MUnique.OpenMU.Network;
@@ -16,7 +17,7 @@ using MUnique.OpenMU.PlugIns;
 /// <summary>
 /// A player that is playing through a remote connection.
 /// </summary>
-public class RemotePlayer : Player, IClientVersionProvider, IHasIpAddress
+public class RemotePlayer : Player, IClientVersionProvider, IHasIpAddress, IConnectionTracked
 {
     private readonly byte[] _packetBuffer = new byte[0xFF];
 
@@ -49,6 +50,40 @@ public class RemotePlayer : Player, IClientVersionProvider, IHasIpAddress
 
     /// <inheritdoc />
     public string? IpAddress => this._ipAddress;
+
+    /// <inheritdoc />
+    public TrackedConnection? TrackedConnection { get; set; }
+
+    /// <summary>
+    /// Gets the time of the last received packet.
+    /// </summary>
+    public DateTime LastPacketUtc { get; private set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets the time the last heartbeat (ping) arrived, or <see cref="DateTime.MinValue"/>.
+    /// </summary>
+    public DateTime LastPingUtc { get; private set; }
+
+    /// <summary>
+    /// Gets the tick count the client sent with its last heartbeat.
+    /// </summary>
+    public uint LastPingClientTick { get; private set; }
+
+    /// <summary>
+    /// Gets the number of heartbeats received.
+    /// </summary>
+    public int PingCount { get; private set; }
+
+    /// <summary>
+    /// Records a heartbeat.
+    /// </summary>
+    /// <param name="clientTick">The tick count of the client.</param>
+    public void RecordPing(uint clientTick)
+    {
+        this.LastPingUtc = DateTime.UtcNow;
+        this.LastPingClientTick = clientTick;
+        this.PingCount++;
+    }
 
     /// <summary>
     /// Gets the game server context.
@@ -157,6 +192,9 @@ public class RemotePlayer : Player, IClientVersionProvider, IHasIpAddress
     /// <param name="sequence">The packet.</param>
     private async ValueTask PacketReceivedAsync(ReadOnlySequence<byte> sequence)
     {
+        this.LastPacketUtc = DateTime.UtcNow;
+        this.TrackedConnection?.Touch(this.LastPacketUtc);
+
         using var loggingScope = this.Logger.BeginScope(
             ("GameServer", this.GameServerContext.Id),
             ("Connection", this.Connection!),

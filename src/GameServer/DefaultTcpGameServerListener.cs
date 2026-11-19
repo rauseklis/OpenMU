@@ -9,6 +9,7 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.GameLogic;
+using MUnique.OpenMU.GameLogic.AntiCheat;
 using MUnique.OpenMU.GameServer.RemoteView;
 using MUnique.OpenMU.Interfaces;
 using MUnique.OpenMU.Network;
@@ -75,6 +76,8 @@ public class DefaultTcpGameServerListener : IGameServerListener
         {
             this.Log(l => l.LogWarning("No network encryption plugin for version {clientVersion} available. It falls back to default encryption.", this.ClientVersion));
         }
+
+        AntiCheatState.EnsureSweeperStarted(() => AntiCheatState.GetConfiguration(this._gameContext), this._logger);
 
         var port = this._endPoint.NetworkPort;
         this._logger.LogInformation("Starting Server Listener, port {port}", port);
@@ -174,7 +177,39 @@ public class DefaultTcpGameServerListener : IGameServerListener
         var remoteEndPoint = connection.EndPoint as IPEndPoint;
         this.Log(l => l.LogDebug($"Game Client connected, Address {remoteEndPoint}"));
 
+        var antiCheatConfiguration = AntiCheatState.GetConfiguration(this._gameContext);
+        TrackedConnection? tracked = null;
+        if (antiCheatConfiguration.ConnectionMode != AntiCheatMode.Off && remoteEndPoint is not null)
+        {
+            var address = ConnectionTracker.Normalize(remoteEndPoint.Address);
+            var decision = AntiCheatState.Connections.TryAccept(address, this._gameContext.Id, antiCheatConfiguration, out tracked);
+            if (decision != ConnectionDecision.Allow)
+            {
+                AntiCheatState.ConnectionsRefused.Add(1);
+                var refuse = antiCheatConfiguration.ConnectionMode == AntiCheatMode.Enforce;
+                this.Log(l => l.LogInformation("[AC] rule=conn.limit mode={Mode} server={Server} ip={Ip} decision={Decision} action={Action}", antiCheatConfiguration.ConnectionMode, this._gameContext.Id, address, decision, refuse ? "refuse" : "allow"));
+                if (refuse)
+                {
+                    AntiCheatState.Connections.Release(tracked);
+                    await connection.DisconnectAsync().ConfigureAwait(false);
+                    return;
+                }
+            }
+        }
+
         var remotePlayer = new RemotePlayer(this._gameContext, connection, this.ClientVersion);
+        if (tracked is not null)
+        {
+            remotePlayer.TrackedConnection = tracked;
+            var trackedConnection = tracked;
+            tracked.Close = () => connection.DisconnectAsync();
+            connection.Disconnected += () =>
+            {
+                AntiCheatState.Connections.Release(trackedConnection);
+                return ValueTask.CompletedTask;
+            };
+        }
+
         connection.Disconnected += async () =>
         {
             await remotePlayer.DisconnectAsync().ConfigureAwait(false);

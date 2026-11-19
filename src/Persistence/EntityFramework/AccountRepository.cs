@@ -17,6 +17,8 @@ using MUnique.OpenMU.Persistence.EntityFramework.Model;
 /// </summary>
 internal class AccountRepository : CachingGenericRepository<Account>
 {
+    private static readonly string UnknownAccountHash = BCrypt.HashPassword(Guid.NewGuid().ToString());
+
     /// <summary>
     /// Initializes a new instance of the <see cref="AccountRepository" /> class.
     /// </summary>
@@ -122,7 +124,14 @@ internal class AccountRepository : CachingGenericRepository<Account>
             .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
-        if (accountInfo is not null && BCrypt.Verify(password, accountInfo.PasswordHash))
+        if (accountInfo is null)
+        {
+            // Unknown names take as long as wrong passwords, so that response times do not reveal which accounts exist.
+            _ = BCrypt.Verify(password, UnknownAccountHash);
+            return null;
+        }
+
+        if (BCrypt.Verify(password, accountInfo.PasswordHash))
         {
             return accountInfo.State;
         }

@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameLogic.PlayerActions;
 
 using System.Threading;
+using MUnique.OpenMU.GameLogic.AntiCheat;
 using MUnique.OpenMU.GameLogic.Views.Login;
 
 /// <summary>
@@ -57,13 +58,64 @@ public class LoginAction
 
     private async ValueTask<AccountState?> AuthenticateAsync(Player player, string username, string password)
     {
+        var config = AntiCheatState.GetConfiguration(player.GameContext);
+        var address = (player as IHasIpAddress)?.IpAddress ?? "unknown";
+        var accountHash = AntiCheatState.HashForLog(username);
+        var throttleActive = config.LoginMode != AntiCheatMode.Off;
+        var enforce = config.LoginMode == AntiCheatMode.Enforce;
+        var slotAcquired = false;
+
         try
         {
+            if (throttleActive)
+            {
+                var decision = AntiCheatState.Login.Check(username, address);
+                if (decision != LoginThrottleDecision.Allow)
+                {
+                    AntiCheatState.LoginBlocked.Add(1);
+                    player.Logger.LogInformation("[AC] rule=login.block mode={Mode} ip={Ip} acct={Acct} decision={Decision} action={Action}", config.LoginMode, address, accountHash, decision, enforce ? "block" : "allow");
+                    if (enforce)
+                    {
+                        await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.ConnectionError)).ConfigureAwait(false);
+                        return null;
+                    }
+                }
+
+                // In shadow mode we never wait; we only note that the check would have had to queue.
+                var wait = enforce ? config : new AntiCheatConfiguration { LoginMaxConcurrentPasswordChecks = config.LoginMaxConcurrentPasswordChecks, LoginPasswordCheckQueueTimeoutMs = 1 };
+                slotAcquired = await AntiCheatState.TryEnterPasswordCheckAsync(wait).ConfigureAwait(false);
+                if (!slotAcquired)
+                {
+                    AntiCheatState.PasswordCheckTimeouts.Add(1);
+                    player.Logger.LogInformation("[AC] rule=login.queue mode={Mode} ip={Ip} action={Action}", config.LoginMode, address, enforce ? "busy" : "allow");
+                    if (enforce)
+                    {
+                        await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.ConnectionError)).ConfigureAwait(false);
+                        return null;
+                    }
+                }
+            }
+
             var state = await player.PersistenceContext.AuthenticateAsync(username, password).ConfigureAwait(false);
             if (state is null)
             {
                 player.Logger.LogInformation("Account not found or invalid password, username: [{Username}].", username);
+                if (throttleActive)
+                {
+                    AntiCheatState.LoginFailures.Add(1);
+                    var delay = AntiCheatState.Login.RecordFailure(username, address, config);
+                    player.Logger.LogInformation("[AC] rule=login.fail mode={Mode} ip={Ip} acct={Acct} delayMs={Delay}", config.LoginMode, address, accountHash, enforce ? delay : 0);
+                    if (enforce && delay > 0)
+                    {
+                        await Task.Delay(delay).ConfigureAwait(false);
+                    }
+                }
+
                 await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.InvalidPassword)).ConfigureAwait(false);
+            }
+            else if (throttleActive)
+            {
+                AntiCheatState.Login.RecordSuccess(username, address);
             }
 
             return state;
@@ -73,6 +125,13 @@ public class LoginAction
             player.Logger.LogError(ex, "Login Failed.");
             await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.ConnectionError)).ConfigureAwait(false);
             return null;
+        }
+        finally
+        {
+            if (slotAcquired)
+            {
+                AntiCheatState.ExitPasswordCheck();
+            }
         }
     }
 
@@ -213,5 +272,9 @@ public class LoginAction
         }
 
         await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.Ok)).ConfigureAwait(false);
+        if ((player as IConnectionTracked)?.TrackedConnection is { } trackedConnection)
+        {
+            AntiCheatState.Connections.MarkLoggedIn(trackedConnection);
+        }
     }
 }
