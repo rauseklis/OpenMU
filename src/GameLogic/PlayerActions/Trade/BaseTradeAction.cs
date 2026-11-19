@@ -45,9 +45,15 @@ public class BaseTradeAction
                 return;
             }
 
-            trader.TradingMoney = 0;
             if (trader.BackupInventory != null)
             {
+                // The offered money was already taken from the character's balance, so it has to be given back.
+                // The backup only exists while a trade is open, which prevents a refund after a finished trade.
+                if (trader.TradingMoney > 0)
+                {
+                    trader.Money += trader.TradingMoney;
+                }
+
                 trader.Inventory!.Clear();
                 trader.BackupInventory.RestoreItemStates();
                 foreach (var item in trader.BackupInventory.Items)
@@ -73,9 +79,10 @@ public class BaseTradeAction
                     }
                 }
 
-                trader.Inventory.ItemStorage.Money = trader.BackupInventory.Money;
                 trader.BackupInventory = null;
             }
+
+            trader.TradingMoney = 0;
         }
 
         this.ResetTradeState(trader);
