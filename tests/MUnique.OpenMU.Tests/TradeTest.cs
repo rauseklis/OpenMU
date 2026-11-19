@@ -139,6 +139,64 @@ public class TradeTest
     }
 
     /// <summary>
+    /// Tests that the offered money is returned when a trade is cancelled.
+    /// </summary>
+    [Test]
+    public async ValueTask TradeCancelRestoresOfferedMoneyAsync()
+    {
+        var trader1 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var trader2 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        trader1.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        trader2.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        trader1.Money = 1000;
+        trader2.Money = 500;
+        await new TradeRequestAction().RequestTradeAsync(trader1, trader2).ConfigureAwait(false);
+        await new TradeAcceptAction().HandleTradeAcceptAsync(trader2, true).ConfigureAwait(false);
+
+        var moneyAction = new TradeMoneyAction();
+        await moneyAction.TradeMoneyAsync(trader1, 300).ConfigureAwait(false);
+        await moneyAction.TradeMoneyAsync(trader1, 700).ConfigureAwait(false);
+        await moneyAction.TradeMoneyAsync(trader2, 200).ConfigureAwait(false);
+        Assert.That(trader1.Money, Is.EqualTo(300));
+        Assert.That(trader2.Money, Is.EqualTo(300));
+
+        await new TradeCancelAction().CancelTradeAsync(trader1).ConfigureAwait(false);
+
+        Assert.That(trader1.Money, Is.EqualTo(1000));
+        Assert.That(trader2.Money, Is.EqualTo(500));
+        Assert.That(trader1.TradingMoney, Is.EqualTo(0));
+        Assert.That(trader2.TradingMoney, Is.EqualTo(0));
+    }
+
+    /// <summary>
+    /// Tests that a finished trade pays the money out exactly once.
+    /// </summary>
+    [Test]
+    public async ValueTask TradeFinishPaysMoneyOnceAsync()
+    {
+        var trader1 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var trader2 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        trader1.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        trader2.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        trader1.Money = 1000;
+        trader2.Money = 500;
+        await new TradeRequestAction().RequestTradeAsync(trader1, trader2).ConfigureAwait(false);
+        await new TradeAcceptAction().HandleTradeAcceptAsync(trader2, true).ConfigureAwait(false);
+        await new TradeMoneyAction().TradeMoneyAsync(trader1, 300).ConfigureAwait(false);
+
+        var tradeButtonHandler = new TradeButtonAction();
+        await tradeButtonHandler.TradeButtonChangedAsync(trader1, TradeButtonState.Checked).ConfigureAwait(false);
+        await tradeButtonHandler.TradeButtonChangedAsync(trader2, TradeButtonState.Checked).ConfigureAwait(false);
+        Assert.That(trader1.Money, Is.EqualTo(700));
+        Assert.That(trader2.Money, Is.EqualTo(800));
+
+        // A late cancel on a finished trade must not hand the money out again.
+        await new TradeCancelAction().CancelTradeAsync(trader1).ConfigureAwait(false);
+        Assert.That(trader1.Money, Is.EqualTo(700));
+        Assert.That(trader2.Money, Is.EqualTo(800));
+    }
+
+    /// <summary>
     /// Tests a trade of items, when it failes due to missing inventory space.
     /// </summary>
     [Test]
