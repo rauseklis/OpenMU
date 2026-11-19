@@ -68,6 +68,15 @@ public class QuestCompletionAction
             return;
         }
 
+        // A money reward which doesn't fit into the inventory would get lost, so the quest stays open until there is room.
+        var moneyReward = activeQuest.Rewards.Where(r => r.RewardType == QuestRewardType.Money).Sum(r => (long)r.Value);
+        if (moneyReward > 0
+            && (long)player.Money + moneyReward > player.GameContext.Configuration.MaximumInventoryMoney)
+        {
+            player.Logger.LogDebug("Failed, the money reward doesn't fit into the inventory.");
+            return;
+        }
+
         questState!.LastFinishedQuest = activeQuest;
         foreach (var requiredItem in activeQuest.RequiredItems)
         {

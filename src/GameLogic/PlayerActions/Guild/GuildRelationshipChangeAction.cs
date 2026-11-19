@@ -1,4 +1,4 @@
-// <copyright file="GuildRelationshipChangeAction.cs" company="MUnique">
+﻿// <copyright file="GuildRelationshipChangeAction.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -135,6 +135,14 @@ public class GuildRelationshipChangeAction
             }
 
             targetGuildId = await serverContext.GuildServer.GetGuildIdByNameAsync(targetGuildName!).ConfigureAwait(false);
+
+            // Only guilds of the own alliance can be removed.
+            var allianceGuilds = await serverContext.GuildServer.GetAllianceGuildsAsync(sourceGuildId).ConfigureAwait(false);
+            if (!allianceGuilds.Any(entry => entry.Id == targetGuildId))
+            {
+                await player.InvokeViewPlugInAsync<IGuildRelationshipChangeResultPlugIn>(p => p.ShowRemoveResultAsync(false)).ConfigureAwait(false);
+                return;
+            }
         }
 
         var removeSuccess = await serverContext.GuildServer.RemoveAllianceAsync(targetGuildId).ConfigureAwait(false);
