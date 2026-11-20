@@ -778,4 +778,9 @@ public enum UpdateVersion
     /// Adds the Arena Warrior monsters 1100-1110 (definitions only).
     /// </summary>
     AddArenaWarriorMonsters = 166,
+
+    /// <summary>
+    /// Adds the Invisible set (Helm, Armor, Pants, Gloves and Boots number 74).
+    /// </summary>
+    AddInvisibleSet = 167,
 }

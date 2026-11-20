@@ -760,6 +760,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Added the Arena Warrior monsters and their Arena spawns.");
         }
 
+        if (await InvisibleSetInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Added the Invisible set.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
