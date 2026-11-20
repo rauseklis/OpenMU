@@ -1256,6 +1256,11 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     internal void TrackSettlement(Combat.CombatEvent settlement) => this._persistence.TrackSettlement(settlement);
 
     /// <summary>
+    /// Gets the number of progress saves of this player which succeeded.
+    /// </summary>
+    internal int SavesCompleted => this._persistence.SavesCompleted;
+
+    /// <summary>
     /// Runs the given operation while holding this player's persistence lock, so that context
     /// mutations and progress saves for the player never run concurrently.
     /// See <see cref="PlayerPersistence"/> for the rationale and the lock ordering invariant.

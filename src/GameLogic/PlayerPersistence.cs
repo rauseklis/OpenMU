@@ -39,6 +39,8 @@ internal sealed class PlayerPersistence
 
     private readonly ConcurrentQueue<CombatEvent> _pendingSettlements = new();
 
+    private int _savesCompleted;
+
     /// <summary>
     /// Tracks, per asynchronous flow, whether <see cref="_lock"/> is already held, so the
     /// lock can be re-entered (Nito's <see cref="AsyncLock"/> is not reentrant). It is an instance
@@ -55,6 +57,11 @@ internal sealed class PlayerPersistence
     {
         this._player = player;
     }
+
+    /// <summary>
+    /// Gets the number of progress saves which succeeded.
+    /// </summary>
+    public int SavesCompleted => Volatile.Read(ref this._savesCompleted);
 
     /// <summary>
     /// Saves the progress of the player.
@@ -75,6 +82,7 @@ internal sealed class PlayerPersistence
             cancellationToken).ConfigureAwait(false);
         if (saved)
         {
+            Interlocked.Increment(ref this._savesCompleted);
             this.ReportCommitted(pending);
         }
 

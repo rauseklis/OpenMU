@@ -17,6 +17,31 @@ public class BuyRequestAction
     private readonly CloseStoreAction _closeStoreAction = new();
 
     /// <summary>
+    /// Saves both players right after a sale. The item is stored in an own step while the zen only changed in
+    /// memory; without this save, a stop of the server shortly after could keep the item moved but not the payment.
+    /// A failing save is logged only; the next regular save retries.
+    /// </summary>
+    /// <param name="buyer">The buyer.</param>
+    /// <param name="seller">The seller.</param>
+    private static async ValueTask SaveAfterSaleAsync(Player buyer, Player seller)
+    {
+        foreach (var player in new[] { buyer, seller })
+        {
+            try
+            {
+                if (!await player.SaveProgressAsync().ConfigureAwait(false))
+                {
+                    player.Logger.LogWarning("Saving {Player} after a sale in a personal store did not succeed; the next regular save will retry.", player);
+                }
+            }
+            catch (Exception ex)
+            {
+                player.Logger.LogError(ex, "Saving {Player} after a sale in a personal store failed; the next regular save will retry.", player);
+            }
+        }
+    }
+
+    /// <summary>
     /// Buys the item from another player shop.
     /// </summary>
     /// <param name="player">The player.</param>
@@ -101,6 +126,23 @@ public class BuyRequestAction
                 return;
             }
 
+            // Everything which would make adding the item to the inventory fail is checked again here, under the
+            // lock and before any zen moves: the free space was only checked before the lock, and an item whose
+            // rental ran out can not be added to an inventory at all.
+            if (item.IsRentalExpired())
+            {
+                await player.InvokeViewPlugInAsync<IPlayerShopBuyRequestResultPlugIn>(p => p.ShowResultAsync(requestedPlayer, ItemBuyResult.ItemBlock, null)).ConfigureAwait(false);
+                return;
+            }
+
+            freeslot = player.Inventory?.CheckInvSpace(item);
+            if (freeslot is null)
+            {
+                await player.InvokeViewPlugInAsync<IPlayerShopBuyRequestResultPlugIn>(p => p.ShowResultAsync(requestedPlayer, ItemBuyResult.MoneyOverflowOrNotEnoughSpace, null)).ConfigureAwait(false);
+                await player.ShowLocalizedBlueMessageAsync(nameof(PlayerMessage.InventoryNotEnoughSpace)).ConfigureAwait(false);
+                return;
+            }
+
             player.Logger.LogDebug("BuyRequest, Item Price: {0}", itemPrice);
             if (player.TryRemoveMoney(itemPrice))
             {
@@ -114,7 +156,23 @@ public class BuyRequestAction
                     await requestedPlayer.InvokeViewPlugInAsync<IItemRemovedPlugIn>(p => p.RemoveItemAsync(slot)).ConfigureAwait(false);
                     item.ItemSlot = (byte)freeslot;
                     item.StorePrice = null;
-                    await player.Inventory!.AddItemAsync(item).ConfigureAwait(false);
+                    if (!await player.Inventory!.AddItemAsync(item).ConfigureAwait(false))
+                    {
+                        // Not expected after the checks above. The zen is given back so that nobody pays for an item
+                        // which was not received; the item is put back into the seller's inventory if it has room.
+                        player.Logger.LogCritical("The item {Item} sold by {Seller} could not be added to the inventory of {Buyer}; refunding the purchase.", item, requestedPlayer, player);
+                        if (requestedPlayer.TryRemoveMoney(itemPrice))
+                        {
+                            player.TryAddMoney(itemPrice);
+                        }
+
+                        await requestedPlayer.Inventory!.AddItemAsync(item).ConfigureAwait(false);
+                        await player.InvokeViewPlugInAsync<IPlayerShopBuyRequestResultPlugIn>(p => p.ShowResultAsync(requestedPlayer, ItemBuyResult.MoneyOverflowOrNotEnoughSpace, null)).ConfigureAwait(false);
+                        await player.InvokeViewPlugInAsync<IUpdateMoneyPlugIn>(p => p.UpdateMoneyAsync()).ConfigureAwait(false);
+                        await requestedPlayer.InvokeViewPlugInAsync<IUpdateMoneyPlugIn>(p => p.UpdateMoneyAsync()).ConfigureAwait(false);
+                        return;
+                    }
+
                     requestedPlayer.PersistenceContext.Detach(item);
                     await itemContext.SaveChangesAsync().ConfigureAwait(false);
                     player.PersistenceContext.Attach(item);
@@ -135,6 +193,8 @@ public class BuyRequestAction
 
         if (itemSold)
         {
+            await SaveAfterSaleAsync(player, requestedPlayer).ConfigureAwait(false);
+
             if (requestedPlayer.ShopStorage.Items.Any())
             {
                 // this update may be sent to other players as well which are currently looking at the store
