@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameLogic.Offline;
 
+using System.Threading;
 using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.GameLogic.MuHelper;
 using MUnique.OpenMU.GameLogic.Views;
@@ -55,6 +56,7 @@ public class OfflinePlayer : Player
 
     private OfflinePlayerMuHelper? _intelligence;
     private Task? _intelligenceDisposeTask;
+    private int _retired;
 
     /// <summary>
     /// The player who most recently attacked this bot, with the time of that attack. Written from the
@@ -86,6 +88,11 @@ public class OfflinePlayer : Player
     /// Gets the login name this offline player belongs to.
     /// </summary>
     public string? AccountLoginName => this.Account?.LoginName;
+
+    /// <summary>
+    /// Gets a value indicating whether this session was replaced by another controller of the character.
+    /// </summary>
+    public bool IsRetired => Volatile.Read(ref this._retired) != 0;
 
     /// <summary>
     /// Gets the start timestamp of the offline session.
@@ -225,8 +232,16 @@ public class OfflinePlayer : Player
     /// </summary>
     public virtual async ValueTask StopAsync()
     {
+        this.Retire();
         await this.DisconnectAsync().ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Marks this session as replaced by another controller of the character (a manual login, or the end of
+    /// the offline session). A retired session can no longer apply effects, even if one of its delayed
+    /// actions is still running.
+    /// </summary>
+    internal void Retire() => Interlocked.Exchange(ref this._retired, 1);
 
     /// <summary>
     /// Registers a player who attacked this bot, so the combat AI can defend itself.
@@ -430,6 +445,7 @@ public class OfflinePlayer : Player
     /// <inheritdoc />
     protected override async ValueTask DisposeAsyncCore()
     {
+        this.Retire();
         if (this._intelligenceDisposeTask is { } disposeTask)
         {
             await disposeTask.ConfigureAwait(false);

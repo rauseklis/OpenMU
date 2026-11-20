@@ -1256,6 +1256,12 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         => this._persistence.SaveProgressAsync(cancellationToken);
 
     /// <summary>
+    /// Remembers an experience settlement which is in memory only, until the next successful save.
+    /// </summary>
+    /// <param name="settlement">The settlement.</param>
+    internal void TrackSettlement(Combat.CombatEvent settlement) => this._persistence.TrackSettlement(settlement);
+
+    /// <summary>
     /// Runs the given operation while holding this player's persistence lock, so that context
     /// mutations and progress saves for the player never run concurrently.
     /// See <see cref="PlayerPersistence"/> for the rationale and the lock ordering invariant.

@@ -13,18 +13,12 @@ using MUnique.OpenMU.PlugIns;
 /// </summary>
 public class MockViewPlugInContainer : ICustomPlugInContainer<IViewPlugIn>
 {
-    private readonly Dictionary<Type, IViewPlugIn> _mocks = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Type, IViewPlugIn> _mocks = new();
 
     /// <inheritdoc />
     public T GetPlugIn<T>()
         where T : class, IViewPlugIn
     {
-        if (!this._mocks.TryGetValue(typeof(T), out var mock))
-        {
-            mock = new Mock<T>().Object;
-            this._mocks.Add(typeof(T), mock);
-        }
-
-        return (T)mock;
+        return (T)this._mocks.GetOrAdd(typeof(T), _ => new Mock<T>().Object);
     }
 }

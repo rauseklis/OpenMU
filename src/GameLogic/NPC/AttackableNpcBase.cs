@@ -9,6 +9,8 @@ using System.Diagnostics;
 using System.Threading;
 using MUnique.OpenMU.AttributeSystem;
 using MUnique.OpenMU.GameLogic.Attributes;
+using MUnique.OpenMU.GameLogic.Combat;
+using MUnique.OpenMU.GameLogic.Offline;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.GameLogic.Views.World;
 using MUnique.OpenMU.Pathfinding;
@@ -26,8 +28,11 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
     private readonly IDropGenerator _dropGenerator;
     private readonly PlugInManager _plugInManager;
     private readonly List<IDisposable> _registrations = new();
+    private readonly object _combatSync = new();
+    private readonly HashSet<AttackKey> _appliedKeys = new();
 
     private int _health;
+    private int _settled;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AttackableNpcBase" /> class.
@@ -61,6 +66,11 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
 
     /// <inheritdoc />
     public bool IsAlive { get; private set; }
+
+    /// <summary>
+    /// Gets the server-owned identifier of the current life. Every spawn starts a new life.
+    /// </summary>
+    public long LifeId { get; private set; }
 
     /// <summary>
     /// Gets a value indicating whether this <see cref="IAttackable" /> is currently teleporting and can't be directly targeted.
@@ -112,6 +122,12 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
             return null;
         }
 
+        if (attacker is OfflinePlayer { IsRetired: true })
+        {
+            this.PublishCombatEvent(CombatEventKind.HitRejectedStaleController, attacker, default, default, this.Health, this.Health);
+            return null;
+        }
+
         var hitInfo = await attacker.CalculateDamageAsync(this, skill, isCombo, damageFactor).ConfigureAwait(false);
 
         if (skill?.Skill is not { } attackSkill || attackSkill.DamageType != DamageType.Fenrir)
@@ -119,7 +135,7 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
             attacker.ApplyAmmunitionConsumption(hitInfo);
         }
 
-        await this.HitAsync(hitInfo, attacker, skill?.Skill, isFinalStreakHit).ConfigureAwait(false);
+        await this.HitAsync(hitInfo, attacker, skill?.Skill, isFinalStreakHit, new AttackKey(CombatIds.NextActionId(), 0)).ConfigureAwait(false);
 
         if (hitInfo.HealthDamage > 0)
         {
@@ -147,6 +163,45 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
         return hitInfo;
     }
 
+    /// <summary>
+    /// Applies an already calculated hit to this object.
+    /// </summary>
+    /// <param name="attacker">The attacker.</param>
+    /// <param name="hitInfo">The calculated hit.</param>
+    /// <param name="key">The identity of the attack pulse.</param>
+    /// <param name="skill">The skill.</param>
+    /// <returns><c>true</c> if the hit was applied; <c>false</c> if it was ignored.</returns>
+    public async ValueTask<bool> ApplyResolvedHitAsync(IAttacker attacker, HitInfo hitInfo, AttackKey key, Skill? skill = null)
+    {
+        if (attacker is OfflinePlayer { IsRetired: true })
+        {
+            this.PublishCombatEvent(CombatEventKind.HitRejectedStaleController, attacker, key, hitInfo, this.Health, this.Health);
+            return false;
+        }
+
+        bool isNew;
+        lock (this._combatSync)
+        {
+            isNew = this._appliedKeys.Add(key);
+        }
+
+        if (!isNew)
+        {
+            this.PublishCombatEvent(CombatEventKind.HitDuplicateIgnored, attacker, key, hitInfo, this.Health, this.Health);
+            return false;
+        }
+
+        await this.HitAsync(hitInfo, attacker, skill, null, key).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <summary>
+    /// Settles the rewards of the current life. Runs once per life; further calls, for example retries, do nothing.
+    /// </summary>
+    /// <param name="player">The player who gets the kill.</param>
+    /// <returns>The task.</returns>
+    internal ValueTask SettleLifeAsync(Player player) => this.SettleLifeCoreAsync(player, player);
+
     /// <inheritdoc />
     public abstract ValueTask ReflectDamageAsync(IAttacker reflector, uint damage);
 
@@ -167,7 +222,14 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
     {
         base.Initialize();
         this.Health = this.SpawnArea.MaximumHealthOverride ?? (int)this.Attributes[Stats.MaximumHealth];
+        lock (this._combatSync)
+        {
+            this._appliedKeys.Clear();
+        }
+
+        Volatile.Write(ref this._settled, 0);
         this.IsAlive = true;
+        this.LifeId = CombatIds.NextLifeId();
     }
 
     /// <summary>
@@ -226,14 +288,24 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
     ///     <c>true</c>, if it's the final hit;
     ///     <c>false</c>, for other hits.
     /// </param>
-    protected async ValueTask HitAsync(HitInfo hitInfo, IAttacker attacker, Skill? skill, bool? isFinalStreakHit = null)
+    protected ValueTask HitAsync(HitInfo hitInfo, IAttacker attacker, Skill? skill, bool? isFinalStreakHit = null)
+        => this.HitAsync(hitInfo, attacker, skill, isFinalStreakHit, new AttackKey(CombatIds.NextActionId(), 0));
+
+    private async ValueTask HitAsync(HitInfo hitInfo, IAttacker attacker, Skill? skill, bool? isFinalStreakHit, AttackKey key)
     {
         if (!this.IsAlive)
         {
             return;
         }
 
-        var killed = this.TryHit(hitInfo.HealthDamage + hitInfo.ShieldDamage, attacker);
+        var (killed, healthBefore, healthAfter) = this.TryHit(hitInfo.HealthDamage + hitInfo.ShieldDamage, attacker);
+        if (healthBefore <= 0)
+        {
+            // Another hit ended the life first; this one hits nothing.
+            return;
+        }
+
+        this.PublishCombatEvent(CombatEventKind.HitApplied, attacker, key, hitInfo, healthBefore, healthAfter);
 
         var player = this.GetHitNotificationTarget(attacker);
         if (player is not null)
@@ -255,6 +327,7 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
         if (killed)
         {
             this.LastDeath = new DeathInformation(attacker.Id, attacker.GetName(), hitInfo, skill?.Number ?? 0);
+            this.PublishCombatEvent(CombatEventKind.LifeEnded, attacker, key, hitInfo, healthBefore, 0);
             await this.OnDeathAsync(attacker).ConfigureAwait(false);
             this.Died?.Invoke(this, this.LastDeath);
             if (!this.ShouldRespawn)
@@ -349,30 +422,42 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
         var player = this.GetHitNotificationTarget(attacker);
         if (player is { })
         {
-            var experienceShares = player.Party is { } party
-                ? await party.DistributeExperienceAfterKillAsync(this, player).ConfigureAwait(false)
-                : [new ExperienceShare(player, await player.AddExpAfterKillAsync(this).ConfigureAwait(false))];
-            if (attacker == player)
+            await this.SettleLifeCoreAsync(attacker, player).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask SettleLifeCoreAsync(IAttacker attacker, Player player)
+    {
+        // One life pays one reward. A repeated call (a retry, a second path to the same death) must not pay again.
+        if (Interlocked.Exchange(ref this._settled, 1) == 1)
+        {
+            return;
+        }
+
+        var experienceShares = player.Party is { } party
+            ? await party.DistributeExperienceAfterKillAsync(this, player).ConfigureAwait(false)
+            : [new ExperienceShare(player, await player.AddExpAfterKillAsync(this).ConfigureAwait(false))];
+        this.PublishSettlements(attacker, experienceShares);
+        if (attacker == player)
+        {
+            await player.AfterKilledMonsterAsync().ConfigureAwait(false);
+        }
+
+        if (player.GameContext.PlugInManager.GetPlugInPoint<IAttackableGotKilledPlugIn>() is { } plugInPoint)
+        {
+            await plugInPoint.AttackableGotKilledAsync(this, attacker).ConfigureAwait(false);
+        }
+
+        if (!this.IsSummonedMonster && player.SelectedCharacter is { } selectedCharacter)
+        {
+            if (selectedCharacter.State > HeroState.Normal)
             {
-                await player.AfterKilledMonsterAsync().ConfigureAwait(false);
+                // An outlaw can shorten its remaining state time by hunting monsters, on any map:
+                // the level of the killed monster is subtracted in seconds.
+                selectedCharacter.StateRemainingSeconds -= (int)this.Attributes[Stats.Level];
             }
 
-            if (player.GameContext.PlugInManager.GetPlugInPoint<IAttackableGotKilledPlugIn>() is { } plugInPoint)
-            {
-                await plugInPoint.AttackableGotKilledAsync(this, attacker).ConfigureAwait(false);
-            }
-
-            if (!this.IsSummonedMonster && player.SelectedCharacter is { } selectedCharacter)
-            {
-                if (selectedCharacter.State > HeroState.Normal)
-                {
-                    // An outlaw can shorten its remaining state time by hunting monsters, on any map:
-                    // the level of the killed monster is subtracted in seconds.
-                    selectedCharacter.StateRemainingSeconds -= (int)this.Attributes[Stats.Level];
-                }
-
-                _ = this.DropItemDelayedAsync(player, experienceShares); // don't wait for completion.
-            }
+            _ = this.DropItemDelayedAsync(player, experienceShares); // don't wait for completion.
         }
     }
 
@@ -406,29 +491,82 @@ public abstract class AttackableNpcBase : NonPlayerCharacter, IAttackable
         }
     }
 
-    private bool TryHit(uint damage, IAttacker attacker)
+    private (bool Killed, int HealthBefore, int HealthAfter) TryHit(uint damage, IAttacker attacker)
     {
-        if (damage > 0)
+        // The health is changed with a compare-and-swap, so that exactly one of several simultaneous hits is
+        // the one which takes it to zero. Only that hit ends the life.
+        while (true)
         {
-            this.RegisterHit(attacker);
-        }
+            var current = Volatile.Read(ref this._health);
+            if (current <= 0)
+            {
+                return (false, 0, 0);
+            }
 
-        if (damage >= this.Health)
-        {
-            this.IsAlive = false;
-            this.Health = 0;
-            return true;
-        }
+            var remaining = damage >= (uint)current ? 0 : current - (int)damage;
+            if (Interlocked.CompareExchange(ref this._health, remaining, current) != current)
+            {
+                continue;
+            }
 
-        try
-        {
-            Interlocked.Add(ref this._health, -(int)damage);
-            return false;
+            if (damage > 0)
+            {
+                this.RegisterHit(attacker);
+            }
+
+            if (remaining == 0)
+            {
+                this.IsAlive = false;
+                return (true, current, 0);
+            }
+
+            return (false, current, remaining);
         }
-        catch
+    }
+
+    private void PublishSettlements(IAttacker attacker, IReadOnlyList<ExperienceShare> shares)
+    {
+        foreach (var share in shares)
         {
-            return false;
+            var settled = new CombatEvent(
+                CombatEventKind.ExperienceSettled,
+                DateTime.UtcNow,
+                default,
+                this.LifeId,
+                this.Id,
+                attacker.Id,
+                attacker.GetName(),
+                CombatEventPublisher.CharacterIdOf(share.Player),
+                CombatEventPublisher.ControllerOf(share.Player),
+                0,
+                0,
+                0,
+                0,
+                share.Experience);
+            CombatEventPublisher.Publish(this._plugInManager, settled);
+            share.Player.TrackSettlement(settled);
         }
+    }
+
+    private void PublishCombatEvent(CombatEventKind kind, IAttacker attacker, AttackKey key, HitInfo hitInfo, int healthBefore, int healthAfter)
+    {
+        CombatEventPublisher.Publish(
+            this._plugInManager,
+            new CombatEvent(
+                kind,
+                DateTime.UtcNow,
+                key,
+                this.LifeId,
+                this.Id,
+                attacker.Id,
+                attacker.GetName(),
+                CombatEventPublisher.CharacterIdOf(attacker),
+                CombatEventPublisher.ControllerOf(attacker),
+                healthBefore,
+                healthAfter,
+                hitInfo.HealthDamage,
+                hitInfo.ShieldDamage,
+                0));
     }
 
     private async ValueTask HandleMoneyDropAsync(uint amount, Player killer, IReadOnlyList<ExperienceShare> experienceShares)

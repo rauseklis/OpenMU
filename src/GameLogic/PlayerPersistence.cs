@@ -4,7 +4,9 @@
 
 namespace MUnique.OpenMU.GameLogic;
 
+using System.Collections.Concurrent;
 using System.Threading;
+using MUnique.OpenMU.GameLogic.Combat;
 using MUnique.OpenMU.Persistence;
 using Nito.AsyncEx;
 
@@ -35,6 +37,8 @@ internal sealed class PlayerPersistence
 
     private readonly AsyncLock _lock = new();
 
+    private readonly ConcurrentQueue<CombatEvent> _pendingSettlements = new();
+
     /// <summary>
     /// Tracks, per asynchronous flow, whether <see cref="_lock"/> is already held, so the
     /// lock can be re-entered (Nito's <see cref="AsyncLock"/> is not reentrant). It is an instance
@@ -64,10 +68,24 @@ internal sealed class PlayerPersistence
             return true;
         }
 
-        return await this.RunExclusiveAsync(
+        // Only settlements which were already in memory when the save started are covered by it.
+        var pending = this._pendingSettlements.Count;
+        var saved = await this.RunExclusiveAsync(
             () => this._player.PersistenceContext.SaveChangesAsync(cancellationToken),
             cancellationToken).ConfigureAwait(false);
+        if (saved)
+        {
+            this.ReportCommitted(pending);
+        }
+
+        return saved;
     }
+
+    /// <summary>
+    /// Remembers an experience settlement which is in memory only, until the next successful save.
+    /// </summary>
+    /// <param name="settlement">The settlement.</param>
+    public void TrackSettlement(CombatEvent settlement) => this._pendingSettlements.Enqueue(settlement);
 
     /// <summary>
     /// Runs the given operation while holding this player's persistence lock, so that context
@@ -119,6 +137,16 @@ internal sealed class PlayerPersistence
         finally
         {
             this._lockHeld.Value = false;
+        }
+    }
+
+    private void ReportCommitted(int count)
+    {
+        for (var i = 0; i < count && this._pendingSettlements.TryDequeue(out var settlement); i++)
+        {
+            CombatEventPublisher.Publish(
+                this._player.GameContext.PlugInManager,
+                settlement with { Kind = CombatEventKind.ExperienceCommitted, UtcTime = DateTime.UtcNow });
         }
     }
 }
