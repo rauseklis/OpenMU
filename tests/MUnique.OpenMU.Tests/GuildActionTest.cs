@@ -316,6 +316,54 @@ public class GuildActionTest : GuildTestBase
     }
 
     /// <summary>
+    /// Tests that an alliance master can't remove a guild which belongs to another alliance.
+    /// </summary>
+    [Test]
+    public async ValueTask AllianceMasterCannotRemoveGuildOfOtherAllianceAsync()
+    {
+        var ownGuildId = await this.GuildServer.GetGuildIdByNameAsync(GuildName).ConfigureAwait(false);
+        var ownPartnerId = await this.CreateOnlineGuildAsync("OwnPartner").ConfigureAwait(false);
+        var otherMasterId = await this.CreateOnlineGuildAsync("OtherMaster").ConfigureAwait(false);
+        var otherPartnerId = await this.CreateOnlineGuildAsync("OtherPartner").ConfigureAwait(false);
+        await this.GuildServer.CreateAllianceAsync(ownGuildId, ownPartnerId).ConfigureAwait(false);
+        await this.GuildServer.CreateAllianceAsync(otherMasterId, otherPartnerId).ConfigureAwait(false);
+
+        var action = new GuildRelationshipChangeAction();
+        await action.RequestLeaveAllianceAsync(this._guildMasterPlayer, "OtherPartner").ConfigureAwait(false);
+        await action.RequestLeaveAllianceAsync(this._guildMasterPlayer, "OtherMaster").ConfigureAwait(false);
+
+        Assert.That(await this.GuildServer.GetAllianceGuildsAsync(otherMasterId).ConfigureAwait(false), Has.Count.EqualTo(2));
+        Assert.That(await this.GuildServer.IsAllianceMasterAsync(otherMasterId).ConfigureAwait(false), Is.True);
+        Assert.That(await this.GuildServer.GetAllianceGuildsAsync(ownGuildId).ConfigureAwait(false), Has.Count.EqualTo(2));
+    }
+
+    /// <summary>
+    /// Tests that an alliance master can still remove a member of the own alliance.
+    /// </summary>
+    [Test]
+    public async ValueTask AllianceMasterCanRemoveGuildOfOwnAllianceAsync()
+    {
+        var ownGuildId = await this.GuildServer.GetGuildIdByNameAsync(GuildName).ConfigureAwait(false);
+        var ownPartnerId = await this.CreateOnlineGuildAsync("OwnPartner").ConfigureAwait(false);
+        await this.GuildServer.CreateAllianceAsync(ownGuildId, ownPartnerId).ConfigureAwait(false);
+
+        var action = new GuildRelationshipChangeAction();
+        await action.RequestLeaveAllianceAsync(this._guildMasterPlayer, "OwnPartner").ConfigureAwait(false);
+
+        Assert.That(await this.GuildServer.GetAllianceGuildsAsync(ownPartnerId).ConfigureAwait(false), Is.Empty);
+    }
+
+    private async ValueTask<uint> CreateOnlineGuildAsync(string guildName)
+    {
+        var context = this.PersistenceContextProvider.CreateNewContext();
+        var master = context.CreateNew<Character>();
+        master.Name = guildName + "Boss";
+        await this.GuildServer.CreateGuildAsync(guildName, master.Name, master.Id, new byte[16], 0).ConfigureAwait(false);
+        await this.GuildServer.PlayerEnteredGameAsync(master.Id, master.Name, 0).ConfigureAwait(false);
+        return await this.GuildServer.GetGuildIdByNameAsync(guildName).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Tests that the guild list is ordered by rank (master, assistant, battle master, normal) and then by name.
     /// </summary>
     [Test]
