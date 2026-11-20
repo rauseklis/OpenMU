@@ -1,4 +1,4 @@
-// <copyright file="Player.cs" company="MUnique">
+﻿// <copyright file="Player.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -1254,6 +1254,12 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     /// <returns>Success of the save operation.</returns>
     public ValueTask<bool> SaveProgressAsync(CancellationToken cancellationToken = default)
         => this._persistence.SaveProgressAsync(cancellationToken);
+
+    /// <summary>
+    /// Remembers an experience settlement which is in memory only, until the next successful save.
+    /// </summary>
+    /// <param name="settlement">The settlement.</param>
+    internal void TrackSettlement(Combat.CombatEvent settlement) => this._persistence.TrackSettlement(settlement);
 
     /// <summary>
     /// Runs the given operation while holding this player's persistence lock, so that context
