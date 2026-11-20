@@ -46,6 +46,10 @@ public sealed class CastleSiegeTributeWithdrawAction
                         {
                             await context.SaveOwnerAsync().ConfigureAwait(false);
                             result = CastleSiegeRequestResult.Success;
+
+                            // The treasury is saved in its own context. Saving the player's zen right away keeps the time in
+                            // which the zen exists only in memory as short as possible.
+                            await SavePlayerAfterWithdrawalAsync(player).ConfigureAwait(false);
                         }
                         catch
                         {
@@ -73,5 +77,17 @@ public sealed class CastleSiegeTributeWithdrawAction
                     result == CastleSiegeRequestResult.Success ? amount : 0))
             .ConfigureAwait(false);
         return result == CastleSiegeRequestResult.Success;
+    }
+
+    private static async ValueTask SavePlayerAfterWithdrawalAsync(Player player)
+    {
+        try
+        {
+            await player.SaveProgressAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            player.Logger.LogError(ex, "Couldn't save the progress of player {Player} after a tribute withdrawal.", player);
+        }
     }
 }

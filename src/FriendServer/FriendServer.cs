@@ -15,10 +15,14 @@ using MUnique.OpenMU.Persistence;
 /// </summary>
 public class FriendServer : IFriendServer
 {
+    private const int MaximumRememberedChatRooms = 5000;
+
     private readonly IPersistenceContextProvider _persistenceContextProvider;
     private readonly ILogger<FriendServer> _logger;
     private readonly IFriendNotifier _friendNotifier;
     private readonly IChatServer _chatServer;
+    private readonly ConcurrentDictionary<ushort, HashSet<string>> _chatRoomMembers = new();
+    private readonly ConcurrentQueue<ushort> _chatRoomOrder = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FriendServer" /> class.
@@ -165,6 +169,8 @@ public class FriendServer : IFriendServer
         //       to create the chat room to an pub/sub-system. An available chat server could then
         //       process the request and notify the corresponding game servers.
         var roomId = await this._chatServer.CreateChatRoomAsync().ConfigureAwait(false);
+        this.RememberChatRoomMember(roomId, playerName);
+        this.RememberChatRoomMember(roomId, friendName);
         if (await this._chatServer.RegisterClientAsync(roomId, playerName).ConfigureAwait(false) is { } authenticationInfoPlayer)
         {
             await this._friendNotifier.ChatRoomCreatedAsync(player.ServerId, authenticationInfoPlayer, friendName).ConfigureAwait(false);
@@ -199,14 +205,54 @@ public class FriendServer : IFriendServer
             return false;
         }
 
+        if (!this.IsChatRoomMember(roomId, playerName))
+        {
+            // Only somebody who is part of a room may invite others into it; the room number comes from the client.
+            return false;
+        }
+
         var authenticationInfoFriend = await this._chatServer.RegisterClientAsync(roomId, friendName).ConfigureAwait(false);
         if (authenticationInfoFriend is not null)
         {
+            this.RememberChatRoomMember(roomId, friendName);
             await this._friendNotifier.ChatRoomCreatedAsync(friend.ServerId, authenticationInfoFriend, playerName).ConfigureAwait(false);
             return true;
         }
 
         return false;
+    }
+
+    private bool IsChatRoomMember(ushort roomId, string name)
+    {
+        if (!this._chatRoomMembers.TryGetValue(roomId, out var members))
+        {
+            return false;
+        }
+
+        lock (members)
+        {
+            return members.Contains(name);
+        }
+    }
+
+    private void RememberChatRoomMember(ushort roomId, string name)
+    {
+        var members = this._chatRoomMembers.GetOrAdd(roomId, _ => new HashSet<string>(StringComparer.Ordinal));
+        lock (members)
+        {
+            if (members.Count == 0)
+            {
+                this._chatRoomOrder.Enqueue(roomId);
+            }
+
+            members.Add(name);
+        }
+
+        // The rooms are only remembered for a limited time: the oldest ones are forgotten.
+        while (this._chatRoomOrder.Count > MaximumRememberedChatRooms && this._chatRoomOrder.TryDequeue(out var oldest))
+        {
+            this._chatRoomMembers.TryRemove(oldest, out _);
+        }
     }
 
     /// <remarks>Note, that the ServerId is not filled by this implementation. The player will receive it separately when the subscription is created.</remarks>

@@ -195,15 +195,9 @@ public class TalkNpcAction
 
     private async ValueTask<bool> IsPlayedAllowedToCreateGuildAsync(Player player)
     {
-        if (player.Level < 100)
+        if (Guild.GuildCreateAction.GetCreationRefusal(player) is { } refusal)
         {
-            await player.InvokeViewPlugInAsync<IShowMessageOfObjectPlugIn>(p => p.ShowMessageOfObjectAsync("Your level should be at least level 100", player.OpenedNpc!)).ConfigureAwait(false);
-            return false;
-        }
-
-        if (player.GuildStatus != null)
-        {
-            await player.InvokeViewPlugInAsync<IShowMessageOfObjectPlugIn>(p => p.ShowMessageOfObjectAsync("You already belong to a guild", player.OpenedNpc!)).ConfigureAwait(false);
+            await player.InvokeViewPlugInAsync<IShowMessageOfObjectPlugIn>(p => p.ShowMessageOfObjectAsync(refusal, player.OpenedNpc!)).ConfigureAwait(false);
             return false;
         }
 

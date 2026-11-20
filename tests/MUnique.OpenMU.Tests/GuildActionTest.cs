@@ -123,6 +123,7 @@ public class GuildActionTest : GuildTestBase
     [Test]
     public async ValueTask GuildCreateAsync()
     {
+        this.PrepareGuildCreation();
         var action = new GuildCreateAction();
         await action.CreateGuildAsync(this._player, "Foobar2", []).ConfigureAwait(false);
         Assert.That(this._player.GuildStatus, Is.Not.Null);
@@ -130,6 +131,42 @@ public class GuildActionTest : GuildTestBase
         var context = this.PersistenceContextProvider.CreateNewGuildContext();
         var newGuild = (await context.GetAsync<DataModel.Entities.Guild>().ConfigureAwait(false)).First(g => g.Name == "Foobar2");
         Assert.That(newGuild.Members.Any(m => m.Id == this._player.SelectedCharacter!.Id), Is.True);
+    }
+
+    /// <summary>
+    /// Tests that a guild is not created when the creator is below the level which the guild master npc requires.
+    /// </summary>
+    [Test]
+    public async ValueTask GuildCreateRefusedBelowRequiredLevelAsync()
+    {
+        this.PrepareGuildCreation();
+        this._player.Attributes![Stats.Level] = 99;
+        await new GuildCreateAction().CreateGuildAsync(this._player, "Foobar3", []).ConfigureAwait(false);
+        await this.AssertGuildNotCreatedAsync("Foobar3").ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Tests that a guild is not created when the creator already belongs to a guild.
+    /// </summary>
+    [Test]
+    public async ValueTask GuildCreateRefusedWhenAlreadyInGuildAsync()
+    {
+        this.PrepareGuildCreation();
+        this._player.GuildStatus = new GuildMemberStatus(1, GuildPosition.NormalMember);
+        await new GuildCreateAction().CreateGuildAsync(this._player, "Foobar4", []).ConfigureAwait(false);
+        await this.AssertGuildNotCreatedAsync("Foobar4").ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Tests that a guild is not created when the guild master npc has not been opened.
+    /// </summary>
+    [Test]
+    public async ValueTask GuildCreateRefusedWithoutGuildMasterNpcAsync()
+    {
+        this.PrepareGuildCreation();
+        this._player.OpenedNpc = null;
+        await new GuildCreateAction().CreateGuildAsync(this._player, "Foobar5", []).ConfigureAwait(false);
+        await this.AssertGuildNotCreatedAsync("Foobar5").ConfigureAwait(false);
     }
 
     /// <summary>
@@ -147,6 +184,19 @@ public class GuildActionTest : GuildTestBase
                 It.Is<IReadOnlyCollection<GuildListEntry>>(list => list.Any(entry => entry.PlayerName == this._player.SelectedCharacter!.Name)),
                 It.Is<Interfaces.Guild>(g => g.Name == GuildName)), Times.Once());
         Assert.That(guildList.Any(entry => entry.PlayerName == this._player.SelectedCharacter!.Name), Is.True);
+    }
+
+    private void PrepareGuildCreation()
+    {
+        this._player.Attributes![Stats.Level] = 100;
+        this._player.OpenedNpc = new NonPlayerCharacter(null!, new DataModel.Configuration.MonsterDefinition { NpcWindow = DataModel.Configuration.NpcWindow.GuildMaster }, null!);
+    }
+
+    private async ValueTask AssertGuildNotCreatedAsync(string guildName)
+    {
+        var context = this.PersistenceContextProvider.CreateNewGuildContext();
+        var guilds = await context.GetAsync<DataModel.Entities.Guild>().ConfigureAwait(false);
+        Assert.That(guilds.Any(g => g.Name == guildName), Is.False);
     }
 
     private async ValueTask RequestGuildAndRespondAsync(bool acceptRequest)
