@@ -35,6 +35,11 @@ public class TradeButtonAction : BaseTradeAction
             && tradingPartner.PlayerState.CurrentState == PlayerState.TradeButtonPressed)
         {
             TradeResult result = await this.InternalFinishTradeAsync(trader, tradingPartner).ConfigureAwait(false);
+            if (result == TradeResult.Success)
+            {
+                await SaveAfterTradeAsync(trader, tradingPartner).ConfigureAwait(false);
+            }
+
             if (result != TradeResult.Success)
             {
                 await this.CancelTradeAsync(tradingPartner, false).ConfigureAwait(false);
@@ -52,6 +57,32 @@ public class TradeButtonAction : BaseTradeAction
         else
         {
             // nothing to do.
+        }
+    }
+
+    /// <summary>
+    /// Saves both traders right after a finished trade. The traded items are stored in an own step while the
+    /// payment only changed in memory; without this save, a stop of the server shortly after the trade could keep
+    /// the items moved but not the payment. It runs after the trade state was left, so a failure here can never
+    /// turn the finished trade into a cancelled one (which would restore the old inventories).
+    /// </summary>
+    /// <param name="trader">The trader who pressed the button last.</param>
+    /// <param name="tradingPartner">The trading partner.</param>
+    private static async ValueTask SaveAfterTradeAsync(ITrader trader, ITrader tradingPartner)
+    {
+        foreach (var party in new[] { trader, tradingPartner })
+        {
+            try
+            {
+                if (!await party.SaveProgressAsync().ConfigureAwait(false))
+                {
+                    (party as Player)?.Logger.LogWarning("Saving {Trader} after a finished trade did not succeed; the next regular save will retry.", party.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                (party as Player)?.Logger.LogError(ex, "Saving {Trader} after a finished trade failed; the next regular save will retry.", party.Name);
+            }
         }
     }
 

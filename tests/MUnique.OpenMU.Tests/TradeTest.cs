@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.Tests;
 
+using System.Threading;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MUnique.OpenMU.DataModel;
@@ -285,6 +286,78 @@ public class TradeTest
         item.Object.Definition = new ItemDefinition { Width = 1, Height = 1 };
         item.Setup(i => i.ItemOptions).Returns(new List<ItemOptionLink>());
         return item.Object;
+    }
+
+    /// <summary>
+    /// Tests that both traders are saved right after a finished trade, with the money already moved, so that the
+    /// items (which are stored separately) and the payment do not drift apart if the server stops soon afterwards.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async ValueTask TradeFinishSavesBothTradersAfterMoneyMovedAsync()
+    {
+        var trader1 = this.CreateTrader(PlayerState.TradeOpened);
+        var trader2 = this.CreateTrader(PlayerState.TradeOpened);
+        trader1.TradingPartner = trader2;
+        trader2.TradingPartner = trader1;
+        var gameContext = new Mock<IGameContext>();
+        gameContext.Setup(c => c.PlugInManager).Returns(new PlugInManager(null, new NullLoggerFactory(), null, null));
+        gameContext.Setup(c => c.PersistenceContextProvider).Returns(new InMemoryPersistenceContextProvider());
+        Mock.Get(trader1).Setup(m => m.GameContext).Returns(gameContext.Object);
+        Mock.Get(trader2).Setup(m => m.GameContext).Returns(gameContext.Object);
+
+        // trader1 offered 300 of its 1,000 (already taken from its balance); trader2 offers nothing.
+        trader1.Money = 700;
+        trader1.TradingMoney = 300;
+        trader2.Money = 500;
+        var savedMoney = new List<(ITrader Trader, int Money)>();
+        foreach (var trader in new[] { trader1, trader2 })
+        {
+            var captured = trader;
+            Mock.Get(captured).Setup(t => t.SaveProgressAsync(It.IsAny<CancellationToken>()))
+                .Returns(() =>
+                {
+                    savedMoney.Add((captured, captured.Money));
+                    return ValueTask.FromResult(true);
+                });
+        }
+
+        var tradeButtonHandler = new TradeButtonAction();
+        await tradeButtonHandler.TradeButtonChangedAsync(trader1, TradeButtonState.Checked).ConfigureAwait(false);
+        await tradeButtonHandler.TradeButtonChangedAsync(trader2, TradeButtonState.Checked).ConfigureAwait(false);
+
+        Assert.That(savedMoney.Any(s => s.Trader == trader1 && s.Money == 700), Is.True, "trader1 saved after the trade");
+        Assert.That(savedMoney.Any(s => s.Trader == trader2 && s.Money == 800), Is.True, "trader2 saved with the received money");
+    }
+
+    /// <summary>
+    /// Tests that a save which fails right after a finished trade does not turn the finished trade into a cancelled one.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async ValueTask FailingSaveAfterTradeDoesNotUndoTheTradeAsync()
+    {
+        var trader1 = this.CreateTrader(PlayerState.TradeOpened);
+        var trader2 = this.CreateTrader(PlayerState.TradeOpened);
+        trader1.TradingPartner = trader2;
+        trader2.TradingPartner = trader1;
+        var gameContext = new Mock<IGameContext>();
+        gameContext.Setup(c => c.PlugInManager).Returns(new PlugInManager(null, new NullLoggerFactory(), null, null));
+        gameContext.Setup(c => c.PersistenceContextProvider).Returns(new InMemoryPersistenceContextProvider());
+        Mock.Get(trader1).Setup(m => m.GameContext).Returns(gameContext.Object);
+        Mock.Get(trader2).Setup(m => m.GameContext).Returns(gameContext.Object);
+        trader1.Money = 700;
+        trader1.TradingMoney = 300;
+        trader2.Money = 500;
+        Mock.Get(trader1).Setup(t => t.SaveProgressAsync(It.IsAny<CancellationToken>())).Throws(new InvalidOperationException("database is down"));
+        Mock.Get(trader2).Setup(t => t.SaveProgressAsync(It.IsAny<CancellationToken>())).Returns(ValueTask.FromResult(false));
+
+        var tradeButtonHandler = new TradeButtonAction();
+        await tradeButtonHandler.TradeButtonChangedAsync(trader1, TradeButtonState.Checked).ConfigureAwait(false);
+        await tradeButtonHandler.TradeButtonChangedAsync(trader2, TradeButtonState.Checked).ConfigureAwait(false);
+
+        Mock.Get(trader1.ViewPlugIns.GetPlugIn<ITradeFinishedPlugIn>()!).Verify(view => view!.TradeFinishedAsync(TradeResult.Success), Times.Once);
+        Assert.That(trader2.Money, Is.EqualTo(800));
     }
 
     private ITrader CreateTrader(State playerState)
