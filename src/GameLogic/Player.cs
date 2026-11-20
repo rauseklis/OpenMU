@@ -1237,14 +1237,8 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         await this.SetSelectedCharacterAsync(null).ConfigureAwait(false);
         await this.MagicEffectList.ClearAllEffectsAsync().ConfigureAwait(false);
 
-        try
-        {
-            await this.SaveProgressAsync().ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            this.Logger.LogError(ex, "Couldn't save when leaving the game. Player: {player}", this);
-        }
+        // A failed save is retried; if it keeps failing it is counted (FinalSaveHealth) and logged as critical.
+        await FinalSave.RunAsync(() => this.SaveProgressAsync(), this.Logger, this.ToString() ?? string.Empty).ConfigureAwait(false);
     }
 
     /// <summary>
