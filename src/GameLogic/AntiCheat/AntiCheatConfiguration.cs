@@ -77,6 +77,12 @@ public class AntiCheatConfiguration
     /// </summary>
     public AntiCheatMode BuildMode { get; set; } = AntiCheatMode.Shadow;
 
+    /// <summary>Gets or sets the mode of the reach check of melee hits (a hit from further away than the maximum distance).</summary>
+    public AntiCheatMode HitReachMode { get; set; } = AntiCheatMode.Shadow;
+
+    /// <summary>Gets or sets the largest distance in tiles between the player and the target of a melee hit. Loose on purpose: ranged weapons use the same request.</summary>
+    public int HitReachMaximumDistance { get; set; } = 10;
+
     /// <summary>Gets or sets the serials of the client builds which are allowed. Nothing is compared while the list is empty.</summary>
     public List<string> AllowedBuildSerials { get; set; } = new();
 }
