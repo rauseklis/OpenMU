@@ -86,7 +86,7 @@ public sealed class CombatJournalPlugIn : IFeaturePlugIn, ISupportCustomConfigur
             if (this._journal is null || this._journalPath != path)
             {
                 this._journal?.Dispose();
-                this._journal = new CombatJournal(path);
+                this._journal = new CombatJournal(path, (long)Math.Max(0, this.Configuration?.MaximumFileMegabytes ?? 0) * 1024 * 1024);
                 this._journalPath = path;
             }
 

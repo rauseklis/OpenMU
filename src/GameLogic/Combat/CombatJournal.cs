@@ -22,24 +22,59 @@ internal sealed class CombatJournal : IDisposable
 
     private readonly object _sync = new();
     private readonly string _path;
+    private readonly long _maximumFileBytes;
     private FileStream? _stream;
     private long _sequence;
+    private long _firstSequenceOfFile = 1;
     private string _lastHash = Genesis;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CombatJournal"/> class and continues the chain of an existing file.
     /// </summary>
     /// <param name="path">The file path.</param>
-    public CombatJournal(string path)
+    /// <param name="maximumFileBytes">The size after which the file is closed and a new one is started; zero for no limit.</param>
+    public CombatJournal(string path, long maximumFileBytes = 0)
     {
         this._path = path;
-        if (File.Exists(path) && File.ReadLines(path).LastOrDefault(l => l.Length > 0) is { } last)
+        this._maximumFileBytes = maximumFileBytes;
+        if (File.Exists(path) && File.ReadLines(path).Where(l => l.Length > 0).ToList() is { Count: > 0 } lines)
         {
-            var entry = JsonSerializer.Deserialize<JournalLine>(last) ?? throw new InvalidDataException("The journal file is unreadable.");
-            this._sequence = entry.Sequence;
-            this._lastHash = entry.Hash;
+            this._firstSequenceOfFile = Parse(lines[0]).Sequence;
+            var last = Parse(lines[^1]);
+            this._sequence = last.Sequence;
+            this._lastHash = last.Hash;
+        }
+        else if (ArchivedFiles(path).LastOrDefault() is { } newestArchive
+                 && File.ReadLines(newestArchive).LastOrDefault(l => l.Length > 0) is { } archivedLast)
+        {
+            // The current file was just rotated away: the chain continues after the newest archived file.
+            var last = Parse(archivedLast);
+            this._sequence = last.Sequence;
+            this._lastHash = last.Hash;
+            this._firstSequenceOfFile = last.Sequence + 1;
         }
     }
+
+    /// <summary>
+    /// Gets the archived (rotated) files which belong to the journal file, oldest first.
+    /// </summary>
+    /// <param name="path">The path of the current journal file.</param>
+    /// <returns>The paths of the archived files.</returns>
+    internal static IEnumerable<string> ArchivedFiles(string path)
+    {
+        var directory = Path.GetDirectoryName(path) ?? string.Empty;
+        var name = Path.GetFileNameWithoutExtension(path);
+        var extension = Path.GetExtension(path);
+        if (!Directory.Exists(directory))
+        {
+            return [];
+        }
+
+        return Directory.GetFiles(directory, name + ".*" + extension).OrderBy(f => f, StringComparer.Ordinal).ToList();
+    }
+
+    private static JournalLine Parse(string line)
+        => JsonSerializer.Deserialize<JournalLine>(line) ?? throw new InvalidDataException("The journal file is unreadable.");
 
     /// <summary>
     /// Computes the hash of a journal line.
@@ -90,8 +125,36 @@ internal sealed class CombatJournal : IDisposable
                 throw;
             }
 
+            if (this._stream.Length <= bytes.Length)
+            {
+                this._firstSequenceOfFile = sequence;
+            }
+
             this._sequence = sequence;
             this._lastHash = hash;
+            this.RotateIfTooLarge();
+        }
+    }
+
+    private void RotateIfTooLarge()
+    {
+        if (this._maximumFileBytes <= 0 || this._stream is not { } stream || stream.Length < this._maximumFileBytes)
+        {
+            return;
+        }
+
+        try
+        {
+            stream.Dispose();
+            this._stream = null;
+            var directory = Path.GetDirectoryName(this._path) ?? string.Empty;
+            var archive = Path.Combine(directory, Path.GetFileNameWithoutExtension(this._path) + "." + this._firstSequenceOfFile.ToString("D12") + Path.GetExtension(this._path));
+            File.Move(this._path, archive);
+            this._firstSequenceOfFile = this._sequence + 1;
+        }
+        catch (IOException)
+        {
+            // The entry is written; rotating is tried again with the next entry.
         }
     }
 
