@@ -30,7 +30,7 @@ public class ApplyMagicEffectConsumeHandlerPlugIn : BaseConsumeHandlerPlugIn
             {
                 return false;
             }
-            var duration = TimeSpan.FromSeconds(effectDefinition.Duration?.ConstantValue.Value ?? premium.DefaultSeconds);
+            var duration = PremiumItemDuration.Get(item) ?? TimeSpan.FromSeconds(effectDefinition.Duration?.ConstantValue.Value ?? premium.DefaultSeconds);
             if (!await PremiumBuffService.ActivateAsync(player, effectDefinition, duration).ConfigureAwait(false))
             {
                 return false;
