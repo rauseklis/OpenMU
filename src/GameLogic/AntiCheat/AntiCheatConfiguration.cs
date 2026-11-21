@@ -1,4 +1,4 @@
-// <copyright file="AntiCheatConfiguration.cs" company="MUnique">
+﻿// <copyright file="AntiCheatConfiguration.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -70,4 +70,13 @@ public class AntiCheatConfiguration
 
     /// <summary>Gets or sets after how many seconds without any packet a logged-in connection gets closed.</summary>
     public int IdleNoPacketTimeoutSeconds { get; set; } = 600;
+
+    /// <summary>
+    /// Gets or sets the mode of the client build check. It only observes (logs and counts) in every mode; refusing
+    /// unknown builds is not implemented.
+    /// </summary>
+    public AntiCheatMode BuildMode { get; set; } = AntiCheatMode.Shadow;
+
+    /// <summary>Gets or sets the serials of the client builds which are allowed. Nothing is compared while the list is empty.</summary>
+    public List<string> AllowedBuildSerials { get; set; } = new();
 }
