@@ -173,4 +173,38 @@ public class ItemRequirementCalculationTest
         Assert.That(agilityValue.Item1, Is.EqualTo(Stats.TotalAgility));
         Assert.That(agilityValue.Item2, Is.EqualTo(requiredAgility));
     }
+
+    /// <summary>
+    /// Tests that orbs and crystals require what the client shows, calculated from the raw item data.
+    /// </summary>
+    /// <param name="attributeName">The attribute of the requirement (strength, agility or energy).</param>
+    /// <param name="rawValue">The raw value of the item data.</param>
+    /// <param name="dropLevel">The drop level.</param>
+    /// <param name="levelRequirement">The level requirement.</param>
+    /// <param name="expected">The expected requirement.</param>
+    [TestCase("energy", 100, 8, 0, 52)] // Orb of Healing
+    [TestCase("energy", 100, 13, 0, 72)] // Orb of Greater Defense
+    [TestCase("energy", 100, 18, 0, 92)] // Orb of Greater Damage
+    [TestCase("energy", 37, 100, 220, 345)] // Crystal of Recovery
+    [TestCase("energy", 20, 74, 0, 79)] // Scroll of FireBurst
+    [TestCase("strength", 320, 60, 0, 596)] // Orb of Fire Slash
+    [TestCase("agility", 258, 81, 0, 646)] // Orb of Ice Arrow
+    public void OrbRequirementsMatchClient(string attributeName, int rawValue, byte dropLevel, int levelRequirement, int expected)
+    {
+        var attribute = attributeName switch
+        {
+            "strength" => Stats.TotalStrength,
+            "agility" => Stats.TotalAgility,
+            _ => Stats.TotalEnergy,
+        };
+        var item = new Item { Definition = new ItemDefinition { Group = 12, DropLevel = dropLevel, Skill = new Skill() } };
+        item.Definition.Requirements.Add(new Persistence.BasicModel.AttributeRequirement { Attribute = Stats.Level, MinimumValue = levelRequirement });
+        var requirement = new Persistence.BasicModel.AttributeRequirement { Attribute = attribute, MinimumValue = rawValue };
+        item.Definition.Requirements.Add(requirement);
+
+        var result = item.GetRequirement(requirement);
+
+        Assert.That(result.Item1, Is.EqualTo(attribute));
+        Assert.That(result.Item2, Is.EqualTo(expected));
+    }
 }

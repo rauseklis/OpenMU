@@ -310,6 +310,11 @@ public static class ItemExtensions
     {
         requirement.ThrowNotInitializedProperty(requirement.Attribute is null, nameof(requirement.Attribute));
 
+        if (item.GetLearnableOrbRequirement(requirement) is { } orbRequirement)
+        {
+            return orbRequirement;
+        }
+
         if (RequirementAttributeMapping.TryGetValue(requirement.Attribute, out var totalAttribute))
         {
             if (!item.IsWearable())
@@ -461,6 +466,40 @@ public static class ItemExtensions
         var dropLevel = item.Definition!.CalculateDropLevel(item.IsAncient(), item.IsExcellent(), item.Level);
 
         return (multiplier * dropLevel * requirementValue / 100) + 20;
+    }
+
+    /// <summary>
+    /// Gets the requirement of an orb, crystal or similar skill item of group 12, as the client displays it.
+    /// The orb definitions contain the raw values of the item data, from which the client calculates the shown requirement:
+    /// strength and agility as <c>20 + value * dropLevel * 3 / 100</c>, energy as <c>20 + value * level * 4 / 100</c>
+    /// (using the drop level, if the item has no level requirement).
+    /// </summary>
+    /// <param name="item">The item.</param>
+    /// <param name="requirement">The requirement.</param>
+    /// <returns>The calculated requirement, or <c>null</c> if the item or the requirement is not affected.</returns>
+    private static (AttributeDefinition Attr, int Value)? GetLearnableOrbRequirement(this Item item, AttributeRequirement requirement)
+    {
+        if (item.Definition is not { Group: 12, Skill: not null } definition
+            || definition.MaximumItemLevel > 0
+            || requirement.Attribute is not { } attribute
+            || requirement.MinimumValue <= 0)
+        {
+            return null;
+        }
+
+        if (attribute == Stats.TotalStrength || attribute == Stats.TotalAgility)
+        {
+            return (attribute, 20 + (requirement.MinimumValue * definition.DropLevel * 3 / 100));
+        }
+
+        if (attribute == Stats.TotalEnergy)
+        {
+            var levelRequirement = definition.Requirements.FirstOrDefault(r => r.Attribute == Stats.Level)?.MinimumValue ?? 0;
+            var level = levelRequirement > 0 ? levelRequirement : definition.DropLevel;
+            return (attribute, 20 + (requirement.MinimumValue * level * 4 / 100));
+        }
+
+        return null;
     }
 
     private static int CalculateBookEnergyRequirement(this Item item, int energyRequirementValue)
