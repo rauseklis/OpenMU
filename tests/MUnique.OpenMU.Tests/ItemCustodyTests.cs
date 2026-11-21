@@ -9,6 +9,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Moq;
+using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.DataModel.Configuration.Items;
 using MUnique.OpenMU.DataModel.Entities;
@@ -138,6 +139,63 @@ public class ItemCustodyTests
         var e = recorder.Events.Single();
         Assert.That(e.Kind, Is.EqualTo(CustodyEventKind.ItemPickedUp));
         Assert.That(e.ToName, Is.AnyOf(player.Name, other.Name));
+    }
+
+    /// <summary>The zen of a finished trade is reported once per direction, with the amount.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task ZenOfAFinishedTradeIsReportedAsync()
+    {
+        var trader1 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var trader2 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var recorder = new Recorder();
+        trader1.GameContext.PlugInManager.RegisterPlugInAtPlugInPoint<ICustodyEventPlugIn>(recorder);
+        trader2.GameContext.PlugInManager.RegisterPlugInAtPlugInPoint<ICustodyEventPlugIn>(recorder);
+        trader1.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        trader2.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        trader1.Money = 1000;
+        trader2.Money = 500;
+        await new MUnique.OpenMU.GameLogic.PlayerActions.Trade.TradeRequestAction().RequestTradeAsync(trader1, trader2).ConfigureAwait(false);
+        await new MUnique.OpenMU.GameLogic.PlayerActions.Trade.TradeAcceptAction().HandleTradeAcceptAsync(trader2, true).ConfigureAwait(false);
+        await new MUnique.OpenMU.GameLogic.PlayerActions.Trade.TradeMoneyAction().TradeMoneyAsync(trader1, 300).ConfigureAwait(false);
+
+        var button = new MUnique.OpenMU.GameLogic.PlayerActions.Trade.TradeButtonAction();
+        await button.TradeButtonChangedAsync(trader1, MUnique.OpenMU.GameLogic.Views.Trade.TradeButtonState.Checked).ConfigureAwait(false);
+        await button.TradeButtonChangedAsync(trader2, MUnique.OpenMU.GameLogic.Views.Trade.TradeButtonState.Checked).ConfigureAwait(false);
+
+        var zen = recorder.Events.Where(e => e.Kind == CustodyEventKind.ZenTraded).ToList();
+        Assert.That(zen, Has.Count.EqualTo(1), "only the direction with zen is reported");
+        Assert.That(zen[0].Amount, Is.EqualTo(300));
+        Assert.That(zen[0].FromName, Is.EqualTo(trader1.Name));
+        Assert.That(zen[0].ToName, Is.EqualTo(trader2.Name));
+    }
+
+    /// <summary>A sale through a personal store reports the zen from the buyer to the seller.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task ZenOfAStoreSaleIsReportedAsync()
+    {
+        var buyer = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var seller = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var recorder = new Recorder();
+        buyer.GameContext.PlugInManager.RegisterPlugInAtPlugInPoint<ICustodyEventPlugIn>(recorder);
+        buyer.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        seller.GameContext.Configuration.MaximumInventoryMoney = int.MaxValue;
+        buyer.Money = 1000;
+        seller.Money = 500;
+        var item = NewPersistableItem("Helm", 1);
+        item.Definition!.IsPersonalStoreSellable = true;
+        item.StorePrice = 300;
+        await seller.ShopStorage!.AddItemAsync((byte)InventoryConstants.FirstStoreItemSlotIndex, item).ConfigureAwait(false);
+        seller.ShopStorage.StoreOpen = true;
+
+        await new MUnique.OpenMU.GameLogic.PlayerActions.PlayerStore.BuyRequestAction().BuyItemAsync(buyer, seller, (byte)InventoryConstants.FirstStoreItemSlotIndex).ConfigureAwait(false);
+
+        var zen = recorder.Events.Single(e => e.Kind == CustodyEventKind.ZenTraded);
+        Assert.That(zen.Amount, Is.EqualTo(300));
+        Assert.That(zen.FromName, Is.EqualTo(buyer.Name));
+        Assert.That(zen.ToName, Is.EqualTo(seller.Name));
+        Assert.That(zen.ItemName, Is.EqualTo("Helm"));
     }
 
     /// <summary>A consumer which throws changes nothing and the failure is visible.</summary>

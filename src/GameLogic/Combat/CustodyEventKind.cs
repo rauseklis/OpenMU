@@ -35,4 +35,7 @@ public enum CustodyEventKind
 
     /// <summary>A staff member created an item with a command.</summary>
     ItemCreatedByStaff,
+
+    /// <summary>Zen moved from one player to another through a finished trade or a sale in a personal store.</summary>
+    ZenTraded,
 }

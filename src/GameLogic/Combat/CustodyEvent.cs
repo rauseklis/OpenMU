@@ -17,6 +17,7 @@ namespace MUnique.OpenMU.GameLogic.Combat;
 /// <param name="FromName">The name of the giver, of the merchant or of the monster.</param>
 /// <param name="ToCharacterId">The character which received the item (none when a merchant received it).</param>
 /// <param name="ToName">The name of the receiver, or of the merchant.</param>
+/// <param name="Amount">The amount of zen for <see cref="CustodyEventKind.ZenTraded"/>; zero for the other kinds.</param>
 public sealed record CustodyEvent(
     CustodyEventKind Kind,
     DateTime UtcTime,
@@ -26,4 +27,5 @@ public sealed record CustodyEvent(
     Guid? FromCharacterId,
     string FromName,
     Guid? ToCharacterId,
-    string ToName);
+    string ToName,
+    long Amount = 0);

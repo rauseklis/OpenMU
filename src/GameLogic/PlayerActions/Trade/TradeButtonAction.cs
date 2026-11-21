@@ -86,6 +86,14 @@ public class TradeButtonAction : BaseTradeAction
         }
     }
 
+    private static void ReportZen(ITrader from, ITrader to, int amount)
+    {
+        if (amount > 0)
+        {
+            PlugIns.ItemCustodyPlugIn.Report(from.GameContext, Combat.CustodyEventKind.ZenTraded, null, (from as Player)?.SelectedCharacter, from.Name, (to as Player)?.SelectedCharacter, to.Name, amount);
+        }
+    }
+
     private static bool CanReceiveMoney(ITrader receiver, ITrader sender)
     {
         var maximum = receiver.GameContext.Configuration?.MaximumInventoryMoney ?? int.MaxValue;
@@ -162,6 +170,8 @@ public class TradeButtonAction : BaseTradeAction
             this.ResetTradeState(trader);
             this.CallPlugIn(traderItems, trader, tradingPartner);
             this.CallPlugIn(tradePartnerItems, tradingPartner, trader);
+            ReportZen(trader, tradingPartner, trader.TradingMoney);
+            ReportZen(tradingPartner, trader, tradingPartner.TradingMoney);
             FinishedTrades.Add(1);
             return TradeResult.Success;
         }

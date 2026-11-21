@@ -51,12 +51,13 @@ public sealed class ItemCustodyPlugIn : IItemTradedToOtherPlayerPlugIn, IItemSol
     /// <param name="fromName">The name of the giver.</param>
     /// <param name="to">The character which received the item, if any.</param>
     /// <param name="toName">The name of the receiver.</param>
-    internal static void Report(IGameContext gameContext, CustodyEventKind kind, Item item, Character? from, string fromName, Character? to, string toName)
+    /// <param name="amount">The amount of zen, for zen events.</param>
+    internal static void Report(IGameContext gameContext, CustodyEventKind kind, Item? item, Character? from, string fromName, Character? to, string toName, long amount = 0)
     {
-        Publish(gameContext, kind, item, from, fromName, to, toName);
+        Publish(gameContext, kind, item, from, fromName, to, toName, amount);
     }
 
-    private static void Publish(IGameContext gameContext, CustodyEventKind kind, Item item, Character? from, string fromName, Character? to, string toName)
+    private static void Publish(IGameContext gameContext, CustodyEventKind kind, Item? item, Character? from, string fromName, Character? to, string toName, long amount = 0)
     {
         CustodyEventPublisher.Publish(
             gameContext.PlugInManager,
@@ -64,11 +65,12 @@ public sealed class ItemCustodyPlugIn : IItemTradedToOtherPlayerPlugIn, IItemSol
                 kind,
                 DateTime.UtcNow,
                 (item as IIdentifiable)?.Id,
-                item.Definition?.Name.ValueInNeutralLanguage ?? string.Empty,
-                item.Level,
+                item?.Definition?.Name.ValueInNeutralLanguage ?? string.Empty,
+                item?.Level ?? 0,
                 (from as IIdentifiable)?.Id,
                 fromName,
                 (to as IIdentifiable)?.Id,
-                toName));
+                toName,
+                amount));
     }
 }
