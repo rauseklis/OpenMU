@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using MUnique.OpenMU.DataModel;
 using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.GameLogic;
+using MUnique.OpenMU.GameLogic.Premium;
 using MUnique.OpenMU.GameLogic.Views.Inventory;
 using MUnique.OpenMU.Persistence.CashShop;
 
@@ -43,7 +44,15 @@ internal static class CashShopItemDelivery
         item.Level = stored.ItemLevel;
         if (stored.RentalDurationSeconds is > 0)
         {
-            item.RentalExpiresAt = DateTimeOffset.UtcNow.AddSeconds(stored.RentalDurationSeconds.Value);
+            if (PremiumBuffCatalog.Find(definition.Group, definition.Number) is not null)
+            {
+                // A bought seal or scroll does not expire in the inventory; the purchased time starts when it is used.
+                PremiumItemDuration.Set(item, stored.RentalDurationSeconds.Value);
+            }
+            else
+            {
+                item.RentalExpiresAt = DateTimeOffset.UtcNow.AddSeconds(stored.RentalDurationSeconds.Value);
+            }
         }
         item.Durability = item.IsStackable() ? stored.Quantity : definition.Durability;
 

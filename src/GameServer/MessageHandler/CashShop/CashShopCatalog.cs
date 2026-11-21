@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using MUnique.OpenMU.GameLogic.Premium;
 using MUnique.OpenMU.Persistence.CashShop;
 
 /// <summary>
@@ -162,9 +163,10 @@ internal sealed class CashShopCatalog
         }
 
         var isPet = package.Group == 13 && package.Number is 0 or 1 or 2 or 3 or 4 or 5 or 37 or 64 or 65 or 67 or 80 or 106 or 123;
-        if (isPet && option.DurationSeconds is not > 0)
+        var isTimedBuff = PremiumBuffCatalog.Find(package.Group, (short)package.Number) is not null;
+        if ((isPet || isTimedBuff) && option.DurationSeconds is not > 0)
         {
-            return false; // Never charge for a new pet rental with an unknown duration.
+            return false; // Never charge for a new pet rental or a seal/scroll with an unknown duration.
         }
 
         offer = new CashShopOffer(
@@ -177,7 +179,7 @@ internal sealed class CashShopCatalog
             package.Number,
             package.Level,
             option.Quantity,
-            isPet ? option.DurationSeconds : null);
+            isPet || isTimedBuff ? option.DurationSeconds : null);
         return true;
     }
 

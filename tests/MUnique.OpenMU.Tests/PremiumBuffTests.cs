@@ -7,6 +7,8 @@ using MUnique.OpenMU.DataModel.Entities;
 using MUnique.OpenMU.GameLogic;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.Premium;
+using MUnique.OpenMU.GameServer.MessageHandler.CashShop;
+using MUnique.OpenMU.Persistence.CashShop;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix.Items;
 using MUnique.OpenMU.Persistence.InMemory;
 
@@ -190,6 +192,54 @@ public class PremiumBuffTests
         Assert.That(await handler.ConsumeItemAsync(player, item, null, default).ConfigureAwait(false), Is.False);
         Assert.That(PremiumBuffService.ReadExpiry(player, 40), Is.EqualTo(expiry));
         await PremiumBuffService.CancelAsync(player, 40).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task BoughtDurationIsUsedWhenTheItemIsConsumedAsync()
+    {
+        var player = await CreatePlayerAsync().ConfigureAwait(false);
+        var handler = new MUnique.OpenMU.GameLogic.PlayerActions.ItemConsumeActions.ApplyMagicEffectConsumeHandlerPlugIn();
+        var definition = player.GameContext.Configuration.Items.Single(item => item.Group == 13 && item.Number == 43);
+
+        var bought = new Item { Definition = definition, Durability = 1 };
+        PremiumItemDuration.Set(bought, 7 * 86400);
+        Assert.That(await handler.ConsumeItemAsync(player, bought, null, default).ConfigureAwait(false), Is.True);
+        var remaining = PremiumBuffService.ReadExpiry(player, 40)!.Value - DateTimeOffset.UtcNow;
+        Assert.That(remaining, Is.InRange(TimeSpan.FromDays(7) - TimeSpan.FromMinutes(1), TimeSpan.FromDays(7)));
+
+        var older = new Item { Definition = definition, Durability = 1 };
+        Assert.That(await handler.ConsumeItemAsync(player, older, null, default).ConfigureAwait(false), Is.True);
+        remaining = PremiumBuffService.ReadExpiry(player, 40)!.Value - DateTimeOffset.UtcNow;
+        Assert.That(remaining, Is.InRange(TimeSpan.FromMinutes(29), TimeSpan.FromMinutes(30)), "an item without a bought duration keeps the default");
+        await PremiumBuffService.CancelAsync(player, 40).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task EverySealScrollElixirAndTalismanUsesItsBoughtDurationAsync()
+    {
+        var handler = new MUnique.OpenMU.GameLogic.PlayerActions.ItemConsumeActions.ApplyMagicEffectConsumeHandlerPlugIn();
+        foreach (var entry in PremiumBuffCatalog.Items)
+        {
+            var player = await CreatePlayerAsync().ConfigureAwait(false);
+            var definition = player.GameContext.Configuration.Items.Single(item => item.Group == entry.Group && item.Number == entry.Number);
+            var item = new Item { Definition = definition, Durability = 1 };
+            PremiumItemDuration.Set(item, 3 * 86400);
+            Assert.That(await handler.ConsumeItemAsync(player, item, null, default).ConfigureAwait(false), Is.True, entry.Name);
+            var remaining = PremiumBuffService.ReadExpiry(player, entry.Effect)!.Value - DateTimeOffset.UtcNow;
+            Assert.That(remaining, Is.InRange(TimeSpan.FromDays(3) - TimeSpan.FromMinutes(1), TimeSpan.FromDays(3)), entry.Name);
+            Assert.That(player.MagicEffectList.ContainsEffect(entry.Effect), Is.True, entry.Name);
+            await PremiumBuffService.CancelAsync(player, entry.Effect).ConfigureAwait(false);
+        }
+    }
+
+    [Test]
+    public async Task DeliveredSealKeepsBoughtDurationAndDoesNotExpireInInventoryAsync()
+    {
+        var player = await CreatePlayerAsync().ConfigureAwait(false);
+        Assert.That(await CashShopItemDelivery.TryDeliverAsync(player, new CashShopStorageItem(1, 124, 9, 11, 13, 43, 0, 1, 604800)).ConfigureAwait(false), Is.True);
+        var seal = player.Inventory!.Items.Single(item => item.Definition?.Number == 43);
+        Assert.That(PremiumItemDuration.Get(seal), Is.EqualTo(TimeSpan.FromDays(7)));
+        Assert.That(seal.RentalExpiresAt, Is.Null);
     }
 
     [Test]

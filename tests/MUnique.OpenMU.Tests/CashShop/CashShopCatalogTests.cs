@@ -61,6 +61,71 @@ public class CashShopCatalogTests
         Assert.That(catalog.TryResolve(122, 22, 999999, out _), Is.False, "unknown price option");
     }
 
+    /// <summary>A bought seal or scroll carries the duration of the chosen price option (1, 3, 7, 30 days), not the item's default.</summary>
+    [Test]
+    public void SealsAndScrollsCarryTheBoughtDuration()
+    {
+        var catalog = CashShopCatalog.Default;
+        var sealDurations = new[] { 13, 14, 15, 16 }.Select(price =>
+        {
+            Assert.That(catalog.TryResolve(122, 22, price, out var offer), Is.True);
+            return offer.RentalDurationSeconds;
+        }).ToArray();
+        Assert.That(sealDurations, Is.EqualTo(new int?[] { 86400, 259200, 604800, 2592000 }));
+
+        foreach (var line in ReadResource("IBSPackage.txt").Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var f = line.TrimEnd('\r').Split('@');
+            Assert.That(catalog.TryResolve(int.Parse(f[2]), int.Parse(f[0]), 0, out var offer), Is.True);
+            if (GameLogic.Premium.PremiumBuffCatalog.Find(offer.ItemGroup, offer.ItemNumber) is not null)
+            {
+                Assert.That(offer.RentalDurationSeconds, Is.GreaterThan(0), f[3]);
+            }
+        }
+    }
+
+    /// <summary>Every price option of every seal and scroll package (all categories) resolves to exactly the duration the shop shows for it.</summary>
+    [Test]
+    public void EveryPriceOptionOfEverySealAndScrollKeepsItsShownDuration()
+    {
+        var shown = new Dictionary<(string Product, int PriceSeq), int>();
+        foreach (var line in ReadResource("IBSProduct.txt").Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var f = line.TrimEnd('\r').Split('@');
+            if (f.Length > 14 && f[14] == "10" && f[4] == "Sec.")
+            {
+                shown[(f[0], int.Parse(f[6]))] = int.Parse(f[3]);
+            }
+        }
+
+        var checkedOptions = 0;
+        var items = new HashSet<short>();
+        foreach (var line in ReadResource("IBSPackage.txt").Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var f = line.TrimEnd('\r').Split('@');
+            Assert.That(CashShopCatalog.Default.TryResolve(int.Parse(f[2]), int.Parse(f[0]), 0, out var defaultOffer), Is.True);
+            if (GameLogic.Premium.PremiumBuffCatalog.Find(defaultOffer.ItemGroup, defaultOffer.ItemNumber) is null)
+            {
+                continue;
+            }
+
+            items.Add(defaultOffer.ItemNumber);
+            var product = f[19].Split('|', StringSplitOptions.RemoveEmptyEntries).Single();
+            var options = shown.Where(s => s.Key.Product == product).ToList();
+            Assert.That(options, Is.Not.Empty, f[3]);
+            foreach (var option in options)
+            {
+                Assert.That(CashShopCatalog.Default.TryResolve(int.Parse(f[2]), int.Parse(f[0]), option.Key.PriceSeq, out var offer), Is.True, f[3]);
+                Assert.That(offer.RentalDurationSeconds, Is.EqualTo(option.Value), $"{f[3]} price option {option.Key.PriceSeq}");
+                checkedOptions++;
+            }
+        }
+
+        TestContext.Out.WriteLine($"{items.Count} different items, {checkedOptions} price options checked");
+        Assert.That(items, Has.Count.GreaterThanOrEqualTo(14));
+        Assert.That(checkedOptions, Is.GreaterThan(50));
+    }
+
     /// <summary>Every package delivers exactly one item per purchase (stacking is only supported for stackable items).</summary>
     [Test]
     public void EveryPackageDeliversOneItem()
