@@ -51,6 +51,9 @@ public static class AntiCheatState
     /// <summary>Gets the counter of observed client builds which are not in the list of allowed builds.</summary>
     public static Counter<int> BuildsUnknown { get; } = AntiCheatMeter.CreateCounter<int>("build_unknown");
 
+    /// <summary>Gets the counter of melee hits from beyond the allowed reach.</summary>
+    public static Counter<int> HitsBeyondReach { get; } = AntiCheatMeter.CreateCounter<int>("hit_beyond_reach");
+
     /// <summary>Gets the counter of received pings.</summary>
     public static Counter<int> PingsReceived { get; } = AntiCheatMeter.CreateCounter<int>("ping_received");
 
