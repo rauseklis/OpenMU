@@ -86,6 +86,12 @@ public class TradeButtonAction : BaseTradeAction
         }
     }
 
+    private static bool CanReceiveMoney(ITrader receiver, ITrader sender)
+    {
+        var maximum = receiver.GameContext.Configuration?.MaximumInventoryMoney ?? int.MaxValue;
+        return (long)receiver.Money + sender.TradingMoney <= maximum;
+    }
+
     private static async ValueTask<bool> TryAddItemsOfTradingPartnerAsync(ITrader trader)
     {
         if (trader.TradingPartner?.TemporaryStorage?.Items.Any() ?? false)
@@ -120,6 +126,15 @@ public class TradeButtonAction : BaseTradeAction
         if (!traderItemsAreTradable || !partnerItemsAreTradable)
         {
             return TradeResult.Cancelled;
+        }
+
+        // Checked before anything is moved: adding the zen of the partner must not exceed the limit of the receiver
+        // (and must never wrap around the range of the number). Both traders are told, like for a full inventory.
+        if (!CanReceiveMoney(trader, tradingPartner) || !CanReceiveMoney(tradingPartner, trader))
+        {
+            await this.SendMessageAsync(trader, nameof(PlayerMessage.InventoryFull)).ConfigureAwait(false);
+            await this.SendMessageAsync(tradingPartner, nameof(PlayerMessage.InventoryFull)).ConfigureAwait(false);
+            return TradeResult.FailedByFullInventory;
         }
 
         this.AttachItemsToPersistenceContext(traderItems, itemContext);

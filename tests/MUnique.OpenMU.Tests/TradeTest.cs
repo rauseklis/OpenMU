@@ -289,6 +289,34 @@ public class TradeTest
     }
 
     /// <summary>
+    /// Tests that a trade which would push the zen of the receiver over the limit (and over the range of the
+    /// number) does not finish: nobody loses zen, the receiver's balance never wraps around.
+    /// </summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async ValueTask TradeThatWouldOverflowReceiverZenIsCancelledAsync()
+    {
+        var trader1 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var trader2 = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        trader1.GameContext.Configuration.MaximumInventoryMoney = 2_000_000_000;
+        trader2.GameContext.Configuration.MaximumInventoryMoney = 2_000_000_000;
+        trader1.Money = 400_000_000;
+        trader2.Money = 1_900_000_000;
+        await new TradeRequestAction().RequestTradeAsync(trader1, trader2).ConfigureAwait(false);
+        await new TradeAcceptAction().HandleTradeAcceptAsync(trader2, true).ConfigureAwait(false);
+        await new TradeMoneyAction().TradeMoneyAsync(trader1, 300_000_000).ConfigureAwait(false);
+
+        var tradeButtonHandler = new TradeButtonAction();
+        await tradeButtonHandler.TradeButtonChangedAsync(trader1, TradeButtonState.Checked).ConfigureAwait(false);
+        await tradeButtonHandler.TradeButtonChangedAsync(trader2, TradeButtonState.Checked).ConfigureAwait(false);
+
+        Assert.That(trader2.Money, Is.EqualTo(1_900_000_000), "the receiver keeps exactly what they had");
+        Assert.That(trader1.Money, Is.EqualTo(400_000_000), "the sender gets the offered zen back");
+        Assert.That(trader1.PlayerState.CurrentState, Is.EqualTo(PlayerState.EnteredWorld));
+        Assert.That(trader2.PlayerState.CurrentState, Is.EqualTo(PlayerState.EnteredWorld));
+    }
+
+    /// <summary>
     /// Tests that both traders are saved right after a finished trade, with the money already moved, so that the
     /// items (which are stored separately) and the payment do not drift apart if the server stops soon afterwards.
     /// </summary>
