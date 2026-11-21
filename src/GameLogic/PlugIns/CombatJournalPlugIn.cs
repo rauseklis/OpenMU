@@ -17,7 +17,7 @@ using MUnique.OpenMU.PlugIns;
 [PlugIn]
 [Display(Name = "Combat event journal", Description = "Writes resolved hits, ended lives and experience settlements into a hash-chained journal file. Off until enabled and given a folder.")]
 [Guid("3C8D5E21-9A47-4B16-8F02-6D1E7B4A9C53")]
-public sealed class CombatJournalPlugIn : IFeaturePlugIn, ISupportCustomConfiguration<CombatJournalConfiguration>, ISupportDefaultCustomConfiguration, ICombatEventPlugIn, ICustodyEventPlugIn, IDisposable
+public sealed class CombatJournalPlugIn : IFeaturePlugIn, ISupportCustomConfiguration<CombatJournalConfiguration>, ISupportDefaultCustomConfiguration, ICombatEventPlugIn, ICustodyEventPlugIn, ISessionEventPlugIn, IDisposable
 {
     private readonly object _sync = new();
     private CombatJournal? _journal;
@@ -61,6 +61,25 @@ public sealed class CombatJournalPlugIn : IFeaturePlugIn, ISupportCustomConfigur
         try
         {
             this.GetJournal(configuration.Directory).Append(custodyEvent);
+        }
+        catch (Exception ex)
+        {
+            CombatEventHealth.RecordFailure(ex);
+        }
+    }
+
+    /// <inheritdoc />
+    public void OnSessionEvent(SessionEvent sessionEvent)
+    {
+        var configuration = this.Configuration;
+        if (configuration is not { Enabled: true } || string.IsNullOrWhiteSpace(configuration.Directory))
+        {
+            return;
+        }
+
+        try
+        {
+            this.GetJournal(configuration.Directory).Append(sessionEvent);
         }
         catch (Exception ex)
         {

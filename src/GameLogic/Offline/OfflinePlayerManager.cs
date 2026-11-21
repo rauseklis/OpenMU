@@ -1,4 +1,4 @@
-// <copyright file="OfflinePlayerManager.cs" company="MUnique">
+﻿// <copyright file="OfflinePlayerManager.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -62,6 +62,7 @@ public sealed class OfflinePlayerManager
                 return false;
             }
 
+            Combat.SessionEventPublisher.Publish(sentinel, Combat.SessionEventKind.OfflineStarted);
             return true;
         }
         catch
@@ -83,6 +84,7 @@ public sealed class OfflinePlayerManager
             return;
         }
 
+        Combat.SessionEventPublisher.Publish(offlinePlayer, Combat.SessionEventKind.OfflineStopped);
         try
         {
             await offlinePlayer.StopAsync().ConfigureAwait(false);

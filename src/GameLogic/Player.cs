@@ -315,6 +315,11 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     /// </summary>
     public NonPlayerCharacter? OpenedNpc { get; set; }
 
+    /// <summary>
+    /// Gets or sets the build identifier (serial) which the client sent with its login, if known.
+    /// </summary>
+    public string? ClientBuild { get; set; }
+
     /// <inheritdoc/>
     public StateMachine PlayerState { get; } = new(GameLogic.PlayerState.Initial);
 
@@ -1001,6 +1006,7 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         await this.CloseTradeIfNeededAsync().ConfigureAwait(false);
         if (await this.PlayerState.TryAdvanceToAsync(GameLogic.PlayerState.Disconnected).ConfigureAwait(false))
         {
+            Combat.SessionEventPublisher.Publish(this, Combat.SessionEventKind.Disconnected);
             try
             {
                 try
@@ -1840,6 +1846,8 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
         {
             throw new InvalidOperationException($"The player has no selected character.");
         }
+
+        Combat.SessionEventPublisher.Publish(this, Combat.SessionEventKind.EnteredWorld);
 
         if (selectedCharacter.CharacterClass is null)
         {
