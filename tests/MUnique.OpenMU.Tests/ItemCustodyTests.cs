@@ -102,6 +102,44 @@ public class ItemCustodyTests
         Assert.That(this._recorder.Events[2].ToName, Is.EqualTo(player.Name));
     }
 
+    /// <summary>Dropping an item on the ground is reported with the dropper.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task DropOnTheGroundIsReportedAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var recorder = new Recorder();
+        player.GameContext.PlugInManager.RegisterPlugInAtPlugInPoint<ICustodyEventPlugIn>(recorder);
+        var item = NewPersistableItem("Axe", 2);
+        await player.Inventory!.AddItemAsync(20, item).ConfigureAwait(false);
+
+        await new MUnique.OpenMU.GameLogic.PlayerActions.Items.DropItemAction().DropItemAsync(player, 20, new MUnique.OpenMU.Pathfinding.Point(10, 10)).ConfigureAwait(false);
+
+        var e = recorder.Events.Single();
+        Assert.That(e.Kind, Is.EqualTo(CustodyEventKind.ItemDroppedByPlayer));
+        Assert.That(e.FromName, Is.EqualTo(player.Name));
+        Assert.That(e.ItemName, Is.EqualTo("Axe"));
+    }
+
+    /// <summary>Picking an item up from the ground is reported once with the receiver, also when it happens twice at the same time.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task PickupFromTheGroundIsReportedOnceAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var other = await PlayerTestHelper.CreatePlayerAsync(player.GameContext).ConfigureAwait(false);
+        var recorder = new Recorder();
+        player.GameContext.PlugInManager.RegisterPlugInAtPlugInPoint<ICustodyEventPlugIn>(recorder);
+        var drop = new DroppedItem(NewPersistableItem("Ring", 0), new MUnique.OpenMU.Pathfinding.Point(100, 100), player.CurrentMap!, null, null);
+
+        var results = await Task.WhenAll(drop.TryPickUpByAsync(player).AsTask(), drop.TryPickUpByAsync(other).AsTask()).ConfigureAwait(false);
+
+        Assert.That(results.Count(r => r.Success), Is.EqualTo(1), "one of two simultaneous pickups wins");
+        var e = recorder.Events.Single();
+        Assert.That(e.Kind, Is.EqualTo(CustodyEventKind.ItemPickedUp));
+        Assert.That(e.ToName, Is.AnyOf(player.Name, other.Name));
+    }
+
     /// <summary>A consumer which throws changes nothing and the failure is visible.</summary>
     /// <returns>The task.</returns>
     [Test]
@@ -135,6 +173,16 @@ public class ItemCustodyTests
             Assert.That(line.Hash, Is.EqualTo(CombatJournal.ComputeHash(previous, line.Sequence, line.UtcTime, line.Kind, line.Json)));
             previous = line.Hash;
         }
+    }
+
+    private static Item NewPersistableItem(string name, byte level)
+    {
+        return new Item
+        {
+            Definition = new ItemDefinition { Width = 1, Height = 1, Name = new MUnique.OpenMU.Interfaces.LocalizedString(name) },
+            Level = level,
+            Durability = 1,
+        };
     }
 
     private static Item NewItem(string name, byte level)

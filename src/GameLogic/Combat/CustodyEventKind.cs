@@ -23,4 +23,16 @@ public enum CustodyEventKind
 
     /// <summary>A monster issued an item which a killer may pick up.</summary>
     ItemIssuedByMonster,
+
+    /// <summary>A player dropped an item on the ground.</summary>
+    ItemDroppedByPlayer,
+
+    /// <summary>A player picked an item up from the ground into the inventory (or stacked it on an item).</summary>
+    ItemPickedUp,
+
+    /// <summary>A player picked an item up from the ground and it was credited to the jewel bank.</summary>
+    ItemPickedIntoBank,
+
+    /// <summary>A staff member created an item with a command.</summary>
+    ItemCreatedByStaff,
 }
