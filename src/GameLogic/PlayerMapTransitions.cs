@@ -151,6 +151,7 @@ internal sealed class PlayerMapTransitions
             return;
         }
 
+        this.ReleaseOpenedNpc();
         await this.PlaceAtGateAsync(gate).ConfigureAwait(false);
         player.CurrentMap = null; // Will be set again, when the client acknowledged the map change by F3 12 packet.
 
@@ -189,6 +190,7 @@ internal sealed class PlayerMapTransitions
 
         player.ThrowNotInitializedProperty(player.SelectedCharacter is null, nameof(player.SelectedCharacter));
         player.SelectedCharacter.ThrowNotInitializedProperty(player.SelectedCharacter.CurrentMap is null, nameof(player.SelectedCharacter.CurrentMap));
+        this.ReleaseOpenedNpc();
         await this.PlaceAtGateAsync(gate).ConfigureAwait(false);
         player.ClearRespawnAfterDeathToken();
 
@@ -303,6 +305,16 @@ internal sealed class PlayerMapTransitions
         return targetMap?.SafeZoneSpawnGate
                ?? spawnTargetMapDefinition.GetSafezoneGate()
                ?? throw new InvalidOperationException($"Game map {spawnTargetMapDefinition} has no spawn gate.");
+    }
+
+    /// <summary>
+    /// Releases the NPC window of the player. A window must not survive a warp: the NPC (a shop, the vault, a
+    /// crafting machine) would stay usable from the new place.
+    /// </summary>
+    private void ReleaseOpenedNpc()
+    {
+        this._player.OpenedNpc = null;
+        this._player.Vault = null;
     }
 
     private async ValueTask<bool> TryRemoveFromCurrentMapAsync(bool willRespawnOnSameMap)
