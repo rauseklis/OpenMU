@@ -1,9 +1,10 @@
-// <copyright file="HitAction.cs" company="MUnique">
+﻿// <copyright file="HitAction.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
 namespace MUnique.OpenMU.GameLogic.PlayerActions;
 
+using MUnique.OpenMU.GameLogic.AntiCheat;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.GameLogic.Views.World;
@@ -68,6 +69,11 @@ public class HitAction
                 // Target out of range
                 return;
             }
+        }
+
+        if (ReachCheck.ShouldRefuse(AntiCheatState.GetConfiguration(player.GameContext), player.Logger, player.Account?.LoginName ?? string.Empty, player.GetDistanceTo(target)))
+        {
+            return;
         }
 
         player.Rotation = lookingDirection;
