@@ -99,6 +99,65 @@ public class CombatJournalTests
         Assert.That(CombatEventHealth.FailureCount, Is.EqualTo(1));
     }
 
+    /// <summary>A journal which grows beyond its limit continues in a new file, and the hash chain runs through all files.</summary>
+    [Test]
+    public void JournalRotatesAndTheChainRunsThroughAllFiles()
+    {
+        var path = this.JournalFile;
+        using (var journal = new CombatJournal(path, 1200))
+        {
+            for (var i = 0; i < 12; i++)
+            {
+                journal.Append(NewEvent(CombatEventKind.HitApplied));
+            }
+        }
+
+        var files = CombatJournal.ArchivedFiles(path).Concat(File.Exists(path) ? new[] { path } : Array.Empty<string>()).ToList();
+        Assert.That(files.Count, Is.GreaterThan(2), "the journal was split into several files");
+        var lines = files.SelectMany(ReadLines).ToList();
+        Assert.That(lines.Select(l => l.Sequence), Is.EqualTo(Enumerable.Range(1, 12).Select(i => (long)i)));
+        AssertChain(lines);
+    }
+
+    /// <summary>After a restart the chain continues, also when the last entry just caused a rotation (no current file exists).</summary>
+    [Test]
+    public void ChainContinuesAfterARestartFollowingARotation()
+    {
+        var path = this.JournalFile;
+        using (var first = new CombatJournal(path, 600))
+        {
+            first.Append(NewEvent(CombatEventKind.HitApplied));
+            first.Append(NewEvent(CombatEventKind.HitApplied));
+        }
+
+        Assert.That(File.Exists(path), Is.False, "precondition: the second entry rotated the file away");
+        using (var second = new CombatJournal(path, 600))
+        {
+            second.Append(NewEvent(CombatEventKind.LifeEnded));
+        }
+
+        var files = CombatJournal.ArchivedFiles(path).Concat(File.Exists(path) ? new[] { path } : Array.Empty<string>()).ToList();
+        var lines = files.SelectMany(ReadLines).OrderBy(l => l.Sequence).ToList();
+        Assert.That(lines.Select(l => l.Sequence), Is.EqualTo(new long[] { 1, 2, 3 }));
+        AssertChain(lines);
+    }
+
+    /// <summary>Without a limit nothing is rotated.</summary>
+    [Test]
+    public void WithoutALimitOneFileIsKept()
+    {
+        using (var journal = new CombatJournal(this.JournalFile, 0))
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                journal.Append(NewEvent(CombatEventKind.HitApplied));
+            }
+        }
+
+        Assert.That(CombatJournal.ArchivedFiles(this.JournalFile), Is.Empty);
+        Assert.That(ReadLines(this.JournalFile), Has.Count.EqualTo(20));
+    }
+
     private static CombatJournalPlugIn Enabled(string directory)
         => new() { Configuration = new CombatJournalConfiguration { Enabled = true, Directory = directory } };
 
