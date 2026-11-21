@@ -63,6 +63,9 @@ public static class AntiCheatState
     /// <summary>Gets the counter of connections which exceeded the allowed failing packets per minute.</summary>
     public static Counter<int> PacketErrorLimitsExceeded { get; } = AntiCheatMeter.CreateCounter<int>("packet_error_limit_exceeded");
 
+    /// <summary>Gets the counter of NPC windows which were closed (or, in shadow mode, would have been) because the player moved away.</summary>
+    public static Counter<int> NpcWindowsOutOfReach { get; } = AntiCheatMeter.CreateCounter<int>("npc_window_out_of_reach");
+
     /// <summary>Gets the counter of received pings.</summary>
     public static Counter<int> PingsReceived { get; } = AntiCheatMeter.CreateCounter<int>("ping_received");
 

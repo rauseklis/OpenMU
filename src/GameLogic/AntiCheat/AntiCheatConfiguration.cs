@@ -98,6 +98,16 @@ public class AntiCheatConfiguration
     /// <summary>Gets or sets how many failing packets per minute and connection are written to the log in detail.</summary>
     public int PacketErrorDetailLogsPerMinute { get; set; } = 5;
 
+    /// <summary>
+    /// Gets or sets the mode of the reach check of NPC windows: the window of an NPC is closed when the player walks further
+    /// than <see cref="NpcReachMaximumDistance"/> away from it, and an NPC which is that far away can not be talked to.
+    /// Closing a window is no sanction, so this is enforced by default.
+    /// </summary>
+    public AntiCheatMode NpcReachMode { get; set; } = AntiCheatMode.Enforce;
+
+    /// <summary>Gets or sets the largest distance in tiles between the player and an NPC whose window is open.</summary>
+    public int NpcReachMaximumDistance { get; set; } = 12;
+
     /// <summary>Gets or sets the serials of the client builds which are allowed. Nothing is compared while the list is empty.</summary>
     public List<string> AllowedBuildSerials { get; set; } = new();
 }

@@ -1,9 +1,10 @@
-// <copyright file="PlayerMovement.cs" company="MUnique">
+﻿// <copyright file="PlayerMovement.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
 namespace MUnique.OpenMU.GameLogic;
 
+using MUnique.OpenMU.GameLogic.AntiCheat;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.GameLogic.Views.World;
@@ -133,6 +134,8 @@ internal sealed class PlayerMovement : IDisposable
 
         this._player.Logger.LogDebug("WalkToAsync: Player is walking to {0}", target);
 
+        await this.CloseWindowOfFarNpcAsync(currentMap, target).ConfigureAwait(false);
+
         var token = await this._walker.InitializeWalkToAsync(target, steps).ConfigureAwait(false);
         await this.MoveOnMapAsync(currentMap, target, MoveType.Walk).ConfigureAwait(false);
         await this._walker.StartWalkAsync(token).ConfigureAwait(false);
@@ -244,6 +247,45 @@ internal sealed class PlayerMovement : IDisposable
     /// <summary>
     /// Sends the current position back to the client, so that it can re-synchronize (rubberband).
     /// </summary>
+    /// <summary>
+    /// Closes the window of the opened NPC when the player walks away from it. Without this, a window stayed usable
+    /// (shop, vault, crafting) from any place the player walked to.
+    /// </summary>
+    /// <param name="currentMap">The map of the player.</param>
+    /// <param name="target">The place the player walks to.</param>
+    private async ValueTask CloseWindowOfFarNpcAsync(GameMap currentMap, Point target)
+    {
+        if (this._player.OpenedNpc is not { } npc)
+        {
+            return;
+        }
+
+        var configuration = AntiCheatState.GetConfiguration(this._player.GameContext);
+        if (configuration.NpcReachMode == AntiCheatMode.Off)
+        {
+            return;
+        }
+
+        var isFar = (npc.CurrentMap is { } npcMap && npcMap != currentMap) || npc.GetDistanceTo(target) > configuration.NpcReachMaximumDistance;
+        if (!isFar)
+        {
+            return;
+        }
+
+        AntiCheatState.NpcWindowsOutOfReach.Add(1);
+        this._player.Logger.LogInformation(
+            "[AC] rule=npc.reach mode={Mode} account={Account} npc={Npc} max={Max} action={Action}",
+            configuration.NpcReachMode,
+            AntiCheatState.HashForLog(this._player.Account?.LoginName ?? string.Empty),
+            npc.Definition.Designation,
+            configuration.NpcReachMaximumDistance,
+            configuration.NpcReachMode == AntiCheatMode.Enforce ? "close" : "allow");
+        if (configuration.NpcReachMode == AntiCheatMode.Enforce)
+        {
+            await new PlayerActions.CloseNpcDialogAction().CloseNpcDialogAsync(this._player).ConfigureAwait(false);
+        }
+    }
+
     private ValueTask ResynchronizeClientAsync()
     {
         return this._player.InvokeViewPlugInAsync<IObjectMovedPlugIn>(p => p.ObjectMovedAsync(this._player, MoveType.Instant));
