@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameLogic.PlayerActions.Items;
 
 using MUnique.OpenMU.GameLogic.AntiCheat;
+using MUnique.OpenMU.GameLogic.Combat;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.GameLogic.Views.Inventory;
 using MUnique.OpenMU.Pathfinding;
@@ -100,6 +101,7 @@ public class DropItemAction
         var wasItemPersisted = player.PersistenceContext.Detach(item);
         var droppedItem = new DroppedItem(item, target, player.CurrentMap!, player, owners, wasItemPersisted);
         await player.CurrentMap!.AddAsync(droppedItem).ConfigureAwait(false);
+        ItemCustodyPlugIn.Report(player.GameContext, CustodyEventKind.ItemDroppedByPlayer, item, player.SelectedCharacter, player.Name, null, "ground");
     }
 
     private async ValueTask RemoveItemFromInventoryAsync(Player player, Item item)

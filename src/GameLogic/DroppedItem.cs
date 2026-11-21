@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameLogic;
 
 using System.Threading;
+using MUnique.OpenMU.GameLogic.Combat;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.Pathfinding;
 using Nito.AsyncEx;
@@ -103,6 +104,17 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
     /// </remarks>
     public async ValueTask<(bool Success, Item? StackTarget)> TryPickUpByAsync(Player player)
     {
+        var result = await this.TryPickUpByCoreAsync(player).ConfigureAwait(false);
+        if (result.Success)
+        {
+            ItemCustodyPlugIn.Report(player.GameContext, CustodyEventKind.ItemPickedUp, this.Item, null, "ground", player.SelectedCharacter, player.Name);
+        }
+
+        return result;
+    }
+
+    private async ValueTask<(bool Success, Item? StackTarget)> TryPickUpByCoreAsync(Player player)
+    {
         Item? stackTarget = null;
         if (!this._availableToPick)
         {
@@ -165,6 +177,7 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
         }
 
         player.Logger.LogInformation("Item '{0}' got picked up by player '{1}' and went into the Jewel Bank.", this, player);
+        ItemCustodyPlugIn.Report(player.GameContext, CustodyEventKind.ItemPickedIntoBank, this.Item, null, "ground", player.SelectedCharacter, player.Name);
         await this.DisposeAndDeleteAsync().ConfigureAwait(false);
         return true;
     }

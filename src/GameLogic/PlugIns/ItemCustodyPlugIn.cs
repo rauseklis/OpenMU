@@ -41,6 +41,21 @@ public sealed class ItemCustodyPlugIn : IItemTradedToOtherPlayerPlugIn, IItemSol
     public void ItemDropping(AttackableNpcBase monster, Player killer, Item item, CancelEventArgs eventArgs)
         => Publish(killer.GameContext, CustodyEventKind.ItemIssuedByMonster, item, null, monster.Definition.Designation, killer.SelectedCharacter, killer.Name);
 
+    /// <summary>
+    /// Reports that an item changed hands or was issued.
+    /// </summary>
+    /// <param name="gameContext">The game context.</param>
+    /// <param name="kind">The kind of the event.</param>
+    /// <param name="item">The item.</param>
+    /// <param name="from">The character which gave the item away, if any.</param>
+    /// <param name="fromName">The name of the giver.</param>
+    /// <param name="to">The character which received the item, if any.</param>
+    /// <param name="toName">The name of the receiver.</param>
+    internal static void Report(IGameContext gameContext, CustodyEventKind kind, Item item, Character? from, string fromName, Character? to, string toName)
+    {
+        Publish(gameContext, kind, item, from, fromName, to, toName);
+    }
+
     private static void Publish(IGameContext gameContext, CustodyEventKind kind, Item item, Character? from, string fromName, Character? to, string toName)
     {
         CustodyEventPublisher.Publish(
