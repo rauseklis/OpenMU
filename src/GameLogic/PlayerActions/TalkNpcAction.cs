@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameLogic.PlayerActions;
 
+using MUnique.OpenMU.GameLogic.AntiCheat;
 using MUnique.OpenMU.GameLogic.Crywolf;
 using MUnique.OpenMU.GameLogic.MiniGames;
 using MUnique.OpenMU.GameLogic.NPC;
@@ -33,6 +34,23 @@ public class TalkNpcAction
         {
             // The NPCs of the crywolf fortress are hidden while it isn't in peace, so they can't be used.
             return;
+        }
+
+        var configuration = AntiCheatState.GetConfiguration(player.GameContext);
+        if (configuration.NpcReachMode != AntiCheatMode.Off && player.GetDistanceTo(npc) > configuration.NpcReachMaximumDistance)
+        {
+            AntiCheatState.NpcWindowsOutOfReach.Add(1);
+            player.Logger.LogInformation(
+                "[AC] rule=npc.reach mode={Mode} account={Account} npc={Npc} max={Max} action={Action} (talk)",
+                configuration.NpcReachMode,
+                AntiCheatState.HashForLog(player.Account?.LoginName ?? string.Empty),
+                npc.Definition.Designation,
+                configuration.NpcReachMaximumDistance,
+                configuration.NpcReachMode == AntiCheatMode.Enforce ? "refuse" : "allow");
+            if (configuration.NpcReachMode == AntiCheatMode.Enforce)
+            {
+                return;
+            }
         }
 
         if (this.AdvancePlayerState(npc))
