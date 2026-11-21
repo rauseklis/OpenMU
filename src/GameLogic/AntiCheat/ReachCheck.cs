@@ -34,27 +34,42 @@ public static class ReachCheck
     /// <param name="distance">The distance between the player and the target, in tiles.</param>
     /// <returns><see langword="true"/> if the hit must be refused (only in enforce mode).</returns>
     public static bool ShouldRefuse(AntiCheatConfiguration configuration, ILogger logger, string accountName, double distance)
+        => Evaluate("hit.reach", configuration.HitReachMode, configuration.HitReachMaximumDistance, AntiCheatState.HitsBeyondReach, logger, accountName, distance);
+
+    /// <summary>
+    /// Checks the drop of an item on the ground. Counts (and, at most every ten seconds per account, logs) a drop beyond the reach.
+    /// </summary>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="logger">The logger.</param>
+    /// <param name="accountName">The login name of the account, which is only logged as a short hash.</param>
+    /// <param name="distance">The distance between the player and the target cell, in tiles.</param>
+    /// <returns><see langword="true"/> if the drop must be refused (only in enforce mode).</returns>
+    public static bool ShouldRefuseDrop(AntiCheatConfiguration configuration, ILogger logger, string accountName, double distance)
+        => Evaluate("drop.reach", configuration.DropReachMode, configuration.DropReachMaximumDistance, AntiCheatState.DropsBeyondReach, logger, accountName, distance);
+
+    private static bool Evaluate(string rule, AntiCheatMode mode, int maximumDistance, System.Diagnostics.Metrics.Counter<int> counter, ILogger logger, string accountName, double distance)
     {
-        if (!IsBeyondReach(configuration, distance))
+        if (mode == AntiCheatMode.Off || distance <= maximumDistance)
         {
             return false;
         }
 
-        AntiCheatState.HitsBeyondReach.Add(1);
+        counter.Add(1);
         var now = DateTime.UtcNow;
-        var key = AntiCheatState.HashForLog(accountName);
+        var key = rule + "|" + AntiCheatState.HashForLog(accountName);
         if (LastLogged.Count < MaximumRememberedKeys && (!LastLogged.TryGetValue(key, out var last) || now - last > TimeSpan.FromSeconds(10)))
         {
             LastLogged[key] = now;
             logger.LogInformation(
-                "[AC] rule=hit.reach mode={Mode} account={Account} distance={Distance:F1} max={Max} action={Action}",
-                configuration.HitReachMode,
-                key,
+                "[AC] rule={Rule} mode={Mode} account={Account} distance={Distance:F1} max={Max} action={Action}",
+                rule,
+                mode,
+                AntiCheatState.HashForLog(accountName),
                 distance,
-                configuration.HitReachMaximumDistance,
-                configuration.HitReachMode == AntiCheatMode.Enforce ? "refuse" : "allow");
+                maximumDistance,
+                mode == AntiCheatMode.Enforce ? "refuse" : "allow");
         }
 
-        return configuration.HitReachMode == AntiCheatMode.Enforce;
+        return mode == AntiCheatMode.Enforce;
     }
 }

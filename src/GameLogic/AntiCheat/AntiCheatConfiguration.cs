@@ -83,6 +83,12 @@ public class AntiCheatConfiguration
     /// <summary>Gets or sets the largest distance in tiles between the player and the target of a melee hit. Loose on purpose: ranged weapons use the same request.</summary>
     public int HitReachMaximumDistance { get; set; } = 10;
 
+    /// <summary>Gets or sets the mode of the reach check of dropping an item on the ground (a drop far away from the player).</summary>
+    public AntiCheatMode DropReachMode { get; set; } = AntiCheatMode.Shadow;
+
+    /// <summary>Gets or sets the largest distance in tiles between the player and the cell where an item is dropped.</summary>
+    public int DropReachMaximumDistance { get; set; } = 8;
+
     /// <summary>Gets or sets the serials of the client builds which are allowed. Nothing is compared while the list is empty.</summary>
     public List<string> AllowedBuildSerials { get; set; } = new();
 }
