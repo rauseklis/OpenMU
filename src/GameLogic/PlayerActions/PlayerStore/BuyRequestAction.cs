@@ -181,6 +181,7 @@ public class BuyRequestAction
                     itemSold = true;
 
                     player.GameContext.PlugInManager.GetPlugInPoint<IItemSoldToOtherPlayerPlugIn>()?.ItemSold(requestedPlayer, item, player);
+                    ItemCustodyPlugIn.Report(player.GameContext, Combat.CustodyEventKind.ZenTraded, item, player.SelectedCharacter, player.Name, requestedPlayer.SelectedCharacter, requestedPlayer.Name, itemPrice);
                 }
                 else
                 {
