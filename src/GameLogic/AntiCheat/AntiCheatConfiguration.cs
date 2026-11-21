@@ -89,6 +89,15 @@ public class AntiCheatConfiguration
     /// <summary>Gets or sets the largest distance in tiles between the player and the cell where an item is dropped.</summary>
     public int DropReachMaximumDistance { get; set; } = 8;
 
+    /// <summary>Gets or sets the mode of the limit for packets which make a handler fail (Enforce disconnects a connection which exceeds it).</summary>
+    public AntiCheatMode PacketErrorMode { get; set; } = AntiCheatMode.Shadow;
+
+    /// <summary>Gets or sets how many failing packets per minute a connection may cause before it is reported (and, in enforce mode, disconnected).</summary>
+    public int PacketErrorMaximumPerMinute { get; set; } = 100;
+
+    /// <summary>Gets or sets how many failing packets per minute and connection are written to the log in detail.</summary>
+    public int PacketErrorDetailLogsPerMinute { get; set; } = 5;
+
     /// <summary>Gets or sets the serials of the client builds which are allowed. Nothing is compared while the list is empty.</summary>
     public List<string> AllowedBuildSerials { get; set; } = new();
 }

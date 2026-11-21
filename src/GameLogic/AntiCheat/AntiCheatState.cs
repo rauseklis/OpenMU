@@ -57,6 +57,12 @@ public static class AntiCheatState
     /// <summary>Gets the counter of item drops beyond the allowed reach.</summary>
     public static Counter<int> DropsBeyondReach { get; } = AntiCheatMeter.CreateCounter<int>("drop_beyond_reach");
 
+    /// <summary>Gets the counter of packets which made a handler fail.</summary>
+    public static Counter<int> PacketErrors { get; } = AntiCheatMeter.CreateCounter<int>("packet_errors");
+
+    /// <summary>Gets the counter of connections which exceeded the allowed failing packets per minute.</summary>
+    public static Counter<int> PacketErrorLimitsExceeded { get; } = AntiCheatMeter.CreateCounter<int>("packet_error_limit_exceeded");
+
     /// <summary>Gets the counter of received pings.</summary>
     public static Counter<int> PingsReceived { get; } = AntiCheatMeter.CreateCounter<int>("ping_received");
 

@@ -1,4 +1,4 @@
-// <copyright file="RemotePlayer.cs" company="MUnique">
+﻿// <copyright file="RemotePlayer.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -22,6 +22,7 @@ public class RemotePlayer : Player, IClientVersionProvider, IHasIpAddress, IConn
     private readonly byte[] _packetBuffer = new byte[0xFF];
 
     private readonly string? _ipAddress;
+    private readonly PacketErrorBudget _packetErrors = new();
 
     private ClientVersion _clientVersion;
 
@@ -233,7 +234,39 @@ public class RemotePlayer : Player, IClientVersionProvider, IHasIpAddress, IConn
         }
         catch (Exception ex)
         {
-            this.Logger.LogError(ex, $"Error while processing the message: {buffer.ToArray().AsString()}");
+            await this.HandlePacketErrorAsync(ex, buffer).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask HandlePacketErrorAsync(Exception exception, Memory<byte> buffer)
+    {
+        var configuration = AntiCheatState.GetConfiguration(this.GameContext);
+        if (configuration.PacketErrorMode == AntiCheatMode.Off)
+        {
+            this.Logger.LogError(exception, $"Error while processing the message: {buffer.ToArray().AsString()}");
+            return;
+        }
+
+        AntiCheatState.PacketErrors.Add(1);
+        var decision = this._packetErrors.Record(DateTime.UtcNow, configuration.PacketErrorMaximumPerMinute, configuration.PacketErrorDetailLogsPerMinute);
+        if (decision.SuppressedInPreviousWindow > 0)
+        {
+            this.Logger.LogWarning("[AC] rule=packet.errors suppressed={Suppressed} previous-minute", decision.SuppressedInPreviousWindow);
+        }
+
+        if (decision.LogDetail)
+        {
+            this.Logger.LogError(exception, $"Error while processing the message: {buffer.ToArray().AsString()}");
+        }
+
+        if (decision.Exceeded)
+        {
+            AntiCheatState.PacketErrorLimitsExceeded.Add(1);
+            this.Logger.LogWarning("[AC] rule=packet.errors mode={Mode} errors={Errors} max={Max} ip={Ip} action={Action}", configuration.PacketErrorMode, decision.ErrorsInWindow, configuration.PacketErrorMaximumPerMinute, this._ipAddress, configuration.PacketErrorMode == AntiCheatMode.Enforce ? "disconnect" : "allow");
+            if (configuration.PacketErrorMode == AntiCheatMode.Enforce)
+            {
+                await this.DisconnectAsync().ConfigureAwait(false);
+            }
         }
     }
 
