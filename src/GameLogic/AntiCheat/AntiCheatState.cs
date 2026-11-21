@@ -1,4 +1,4 @@
-// <copyright file="AntiCheatState.cs" company="MUnique">
+﻿// <copyright file="AntiCheatState.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -44,6 +44,12 @@ public static class AntiCheatState
 
     /// <summary>Gets the counter of closed (or would-be closed) connections.</summary>
     public static Counter<int> ConnectionsExpired { get; } = AntiCheatMeter.CreateCounter<int>("conn_expired");
+
+    /// <summary>Gets the counter of observed client builds.</summary>
+    public static Counter<int> BuildsObserved { get; } = AntiCheatMeter.CreateCounter<int>("build_observed");
+
+    /// <summary>Gets the counter of observed client builds which are not in the list of allowed builds.</summary>
+    public static Counter<int> BuildsUnknown { get; } = AntiCheatMeter.CreateCounter<int>("build_unknown");
 
     /// <summary>Gets the counter of received pings.</summary>
     public static Counter<int> PingsReceived { get; } = AntiCheatMeter.CreateCounter<int>("ping_received");
