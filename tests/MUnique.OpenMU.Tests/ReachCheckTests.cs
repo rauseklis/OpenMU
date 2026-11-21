@@ -38,6 +38,31 @@ public class ReachCheckTests
         Assert.That(ReachCheck.ShouldRefuse(off, NullLogger.Instance, "acct", 30), Is.False);
     }
 
+    /// <summary>A drop beyond the reach is only observed in shadow mode, refused in enforce mode; a close drop never.</summary>
+    [Test]
+    public void DropBeyondReachIsRefusedOnlyInEnforceMode()
+    {
+        var shadow = new AntiCheatConfiguration { DropReachMode = AntiCheatMode.Shadow, DropReachMaximumDistance = 8 };
+        var enforce = new AntiCheatConfiguration { DropReachMode = AntiCheatMode.Enforce, DropReachMaximumDistance = 8 };
+        var off = new AntiCheatConfiguration { DropReachMode = AntiCheatMode.Off, DropReachMaximumDistance = 8 };
+
+        Assert.That(ReachCheck.ShouldRefuseDrop(shadow, NullLogger.Instance, "acct", 40), Is.False);
+        Assert.That(ReachCheck.ShouldRefuseDrop(enforce, NullLogger.Instance, "acct", 40), Is.True);
+        Assert.That(ReachCheck.ShouldRefuseDrop(off, NullLogger.Instance, "acct", 40), Is.False);
+        Assert.That(ReachCheck.ShouldRefuseDrop(enforce, NullLogger.Instance, "acct", 3), Is.False, "a drop next to the player is fine");
+        Assert.That(ReachCheck.ShouldRefuseDrop(enforce, NullLogger.Instance, "acct", 8), Is.False, "exactly at the limit is fine");
+    }
+
+    /// <summary>The hit and drop rules are counted and limited separately.</summary>
+    [Test]
+    public void DefaultsOfTheDropRuleObserveOnly()
+    {
+        var configuration = new AntiCheatConfiguration();
+
+        Assert.That(configuration.DropReachMode, Is.EqualTo(AntiCheatMode.Shadow));
+        Assert.That(configuration.DropReachMaximumDistance, Is.GreaterThanOrEqualTo(6));
+    }
+
     /// <summary>The compiled defaults observe only and are loose enough for ranged weapons.</summary>
     [Test]
     public void DefaultsObserveOnly()

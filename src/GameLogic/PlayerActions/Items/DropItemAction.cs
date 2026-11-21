@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameLogic.PlayerActions.Items;
 
+using MUnique.OpenMU.GameLogic.AntiCheat;
 using MUnique.OpenMU.GameLogic.PlugIns;
 using MUnique.OpenMU.GameLogic.Views.Inventory;
 using MUnique.OpenMU.Pathfinding;
@@ -26,6 +27,12 @@ public class DropItemAction
 
         if (item is null
             || !(player.CurrentMap?.Terrain.WalkMap[target.X, target.Y] ?? false))
+        {
+            await player.InvokeViewPlugInAsync<IItemDropResultPlugIn>(p => p.ItemDropResultAsync(slot, false)).ConfigureAwait(false);
+            return;
+        }
+
+        if (ReachCheck.ShouldRefuseDrop(AntiCheatState.GetConfiguration(player.GameContext), player.Logger, player.Account?.LoginName ?? string.Empty, player.GetDistanceTo(target)))
         {
             await player.InvokeViewPlugInAsync<IItemDropResultPlugIn>(p => p.ItemDropResultAsync(slot, false)).ConfigureAwait(false);
             return;
