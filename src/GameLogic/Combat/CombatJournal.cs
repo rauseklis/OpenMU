@@ -60,13 +60,19 @@ internal sealed class CombatJournal : IDisposable
     /// Appends an event and flushes it to disk. Throws if that did not work.
     /// </summary>
     /// <param name="combatEvent">The event.</param>
-    public void Append(CombatEvent combatEvent)
+    public void Append(CombatEvent combatEvent) => this.Append(combatEvent.Kind.ToString(), JsonSerializer.Serialize(combatEvent, EventOptions));
+
+    /// <summary>
+    /// Appends an item custody event and flushes it to disk. Throws if that did not work.
+    /// </summary>
+    /// <param name="custodyEvent">The event.</param>
+    public void Append(CustodyEvent custodyEvent) => this.Append(custodyEvent.Kind.ToString(), JsonSerializer.Serialize(custodyEvent, EventOptions));
+
+    private void Append(string kind, string json)
     {
         lock (this._sync)
         {
             this._stream ??= new FileStream(this._path, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, FileOptions.WriteThrough);
-            var json = JsonSerializer.Serialize(combatEvent, EventOptions);
-            var kind = combatEvent.Kind.ToString();
             var sequence = this._sequence + 1;
             var time = DateTime.UtcNow;
             var hash = ComputeHash(this._lastHash, sequence, time, kind, json);
