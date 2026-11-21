@@ -1,4 +1,4 @@
-// <copyright file="LoginAction.cs" company="MUnique">
+﻿// <copyright file="LoginAction.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -272,6 +272,7 @@ public class LoginAction
         }
 
         await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.Ok)).ConfigureAwait(false);
+        Combat.SessionEventPublisher.Publish(player, Combat.SessionEventKind.LoggedIn);
         if ((player as IConnectionTracked)?.TrackedConnection is { } trackedConnection)
         {
             AntiCheatState.Connections.MarkLoggedIn(trackedConnection);

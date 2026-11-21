@@ -103,6 +103,12 @@ internal sealed class CombatJournal : IDisposable
     /// <param name="custodyEvent">The event.</param>
     public void Append(CustodyEvent custodyEvent) => this.Append(custodyEvent.Kind.ToString(), JsonSerializer.Serialize(custodyEvent, EventOptions));
 
+    /// <summary>
+    /// Appends a session event and flushes it to disk. Throws if that did not work.
+    /// </summary>
+    /// <param name="sessionEvent">The event.</param>
+    public void Append(SessionEvent sessionEvent) => this.Append(sessionEvent.Kind.ToString(), JsonSerializer.Serialize(sessionEvent, EventOptions));
+
     private void Append(string kind, string json)
     {
         lock (this._sync)
