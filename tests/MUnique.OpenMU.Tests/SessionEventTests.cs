@@ -87,6 +87,16 @@ public class SessionEventTests
         Assert.That(CombatEventHealth.IsDegraded, Is.True);
     }
 
+    /// <summary>The disconnect of a connection which never logged in (a port probe) is not reported; everything else is.</summary>
+    [Test]
+    public void ProbesWithoutAnAccountAreNotReported()
+    {
+        Assert.That(SessionEventPublisher.ShouldPublish(SessionEventKind.Disconnected, false), Is.False);
+        Assert.That(SessionEventPublisher.ShouldPublish(SessionEventKind.Disconnected, true), Is.True);
+        Assert.That(SessionEventPublisher.ShouldPublish(SessionEventKind.LoggedIn, true), Is.True);
+        Assert.That(SessionEventPublisher.ShouldPublish(SessionEventKind.EnteredWorld, true), Is.True);
+    }
+
     /// <summary>The journal keeps session events in the same chain.</summary>
     [Test]
     public void JournalKeepsSessionEventsInTheChain()
