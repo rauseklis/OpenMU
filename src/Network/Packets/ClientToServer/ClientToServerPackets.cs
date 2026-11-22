@@ -19692,7 +19692,7 @@ public readonly struct ClientIntegrityReport
     /// <summary>
     /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
     /// </summary>
-    public static int Length => 50;
+    public static int Length => 51;
 
     /// <summary>
     /// Gets the header of this packet.
@@ -19704,7 +19704,7 @@ public readonly struct ClientIntegrityReport
     /// </summary>
     public Span<byte> Build
     {
-        get => this._data.Slice(2, 16).Span;
+        get => this._data.Slice(3, 16).Span;
     }
 
     /// <summary>
@@ -19712,7 +19712,7 @@ public readonly struct ClientIntegrityReport
     /// </summary>
     public Span<byte> ProgramHash
     {
-        get => this._data.Slice(18, 32).Span;
+        get => this._data.Slice(19, 32).Span;
     }
 
     /// <summary>
