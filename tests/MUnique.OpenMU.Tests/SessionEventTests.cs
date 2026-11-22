@@ -13,6 +13,7 @@ using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.Combat;
 using MUnique.OpenMU.GameLogic.Offline;
 using MUnique.OpenMU.GameLogic.PlugIns;
+using MUnique.OpenMU.Network.Packets.ClientToServer;
 
 /// <summary>
 /// Tests the session events: who entered the world, who disconnected, and when the server took over a character.
@@ -130,12 +131,18 @@ public class SessionEventTests
     public async Task IntegrityReportHandlerReadsThePacketAsync()
     {
         var player = await PlayerTestHelper.CreatePlayerAsync(this._gameContext).ConfigureAwait(false);
-        var packet = new byte[50];
-        packet[0] = 0xC1;
-        packet[1] = 50;
-        packet[2] = 0xF9;
-        System.Text.Encoding.ASCII.GetBytes("d7f3dc756664f8f6").CopyTo(packet, 2);
-        Enumerable.Range(0, 32).ToList().ForEach(i => packet[18 + i] = (byte)i);
+        var packet = new byte[ClientIntegrityReportRef.Length];
+        var writer = new ClientIntegrityReportRef(packet);
+        System.Text.Encoding.ASCII.GetBytes("d7f3dc756664f8f6").CopyTo(writer.Build);
+        for (var i = 0; i < 32; i++)
+        {
+            writer.ProgramHash[i] = (byte)i;
+        }
+
+        // The message must carry its own code and a matching length, or the server would not recognise it.
+        Assert.That(packet[0], Is.EqualTo(0xC1));
+        Assert.That(packet[1], Is.EqualTo(packet.Length));
+        Assert.That(packet[2], Is.EqualTo(new MUnique.OpenMU.GameServer.MessageHandler.ClientIntegrityReportHandlerPlugIn().Key));
 
         await new MUnique.OpenMU.GameServer.MessageHandler.ClientIntegrityReportHandlerPlugIn().HandlePacketAsync(player, packet).ConfigureAwait(false);
 

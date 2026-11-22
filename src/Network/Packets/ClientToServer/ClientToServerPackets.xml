@@ -4916,19 +4916,19 @@
       <Code>F9</Code>
       <Name>ClientIntegrityReport</Name>
       <Caption>Client Integrity Report</Caption>
-      <Length>50</Length>
+      <Length>51</Length>
       <Direction>ClientToServer</Direction>
       <SentWhen>The client has started and the player logged in. It tells which build it is and a fingerprint of its program files.</SentWhen>
       <CausedReaction>The server records the report for the session. Nothing changes in the game.</CausedReaction>
       <Fields>
         <Field>
-          <Index>2</Index>
+          <Index>3</Index>
           <Type>Binary</Type>
           <Name>Build</Name>
           <Length>16</Length>
         </Field>
         <Field>
-          <Index>18</Index>
+          <Index>19</Index>
           <Type>Binary</Type>
           <Name>ProgramHash</Name>
           <Length>32</Length>
