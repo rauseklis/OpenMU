@@ -64,7 +64,7 @@ public sealed class ItemCustodyPlugIn : IItemTradedToOtherPlayerPlugIn, IItemSol
             new CustodyEvent(
                 kind,
                 DateTime.UtcNow,
-                (item as IIdentifiable)?.Id,
+                (item as IIdentifiable)?.Id ?? (item as TemporaryItem)?.TrackingId,
                 item?.Definition?.Name.ValueInNeutralLanguage ?? string.Empty,
                 item?.Level ?? 0,
                 (from as IIdentifiable)?.Id,

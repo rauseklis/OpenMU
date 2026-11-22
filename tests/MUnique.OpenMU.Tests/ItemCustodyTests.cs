@@ -141,6 +141,31 @@ public class ItemCustodyTests
         Assert.That(e.ToName, Is.AnyOf(player.Name, other.Name));
     }
 
+    /// <summary>An item which only existed in memory (a monster drop) keeps one identifier from the ground into the inventory.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task TemporaryItemKeepsItsIdentifierWhenPickedUpAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var recorder = new Recorder();
+        player.GameContext.PlugInManager.RegisterPlugInAtPlugInPoint<ICustodyEventPlugIn>(recorder);
+        var item = new TemporaryItem
+        {
+            Definition = new ItemDefinition { Width = 1, Height = 1, Name = new MUnique.OpenMU.Interfaces.LocalizedString("Wind Armor") },
+            Level = 1,
+            Durability = 1,
+        };
+        var drop = new DroppedItem(item, new MUnique.OpenMU.Pathfinding.Point(100, 100), player.CurrentMap!, null, null);
+
+        var result = await drop.TryPickUpByAsync(player).ConfigureAwait(false);
+
+        Assert.That(result.Success, Is.True);
+        var picked = recorder.Events.Single();
+        Assert.That(picked.ItemId, Is.EqualTo(item.TrackingId), "the pickup names the item by its tracking id");
+        var inInventory = player.Inventory!.Items.Single(i => i.Definition!.Name.ValueInNeutralLanguage == "Wind Armor");
+        Assert.That((inInventory as MUnique.OpenMU.Persistence.IIdentifiable)?.Id, Is.EqualTo(item.TrackingId), "the saved item keeps that id");
+    }
+
     /// <summary>The zen of a finished trade is reported once per direction, with the amount.</summary>
     /// <returns>The task.</returns>
     [Test]

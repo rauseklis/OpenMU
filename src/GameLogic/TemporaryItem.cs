@@ -23,6 +23,12 @@ public sealed class TemporaryItem : Item
     }
 
     /// <summary>
+    /// Gets the identifier this item keeps when it becomes persistent. It exists from the moment the item is created, so the
+    /// item can be followed from its first appearance (for example a monster drop on the ground) into an inventory.
+    /// </summary>
+    public Guid TrackingId { get; } = Guid.NewGuid();
+
+    /// <summary>
     /// Makes this item persistent.
     /// </summary>
     /// <param name="persistenceContext">The persistence context where the item should be added.</param>
@@ -30,6 +36,11 @@ public sealed class TemporaryItem : Item
     public Item MakePersistent(IContext persistenceContext)
     {
         var persistentItem = persistenceContext.CreateNew<Item>();
+        if (persistentItem is MUnique.OpenMU.Persistence.IIdentifiable identifiable)
+        {
+            identifiable.Id = this.TrackingId;
+        }
+
         persistentItem.AssignValues(this);
         return persistentItem;
     }
