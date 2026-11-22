@@ -110,7 +110,7 @@ public sealed class UniqueRewardWeights(IContext context, GameConfiguration conf
         ReplaceGroups(wrapper, groups, replacement, total);
     }
 
-    private ItemDropItemGroup CreateGroup(ItemDropItemGroup source, string category, IEnumerable<ItemDefinition> items, double chance)
+    internal ItemDropItemGroup CreateGroup(ItemDropItemGroup source, string category, IEnumerable<ItemDefinition> items, double chance)
     {
         var result = this.Context.CreateNew<ItemDropItemGroup>();
         result.Description = $"Unique rewards: {source.SourceItemLevel} / {category} / {items.First().Name}";
