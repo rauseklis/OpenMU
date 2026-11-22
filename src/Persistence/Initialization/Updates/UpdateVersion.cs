@@ -783,4 +783,9 @@ public enum UpdateVersion
     /// Adds the Invisible set (Helm, Armor, Pants, Gloves and Boots number 74).
     /// </summary>
     AddInvisibleSet = 167,
+
+    /// <summary>
+    /// Sets the duration of the Elf Soldier buff to 2 hours 30 minutes.
+    /// </summary>
+    ElfSoldierBuffDuration = 168,
 }
