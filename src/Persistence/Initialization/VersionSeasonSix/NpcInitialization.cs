@@ -129,9 +129,9 @@ internal partial class NpcInitialization : Version095d.NpcInitialization
             buffEffect.InformObservers = true;
             buffEffect.StopByDeath = true;
 
-            // Duration: 60 minutes
+            // Duration: 2 hours 30 minutes
             buffEffect.Duration = this.Context.CreateNew<PowerUpDefinitionValue>();
-            buffEffect.Duration.ConstantValue.Value = 3600;
+            buffEffect.Duration.ConstantValue.Value = 9000;
 
             // Defense boost: 50 + (Level / 5)
             var defensePowerUp = this.Context.CreateNew<PowerUpDefinition>();

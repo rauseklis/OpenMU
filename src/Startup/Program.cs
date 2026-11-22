@@ -765,6 +765,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Added the Invisible set.");
         }
 
+        if (await ElfSoldierBuffDurationInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Set the Elf Soldier buff duration to 2 hours 30 minutes.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
