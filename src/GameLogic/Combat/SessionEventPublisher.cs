@@ -26,7 +26,8 @@ internal static class SessionEventPublisher
     /// </summary>
     /// <param name="player">The player.</param>
     /// <param name="kind">The kind of the event.</param>
-    public static void Publish(Player player, SessionEventKind kind)
+    /// <param name="details">Additional text for some kinds of events.</param>
+    public static void Publish(Player player, SessionEventKind kind, string details = "")
     {
         if (!ShouldPublish(kind, player.Account is not null))
         {
@@ -44,7 +45,8 @@ internal static class SessionEventPublisher
                 character?.Name ?? string.Empty,
                 (player as IHasIpAddress)?.IpAddress ?? string.Empty,
                 player.ClientBuild ?? string.Empty,
-                CombatEventPublisher.ControllerOf(player));
+                CombatEventPublisher.ControllerOf(player),
+                details);
             player.GameContext.PlugInManager.GetPlugInPoint<ISessionEventPlugIn>()?.OnSessionEvent(sessionEvent);
         }
         catch (Exception ex)

@@ -23,4 +23,7 @@ public enum SessionEventKind
 
     /// <summary>The offline play of a character ended.</summary>
     OfflineStopped,
+
+    /// <summary>The client reported which build it is and a fingerprint of its program files.</summary>
+    IntegrityReported,
 }
