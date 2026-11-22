@@ -770,6 +770,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Set the Elf Soldier buff duration to 2 hours 30 minutes.");
         }
 
+        if (await MoveBrassToGoldMedalInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Moved the Brass armor set to the Gold Medal rewards and added Bronze to the Silver Medal.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

@@ -1,4 +1,4 @@
-// <copyright file="UniqueRewardWeightTests.cs" company="MUnique">
+﻿// <copyright file="UniqueRewardWeightTests.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -36,7 +36,7 @@ public class UniqueRewardWeightTests
     [TestCase(11, 7, .7)]
     [TestCase(12, 9, .7)]
     [TestCase(5, 6, .4125)]
-    [TestCase(6, 6, .525)]
+    [TestCase(6, 7, .525)]
     [TestCase(2, 7, .32)]
     public void EachUniqueArmorSetHasOneEqualAllocation(byte level, int count, double total)
     {

@@ -788,4 +788,9 @@ public enum UpdateVersion
     /// Sets the duration of the Elf Soldier buff to 2 hours 30 minutes.
     /// </summary>
     ElfSoldierBuffDuration = 168,
+
+    /// <summary>
+    /// Moves the Brass armor set from the Silver Medal to the Gold Medal rewards and adds the Bronze set to the Silver Medal.
+    /// </summary>
+    MoveBrassToGoldMedal = 169,
 }
