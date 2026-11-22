@@ -19643,6 +19643,92 @@ public readonly struct ResetNpcInfoRequest
     /// <returns>The packet as byte span.</returns>
     public static implicit operator Memory<byte>(ResetNpcInfoRequest packet) => packet._data; 
 }
+
+
+/// <summary>
+/// Is sent by the client when: The client has started and the player logged in. It tells which build it is and a fingerprint of its program files.
+/// Causes reaction on server side: The server records the report for the session. Nothing changes in the game.
+/// </summary>
+public readonly struct ClientIntegrityReport
+{
+    private readonly Memory<byte> _data;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ClientIntegrityReport"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    public ClientIntegrityReport(Memory<byte> data)
+        : this(data, true)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ClientIntegrityReport"/> struct.
+    /// </summary>
+    /// <param name="data">The underlying data.</param>
+    /// <param name="initialize">If set to <c>true</c>, the header data is automatically initialized and written to the underlying span.</param>
+    private ClientIntegrityReport(Memory<byte> data, bool initialize)
+    {
+        this._data = data;
+        if (initialize)
+        {
+            var header = this.Header;
+            header.Type = HeaderType;
+            header.Code = Code;
+            header.Length = (byte)Math.Min(data.Length, Length);
+        }
+    }
+
+    /// <summary>
+    /// Gets the header type of this data packet.
+    /// </summary>
+    public static byte HeaderType => 0xC1;
+
+    /// <summary>
+    /// Gets the operation code of this data packet.
+    /// </summary>
+    public static byte Code => 0xF9;
+
+    /// <summary>
+    /// Gets the initial length of this data packet. When the size is dynamic, this value may be bigger than actually needed.
+    /// </summary>
+    public static int Length => 50;
+
+    /// <summary>
+    /// Gets the header of this packet.
+    /// </summary>
+    public C1Header Header => new (this._data);
+
+    /// <summary>
+    /// Gets or sets the build.
+    /// </summary>
+    public Span<byte> Build
+    {
+        get => this._data.Slice(2, 16).Span;
+    }
+
+    /// <summary>
+    /// Gets or sets the program hash.
+    /// </summary>
+    public Span<byte> ProgramHash
+    {
+        get => this._data.Slice(18, 32).Span;
+    }
+
+    /// <summary>
+    /// Performs an implicit conversion from a Memory of bytes to a <see cref="ClientIntegrityReport"/>.
+    /// </summary>
+    /// <param name="packet">The packet as span.</param>
+    /// <returns>The packet as struct.</returns>
+    public static implicit operator ClientIntegrityReport(Memory<byte> packet) => new (packet, false);
+
+    /// <summary>
+    /// Performs an implicit conversion from <see cref="ClientIntegrityReport"/> to a Memory of bytes.
+    /// </summary>
+    /// <param name="packet">The packet as struct.</param>
+    /// <returns>The packet as byte span.</returns>
+    public static implicit operator Memory<byte>(ClientIntegrityReport packet) => packet._data; 
+}
     /// <summary>
     /// The state of the trade button.
     /// </summary>

@@ -16,6 +16,7 @@ namespace MUnique.OpenMU.GameLogic.Combat;
 /// <param name="Address">The network address of the client, if known.</param>
 /// <param name="Build">The build identifier (serial) the client sent at login, if known.</param>
 /// <param name="Controller">What steers the character.</param>
+/// <param name="Details">Additional text for some kinds of events (for example the fingerprint of an integrity report).</param>
 public sealed record SessionEvent(
     SessionEventKind Kind,
     DateTime UtcTime,
@@ -24,4 +25,5 @@ public sealed record SessionEvent(
     string CharacterName,
     string Address,
     string Build,
-    CombatController Controller);
+    CombatController Controller,
+    string Details = "");

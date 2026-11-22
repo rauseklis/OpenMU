@@ -320,6 +320,31 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     /// </summary>
     public string? ClientBuild { get; set; }
 
+    /// <summary>
+    /// The most integrity reports of one session which are recorded; further reports are ignored, so a client cannot flood the journal.
+    /// </summary>
+    internal const int MaximumIntegrityReports = 3;
+
+    private int _integrityReports;
+
+    /// <summary>
+    /// Records what the client reported about itself (its build and a fingerprint of its program files) for this session.
+    /// Only a logged-in player is recorded, and only a few times per session. It changes nothing in the game.
+    /// </summary>
+    /// <param name="build">The build identifier the client reported.</param>
+    /// <param name="programHash">The fingerprint of the program files the client reported, as hexadecimal text.</param>
+    /// <returns><see langword="true"/> if the report was recorded.</returns>
+    public bool RecordClientIntegrity(string build, string programHash)
+    {
+        if (this.Account is null || Interlocked.Increment(ref this._integrityReports) > MaximumIntegrityReports)
+        {
+            return false;
+        }
+
+        Combat.SessionEventPublisher.Publish(this, Combat.SessionEventKind.IntegrityReported, $"build={build};hash={programHash}");
+        return true;
+    }
+
     /// <inheritdoc/>
     public StateMachine PlayerState { get; } = new(GameLogic.PlayerState.Initial);
 

@@ -97,6 +97,53 @@ public class SessionEventTests
         Assert.That(SessionEventPublisher.ShouldPublish(SessionEventKind.EnteredWorld, true), Is.True);
     }
 
+    /// <summary>The report of a client is recorded for a logged-in player, and only a few times per session.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task IntegrityReportIsRecordedAFewTimesAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync(this._gameContext).ConfigureAwait(false);
+
+        var results = Enumerable.Range(0, Player.MaximumIntegrityReports + 2).Select(_ => player.RecordClientIntegrity("build-abc", "00ff")).ToList();
+
+        Assert.That(results.Count(r => r), Is.EqualTo(Player.MaximumIntegrityReports));
+        var recorded = this._recorder.Events.Where(e => e.Kind == SessionEventKind.IntegrityReported).ToList();
+        Assert.That(recorded, Has.Count.EqualTo(Player.MaximumIntegrityReports));
+        Assert.That(recorded[0].Details, Is.EqualTo("build=build-abc;hash=00ff"));
+    }
+
+    /// <summary>A connection which is not logged in cannot make the server record a report.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task IntegrityReportOfAnUnauthenticatedPlayerIsIgnoredAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync(this._gameContext).ConfigureAwait(false);
+        player.Account = null;
+
+        Assert.That(player.RecordClientIntegrity("build-abc", "00ff"), Is.False);
+        Assert.That(this._recorder.Events.Any(e => e.Kind == SessionEventKind.IntegrityReported), Is.False);
+    }
+
+    /// <summary>The handler reads the build and the fingerprint from the packet.</summary>
+    /// <returns>The task.</returns>
+    [Test]
+    public async Task IntegrityReportHandlerReadsThePacketAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync(this._gameContext).ConfigureAwait(false);
+        var packet = new byte[50];
+        packet[0] = 0xC1;
+        packet[1] = 50;
+        packet[2] = 0xF9;
+        System.Text.Encoding.ASCII.GetBytes("d7f3dc756664f8f6").CopyTo(packet, 2);
+        Enumerable.Range(0, 32).ToList().ForEach(i => packet[18 + i] = (byte)i);
+
+        await new MUnique.OpenMU.GameServer.MessageHandler.ClientIntegrityReportHandlerPlugIn().HandlePacketAsync(player, packet).ConfigureAwait(false);
+
+        var recorded = this._recorder.Events.Single(e => e.Kind == SessionEventKind.IntegrityReported);
+        Assert.That(recorded.Details, Does.StartWith("build=d7f3dc756664f8f6;hash=000102030405"));
+        Assert.That(recorded.Details, Does.EndWith("1c1d1e1f"));
+    }
+
     /// <summary>The journal keeps session events in the same chain.</summary>
     [Test]
     public void JournalKeepsSessionEventsInTheChain()

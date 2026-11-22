@@ -6181,4 +6181,34 @@ public static class ConnectionExtensions
         }
 
         await connection.SendAsync(WritePacket).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends a <see cref="ClientIntegrityReport" /> to this connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="build">The build.</param>
+    /// <param name="programHash">The program hash.</param>
+    /// <remarks>
+    /// Is sent by the client when: The client has started and the player logged in. It tells which build it is and a fingerprint of its program files.
+    /// Causes reaction on server side: The server records the report for the session. Nothing changes in the game.
+    /// </remarks>
+    public static async ValueTask SendClientIntegrityReportAsync(this IConnection? connection, Memory<byte> @build, Memory<byte> @programHash)
+    {
+        if (connection is null)
+        {
+            return;
+        }
+
+        int WritePacket()
+        {
+            var length = ClientIntegrityReportRef.Length;
+            var packet = new ClientIntegrityReportRef(connection.Output.GetSpan(length)[..length]);
+            @build.Span.CopyTo(packet.Build);
+            @programHash.Span.CopyTo(packet.ProgramHash);
+
+            return packet.Header.Length;
+        }
+
+        await connection.SendAsync(WritePacket).ConfigureAwait(false);
     }}
