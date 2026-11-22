@@ -203,6 +203,7 @@ internal sealed class PlayerMapTransitions
             await player.PlayerState.TryAdvanceToAsync(GameLogic.PlayerState.EnteredWorld).ConfigureAwait(false);
             player.IsAlive = true;
             await player.CurrentMap!.AddAsync(player).ConfigureAwait(false);
+            await this.ResendMagicEffectsAsync().ConfigureAwait(false);
         }
         else
         {
@@ -252,6 +253,7 @@ internal sealed class PlayerMapTransitions
         player.IsAlive = true;
 
         await player.CurrentMap!.AddAsync(player).ConfigureAwait(false);
+        await this.ResendMagicEffectsAsync().ConfigureAwait(false);
         if (!player.CurrentMap.Terrain.WalkMap[player.SelectedCharacter.PositionX, player.SelectedCharacter.PositionY]
             && await this.RecoverFromBlockedSpawnAsync().ConfigureAwait(false))
         {
@@ -260,6 +262,24 @@ internal sealed class PlayerMapTransitions
         }
 
         await this._summon.AddToMapAsync(player.CurrentMap).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sends the active visible effects again, so that the buff icons are shown after the map change.
+    /// It has to run after the player was added to the map: the client resets its buff list when it creates the own character.
+    /// </summary>
+    private async ValueTask ResendMagicEffectsAsync()
+    {
+        var player = this._player;
+        foreach (var effect in player.MagicEffectList.GetActiveEffectsSnapshot())
+        {
+            if (effect.IsDisposed || effect.IsDisposing || effect.Id >= 200)
+            {
+                continue;
+            }
+
+            await player.InvokeViewPlugInAsync<IActivateMagicEffectPlugIn>(p => p.ActivateMagicEffectAsync(effect, player)).ConfigureAwait(false);
+        }
     }
 
     /// <summary>
