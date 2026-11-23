@@ -104,6 +104,11 @@ public class ShowHitPlugIn : IShowHitPlugIn
 
     private DamageKind GetDamageKind(DamageAttributes attributes)
     {
+        if (attributes.HasFlag(DamageAttributes.PlusThirteen))
+        {
+            return DamageKind.PlusThirteenCrimson;
+        }
+
         if (attributes.HasFlag(DamageAttributes.IgnoreDefense))
         {
             return DamageKind.IgnoreDefenseCyan;

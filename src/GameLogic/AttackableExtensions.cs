@@ -91,7 +91,8 @@ public static class AttackableExtensions
 
         DamageAttributes attributes = DamageAttributes.Undefined;
         bool isCriticalHit = Rand.NextRandomBool(attacker.Attributes[Stats.CriticalDamageChance]);
-        bool isExcellentHit = Rand.NextRandomBool(attacker.Attributes[Stats.ExcellentDamageChance]);
+        bool isPlusThirteenHit = Rand.NextRandomBool(attacker.Attributes[Stats.PlusThirteenStrikeChance]);
+        bool isExcellentHit = isPlusThirteenHit || Rand.NextRandomBool(attacker.Attributes[Stats.ExcellentDamageChance]);
         bool isIgnoringDefense = Rand.NextRandomBool(attacker.Attributes[Stats.DefenseIgnoreChance]);
 
         var defense = 0;
@@ -194,6 +195,12 @@ public static class AttackableExtensions
         }
 
         dmg += (int)attacker.Attributes[Stats.GreaterDamageBonus];
+
+        if (isPlusThirteenHit)
+        {
+            dmg = (int)(dmg * PlusThirteenBonus.WeaponStrikeDamageFactor);
+            attributes |= DamageAttributes.PlusThirteen;
+        }
 
         /*Scroll of Wrath/Wizardry and Remedy of Love go here (but for now they don't exist)*/
 

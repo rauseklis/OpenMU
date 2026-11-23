@@ -253,6 +253,9 @@ public class PowerUpFactoryTest
     {
         var itemDefinition = new Mock<ItemDefinition>();
         itemDefinition.Object.Durability = 100;
+
+        // Not a weapon group, so these generic items don't trigger the +13 weapon bonus.
+        itemDefinition.Object.Group = 7;
         itemDefinition.Setup(d => d.BasePowerUpAttributes).Returns(new List<ItemBasePowerUpDefinition>());
         itemDefinition.Setup(d => d.PossibleItemSetGroups).Returns(new List<ItemSetGroup>());
         return itemDefinition.Object;

@@ -40,3 +40,4 @@ Defines the kind of the damage.
 | 5 | PoisonDarkGreen | Dark green color, usually used by poison damage. |
 | 6 | DarkPink | Dark pink color. |
 | 7 | White | White color. |
+| 8 | PlusThirteenCrimson | Deep crimson color, used by the strike of a +13 weapon. |

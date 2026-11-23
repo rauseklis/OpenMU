@@ -15870,6 +15870,11 @@
           <Description>White color.</Description>
           <Value>7</Value>
         </EnumValue>
+        <EnumValue>
+          <Name>PlusThirteenCrimson</Name>
+          <Description>Deep crimson color, used by the strike of a +13 weapon.</Description>
+          <Value>8</Value>
+        </EnumValue>
       </Values>
     </Enum>
     <Enum>

@@ -64,4 +64,9 @@ public enum DamageAttributes
     /// The damage is the final hit of a quick sequence from a rage fighter skill.
     /// </summary>
     RageFighterStreakFinalHit = 512,
+
+    /// <summary>
+    /// The damage is a +13 weapon strike (an excellent hit with 20% more damage).
+    /// </summary>
+    PlusThirteen = 1024,
 }
