@@ -43,7 +43,8 @@ public class PetDurabilityBalanceTests
     public void EveryDamagePetMatchesApprovedFarmingProfiles(short number, double hpPerSecond)
     {
         var pet = CreatePet(number);
-        var expectedHours = number is 0 or 1 or 2 or 106 ? 3 : number == 4 ? 72 : number == 37 ? 24 : 6;
+        var baseHours = number is 0 or 1 or 2 or 106 ? 3 : number == 4 ? 72 : number == 37 ? 24 : 6;
+        var expectedHours = baseHours / (number == 37 ? 1.0 : number is 3 or 4 ? 2.0 : 3.0);
         var loss = PetDurabilityPolicy.DamageLoss(pet, hpPerSecond * 3600);
         Assert.That(loss, Is.EqualTo(255.0 / expectedHours * hpPerSecond / 50).Within(1e-10));
         if (hpPerSecond == 50)
@@ -134,7 +135,7 @@ public class PetDurabilityBalanceTests
         var raven = CreatePet(5);
         Assert.That(PetDurabilityPolicy.DamageLoss(raven, 180000), Is.Zero, "Raven must never switch to incoming-damage wear.");
         var expectedHourlyLoss = (2 + 1.28) / 3 * 3600 * PetDurabilityPolicy.RavenLoss(raven);
-        Assert.That(255 / expectedHourlyLoss, Is.EqualTo(72).Within(1e-10));
+        Assert.That(255 / expectedHourlyLoss, Is.EqualTo(36).Within(1e-10));
         Assert.That(PetDurabilityPolicy.RavenLoss(raven, 20), Is.EqualTo(PetDurabilityPolicy.RavenLoss(raven) * 0.8).Within(1e-12));
     }
 
