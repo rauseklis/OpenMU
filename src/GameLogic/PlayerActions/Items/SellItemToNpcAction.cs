@@ -58,13 +58,35 @@ public class SellItemToNpcAction
             return false;
         }
 
-        if (item.Definition is null || (item.Definition.IsBoundToCharacter && (item.Definition.Durability == 0 || item.Durability > 0)))
+        if (IsSellBlockedByBinding(item))
         {
             await player.InvokeViewPlugInAsync<IItemSoldToNpcPlugIn>(p => p.ItemSoldToNpcAsync(false)).ConfigureAwait(false);
             return false;
         }
 
         return await this.SellItemAsync(player, item).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the character binding of the item prevents selling it to an NPC:
+    /// a bound item can only be sold once it is used up. The Wizards Ring is the exception, because it can't be
+    /// traded or stored and selling it is the only way to free its inventory slot.
+    /// </summary>
+    /// <param name="item">The item.</param>
+    /// <returns><c>True</c>, if the item can't be sold; otherwise, <c>false</c>.</returns>
+    public static bool IsSellBlockedByBinding(Item item)
+    {
+        if (item.Definition is null)
+        {
+            return true;
+        }
+
+        if (item.Definition is { Group: 13, Number: 20 })
+        {
+            return false;
+        }
+
+        return item.Definition.IsBoundToCharacter && (item.Definition.Durability == 0 || item.Durability > 0);
     }
 
     private async ValueTask<bool> SellItemAsync(Player player, Item item)
