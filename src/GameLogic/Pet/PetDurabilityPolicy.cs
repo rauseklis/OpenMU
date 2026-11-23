@@ -40,8 +40,16 @@ public static class PetDurabilityPolicy
         _ => throw new ArgumentException("Unsupported pet.", nameof(item)),
     };
 
-    /// <summary>Damage divisor from 50 counted HP/s and 255 full Life.</summary>
-    public static double DamageDivisor(Item item) => 50.0 * 3600 * TargetHours(item) / 255;
+    /// <summary>Owner-selected wear speed over the approved calibration: Fenrir x1, Dinorant, Dark Horse and Dark Raven x2, all other pets x3.</summary>
+    public static double WearSpeed(Item item) => item.Definition?.Number switch
+    {
+        37 => 1,
+        3 or 4 or 5 => 2,
+        _ => 3,
+    };
+
+    /// <summary>Damage divisor from 50 counted HP/s, 255 full Life and the <see cref="WearSpeed"/>.</summary>
+    public static double DamageDivisor(Item item) => 50.0 * 3600 * TargetHours(item) / 255 / WearSpeed(item);
 
     /// <summary>Damage wear. A persisted rental timestamp distinguishes Cash Shop items from ordinary drops.</summary>
     public static double DamageLoss(Item item, double countedDamage, double protectionPercent = 0)
@@ -50,7 +58,7 @@ public static class PetDurabilityPolicy
 
     /// <summary>Hit wear is charged only after the existing random selector chooses Raven.</summary>
     public static double RavenLoss(Item item, double protectionPercent = 0)
-        => !item.IsDarkRaven() || item.RentalExpiresAt.HasValue || !IsUsable(item) ? 0 : ProtectionMultiplier(protectionPercent) / RavenHitsPerLife;
+        => !item.IsDarkRaven() || item.RentalExpiresAt.HasValue || !IsUsable(item) ? 0 : ProtectionMultiplier(protectionPercent) * WearSpeed(item) / RavenHitsPerLife;
 
     /// <summary>Converts a displayed percent to a nonnegative remaining wear fraction.</summary>
     public static double ProtectionMultiplier(double percent) => double.IsFinite(percent) ? 1 - Math.Clamp(percent, 0, 100) / 100 : 1;
