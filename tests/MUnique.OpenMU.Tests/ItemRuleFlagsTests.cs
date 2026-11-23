@@ -61,6 +61,33 @@ public class ItemRuleFlagsTests
     }
 
     /// <summary>
+    /// Verifies that a character-bound item is only sold once it is used up, except the Wizards Ring, which can always be sold
+    /// because it can't be traded or stored and would otherwise block its inventory slot.
+    /// </summary>
+    /// <param name="group">The item group.</param>
+    /// <param name="number">The item number.</param>
+    /// <param name="isBound">If set to <c>true</c>, the item is bound to the character.</param>
+    /// <param name="durability">The durability of the item.</param>
+    /// <param name="expectedBlocked">If set to <c>true</c>, the binding is expected to block the sale.</param>
+    [TestCase((byte)13, (short)20, true, 30, false)]
+    [TestCase((byte)13, (short)20, true, 0, false)]
+    [TestCase((byte)13, (short)21, true, 5, true)]
+    [TestCase((byte)13, (short)21, true, 0, false)]
+    [TestCase((byte)13, (short)22, false, 5, false)]
+    public void BoundItemCanOnlyBeSoldWhenUsedUpExceptTheWizardsRing(byte group, short number, bool isBound, int durability, bool expectedBlocked)
+    {
+        var item = CreateItem(definition =>
+        {
+            definition.Group = group;
+            definition.Number = number;
+            definition.IsBoundToCharacter = isBound;
+        });
+        item.Durability = durability;
+
+        Assert.That(SellItemToNpcAction.IsSellBlockedByBinding(item), Is.EqualTo(expectedBlocked));
+    }
+
+    /// <summary>
     /// Verifies that a wearable item is repaired to its maximum durability when it is repairable, and not at all when it isn't.
     /// </summary>
     /// <param name="isRepairable">If set to <c>true</c>, the item is repairable.</param>
