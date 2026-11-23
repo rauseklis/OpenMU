@@ -6,6 +6,7 @@ namespace MUnique.OpenMU.Tests;
 
 using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.DataModel.Configuration;
+using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.Persistence.Initialization.VersionSeasonSix;
 using MUnique.OpenMU.Persistence.InMemory;
 
@@ -103,17 +104,16 @@ public class BonusProgressionTests
         var pairs = this._configuration.Maps.SelectMany(map => map.DropItemGroups
             .Where(group => group.ItemType == SpecialItemType.SmallBonus)
             .Select(group => (Map: (int)map.Number, Monster: (int)group.Monster!.Number, Level: (int)group.ItemLevel!.Value))).ToList();
-        Assert.That(pairs.Count(pair => pair.Level != 5), Is.EqualTo(64), "Only Silver sources are expanded by the absolute-chance update.");
-        Assert.That(pairs.Distinct().Count(), Is.EqualTo(pairs.Count));
-        Assert.That(pairs.Where(pair => pair.Level == 1).Select(pair => (pair.Map, pair.Monster)), Is.EquivalentTo(new[]
+        Assert.That(this._configuration.Maps.All(map => map.DropItemGroups.Distinct().Count() == map.DropItemGroups.Count), Is.True, "No group is attached twice to a map.");
+        var previous = new[]
         {
-            (8, 62), (8, 60), (8, 57), (8, 58), (8, 61),
-            (10, 69), (10, 71), (10, 70), (10, 73),
-            (33, 308), (33, 307), (33, 306), (33, 305),
-        }));
-        Assert.That(pairs.Count(pair => pair.Level == 7), Is.EqualTo(30), "Existing Heaven sources");
-        Assert.That(pairs.Count(pair => pair.Level == 2), Is.EqualTo(8));
-        Assert.That(pairs.Where(pair => pair.Level == 2).All(pair => pair.Map is 4 or 7), Is.True);
+            (Map: 8, Monster: 62, Level: 1), (8, 60, 1), (8, 57, 1), (8, 58, 1), (8, 61, 1),
+            (10, 69, 1), (10, 71, 1), (10, 70, 1), (10, 73, 1),
+            (33, 308, 1), (33, 307, 1), (33, 306, 1), (33, 305, 1),
+            (4, 37, 2), (4, 40, 2), (4, 35, 2), (4, 38, 2), (7, 51, 2), (7, 52, 2), (7, 48, 2), (7, 49, 2),
+        };
+        Assert.That(previous.Except(pairs), Is.Empty, "The earlier hand-picked Star and Firecracker monsters are still sources.");
+        Assert.That(pairs.Where(pair => pair.Level == 2).All(pair => this._configuration.Monsters.Single(monster => monster.Number == pair.Monster)[Stats.Level] is >= 60 and <= 74), Is.True);
     }
 
     [TestCase(1, 45000, 70000, 160)]

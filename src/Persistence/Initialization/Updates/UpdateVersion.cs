@@ -793,4 +793,9 @@ public enum UpdateVersion
     /// Sets the approved opening chances of the small monster bonuses and Box of Heaven.
     /// </summary>
     BonusOpeningRedistribution = 169,
+
+    /// <summary>
+    /// Makes the small bonuses drop by monster level on every map.
+    /// </summary>
+    BonusLevelSources = 170,
 }

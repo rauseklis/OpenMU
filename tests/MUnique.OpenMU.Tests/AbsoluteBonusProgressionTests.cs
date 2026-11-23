@@ -159,11 +159,17 @@ public class AbsoluteBonusProgressionTests
     {
         using var stream = typeof(BonusProgression).Assembly.GetManifestResourceStream("MUnique.OpenMU.Persistence.Initialization.Resources.BonusProgression.json")!;
         using var plan = JsonDocument.Parse(stream);
-        var expected = plan.RootElement.GetProperty("bonuses").EnumerateArray().Where(bonus => bonus.GetProperty("level").GetInt32() != 5)
+        var bands = new Dictionary<int, (int Min, int Max)> { [1] = (72, 99), [2] = (60, 74), [3] = (50, 60), [6] = (45, 59), [7] = (20, 74) };
+        var reviewed = plan.RootElement.GetProperty("bonuses").EnumerateArray().Where(bonus => bonus.GetProperty("level").GetInt32() != 5)
             .Select(bonus => (bonus.GetProperty("map").GetInt32(), bonus.GetProperty("monster").GetInt32(), bonus.GetProperty("level").GetInt32())).ToArray();
         var actual = this._configuration.Maps.SelectMany(map => map.DropItemGroups.Where(group => group.ItemType == SpecialItemType.SmallBonus && group.ItemLevel != 5)
-            .Select(group => ((int)map.Number, (int)group.Monster!.Number, (int)group.ItemLevel!.Value))).ToArray();
-        Assert.That(actual, Is.EquivalentTo(expected));
+            .Select(group => ((int)map.Number, (int)group.Monster!.Number, (int)group.ItemLevel!.Value))).ToHashSet();
+        var outsideBand = reviewed.Where(pair => this._configuration.Monsters.Single(monster => monster.Number == pair.Item2)[Stats.Level] is var level
+            && (level < bands[pair.Item3].Min || level > bands[pair.Item3].Max)).ToArray();
+        var notSpawning = reviewed.Where(pair => !this._configuration.Maps.Single(map => map.Number == pair.Item1).MonsterSpawns.Any(spawn => spawn.MonsterDefinition?.Number == pair.Item2)).ToArray();
+        Assert.That(reviewed.Except(outsideBand).Except(notSpawning).Except(actual), Is.Empty, "Every reviewed monster inside its level band that spawns on the map is still a source.");
+        Assert.That(outsideBand, Is.EquivalentTo(new[] { (7, 45, 6) }), "Only Bahamut (level 43) leaves the Gold Medal band 45-59.");
+        Assert.That(notSpawning, Is.EquivalentTo(new[] { (2, 19, 7) }), "Yeti is in the reviewed list but has no spawn in Devias.");
     }
 
     [Test]

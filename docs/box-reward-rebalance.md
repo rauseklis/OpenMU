@@ -5,48 +5,41 @@ The monster-drop and Box of Heaven rules below define the configured progression
 
 Each eligible kill uses one bonus roll with these absolute chances. Overlapping bonuses keep their own chances; at most **one bonus** can drop per kill. The remaining chance gives no bonus. Ordinary loot rolls separately. This progression is enabled on Server 1; other servers retain their own settings.
 
-| Bonus | Eligibility | Monster-drop chance |
+| Bonus | Eligibility (monster level, inclusive) | Monster-drop chance |
 |---|---|---:|
-| Silver Medal | Ordinary automatic world spawns, monster levels 1–44 inclusive | 1.00% |
-| Gold Medal | Existing specified Gold monsters | 0.35% |
-| Heart of Love | Existing specified Heart monsters | 0.30% |
-| Box of Heaven | Existing specified Heaven monsters | 0.05% |
-| Firecracker | Existing specified Firecracker monsters | 0.15% |
-| Star | Existing specified Star monsters | 0.05% |
+| Silver Medal | Monster levels 1–44 | 1.00% |
+| Gold Medal | Monster levels 45–59 | 0.35% |
+| Heart of Love | Monster levels 50–60 (overlaps Gold) | 0.30% |
+| Firecracker | Monster levels 60–74 | 0.15% |
+| Box of Heaven | Monster levels 20–74 | 0.05% |
+| Star | Monster levels 72–99 | 0.05% |
 
-Silver eligibility is derived from monster level and normal spawn data, rather than a manually maintained monster list. NPCs, event-only spawns/objectives, disabled spawns, special guaranteed-reward bosses and event/battle-zone maps are excluded. Summoned monsters already do not generate loot. Ordinary eligible Kalima hunting monsters are included; this does not add Silver to Kalima bosses.
+Every bonus is derived from the monster level and normal spawn data, rather than from a manually maintained monster list. It applies on every map, including Kalima, Blood Castle and Devil Square. A monster qualifies when it spawns automatically or during an event (`Automatic`, `AutomaticDuringEvent`, `OnceAtEventStart`, `AutomaticDuringWave`, which covers Blood Castle, Devil Square and the Imperial Guardian waves), is a real monster that can drop items, and has no guaranteed-reward group. NPCs, gates/traps, boss-wave starts (`OnceAtWaveStart`), manually spawned event monsters (Chaos Castle), battle-zone maps and special guaranteed-reward bosses are excluded. Summoned monsters already do not generate loot. Update 170 rebuilds these sources once on an existing database; chances per kill and the opening contents are unchanged.
 
 Average eligible kills per bonus are approximately 100 for Silver, 286 for Gold, 333 for Heart, 2,000 for Heaven, 667 for Firecracker and 2,000 for Star. These are statistical averages, not guaranteed drop counts.
 
 An opening gives one item or one Zen outcome, never a complete armor set. Monster drop chances and box opening chances are separate. Equipment is ordinary unless the box is explicitly a Kundun or Ancient reward.
 
-## Monster locations
+## Monster locations (by level)
 
-| Bonus | Map | Monsters |
+| Bonus | Level | Example monsters |
 |---|---|---|
-| Box Of Heaven | Dungeon | Larva (Lv 25), Cyclops (Lv 28), Ghost (Lv 32), Hell Hound (Lv 38), Hell Spider (Lv 40), Elite Skeleton (Lv 42), Thunder Lich (Lv 44), Poison Bull (Lv 46), Dark Knight (Lv 48), Gorgon (Lv 55) |
-| Box Of Heaven | Devias | Worm (Lv 20), Ice Monster (Lv 22), Hommerd (Lv 24), Assassin (Lv 26), Yeti (Lv 30), Elite Yeti (Lv 36) |
-| Box Of Heaven | Lost Tower | Shadow (Lv 47), Poison Shadow (Lv 50), Cursed Wizard (Lv 54), Death Cow (Lv 57), Devil (Lv 60), Death Knight (Lv 62), Death Gorgon (Lv 64), Balrog (Lv 66) |
-| Box Of Heaven | Atlans | Bahamut (Lv 43), Vepar (Lv 45), Valkyrie (Lv 46), Great Bahamut (Lv 66), Silver Valkyrie (Lv 68), Lizard King (Lv 70) |
-| Silver Medal | Normal hunting maps | Eligible ordinary automatic spawns at Lv1–44: Lorencia, Noria, Devias, Dungeon, Atlans, Elvenland, Kalima 1 and Kalima 2 |
-| Gold Medal | Dungeon | Poison Bull (Lv 46), Dark Knight (Lv 48), Gorgon (Lv 55) |
-| Gold Medal | Lost Tower | Shadow (Lv 47), Poison Shadow (Lv 50), Cursed Wizard (Lv 54), Death Cow (Lv 57) |
-| Gold Medal | Atlans | Bahamut (Lv 43), Vepar (Lv 45), Valkyrie (Lv 46) |
-| Heart Of Love | Dungeon | Gorgon (Lv 55) |
-| Heart Of Love | Lost Tower | Cursed Wizard (Lv 54), Death Cow (Lv 57) |
-| Firecracker | Lost Tower | Devil (Lv 60), Death Knight (Lv 62), Death Gorgon (Lv 64), Balrog (Lv 66) |
-| Firecracker | Atlans | Great Bahamut (Lv 66), Silver Valkyrie (Lv 68), Lizard King (Lv 70), Hydra (Lv 74) |
-| Star | Tarkan | Mutant (Lv 72), Bloody Wolf (Lv 76), Iron Wheel (Lv 80), Tantallos (Lv 83), Beam Knight (Lv 84) |
-| Star | Icarus | Alquamos (Lv 75), Mega Crust (Lv 78), Queen Rainer (Lv 82), Drakan (Lv 86) |
-| Star | Aida | Death Tree (Lv 72), Forest Orc (Lv 74), Death Rider (Lv 78), Blue Golem (Lv 84) |
+| Silver Medal | 1–44 | Goblin (3), Beetle Monster (10), Worm (20), Ice Monster (22), Ghost (32), Hell Hound (38), Hell Spider (40), Elite Skeleton (42), Thunder Lich (44); Kalima: Aegis 1 (17), Death Angel 1 (24), Blood Soldier 2 (37) |
+| Gold Medal | 45–59 | Vepar (45), Poison Bull (46), Valkyrie (46), Shadow (47), Dark Knight (48), Poison Shadow (50), Gorgon (55), Death Cow (57); Kalima: Death Centurion 2 (48), Blood Soldier 3 (50), Death Angel 3 (53), Necron 3 (58) |
+| Heart of Love | 50–60 | Poison Shadow (50), Cursed Wizard (54), Gorgon (55), Death Cow (57), Necron 3 (58), Devil (60) |
+| Firecracker | 60–74 | Devil (60), Death Knight (62), Death Gorgon (64), Balrog (66), Great Bahamut (66), Silver Valkyrie (68), Lizard King (70), Hydra (74); Kalima: Aegis 4 (62), Blood Soldier 4 (70), Death Angel 4 (74); Blood Castle: Chief Skeleton Warrior 2 (64), Dark Skull Soldier 1 (66), Giant Ogre 1 (70) |
+| Box of Heaven | 20–74 | Everything from level 20 to 74, e.g. Worm (20), Cyclops (28), Yeti (30), Hell Hound (38), Gorgon (55), Devil (60), Hydra (74) |
+| Star | 72–99 | Mutant (72), Death Tree (72), Alquamos (75), Bloody Wolf (76), Iron Wheel (80), Queen Rainer (82), Beam Knight (84), Drakan (86), Zaikan (90), Phantom Knight (96); Blood Castle: Giant Ogre 3 (85), Red Skeleton Knight 3 (87) |
+
+Overlapping bands keep their own chances; one bonus roll per kill means a level 55 monster has Gold 0.35%, Heart of Love 0.30% and Heaven 0.05% (0.70% in total), a level 60 monster Heart of Love 0.30%, Firecracker 0.15% and Heaven 0.05%.
 
 Examples of the single bonus roll:
 
 | Eligible bonuses | Absolute chances | No bonus |
 |---|---|---:|
 | Silver only | Silver 1.00% | 99.00% |
-| Silver + Heaven | Silver 1.00%, Heaven 0.05% | 98.95% |
-| Silver + Gold + Heaven, e.g. Bahamut | Silver 1.00%, Gold 0.35%, Heaven 0.05% | 98.60% |
+| Silver + Heaven, e.g. a level 30 monster | Silver 1.00%, Heaven 0.05% | 98.95% |
+| Gold + Heart + Heaven, e.g. a level 55 monster | Gold 0.35%, Heart 0.30%, Heaven 0.05% | 99.30% |
 | Firecracker + Heaven | Firecracker 0.15%, Heaven 0.05% | 99.80% |
 
 ## Ordinary opening probabilities

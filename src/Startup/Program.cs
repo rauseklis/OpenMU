@@ -775,6 +775,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed the new opening chances of Silver, Gold, Heart of Love, Firecracker and Box of Heaven.");
         }
 
+        if (await BonusLevelSourcesInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the level-based sources of the small bonuses.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
