@@ -10,6 +10,8 @@ using MUnique.OpenMU.GameLogic.Attributes;
 public static class PremiumBuffService
 {
     private const long SecondsPerDay = 86400;
+    private const byte ScrollSubType = 241;
+    private const byte HealingScrollSubType = 247;
 
     public static async ValueTask<bool> ActivateAsync(Player player, MagicEffectDefinition definition, TimeSpan duration)
     {
@@ -29,6 +31,25 @@ public static class PremiumBuffService
             || !configuredAttributes.Any(attribute => attribute == PremiumBuffStats.ExpirySecond(entry.Effect)))
         {
             return false;
+        }
+
+        if (entry.SubType is ScrollSubType or HealingScrollSubType)
+        {
+            // Scrolls of different kinds work together. Using the same scroll again adds its time to the time that is left.
+            if (ReadExpiry(player, entry.Effect) is { } current && current > DateTimeOffset.UtcNow)
+            {
+                duration += current - DateTimeOffset.UtcNow;
+                expires = DateTimeOffset.UtcNow.Add(duration);
+            }
+
+            if (player.MagicEffectList.TryGetEffect(entry.Effect, out var running))
+            {
+                await running.DisposeAsync().ConfigureAwait(false);
+            }
+
+            SetExpiry(player, entry.Effect, expires);
+            await AddEffectAsync(player, definition, duration, powers).ConfigureAwait(false);
+            return true;
         }
 
         foreach (var other in PremiumBuffCatalog.Items.Where(item => item.SubType == entry.SubType))

@@ -103,18 +103,52 @@ public class PremiumBuffTests
     }
 
     [Test]
-    public async Task ScrollAndElixirFamiliesDoNotStackWithTheirOwnFamilyAsync()
+    public async Task ElixirsAndSealsStillReplaceTheirOwnFamilyButScrollsWorkTogetherAsync()
     {
         var player = await CreatePlayerAsync().ConfigureAwait(false);
         foreach (var effect in new byte[] { 44, 45, 50, 51, 121 })
         {
             await PremiumBuffService.ActivateAsync(player, Definition(player, effect), TimeSpan.FromHours(1)).ConfigureAwait(false);
         }
-        Assert.That(player.MagicEffectList.ContainsEffect(44), Is.False);
+        Assert.That(player.MagicEffectList.ContainsEffect(44), Is.True);
         Assert.That(player.MagicEffectList.ContainsEffect(45), Is.True);
         Assert.That(player.MagicEffectList.ContainsEffect(50), Is.False);
         Assert.That(player.MagicEffectList.ContainsEffect(51), Is.True);
         Assert.That(player.MagicEffectList.ContainsEffect(121), Is.True);
+        await player.MagicEffectList.ClearAllEffectsAsync().ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task DifferentScrollsAreActiveAtTheSameTimeAsync()
+    {
+        var player = await CreatePlayerAsync().ConfigureAwait(false);
+        foreach (var effect in new byte[] { 44, 45, 46, 47, 48, 49, 89, 90, 121 })
+        {
+            Assert.That(await PremiumBuffService.ActivateAsync(player, Definition(player, effect), TimeSpan.FromHours(1)).ConfigureAwait(false), Is.True);
+        }
+
+        foreach (var effect in new byte[] { 44, 45, 46, 47, 48, 49, 89, 90, 121 })
+        {
+            Assert.That(player.MagicEffectList.ContainsEffect(effect), Is.True, $"effect {effect}");
+            Assert.That(PremiumBuffService.ReadExpiry(player, effect), Is.GreaterThan(DateTimeOffset.UtcNow.AddMinutes(59)));
+        }
+
+        await player.MagicEffectList.ClearAllEffectsAsync().ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task UsingTheSameScrollAgainAddsItsTimeAsync()
+    {
+        var player = await CreatePlayerAsync().ConfigureAwait(false);
+        var strength = Definition(player, 90);
+        await PremiumBuffService.ActivateAsync(player, strength, TimeSpan.FromMinutes(30)).ConfigureAwait(false);
+        await PremiumBuffService.ActivateAsync(player, strength, TimeSpan.FromMinutes(30)).ConfigureAwait(false);
+        await PremiumBuffService.ActivateAsync(player, strength, TimeSpan.FromMinutes(30)).ConfigureAwait(false);
+        var expiry = PremiumBuffService.ReadExpiry(player, 90)!.Value;
+        Assert.That(expiry, Is.GreaterThan(DateTimeOffset.UtcNow.AddMinutes(89)));
+        Assert.That(expiry, Is.LessThan(DateTimeOffset.UtcNow.AddMinutes(91)));
+        Assert.That(player.MagicEffectList.ContainsEffect(90), Is.True);
+        Assert.That(player.Attributes![Stats.ExcellentDamageChance], Is.EqualTo(0.2f), "the bonus must not be doubled");
         await player.MagicEffectList.ClearAllEffectsAsync().ConfigureAwait(false);
     }
 
