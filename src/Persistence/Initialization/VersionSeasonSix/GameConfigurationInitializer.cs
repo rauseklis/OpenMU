@@ -122,6 +122,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new UniqueRewardWeights(this.Context, this.GameConfiguration).Initialize();
         new RewardCategoryRatios(this.Context, this.GameConfiguration).Initialize();
         new BonusOpeningRedistribution(this.Context, this.GameConfiguration).Initialize();
+        new BonusLevelSources(this.Context, this.GameConfiguration).Initialize();
         new ShopValuablesCleanup(this.Context, this.GameConfiguration).Initialize();
     }
 
