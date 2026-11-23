@@ -770,6 +770,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Set the Elf Soldier buff duration to 2 hours 30 minutes.");
         }
 
+        if (await BonusOpeningRedistributionInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the new opening chances of Silver, Gold, Heart of Love, Firecracker and Box of Heaven.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

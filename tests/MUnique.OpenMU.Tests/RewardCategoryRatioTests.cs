@@ -34,13 +34,13 @@ public class RewardCategoryRatioTests
     [TestCase(11, 10, .70, .20, .10, 0, 0, 0, 0)]
     [TestCase(11, 11, .70, .20, .10, 0, 0, 0, 0)]
     [TestCase(11, 12, .70, .20, .10, 0, 0, 0, 0)]
-    [TestCase(11, 5, .4125, .11, .0275, 0, .20, .05, .20)]
-    [TestCase(11, 6, .525, .14, .035, 0, .15, .05, .10)]
-    [TestCase(11, 2, .32, .08, 0, 0, .35, 0, .25)]
+    [TestCase(11, 5, .42, .20, .10, 0, .03, .05, .20)]
+    [TestCase(11, 6, .51, .20, .10, 0, .04, .05, .10)]
+    [TestCase(11, 2, .56, .14, 0, 0, .05, 0, .25)]
     [TestCase(11, 1, .75, .20, .05, 0, 0, 0, 0)]
     [TestCase(32, 0, .70, .20, .10, 0, 0, 0, 0)]
     [TestCase(34, 0, .80, .15, 0, .05, 0, 0, 0)]
-    [TestCase(11, 3, 0, .525, .075, 0, .30, 0, .10)]
+    [TestCase(11, 3, 0, .774, .086, 0, .04, 0, .10)]
     public void ConfiguredCategoriesMatchApprovedTotals(short number, byte level, double armor, double weapons, double shields, double rare, double jewels, double rings, double zen)
     {
         var groups = this.Groups(number, level);

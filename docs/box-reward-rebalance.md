@@ -8,15 +8,15 @@ Each eligible kill uses one bonus roll with these absolute chances. Overlapping 
 | Bonus | Eligibility | Monster-drop chance |
 |---|---|---:|
 | Silver Medal | Ordinary automatic world spawns, monster levels 1–44 inclusive | 1.00% |
-| Gold Medal | Existing specified Gold monsters | 0.50% |
-| Heart of Love | Existing specified Heart monsters | 0.35% |
-| Box of Heaven | Existing specified Heaven monsters | 0.25% |
+| Gold Medal | Existing specified Gold monsters | 0.35% |
+| Heart of Love | Existing specified Heart monsters | 0.30% |
+| Box of Heaven | Existing specified Heaven monsters | 0.05% |
 | Firecracker | Existing specified Firecracker monsters | 0.15% |
 | Star | Existing specified Star monsters | 0.05% |
 
 Silver eligibility is derived from monster level and normal spawn data, rather than a manually maintained monster list. NPCs, event-only spawns/objectives, disabled spawns, special guaranteed-reward bosses and event/battle-zone maps are excluded. Summoned monsters already do not generate loot. Ordinary eligible Kalima hunting monsters are included; this does not add Silver to Kalima bosses.
 
-Average eligible kills per bonus are approximately 100 for Silver, 200 for Gold, 286 for Heart, 400 for Heaven, 667 for Firecracker and 2,000 for Star. These are statistical averages, not guaranteed drop counts.
+Average eligible kills per bonus are approximately 100 for Silver, 286 for Gold, 333 for Heart, 2,000 for Heaven, 667 for Firecracker and 2,000 for Star. These are statistical averages, not guaranteed drop counts.
 
 An opening gives one item or one Zen outcome, never a complete armor set. Monster drop chances and box opening chances are separate. Equipment is ordinary unless the box is explicitly a Kundun or Ancient reward.
 
@@ -45,24 +45,24 @@ Examples of the single bonus roll:
 | Eligible bonuses | Absolute chances | No bonus |
 |---|---|---:|
 | Silver only | Silver 1.00% | 99.00% |
-| Silver + Heaven | Silver 1.00%, Heaven 0.25% | 98.75% |
-| Silver + Gold + Heaven, e.g. Bahamut | Silver 1.00%, Gold 0.50%, Heaven 0.25% | 98.25% |
-| Firecracker + Heaven | Firecracker 0.15%, Heaven 0.25% | 99.60% |
+| Silver + Heaven | Silver 1.00%, Heaven 0.05% | 98.95% |
+| Silver + Gold + Heaven, e.g. Bahamut | Silver 1.00%, Gold 0.35%, Heaven 0.05% | 98.60% |
+| Firecracker + Heaven | Firecracker 0.15%, Heaven 0.05% | 99.80% |
 
 ## Ordinary opening probabilities
 
 | Bonus | Armor | Weapons | Shields | Jewels | Rings | Pets | Higher pet group | Zen |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Silver Medal | 41.25% | 11% | 2.75% | 20% | 5% | 0% | 0% | 20% |
-| Gold Medal | 52.5% | 14% | 3.5% | 15% | 5% | 0% | 0% | 10% |
-| Heart Of Love | 0% | 52.5% | 7.5% | 30% | 0% | 0% | 0% | 10% |
-| Firecracker | 32% | 8% | 0% | 35% | 0% | 0% | 0% | 25% |
-| Box Of Heaven | 0% | 0% | 0% | 45% | 0% | 30% | 5% | 20% |
+| Silver Medal | 42% | 20% | 10% | 3% | 5% | 0% | 0% | 20% |
+| Gold Medal | 51% | 20% | 10% | 4% | 5% | 0% | 0% | 10% |
+| Heart Of Love | 0% | 77.4% | 8.6% | 4% | 0% | 0% | 0% | 10% |
+| Firecracker | 56% | 14% | 0% | 5% | 0% | 0% | 0% | 25% |
+| Box Of Heaven | 0% | 0% | 0% | 45% | 0% | 32% | 3% | 20% |
 | Star | 75% | 20% | 5% | 0% | 0% | 0% | 0% | 0% |
 
-Firecracker uses an 80% armor / 20% weapon split within its unchanged 40% equipment share. Silver and Gold use a 75% armor / 20% weapon / 5% shield split within their unchanged 55% and 70% equipment shares. Boxes without an armor or shield category do not gain one. Other boxes keep their existing non-equipment category chances.
+Every listed jewel is **1%** per opening (Silver 3 jewels, Gold 4, Heart of Love 4, Firecracker 5). Rings and Zen keep their previous chances. Silver and Gold give weapons 20% and shields 10% of the whole opening; armor receives the remainder. Heart of Love splits what remains after jewels and Zen 90% weapons / 10% shields, Firecracker 80% armor / 20% weapons. Boxes without an armor or shield category do not gain one. Box of Heaven keeps its jewels, Zen and category contents; each higher pet is 1% and the ordinary pets share the rest of the old pet chance.
 
-Silver, Gold and Firecracker select one unique armor set equally, then one of its included pieces equally. Silver's six sets are approximately 6.88% each per opening; Gold's six sets are 8.75% each; Firecracker's seven sets are approximately 4.57% each. Shared equip eligibility does not add probability. All item pools and non-equipment probabilities stay unchanged.
+Silver, Gold and Firecracker select one unique armor set equally, then one of its included pieces equally. Silver's six sets are 7.00% each per opening; Gold's six sets are 8.50% each; Firecracker's seven sets are 8.00% each. Each Silver weapon is approximately 1.82%, each Gold weapon 1.67%, each Heart of Love weapon 5.16% and each Firecracker weapon 1.75%; each Silver and Gold shield is 2.5%. Shared equip eligibility does not add probability. All item pools and non-equipment probabilities stay unchanged.
 
 ## Equipment levels and options
 
@@ -140,7 +140,7 @@ Thunder Hawk and Valiant have four armor pieces and no helm; Piercing Groove has
 - **Jewels:** Jewel of Bless, Jewel of Soul.
 - **Pets:** Imp, Guardian Angel, Horn of Uniria.
 - **Higher Pet Group:** Demon, Spirit of Guardian, Horn of Dinorant.
-- Bless and Soul are **22.50% each** per opening; normal pets are **10.00% each**; each higher pet is approximately **1.67%**. Categories are selected first, then equally among their members. Box of Heaven does not award Fruits.
+- Bless and Soul are **22.50% each** per opening; normal pets are **10.67% each**; each higher pet is **1.00%**. Categories are selected first, then equally among their members. Box of Heaven does not award Fruits.
 - **Zen outcome:** 100,000 Zen.
 
 ## Kundun +1 through +5
