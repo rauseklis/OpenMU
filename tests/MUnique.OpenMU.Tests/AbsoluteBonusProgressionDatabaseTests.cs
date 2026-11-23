@@ -79,7 +79,7 @@ public class AbsoluteBonusProgressionDatabaseTests
         var servers = await reload.GetAsync<GameServerDefinition>().ConfigureAwait(false);
         Assert.That(servers.Single(server => server.ServerID == 0).SmallBonusDropChance, Is.Null);
         var bonuses = after.Maps.SelectMany(map => map.DropItemGroups).Where(group => group.ItemType == SpecialItemType.SmallBonus).ToArray();
-        var chances = new Dictionary<byte, double> { [1] = .0005, [2] = .0015, [3] = .0035, [5] = .01, [6] = .005, [7] = .0025 };
+        var chances = new Dictionary<byte, double> { [1] = .0005, [2] = .0015, [3] = .003, [5] = .01, [6] = .0035, [7] = .0005 };
         Assert.That(bonuses.All(group => Math.Abs(group.Chance - chances[group.ItemLevel!.Value]) < 1e-12), Is.True);
         Assert.That(bonuses.Where(group => group.ItemLevel == 5).All(group => group.MinimumMonsterLevel == 1 && group.MaximumMonsterLevel == 44), Is.True);
         await using var database = new EntityDataContext();

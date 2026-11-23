@@ -35,9 +35,9 @@ public class UniqueRewardWeightTests
     [TestCase(10, 7, .7)]
     [TestCase(11, 7, .7)]
     [TestCase(12, 9, .7)]
-    [TestCase(5, 6, .4125)]
-    [TestCase(6, 6, .525)]
-    [TestCase(2, 7, .32)]
+    [TestCase(5, 6, .42)]
+    [TestCase(6, 6, .51)]
+    [TestCase(2, 7, .56)]
     public void EachUniqueArmorSetHasOneEqualAllocation(byte level, int count, double total)
     {
         var armor = this.Groups(level).Where(group => group.PossibleItems.Count > 0 && group.PossibleItems.All(item => item.Group is >= 7 and <= 11)).ToArray();

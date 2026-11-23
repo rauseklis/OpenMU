@@ -232,6 +232,7 @@ public class ChocolateEndgameTests
         new ChocolateEndgameItemBalance(context, this._configuration).Initialize();
         new DisabledSocketSystem(context, this._configuration).Initialize();
         new RewardCategoryRatios(context, this._configuration).Initialize();
+        new BonusOpeningRedistribution(context, this._configuration).Initialize();
         Assert.That(this.UnrelatedBoxFingerprint(), Is.EqualTo(preserved));
     }
 
@@ -259,7 +260,7 @@ public class ChocolateEndgameTests
     }
 
     private string UnrelatedBoxFingerprint() => string.Join('\n', this._configuration.Items.Where(item => !(item.Group == 14 && item.Number is 32 or 33 or 34))
-        .OrderBy(item => item.Group).ThenBy(item => item.Number).SelectMany(item => item.DropItems.Select(group => $"{item.Group}/{item.Number}:{group.SourceItemLevel}:{group.Description}:{group.Chance}:{group.MinimumLevel}:{group.MaximumLevel}:{group.ItemType}:{group.MoneyAmount}:{group.SkillChance}:{group.LuckChance}:{string.Join(',', group.PossibleItems.Select(candidate => $"{candidate.Group}/{candidate.Number}"))}")));
+        .OrderBy(item => item.Group).ThenBy(item => item.Number).SelectMany(item => item.DropItems.Select(group => $"{item.Group}/{item.Number}:{group.SourceItemLevel}:{group.Description}:{Math.Round(group.Chance, 12)}:{group.MinimumLevel}:{group.MaximumLevel}:{group.ItemType}:{group.MoneyAmount}:{group.SkillChance}:{group.LuckChance}:{string.Join(',', group.PossibleItems.Select(candidate => $"{candidate.Group}/{candidate.Number}"))}")));
 
     private List<ItemDropItemGroup> Groups(int number) => this._configuration.Items.Single(item => item.Group == 14 && item.Number == number).DropItems.Where(group => group.SourceItemLevel == 0).ToList();
 

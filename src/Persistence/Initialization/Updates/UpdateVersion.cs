@@ -788,4 +788,9 @@ public enum UpdateVersion
     /// Sets the duration of the Elf Soldier buff to 2 hours 30 minutes.
     /// </summary>
     ElfSoldierBuffDuration = 168,
+
+    /// <summary>
+    /// Sets the approved opening chances of the small monster bonuses and Box of Heaven.
+    /// </summary>
+    BonusOpeningRedistribution = 169,
 }

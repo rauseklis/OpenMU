@@ -153,6 +153,7 @@ public class KundunProgressionTests
         new KundunProgression(context, this._configuration).Initialize();
         new UniqueRewardWeights(context, this._configuration).Initialize();
         new RewardCategoryRatios(context, this._configuration).Initialize();
+        new BonusOpeningRedistribution(context, this._configuration).Initialize();
         Assert.That(this.UnrelatedFingerprint(), Is.EqualTo(before));
         Assert.That(this.KundunFingerprint(), Is.EqualTo(expected));
         for (var tier = 1; tier <= 3; tier++)
@@ -171,7 +172,7 @@ public class KundunProgressionTests
 
     private string UnrelatedFingerprint() => string.Join('\n', this._configuration.Items.SelectMany(item => item.DropItems.Where(group => !(item.Group == 14 && item.Number == 11 && group.SourceItemLevel is >= 8 and <= 12))).Select(GroupFingerprint).Order());
 
-    private static string GroupFingerprint(ItemDropItemGroup group) => $"{group.SourceItemLevel}:{group.Description}:{group.Chance}:{group.ItemType}:{group.MinimumLevel}:{group.MaximumLevel}:{group.ExcellentSecondOptionChance}:{group.LuckChance}:{group.SkillChance}:{group.MoneyAmount}:{string.Join(',', group.PossibleItems.Select(item => $"{item.Group}/{item.Number}").Order())}";
+    private static string GroupFingerprint(ItemDropItemGroup group) => $"{group.SourceItemLevel}:{group.Description}:{Math.Round(group.Chance, 12)}:{group.ItemType}:{group.MinimumLevel}:{group.MaximumLevel}:{group.ExcellentSecondOptionChance}:{group.LuckChance}:{group.SkillChance}:{group.MoneyAmount}:{string.Join(',', group.PossibleItems.Select(item => $"{item.Group}/{item.Number}").Order())}";
 
     [Test]
     public void ExportCatalogWhenRequested()
