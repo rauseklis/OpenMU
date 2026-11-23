@@ -785,6 +785,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Set the item drop time to 30 seconds and installed the monster scaling of server 1.");
         }
 
+        if (await ShopPotionStacksInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Potions now stack to 50 and the shops sell them in amounts of 1, 10 and 25.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
