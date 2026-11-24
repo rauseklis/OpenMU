@@ -795,6 +795,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Raised the monster attack rate increase of server 1 to 150%.");
         }
 
+        if (await QuestItemDropRatesInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Made the class quest items rarer.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

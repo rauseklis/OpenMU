@@ -185,9 +185,9 @@ internal class Quests : InitializerBase
         evidenceOfStrength.RequiredStartMoney = 5000000;
         evidenceOfStrength.MinimumCharacterLevel = 380;
 
-        this.AddItemRequirement(evidenceOfStrength, 14, Quest.FlameOfDeathBeamKnightNumber, 0, 63, 3.0 / 100.0);
-        this.AddItemRequirement(evidenceOfStrength, 14, Quest.HornOfHellMaineNumber, 0, 309, 4.0 / 100.0);
-        this.AddItemRequirement(evidenceOfStrength, 14, Quest.FeatherOfDarkPhoenixNumber, 0, 77, 5.0 / 100.0);
+        this.AddItemRequirement(evidenceOfStrength, 14, Quest.FlameOfDeathBeamKnightNumber, 0, 63, QuestItemDropRates.ForEvidenceOfStrength(Quest.FlameOfDeathBeamKnightNumber)!.Value);
+        this.AddItemRequirement(evidenceOfStrength, 14, Quest.HornOfHellMaineNumber, 0, 309, QuestItemDropRates.ForEvidenceOfStrength(Quest.HornOfHellMaineNumber)!.Value);
+        this.AddItemRequirement(evidenceOfStrength, 14, Quest.FeatherOfDarkPhoenixNumber, 0, 77, QuestItemDropRates.ForEvidenceOfStrength(Quest.FeatherOfDarkPhoenixNumber)!.Value);
 
         // Rewards:
         var pointReward = this.Context.CreateNew<QuestReward>();
@@ -339,7 +339,7 @@ internal class Quests : InitializerBase
         dropItemGroup.SetGuid(quest.Number, itemNumber, quest.QualifiedCharacter?.Number ?? 0);
         dropItemGroup.Description = $"Quest Item '{itemRequirement.Item.Name}' ({quest.QualifiedCharacter?.Name})";
         dropItemGroup.PossibleItems.Add(itemRequirement.Item);
-        dropItemGroup.Chance = 10.0 / 10000.0;
+        dropItemGroup.Chance = QuestItemDropRates.ForQuest(quest.Number) ?? QuestItemDropRates.PreviousDefault;
         dropItemGroup.ItemLevel = itemLevel;
 
         itemRequirement.DropItemGroup = dropItemGroup;
