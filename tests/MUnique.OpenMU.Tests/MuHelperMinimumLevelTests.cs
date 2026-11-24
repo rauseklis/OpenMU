@@ -14,15 +14,15 @@ using MUnique.OpenMU.GameLogic.MuHelper;
 public class MuHelperMinimumLevelTests
 {
     /// <summary>
-    /// By default only the first server (id 0) requires level 50; all others keep the general minimum.
+    /// By default only the x5 server (id 1) requires level 50; all others keep the general minimum.
     /// </summary>
     [Test]
-    public void OnlyTheFirstServerRequiresLevelFifty()
+    public void OnlyTheX5ServerRequiresLevelFifty()
     {
         var configuration = new MuHelperConfiguration();
 
-        Assert.That(configuration.GetMinLevel(0), Is.EqualTo(50));
-        Assert.That(configuration.GetMinLevel(1), Is.EqualTo(1));
+        Assert.That(configuration.GetMinLevel(0), Is.EqualTo(1));
+        Assert.That(configuration.GetMinLevel(1), Is.EqualTo(50));
         Assert.That(configuration.GetMinLevel(2), Is.EqualTo(1));
     }
 
@@ -34,8 +34,8 @@ public class MuHelperMinimumLevelTests
     {
         var configuration = JsonSerializer.Deserialize<MuHelperConfiguration>("{\"MinLevel\":1,\"MaxLevel\":400}")!;
 
-        Assert.That(configuration.GetMinLevel(0), Is.EqualTo(50));
-        Assert.That(configuration.GetMinLevel(1), Is.EqualTo(1));
+        Assert.That(configuration.GetMinLevel(0), Is.EqualTo(1));
+        Assert.That(configuration.GetMinLevel(1), Is.EqualTo(50));
     }
 
     /// <summary>

@@ -46,10 +46,10 @@ public class MuHelperConfiguration
     public int MaxLevel { get; set; } = 400;
 
     /// <summary>
-    /// Gets or sets the id of the game server (internal server id, the first server is 0) which has its own minimum level.
+    /// Gets or sets the id of the game server (internal server id; the x5 experience server is 1) which has its own minimum level.
     /// </summary>
-    [Display(Name = "Server with its own minimum level", Description = "The internal id of the game server (first server = 0) which uses the minimum level below instead of the general one.")]
-    public byte LimitedServerId { get; set; }
+    [Display(Name = "Server with its own minimum level", Description = "The internal id of the game server (the x5 experience server = 1) which uses the minimum level below instead of the general one.")]
+    public byte LimitedServerId { get; set; } = 1;
 
     /// <summary>
     /// Gets or sets the minimum character level on the server <see cref="LimitedServerId"/>.
