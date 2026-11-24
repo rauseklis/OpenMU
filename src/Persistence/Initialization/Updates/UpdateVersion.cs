@@ -818,4 +818,9 @@ public enum UpdateVersion
     /// Makes the items of the class quests much rarer.
     /// </summary>
     QuestItemDropRates = 174,
+
+    /// <summary>
+    /// The x5 server gets its own monster scaling, common drop chances halved, no excellent rings or pendants from drops.
+    /// </summary>
+    MonsterBalance = 175,
 }

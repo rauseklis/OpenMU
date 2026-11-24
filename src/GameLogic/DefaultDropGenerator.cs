@@ -213,7 +213,10 @@ public class DefaultDropGenerator : IDropGenerator
             return null;
         }
 
-        var possible = possibleItems ?? this.GetPossibleList(monsterLevel - this._excellentItemDropLevelDelta);
+        // Monsters never drop excellent rings or pendants. Boxes with a hand-picked item list (possibleItems) are left as configured.
+        var possible = possibleItems ?? this.GetPossibleList(monsterLevel - this._excellentItemDropLevelDelta)
+            ?.Where(definition => !ExcellentJewellery.IsExcellentRingOrPendant(definition))
+            .ToList();
         var item = this.GenerateRandomItem(possible);
         if (item is null)
         {

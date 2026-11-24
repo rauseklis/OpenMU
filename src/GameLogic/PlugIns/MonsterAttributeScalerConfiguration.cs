@@ -88,6 +88,24 @@ public class MonsterAttributeScalerConfiguration
     /// </summary>
     public byte? OnlyServerId { get; set; }
 
+    /// <summary>
+    /// Gets or sets the internal id of one more game server which gets its own attack rate and health scaling
+    /// (<see cref="OtherServerAttackRatePercentage"/>, <see cref="OtherServerHealthPercentage"/>). Damage, defense and defense rate
+    /// are scaled by the same percentages as on the other server. If empty (default), there is no such server.
+    /// A change needs a server restart.
+    /// </summary>
+    public byte? OtherServerId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the percentage by which the monster attack rate is increased on the server <see cref="OtherServerId"/>.
+    /// </summary>
+    public float OtherServerAttackRatePercentage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the percentage by which the monster maximum health is increased on the server <see cref="OtherServerId"/>.
+    /// </summary>
+    public float OtherServerHealthPercentage { get; set; }
+
     private bool ScaleAllActive => this._scaleAllPercentage > 0;
 
     private void SetIndividualField(ref float field, float value)

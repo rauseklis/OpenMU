@@ -800,6 +800,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Made the class quest items rarer.");
         }
 
+        if (await MonsterBalanceInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the monster balance (the x5 server gets its own monster scaling, common drops halved, no excellent rings or pendants).");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

@@ -124,6 +124,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new BonusOpeningRedistribution(this.Context, this.GameConfiguration).Initialize();
         new BonusLevelSources(this.Context, this.GameConfiguration).Initialize();
         new ShopValuablesCleanup(this.Context, this.GameConfiguration).Initialize();
+        new MonsterBalance(this.Context, this.GameConfiguration).Initialize();
     }
 
     /// <summary>

@@ -22,11 +22,8 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     ISupportDefaultCustomConfiguration,
     IDisabledByDefault
 {
-    private readonly SimpleElement _damageMultiplier = new(1.0f, AggregateType.Multiplicate);
-    private readonly SimpleElement _attackRateMultiplier = new(1.0f, AggregateType.Multiplicate);
-    private readonly SimpleElement _defenseRateMultiplier = new(1.0f, AggregateType.Multiplicate);
-    private readonly SimpleElement _defenseMultiplier = new(1.0f, AggregateType.Multiplicate);
-    private readonly SimpleElement _healthMultiplier = new(1.0f, AggregateType.Multiplicate);
+    private readonly Multipliers _main = new();
+    private readonly Multipliers _other = new();
 
     private MonsterAttributeScalerConfiguration? _configuration;
 
@@ -40,19 +37,15 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
 
             if (value is null)
             {
-                this._damageMultiplier.Value = 1.0f;
-                this._attackRateMultiplier.Value = 1.0f;
-                this._defenseRateMultiplier.Value = 1.0f;
-                this._defenseMultiplier.Value = 1.0f;
-                this._healthMultiplier.Value = 1.0f;
+                this._main.Set(0, 0, 0, 0, 0);
+                this._other.Set(0, 0, 0, 0, 0);
                 return;
             }
 
-            this._damageMultiplier.Value = value.DamagePercentage > 0 ? 1.0f + (value.DamagePercentage / 100.0f) : 1.0f;
-            this._attackRateMultiplier.Value = value.AttackRatePercentage > 0 ? 1.0f + (value.AttackRatePercentage / 100.0f) : 1.0f;
-            this._defenseRateMultiplier.Value = value.DefenseRatePercentage > 0 ? 1.0f + (value.DefenseRatePercentage / 100.0f) : 1.0f;
-            this._defenseMultiplier.Value = value.DefensePercentage > 0 ? 1.0f + (value.DefensePercentage / 100.0f) : 1.0f;
-            this._healthMultiplier.Value = value.HealthPercentage > 0 ? 1.0f + (value.HealthPercentage / 100.0f) : 1.0f;
+            this._main.Set(value.DamagePercentage, value.AttackRatePercentage, value.DefenseRatePercentage, value.DefensePercentage, value.HealthPercentage);
+
+            // The other server only has its own attack rate and health; the other values are the same as the main ones.
+            this._other.Set(value.DamagePercentage, value.OtherServerAttackRatePercentage, value.DefenseRatePercentage, value.DefensePercentage, value.OtherServerHealthPercentage);
         }
     }
 
@@ -65,17 +58,17 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     /// <inheritdoc />
     public ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
     {
-        if (addedObject is not AttackableNpcBase monster || !this.AppliesTo(map))
+        if (addedObject is not AttackableNpcBase monster || this.GetMultipliers(map) is not { } multipliers)
         {
             return ValueTask.CompletedTask;
         }
 
-        monster.Attributes.AddElement(this._damageMultiplier, Stats.MinimumPhysBaseDmg);
-        monster.Attributes.AddElement(this._damageMultiplier, Stats.MaximumPhysBaseDmg);
-        monster.Attributes.AddElement(this._attackRateMultiplier, Stats.AttackRatePvm);
-        monster.Attributes.AddElement(this._defenseRateMultiplier, Stats.DefenseRatePvm);
-        monster.Attributes.AddElement(this._defenseMultiplier, Stats.DefenseBase);
-        monster.Attributes.AddElement(this._healthMultiplier, Stats.MaximumHealth);
+        monster.Attributes.AddElement(multipliers.Damage, Stats.MinimumPhysBaseDmg);
+        monster.Attributes.AddElement(multipliers.Damage, Stats.MaximumPhysBaseDmg);
+        monster.Attributes.AddElement(multipliers.AttackRate, Stats.AttackRatePvm);
+        monster.Attributes.AddElement(multipliers.DefenseRate, Stats.DefenseRatePvm);
+        monster.Attributes.AddElement(multipliers.Defense, Stats.DefenseBase);
+        monster.Attributes.AddElement(multipliers.Health, Stats.MaximumHealth);
 
         return ValueTask.CompletedTask;
     }
@@ -83,24 +76,72 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     /// <inheritdoc />
     public ValueTask ObjectRemovedFromMapAsync(GameMap map, ILocateable removedObject)
     {
-        if (removedObject is not AttackableNpcBase monster || !this.AppliesTo(map))
+        if (removedObject is not AttackableNpcBase monster || this.GetMultipliers(map) is not { } multipliers)
         {
             return ValueTask.CompletedTask;
         }
 
-        monster.Attributes.RemoveElement(this._damageMultiplier, Stats.MinimumPhysBaseDmg);
-        monster.Attributes.RemoveElement(this._damageMultiplier, Stats.MaximumPhysBaseDmg);
-        monster.Attributes.RemoveElement(this._attackRateMultiplier, Stats.AttackRatePvm);
-        monster.Attributes.RemoveElement(this._defenseRateMultiplier, Stats.DefenseRatePvm);
-        monster.Attributes.RemoveElement(this._defenseMultiplier, Stats.DefenseBase);
-        monster.Attributes.RemoveElement(this._healthMultiplier, Stats.MaximumHealth);
+        monster.Attributes.RemoveElement(multipliers.Damage, Stats.MinimumPhysBaseDmg);
+        monster.Attributes.RemoveElement(multipliers.Damage, Stats.MaximumPhysBaseDmg);
+        monster.Attributes.RemoveElement(multipliers.AttackRate, Stats.AttackRatePvm);
+        monster.Attributes.RemoveElement(multipliers.DefenseRate, Stats.DefenseRatePvm);
+        monster.Attributes.RemoveElement(multipliers.Defense, Stats.DefenseBase);
+        monster.Attributes.RemoveElement(multipliers.Health, Stats.MaximumHealth);
 
         return ValueTask.CompletedTask;
     }
 
-    private bool AppliesTo(GameMap map)
+    /// <summary>
+    /// Gets the attack rate and health factor which are applied to the monsters of the specified game server.
+    /// </summary>
+    /// <param name="serverId">The internal id of the game server.</param>
+    /// <returns>The factors; 1 means no scaling.</returns>
+    internal (float AttackRate, float Health) GetFactors(byte? serverId)
     {
-        var onlyServerId = this._configuration?.OnlyServerId;
-        return onlyServerId is null || map.ServerId == onlyServerId;
+        var multipliers = this.GetMultipliers(serverId);
+        return multipliers is null ? (1.0f, 1.0f) : (multipliers.AttackRate.Value, multipliers.Health.Value);
+    }
+
+    private Multipliers? GetMultipliers(GameMap map) => this.GetMultipliers(map.ServerId);
+
+    private Multipliers? GetMultipliers(byte? serverId)
+    {
+        var configuration = this._configuration;
+        if (configuration is null)
+        {
+            return null;
+        }
+
+        if (configuration.OtherServerId is { } otherServerId && serverId == otherServerId)
+        {
+            return this._other;
+        }
+
+        var onlyServerId = configuration.OnlyServerId;
+        return onlyServerId is null || serverId == onlyServerId ? this._main : null;
+    }
+
+    private sealed class Multipliers
+    {
+        public SimpleElement Damage { get; } = new(1.0f, AggregateType.Multiplicate);
+
+        public SimpleElement AttackRate { get; } = new(1.0f, AggregateType.Multiplicate);
+
+        public SimpleElement DefenseRate { get; } = new(1.0f, AggregateType.Multiplicate);
+
+        public SimpleElement Defense { get; } = new(1.0f, AggregateType.Multiplicate);
+
+        public SimpleElement Health { get; } = new(1.0f, AggregateType.Multiplicate);
+
+        public void Set(float damage, float attackRate, float defenseRate, float defense, float health)
+        {
+            this.Damage.Value = ToFactor(damage);
+            this.AttackRate.Value = ToFactor(attackRate);
+            this.DefenseRate.Value = ToFactor(defenseRate);
+            this.Defense.Value = ToFactor(defense);
+            this.Health.Value = ToFactor(health);
+        }
+
+        private static float ToFactor(float percentage) => percentage > 0 ? 1.0f + (percentage / 100.0f) : 1.0f;
     }
 }
