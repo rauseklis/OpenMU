@@ -77,7 +77,10 @@ public static class ShopPotionStacks
     }
 
     /// <summary>
-    /// Adds the three listings (1, 10 and 25 pieces, level +0) of each given potion type into free slots of the store.
+    /// Adds the three listings (1, 10 and 25 pieces, level +0) of each given potion type to the store.
+    /// Each potion type has its own column and each amount its own row: row 0 holds the single potions,
+    /// row 1 the stacks of 10 and row 2 the stacks of 25, in the order of <see cref="PotionNumbers"/>.
+    /// A listing whose cell is already taken moves to the next free slot.
     /// </summary>
     /// <param name="context">The persistence context.</param>
     /// <param name="configuration">The game configuration.</param>
@@ -91,12 +94,18 @@ public static class ShopPotionStacks
             Occupy(occupied, item.ItemSlot, item.Definition?.Width ?? 1, item.Definition?.Height ?? 1);
         }
 
-        foreach (var number in potionNumbers.Distinct())
+        var wanted = potionNumbers.Distinct().OrderBy(number => Array.IndexOf(PotionNumbers, number)).ToList();
+        for (var column = 0; column < wanted.Count; column++)
         {
-            var definition = configuration.Items.Single(item => item.Group == 14 && item.Number == number);
-            foreach (var stackSize in StackSizes)
+            var definition = configuration.Items.Single(item => item.Group == 14 && item.Number == wanted[column]);
+            for (var row = 0; row < StackSizes.Length; row++)
             {
-                var slot = Array.IndexOf(occupied, false);
+                var slot = (row * StoreWidth) + column;
+                if (column >= StoreWidth || occupied[slot])
+                {
+                    slot = Array.IndexOf(occupied, false);
+                }
+
                 if (slot < 0)
                 {
                     throw new InvalidOperationException("The merchant store has no free slot left for the potions.");
@@ -105,7 +114,7 @@ public static class ShopPotionStacks
                 var listing = context.CreateNew<Item>();
                 listing.Definition = definition;
                 listing.ItemSlot = (byte)slot;
-                listing.Durability = stackSize;
+                listing.Durability = StackSizes[row];
                 listing.Level = 0;
                 store.Items.Add(listing);
                 occupied[slot] = true;
