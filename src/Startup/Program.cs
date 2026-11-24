@@ -810,6 +810,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Laid the shop potions out in aligned rows.");
         }
 
+        if (await HealthLossPerHitInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Installed the health loss per hit of the Imp, the Demon and the wings.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
