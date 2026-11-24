@@ -823,4 +823,9 @@ public enum UpdateVersion
     /// The x5 server gets its own monster scaling, common drop chances halved, no excellent rings or pendants from drops.
     /// </summary>
     MonsterBalance = 175,
+
+    /// <summary>
+    /// The Imp (Satan), the Demon and the wings of the 1st, 2nd and 3rd class take health from the wearer with every hit.
+    /// </summary>
+    HealthLossPerHit = 176,
 }
