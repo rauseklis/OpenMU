@@ -228,6 +228,43 @@ public class DropGeneratorTest
     }
 
     /// <summary>
+    /// Tests that the per-server zen scale only changes the experience part of dropped zen.
+    /// </summary>
+    /// <param name="scale">The scale.</param>
+    /// <param name="expectedMoney">The expected zen for 5000 gained experience.</param>
+    [TestCase(1.0, 5007u)]
+    [TestCase(0.02, 107u)]
+    [TestCase(0.0, 7u)]
+    public async Task TestZenExperienceScaleAsync(double scale, uint expectedMoney)
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        player.CurrentMap!.Definition.DropItemGroups.Clear();
+        var monster = this.GetMonster(1, 70);
+        monster.DropItemGroups.Add(10000, SpecialItemType.Money, false);
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0), false, null, null, scale);
+
+        var (_, money) = await generator.GenerateItemDropsAsync(monster, 5000, player).ConfigureAwait(false);
+
+        Assert.That(money, Is.EqualTo(expectedMoney));
+    }
+
+    /// <summary>
+    /// Tests how the zen scale is derived from the server settings.
+    /// </summary>
+    [Test]
+    public void TestZenExperienceScaleCalculation()
+    {
+        Assert.That(DefaultDropGenerator.CalculateZenExperienceScale(null, 500), Is.EqualTo(1));
+        Assert.That(DefaultDropGenerator.CalculateZenExperienceScale(10, 500), Is.EqualTo(0.02).Within(1e-12));
+        Assert.That(DefaultDropGenerator.CalculateZenExperienceScale(5, 5), Is.EqualTo(1));
+        Assert.That(DefaultDropGenerator.CalculateZenExperienceScale(10, 0), Is.EqualTo(1));
+        Assert.That(DefaultDropGenerator.CalculateZenExperienceScale(-1, 500), Is.EqualTo(1));
+        Assert.That(DefaultDropGenerator.CalculateZenExperienceScale(float.NaN, 500), Is.EqualTo(1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer(0), false, null, null, -1));
+        Assert.That(new GameServerDefinition().ZenDropExperienceRate, Is.Null);
+    }
+
+    /// <summary>
     /// Tests parsing of the per-bonus chance text.
     /// </summary>
     [Test]

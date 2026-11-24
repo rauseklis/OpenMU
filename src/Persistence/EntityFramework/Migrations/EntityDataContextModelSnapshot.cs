@@ -2304,6 +2304,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<string>("SmallBonusLevelChances")
                         .HasColumnType("text");
 
+                    b.Property<float?>("ZenDropExperienceRate")
+                        .HasColumnType("real");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GameConfigurationId");

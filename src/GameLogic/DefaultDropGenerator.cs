@@ -43,6 +43,7 @@ public class DefaultDropGenerator : IDropGenerator
     private readonly bool _smallBonusDropsEnabled;
     private readonly double? _smallBonusDropChance;
     private readonly IReadOnlyDictionary<byte, double> _smallBonusLevelChances;
+    private readonly double _zenExperienceScale;
     private readonly IList<ItemDefinition> _ancientItems;
     private readonly IList<ItemDefinition> _droppableItems;
     private readonly IList<ItemDefinition>?[] _droppableItemsPerMonsterLevel = new IList<ItemDefinition>?[byte.MaxValue + 1];
@@ -59,8 +60,15 @@ public class DefaultDropGenerator : IDropGenerator
     /// <param name="smallBonusDropsEnabled">Whether this server enables configured small-bonus drops.</param>
     /// <param name="smallBonusDropChance">An optional combined bonus chance, shared equally by eligible groups.</param>
     /// <param name="smallBonusLevelChances">Optional per-bonus chances of this server, see <see cref="ParseSmallBonusLevelChances"/>. Ignored when <paramref name="smallBonusDropChance"/> is set.</param>
-    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer, bool smallBonusDropsEnabled = false, double? smallBonusDropChance = null, string? smallBonusLevelChances = null)
+    /// <param name="zenExperienceScale">Scales the experience part of dropped zen (1 = unchanged).</param>
+    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer, bool smallBonusDropsEnabled = false, double? smallBonusDropChance = null, string? smallBonusLevelChances = null, double zenExperienceScale = 1)
     {
+        if (!double.IsFinite(zenExperienceScale) || zenExperienceScale < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(zenExperienceScale));
+        }
+
+        this._zenExperienceScale = zenExperienceScale;
         if (smallBonusDropChance is { } chance && (!double.IsFinite(chance) || chance is < 0 or > 1))
         {
             throw new ArgumentOutOfRangeException(nameof(smallBonusDropChance));
@@ -464,6 +472,23 @@ public class DefaultDropGenerator : IDropGenerator
     }
 
     /// <summary>
+    /// Calculates by which factor the experience part of dropped zen is scaled on a server.
+    /// </summary>
+    /// <param name="zenDropExperienceRate">The configured zen experience rate, or null for the normal calculation.</param>
+    /// <param name="serverExperienceRate">The experience rate of the server.</param>
+    /// <returns>1 when not configured (or the server rate is not positive), otherwise the zen rate divided by the server rate.</returns>
+    public static double CalculateZenExperienceScale(float? zenDropExperienceRate, float serverExperienceRate)
+    {
+        if (zenDropExperienceRate is not { } zenRate || !float.IsFinite(zenRate) || zenRate < 0
+            || !float.IsFinite(serverExperienceRate) || serverExperienceRate <= 0)
+        {
+            return 1;
+        }
+
+        return (double)zenRate / serverExperienceRate;
+    }
+
+    /// <summary>
     /// Gets the chance of a small-bonus group on this server. Groups with a fixed chance of 1 are never overridden.
     /// </summary>
     private double GetSmallBonusGroupChance(DropItemGroup group)
@@ -679,7 +704,7 @@ public class DefaultDropGenerator : IDropGenerator
         var item = this.GenerateSpecialItem(monster, selectedGroup);
         if (item is null && selectedGroup.ItemType == SpecialItemType.Money)
         {
-            droppedMoney = (uint)(gainedExperience + BaseMoneyDrop);
+            droppedMoney = (uint)(Math.Max(0, gainedExperience) * this._zenExperienceScale + BaseMoneyDrop);
         }
 
         return item;

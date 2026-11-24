@@ -58,6 +58,15 @@ public partial class GameServerDefinition
     public string? SmallBonusLevelChances { get; set; }
 
     /// <summary>
+    /// Gets or sets the experience rate which the zen dropped by monsters is based on, for this server only.
+    /// Zen from kills is the gained experience plus a small base amount. When this is set, the experience part
+    /// is scaled by this value divided by <see cref="ExperienceRate"/>, so a server with a high experience rate
+    /// can drop zen as if its rate were lower (for example 10 on a 500x server drops what a 10x server would).
+    /// Null keeps the normal calculation. Reload the server after changing it.
+    /// </summary>
+    public float? ZenDropExperienceRate { get; set; }
+
+    /// <summary>
     /// Gets or sets the server configuration.
     /// </summary>
     [Required]

@@ -16,11 +16,13 @@ public sealed class AddServerBonusLevelChances : Migration
     protected override void Up(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.AddColumn<string>(name: "SmallBonusLevelChances", schema: "config", table: "GameServerDefinition", type: "text", nullable: true);
+        migrationBuilder.AddColumn<float>(name: "ZenDropExperienceRate", schema: "config", table: "GameServerDefinition", type: "real", nullable: true);
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.DropColumn(name: "SmallBonusLevelChances", schema: "config", table: "GameServerDefinition");
+        migrationBuilder.DropColumn(name: "ZenDropExperienceRate", schema: "config", table: "GameServerDefinition");
     }
 }
