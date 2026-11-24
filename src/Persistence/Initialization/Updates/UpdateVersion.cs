@@ -837,5 +837,10 @@ public enum UpdateVersion
     /// <summary>
     /// Lumen the Barmaid (Lorencia bar) sells the Invisible set and the Mace of King.
     /// </summary>
-    LorenciaBarCustomItems = 178,
+        LorenciaBarCustomItems = 178,
+
+    /// <summary>
+    /// The fruit costs of the resets (Jewel Bank) become fixed amounts per reset range: 25, 50, 75, 100 and 150.
+    /// </summary>
+    ResetFruitTiers = 179,
 }

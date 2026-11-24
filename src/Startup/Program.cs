@@ -800,6 +800,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Made the class quest items rarer.");
         }
 
+        if (await ResetFruitTiersInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Set the fruit costs of the resets (25, 50, 75, 100 and 150 fruits per reset range).");
+        }
+
         if (await MonsterBalanceInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
         {
             this._logger.Information("Installed the monster balance (the x5 server gets its own monster scaling, common drops halved, no excellent rings or pendants).");
