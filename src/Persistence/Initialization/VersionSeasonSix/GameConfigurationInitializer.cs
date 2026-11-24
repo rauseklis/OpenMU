@@ -126,6 +126,7 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new ShopValuablesCleanup(this.Context, this.GameConfiguration).Initialize();
         new MonsterBalance(this.Context, this.GameConfiguration).Initialize();
         new HealthLossPerHit(this.Context, this.GameConfiguration).Initialize();
+        new LorenciaBarCustomItems(this.Context, this.GameConfiguration).Initialize();
     }
 
     /// <summary>

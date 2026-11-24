@@ -815,6 +815,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed the health loss per hit of the Imp, the Demon and the wings.");
         }
 
+        if (await LorenciaBarCustomItemsInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Added the Invisible set and the Mace of King to the shop of Lumen the Barmaid.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
