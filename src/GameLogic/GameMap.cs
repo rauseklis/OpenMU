@@ -83,6 +83,12 @@ public class GameMap
     public TimeSpan ItemDropDuration { get; }
 
     /// <summary>
+    /// Gets or sets the internal id of the game server which hosts this map instance.
+    /// It is <c>null</c> if the map is not hosted by a game server (e.g. in tests).
+    /// </summary>
+    public byte? ServerId { get; set; }
+
+    /// <summary>
     /// Gets the definition of the map.
     /// </summary>
     public GameMapDefinition Definition { get; }

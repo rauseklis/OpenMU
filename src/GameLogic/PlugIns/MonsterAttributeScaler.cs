@@ -65,7 +65,7 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     /// <inheritdoc />
     public ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
     {
-        if (addedObject is not AttackableNpcBase monster)
+        if (addedObject is not AttackableNpcBase monster || !this.AppliesTo(map))
         {
             return ValueTask.CompletedTask;
         }
@@ -83,7 +83,7 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     /// <inheritdoc />
     public ValueTask ObjectRemovedFromMapAsync(GameMap map, ILocateable removedObject)
     {
-        if (removedObject is not AttackableNpcBase monster)
+        if (removedObject is not AttackableNpcBase monster || !this.AppliesTo(map))
         {
             return ValueTask.CompletedTask;
         }
@@ -96,5 +96,11 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
         monster.Attributes.RemoveElement(this._healthMultiplier, Stats.MaximumHealth);
 
         return ValueTask.CompletedTask;
+    }
+
+    private bool AppliesTo(GameMap map)
+    {
+        var onlyServerId = this._configuration?.OnlyServerId;
+        return onlyServerId is null || map.ServerId == onlyServerId;
     }
 }

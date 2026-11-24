@@ -798,4 +798,9 @@ public enum UpdateVersion
     /// Makes the small bonuses drop by monster level on every map.
     /// </summary>
     BonusLevelSources = 170,
+
+    /// <summary>
+    /// Sets the dropped item duration to 30 seconds and scales the monsters of server 1 (+50% attack rate, +20% health).
+    /// </summary>
+    InfernoMonsterScalingAndDropTime = 171,
 }
