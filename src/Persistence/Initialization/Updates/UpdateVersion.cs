@@ -833,4 +833,9 @@ public enum UpdateVersion
     /// The Imp (Satan), the Demon and the wings of the 1st, 2nd and 3rd class take health from the wearer with every hit.
     /// </summary>
     HealthLossPerHit = 177,
+
+    /// <summary>
+    /// Lumen the Barmaid (Lorencia bar) sells the Invisible set and the Mace of King.
+    /// </summary>
+    LorenciaBarCustomItems = 178,
 }
