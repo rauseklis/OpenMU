@@ -48,6 +48,16 @@ public partial class GameServerDefinition
     public double? SmallBonusDropChance { get; set; }
 
     /// <summary>
+    /// Gets or sets absolute per-bonus drop chances for this server only, as comma separated
+    /// "bonus level=chance" pairs, for example "1=0.0033,5=0.03". The bonus level is the item level of the
+    /// small-bonus drop group (1 Star, 2 Firecracker, 3 Heart of Love, 5 Silver Medal, 6 Gold Medal, 7 Box of Heaven).
+    /// Chances are fractions from 0 to 1. Levels which are not listed keep the chance of their group.
+    /// Null keeps the chances of the shared groups. It is ignored when <see cref="SmallBonusDropChance"/> is set.
+    /// Reload the server after changing it.
+    /// </summary>
+    public string? SmallBonusLevelChances { get; set; }
+
+    /// <summary>
     /// Gets or sets the server configuration.
     /// </summary>
     [Required]

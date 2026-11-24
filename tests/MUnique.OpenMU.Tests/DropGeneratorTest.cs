@@ -181,6 +181,73 @@ public class DropGeneratorTest
     }
 
     /// <summary>
+    /// Tests that per-server bonus level chances replace only the listed levels of eligible groups.
+    /// The shared group has a 5 % chance (level 5).
+    /// </summary>
+    /// <param name="levelChances">The server's configured level chances.</param>
+    /// <param name="roll">The random roll.</param>
+    /// <param name="expectedBonuses">The expected bonus count.</param>
+    [TestCase(null, 0.04999, 1)]
+    [TestCase(null, 0.05, 0)]
+    [TestCase("5=0.03", 0.02999, 1)]
+    [TestCase("5=0.03", 0.03, 0)]
+    [TestCase("5=0.03", 0.04, 0)]
+    [TestCase("5=0.10", 0.09999, 1)]
+    [TestCase("1=0.5,6=0.5", 0.04999, 1)]
+    [TestCase("1=0.5,6=0.5", 0.05, 0)]
+    [TestCase("5=0", 0.0, 0)]
+    public async Task TestSmallBonusLevelChancesAsync(string? levelChances, double roll, int expectedBonuses)
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var bonus = player.CurrentMap!.Definition.DropItemGroups.Add(500, SpecialItemType.SmallBonus, true);
+        bonus.ItemLevel = 5;
+        var generator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer2(0, roll), true, null, levelChances);
+
+        var (items, _) = await generator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+        Assert.That(items.Count(i => i.Definition == bonus.PossibleItems.First()), Is.EqualTo(expectedBonuses));
+    }
+
+    /// <summary>
+    /// Tests that fixed groups (chance 1) are not overridden and that the combined chance wins over level chances.
+    /// </summary>
+    [Test]
+    public async Task TestSmallBonusLevelChancesIgnoreFixedAndCombinedAsync()
+    {
+        var player = await PlayerTestHelper.CreatePlayerAsync().ConfigureAwait(false);
+        var bonus = player.CurrentMap!.Definition.DropItemGroups.Add(500, SpecialItemType.SmallBonus, true);
+        bonus.ItemLevel = 5;
+        bonus.Chance = 1;
+        var fixedGenerator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer2(0, 0.5), true, null, "5=0");
+        var (fixedItems, _) = await fixedGenerator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+        Assert.That(fixedItems.Count(i => i.Definition == bonus.PossibleItems.First()), Is.EqualTo(1));
+
+        bonus.Chance = 0.05;
+        var combinedGenerator = new DefaultDropGenerator(this.GetGameConfig(), this.GetRandomizer2(0, 0.04), true, 0.05, "5=0");
+        var (combinedItems, _) = await combinedGenerator.GenerateItemDropsAsync(this.GetMonster(1, 70), 1, player).ConfigureAwait(false);
+        Assert.That(combinedItems.Count(i => i.Definition == bonus.PossibleItems.First()), Is.EqualTo(1));
+    }
+
+    /// <summary>
+    /// Tests parsing of the per-bonus chance text.
+    /// </summary>
+    [Test]
+    public void TestSmallBonusLevelChancesParsing()
+    {
+        Assert.That(DefaultDropGenerator.ParseSmallBonusLevelChances(null), Is.Empty);
+        Assert.That(DefaultDropGenerator.ParseSmallBonusLevelChances("  "), Is.Empty);
+        var parsed = DefaultDropGenerator.ParseSmallBonusLevelChances("1=0.0033, 2=0.01,3=0.01,5=0.03,6=0.02,7=0.001");
+        Assert.That(parsed, Has.Count.EqualTo(6));
+        Assert.That(parsed[1], Is.EqualTo(0.0033));
+        Assert.That(parsed[7], Is.EqualTo(0.001));
+        foreach (var bad in new[] { "5", "5=", "=0.1", "x=0.1", "5=abc", "5=1.1", "5=-0.1", "5=NaN", "5=0.1,5=0.2", "256=0.1", "5=0.1=0.2" })
+        {
+            Assert.Throws<FormatException>(() => DefaultDropGenerator.ParseSmallBonusLevelChances(bad), bad);
+        }
+
+        Assert.That(new GameServerDefinition().SmallBonusLevelChances, Is.Null);
+    }
+
+    /// <summary>
     /// Tests that guaranteed rewards, zero-drop monsters and other NPCs do not receive bonuses.
     /// </summary>
     /// <param name="kind">The object kind.</param>

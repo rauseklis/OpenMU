@@ -2301,6 +2301,9 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<double?>("SmallBonusDropChance")
                         .HasColumnType("double precision");
 
+                    b.Property<string>("SmallBonusLevelChances")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GameConfigurationId");

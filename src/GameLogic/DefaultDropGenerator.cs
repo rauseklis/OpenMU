@@ -42,6 +42,7 @@ public class DefaultDropGenerator : IDropGenerator
     private readonly IRandomizer _randomizer;
     private readonly bool _smallBonusDropsEnabled;
     private readonly double? _smallBonusDropChance;
+    private readonly IReadOnlyDictionary<byte, double> _smallBonusLevelChances;
     private readonly IList<ItemDefinition> _ancientItems;
     private readonly IList<ItemDefinition> _droppableItems;
     private readonly IList<ItemDefinition>?[] _droppableItemsPerMonsterLevel = new IList<ItemDefinition>?[byte.MaxValue + 1];
@@ -57,12 +58,15 @@ public class DefaultDropGenerator : IDropGenerator
     /// <param name="randomizer">The randomizer.</param>
     /// <param name="smallBonusDropsEnabled">Whether this server enables configured small-bonus drops.</param>
     /// <param name="smallBonusDropChance">An optional combined bonus chance, shared equally by eligible groups.</param>
-    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer, bool smallBonusDropsEnabled = false, double? smallBonusDropChance = null)
+    /// <param name="smallBonusLevelChances">Optional per-bonus chances of this server, see <see cref="ParseSmallBonusLevelChances"/>. Ignored when <paramref name="smallBonusDropChance"/> is set.</param>
+    public DefaultDropGenerator(GameConfiguration config, IRandomizer randomizer, bool smallBonusDropsEnabled = false, double? smallBonusDropChance = null, string? smallBonusLevelChances = null)
     {
         if (smallBonusDropChance is { } chance && (!double.IsFinite(chance) || chance is < 0 or > 1))
         {
             throw new ArgumentOutOfRangeException(nameof(smallBonusDropChance));
         }
+
+        this._smallBonusLevelChances = ParseSmallBonusLevelChances(smallBonusLevelChances);
 
         this._excellentItemDropLevelDelta = config.ExcellentItemDropLevelDelta;
         this._randomizer = randomizer;
@@ -416,15 +420,59 @@ public class DefaultDropGenerator : IDropGenerator
 
         foreach (var group in this._smallBonusDropGroups)
         {
-            if (threshold < group.Chance)
+            var groupChance = this.GetSmallBonusGroupChance(group);
+            if (threshold < groupChance)
             {
                 return this.GenerateItemFromGroup(monster, group);
             }
 
-            threshold -= group.Chance;
+            threshold -= groupChance;
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Parses per-bonus chances, written as comma separated "bonus level=chance" pairs, for example "1=0.0033,5=0.03".
+    /// </summary>
+    /// <param name="value">The configured text. Null or white space means no per-bonus chances.</param>
+    /// <returns>The chance per bonus level.</returns>
+    /// <exception cref="FormatException">The text is malformed, repeats a level or has a chance outside 0 to 1.</exception>
+    public static IReadOnlyDictionary<byte, double> ParseSmallBonusLevelChances(string? value)
+    {
+        var result = new Dictionary<byte, double>();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return result;
+        }
+
+        foreach (var pair in value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = pair.Split('=', StringSplitOptions.TrimEntries);
+            if (parts.Length != 2
+                || !byte.TryParse(parts[0], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var level)
+                || !double.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var chance)
+                || !double.IsFinite(chance)
+                || chance is < 0 or > 1
+                || !result.TryAdd(level, chance))
+            {
+                throw new FormatException($"Invalid small bonus level chance '{pair}'. Expected unique 'level=chance' pairs with a chance from 0 to 1.");
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets the chance of a small-bonus group on this server. Groups with a fixed chance of 1 are never overridden.
+    /// </summary>
+    private double GetSmallBonusGroupChance(DropItemGroup group)
+    {
+        return group.Chance is > 0 and < 1
+            && group.ItemLevel is { } level
+            && this._smallBonusLevelChances.TryGetValue(level, out var chance)
+                ? chance
+                : group.Chance;
     }
 
     private void PartitionDropGroups(IEnumerable<DropItemGroup> groups, MonsterDefinition? monster = null)
