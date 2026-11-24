@@ -44,4 +44,24 @@ public class MuHelperConfiguration
     /// </summary>
     [Display(ResourceType = typeof(PlugInResources), Name = nameof(PlugInResources.MuHelperConfiguration_MaxLevel_Name))]
     public int MaxLevel { get; set; } = 400;
+
+    /// <summary>
+    /// Gets or sets the id of the game server (internal server id, the first server is 0) which has its own minimum level.
+    /// </summary>
+    [Display(Name = "Server with its own minimum level", Description = "The internal id of the game server (first server = 0) which uses the minimum level below instead of the general one.")]
+    public byte LimitedServerId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum character level on the server <see cref="LimitedServerId"/>.
+    /// </summary>
+    [Display(Name = "Minimum level on that server", Description = "The minimum character level for the MU Helper on the server above.")]
+    public int LimitedServerMinLevel { get; set; } = 50;
+
+    /// <summary>
+    /// Gets the minimum character level on the given game server.
+    /// </summary>
+    /// <param name="serverId">The internal id of the game server.</param>
+    /// <returns>The minimum character level.</returns>
+    public int GetMinLevel(byte serverId)
+        => serverId == this.LimitedServerId ? Math.Max(this.MinLevel, this.LimitedServerMinLevel) : this.MinLevel;
 }
