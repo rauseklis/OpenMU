@@ -813,4 +813,9 @@ public enum UpdateVersion
     /// Raises the monster attack rate increase of server 1 (internal id 0) to 150%.
     /// </summary>
     InfernoAttackRate150 = 173,
+
+    /// <summary>
+    /// Makes the items of the class quests much rarer.
+    /// </summary>
+    QuestItemDropRates = 174,
 }
