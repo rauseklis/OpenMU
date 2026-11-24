@@ -32,14 +32,14 @@ public static class PlusThirteenBonus
     public const float SetDefenseIgnoreChance = 0.05f;
 
     /// <summary>
-    /// The chance of the +13 weapon strike (2%).
+    /// The chance of the +13 weapon strike (6%).
     /// </summary>
-    public const float WeaponStrikeChance = 0.02f;
+    public const float WeaponStrikeChance = 0.06f;
 
     /// <summary>
     /// The damage multiplier of the +13 weapon strike, applied on top of an excellent hit.
     /// </summary>
-    public const double WeaponStrikeDamageFactor = 1.2;
+    public const double WeaponStrikeDamageFactor = 1.5;
 
     private const byte FirstWeaponGroup = 0;
 
