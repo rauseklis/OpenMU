@@ -823,4 +823,9 @@ public enum UpdateVersion
     /// The x5 server gets its own monster scaling, common drop chances halved, no excellent rings or pendants from drops.
     /// </summary>
     MonsterBalance = 175,
+
+    /// <summary>
+    /// Lays the potions of all shops out in aligned rows (one column per potion type; 1, 10 and 25 pieces).
+    /// </summary>
+    ShopPotionLayout = 176,
 }
