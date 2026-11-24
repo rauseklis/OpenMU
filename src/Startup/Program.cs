@@ -790,6 +790,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Potions now stack to 50 and the shops sell them in amounts of 1, 10 and 25.");
         }
 
+        if (await InfernoAttackRate150Installer.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Raised the monster attack rate increase of server 1 to 150%.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
