@@ -1220,6 +1220,11 @@ public class Stats
     public static AttributeDefinition ExcellentDamageChance { get; } = new(new Guid("577AE8D4-D9E5-4A1F-9A69-45D1A2519EEE"), "Excellent Damage Chance", string.Empty);
 
     /// <summary>
+    /// Gets the +13 weapon strike chance attribute definition.
+    /// </summary>
+    public static AttributeDefinition PlusThirteenStrikeChance { get; } = new(new Guid("5C0B1D2E-7A4F-4E36-9B58-13D0A13C0DE1"), "+13 Weapon Strike Chance", "The chance of the +13 weapon strike, which is an excellent hit with 20% more damage.");
+
+    /// <summary>
     /// Gets the defense ignore chance attribute definition.
     /// </summary>
     public static AttributeDefinition DefenseIgnoreChance { get; } = new(new Guid("56BDC72E-9D37-4EDA-8AC8-9E12473966FC"), "Defense Ignore Chance", string.Empty);

@@ -42494,6 +42494,11 @@ public readonly struct ResetNpcStateResponse
         /// White color.
         /// </summary>
             White = 7,
+
+        /// <summary>
+        /// Deep crimson color, used by the strike of a +13 weapon.
+        /// </summary>
+            PlusThirteenCrimson = 8,
     }
 
     /// <summary>

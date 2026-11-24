@@ -147,7 +147,8 @@ public class ItemPowerUpFactory : IItemPowerUpFactory
 
         result = result.Concat(this.GetOptionCombinationBonus(activeItems, gameConfiguration));
 
-        return result.SelectMany(p => PowerUpWrapper.CreateByPowerUpDefinition(p, attributeHolder));
+        return result.SelectMany(p => PowerUpWrapper.CreateByPowerUpDefinition(p, attributeHolder))
+            .Concat(PlusThirteenBonus.GetPowerUps(activeItems, attributeHolder));
     }
 
     private IEnumerable<PowerUpDefinition> GetOptionCombinationBonus(IEnumerable<Item> activeItems, GameConfiguration gameConfiguration)
