@@ -35,6 +35,14 @@ public class LorenciaShopLayoutTests
         using var context = provider.CreateNewContext();
         var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
         var store = configuration.Monsters.Single(monster => monster.Number == 255).MerchantStore!;
+
+        // The layout update predates the Invisible set and the Mace of King, which a later update adds below the stock;
+        // the upgrade scenario starts from the shop as it was before that.
+        foreach (var custom in store.Items.Where(item => item.Definition is { Number: 74, Group: >= 7 and <= 11 } or { Group: 2, Number: 22 }).ToList())
+        {
+            store.Items.Remove(custom);
+        }
+
         var original = store.Items.Select(item => (item, item.Definition, item.Level, item.Durability, item.StorePrice)).ToArray();
         foreach (var item in store.Items)
         {
