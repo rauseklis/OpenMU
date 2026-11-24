@@ -82,6 +82,12 @@ public class MonsterAttributeScalerConfiguration
         set => this.SetIndividualField(ref this._healthPercentage, value);
     }
 
+    /// <summary>
+    /// Gets or sets the internal id of the only game server on which the scaling is applied.
+    /// If empty (default), it is applied on every game server. A change needs a server restart.
+    /// </summary>
+    public byte? OnlyServerId { get; set; }
+
     private bool ScaleAllActive => this._scaleAllPercentage > 0;
 
     private void SetIndividualField(ref float field, float value)

@@ -28,6 +28,14 @@ internal class GameServerMapInitializer : MapInitializer
         this._serverDefinition = serverDefinition;
     }
 
+    /// <inheritdoc />
+    protected override GameMap InternalCreateGameMap(GameMapDefinition definition)
+    {
+        var map = base.InternalCreateGameMap(definition);
+        map.ServerId = this._serverDefinition.ServerID;
+        return map;
+    }
+
     /// <summary>
     /// Gets the map definition by searching for it at the <see cref="GameServerConfiguration"/>.
     /// </summary>
