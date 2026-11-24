@@ -825,7 +825,12 @@ public enum UpdateVersion
     MonsterBalance = 175,
 
     /// <summary>
+    /// Lays the potions of all shops out in aligned rows (one column per potion type; 1, 10 and 25 pieces).
+    /// </summary>
+    ShopPotionLayout = 176,
+
+    /// <summary>
     /// The Imp (Satan), the Demon and the wings of the 1st, 2nd and 3rd class take health from the wearer with every hit.
     /// </summary>
-    HealthLossPerHit = 176,
+    HealthLossPerHit = 177,
 }

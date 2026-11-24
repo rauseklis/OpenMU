@@ -805,6 +805,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Installed the monster balance (the x5 server gets its own monster scaling, common drops halved, no excellent rings or pendants).");
         }
 
+        if (await ShopPotionLayoutInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Laid the shop potions out in aligned rows.");
+        }
+
         if (await HealthLossPerHitInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
         {
             this._logger.Information("Installed the health loss per hit of the Imp, the Demon and the wings.");

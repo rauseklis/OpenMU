@@ -91,27 +91,27 @@ public class PlusThirteenBonusTests
     }
 
     /// <summary>
-    /// A +13 weapon gives a 2% strike chance; a +12 weapon or a shield gives nothing.
+    /// A +13 weapon gives a 6% strike chance; a +12 weapon or a shield gives nothing.
     /// </summary>
     [Test]
     public void WeaponGivesStrikeChanceOnlyAtThirteen()
     {
         var holder = GetAttributeSystem();
         PlusThirteenBonus.GetPowerUps(new[] { CreateItem(InventoryConstants.LeftHandSlot, 0, 5, 13) }, holder).ToList();
-        Assert.That(holder[Stats.PlusThirteenStrikeChance], Is.EqualTo(0.02f).Within(0.0001f));
+        Assert.That(holder[Stats.PlusThirteenStrikeChance], Is.EqualTo(0.06f).Within(0.0001f));
 
         Assert.That(PlusThirteenBonus.HasWeapon(new[] { CreateItem(InventoryConstants.LeftHandSlot, 0, 5, 12) }), Is.False);
         Assert.That(PlusThirteenBonus.HasWeapon(new[] { CreateItem(InventoryConstants.RightHandSlot, 6, 5, 13) }), Is.False);
     }
 
     /// <summary>
-    /// The strike chance stays below the damage factor rule: 20% on top of excellent damage.
+    /// The strike chance stays below the damage factor rule: 50% on top of excellent damage.
     /// </summary>
     [Test]
     public void ConstantsMatchTheDesign()
     {
-        Assert.That(PlusThirteenBonus.WeaponStrikeChance, Is.EqualTo(0.02f));
-        Assert.That(PlusThirteenBonus.WeaponStrikeDamageFactor, Is.EqualTo(1.2));
+        Assert.That(PlusThirteenBonus.WeaponStrikeChance, Is.EqualTo(0.06f));
+        Assert.That(PlusThirteenBonus.WeaponStrikeDamageFactor, Is.EqualTo(1.5));
         Assert.That(PlusThirteenBonus.SetVitality, Is.EqualTo(100));
         Assert.That(PlusThirteenBonus.SetDefenseIgnoreChance, Is.EqualTo(0.05f));
     }
