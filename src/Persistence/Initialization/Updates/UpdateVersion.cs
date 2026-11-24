@@ -803,4 +803,9 @@ public enum UpdateVersion
     /// Sets the dropped item duration to 30 seconds and scales the monsters of server 1 (+50% attack rate, +20% health).
     /// </summary>
     InfernoMonsterScalingAndDropTime = 171,
+
+    /// <summary>
+    /// Lets potions stack to 50 and limits shop potions to level +0 in amounts of 1, 10 and 25.
+    /// </summary>
+    ShopPotionStacks = 172,
 }
