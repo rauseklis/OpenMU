@@ -106,6 +106,39 @@ public class MonsterAttributeScalerConfiguration
     /// </summary>
     public float OtherServerHealthPercentage { get; set; }
 
+    /// <summary>
+    /// Gets or sets the monster numbers (comma separated, e.g. "43,53,54") which get their own boosted percentages
+    /// (<see cref="BoostedDamagePercentage"/> and the following ones) instead of the normal ones. This is only used on the
+    /// server <see cref="OnlyServerId"/> (or on every server, if that is empty). Empty (default) means no boosted monsters.
+    /// A change needs a server restart.
+    /// </summary>
+    public string BoostedMonsterNumbers { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the percentage by which the damage of the boosted monsters is increased (100 = double).
+    /// </summary>
+    public float BoostedDamagePercentage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the percentage by which the attack rate of the boosted monsters is increased (900 = ten times).
+    /// </summary>
+    public float BoostedAttackRatePercentage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the percentage by which the defense rate of the boosted monsters is increased.
+    /// </summary>
+    public float BoostedDefenseRatePercentage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the percentage by which the defense of the boosted monsters is increased.
+    /// </summary>
+    public float BoostedDefensePercentage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the percentage by which the maximum health of the boosted monsters is increased.
+    /// </summary>
+    public float BoostedHealthPercentage { get; set; }
+
     private bool ScaleAllActive => this._scaleAllPercentage > 0;
 
     private void SetIndividualField(ref float field, float value)

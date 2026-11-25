@@ -24,6 +24,9 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
 {
     private readonly Multipliers _main = new();
     private readonly Multipliers _other = new();
+    private readonly Multipliers _boosted = new();
+
+    private HashSet<short> _boostedNumbers = new();
 
     private MonsterAttributeScalerConfiguration? _configuration;
 
@@ -39,6 +42,8 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
             {
                 this._main.Set(0, 0, 0, 0, 0);
                 this._other.Set(0, 0, 0, 0, 0);
+                this._boosted.Set(0, 0, 0, 0, 0);
+                this._boostedNumbers = new HashSet<short>();
                 return;
             }
 
@@ -46,6 +51,10 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
 
             // The other server only has its own attack rate and health; the other values are the same as the main ones.
             this._other.Set(value.DamagePercentage, value.OtherServerAttackRatePercentage, value.DefenseRatePercentage, value.DefensePercentage, value.OtherServerHealthPercentage);
+
+            // The boosted monsters get their own percentages, on the main server only.
+            this._boosted.Set(value.BoostedDamagePercentage, value.BoostedAttackRatePercentage, value.BoostedDefenseRatePercentage, value.BoostedDefensePercentage, value.BoostedHealthPercentage);
+            this._boostedNumbers = ParseNumbers(value.BoostedMonsterNumbers);
         }
     }
 
@@ -58,7 +67,7 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     /// <inheritdoc />
     public ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
     {
-        if (addedObject is not AttackableNpcBase monster || this.GetMultipliers(map) is not { } multipliers)
+        if (addedObject is not AttackableNpcBase monster || this.GetMultipliers(map, monster) is not { } multipliers)
         {
             return ValueTask.CompletedTask;
         }
@@ -76,7 +85,7 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     /// <inheritdoc />
     public ValueTask ObjectRemovedFromMapAsync(GameMap map, ILocateable removedObject)
     {
-        if (removedObject is not AttackableNpcBase monster || this.GetMultipliers(map) is not { } multipliers)
+        if (removedObject is not AttackableNpcBase monster || this.GetMultipliers(map, monster) is not { } multipliers)
         {
             return ValueTask.CompletedTask;
         }
@@ -102,7 +111,30 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
         return multipliers is null ? (1.0f, 1.0f) : (multipliers.AttackRate.Value, multipliers.Health.Value);
     }
 
-    private Multipliers? GetMultipliers(GameMap map) => this.GetMultipliers(map.ServerId);
+    private static HashSet<short> ParseNumbers(string? numbers)
+    {
+        var result = new HashSet<short>();
+        foreach (var part in (numbers ?? string.Empty).Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (short.TryParse(part, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var number))
+            {
+                result.Add(number);
+            }
+        }
+
+        return result;
+    }
+
+    private Multipliers? GetMultipliers(GameMap map, AttackableNpcBase monster)
+    {
+        var multipliers = this.GetMultipliers(map.ServerId);
+        if (ReferenceEquals(multipliers, this._main) && this._boostedNumbers.Contains(monster.Definition.Number))
+        {
+            return this._boosted;
+        }
+
+        return multipliers;
+    }
 
     private Multipliers? GetMultipliers(byte? serverId)
     {
