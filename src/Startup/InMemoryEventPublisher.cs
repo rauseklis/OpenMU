@@ -73,4 +73,13 @@ public class InMemoryEventPublisher : IEventPublisher
             await gameServer.Value.PlayerAlreadyLoggedInAsync(serverId, loginName).ConfigureAwait(false);
         }
     }
+
+    /// <inheritdoc />
+    public async ValueTask DisconnectAccountAsync(string loginName)
+    {
+        foreach (var gameServer in this._gameServers)
+        {
+            await gameServer.Value.DisconnectAccountAsync(loginName).ConfigureAwait(false);
+        }
+    }
 }

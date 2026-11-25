@@ -13,6 +13,12 @@ using MUnique.OpenMU.GameLogic.Views.Login;
 /// </summary>
 public class LoginAction
 {
+    private const int AttemptsBeforeTakeOver = 3;
+
+    private static readonly TimeSpan AttemptWindow = TimeSpan.FromMinutes(5);
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Count, DateTime LastAttempt)> FailedAttempts = new();
+
     private static int _templateCounter;
 
     /// <summary>
@@ -172,12 +178,32 @@ public class LoginAction
             if (player.GameContext.OfflinePlayerManager.TryGetPlayer(username, out var offlinePlayer))
             {
                 var isTemplateOffline = offlinePlayer!.IsTemplatePlayer;
-                if (!isTemplateOffline && !await gameServerContext.LoginServer.TryLoginAsync(username, gameServerContext.Id).ConfigureAwait(false))
+                if (!isTemplateOffline)
                 {
-                    context.Allowed = false;
-                    await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.AccountAlreadyConnected)).ConfigureAwait(false);
-                    await gameServerContext.EventPublisher.PlayerAlreadyLoggedInAsync(gameServerContext.Id, username).ConfigureAwait(false);
-                    return (false, null);
+                    var (loggedIn, tookOver) = await this.TryLoginOrTakeOverAsync(player, gameServerContext, username).ConfigureAwait(false);
+                    if (!loggedIn)
+                    {
+                        context.Allowed = false;
+                        await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.AccountAlreadyConnected)).ConfigureAwait(false);
+                        await gameServerContext.EventPublisher.PlayerAlreadyLoggedInAsync(gameServerContext.Id, username).ConfigureAwait(false);
+                        return (false, null);
+                    }
+
+                    if (tookOver)
+                    {
+                        // The take-over already disconnected the offline session via DisconnectAccountAsync,
+                        // so we skip HandleOfflineSessionHandoverAsync and just reload the account.
+                        var reloadedAccount = await player.PersistenceContext.GetAccountByLoginNameAsync(username).ConfigureAwait(false);
+                        if (reloadedAccount is null)
+                        {
+                            await gameServerContext.LoginServer.LogOffAsync(username, gameServerContext.Id).ConfigureAwait(false);
+                            await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.ConnectionError)).ConfigureAwait(false);
+                            context.Allowed = false;
+                            return (false, null);
+                        }
+
+                        return (true, reloadedAccount);
+                    }
                 }
 
                 var offlineAccount = await this.HandleOfflineSessionHandoverAsync(player, username).ConfigureAwait(false);
@@ -204,12 +230,29 @@ public class LoginAction
                 return (false, null);
             }
 
-            if (!loadedAccount.IsTemplate && !await gameServerContext.LoginServer.TryLoginAsync(username, gameServerContext.Id).ConfigureAwait(false))
+            if (!loadedAccount.IsTemplate)
             {
-                context.Allowed = false;
-                await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.AccountAlreadyConnected)).ConfigureAwait(false);
-                await gameServerContext.EventPublisher.PlayerAlreadyLoggedInAsync(gameServerContext.Id, username).ConfigureAwait(false);
-                return (false, null);
+                var (loggedIn, tookOver) = await this.TryLoginOrTakeOverAsync(player, gameServerContext, username).ConfigureAwait(false);
+                if (!loggedIn)
+                {
+                    context.Allowed = false;
+                    await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.AccountAlreadyConnected)).ConfigureAwait(false);
+                    await gameServerContext.EventPublisher.PlayerAlreadyLoggedInAsync(gameServerContext.Id, username).ConfigureAwait(false);
+                    return (false, null);
+                }
+
+                if (tookOver)
+                {
+                    // The old session saved its progress while it was disconnected, so the data loaded above may be outdated.
+                    loadedAccount = await player.PersistenceContext.GetAccountByLoginNameAsync(username).ConfigureAwait(false);
+                    if (loadedAccount is null)
+                    {
+                        await gameServerContext.LoginServer.LogOffAsync(username, gameServerContext.Id).ConfigureAwait(false);
+                        await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.ConnectionError)).ConfigureAwait(false);
+                        context.Allowed = false;
+                        return (false, null);
+                    }
+                }
             }
 
             return (true, loadedAccount);
@@ -220,6 +263,56 @@ public class LoginAction
             await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.ConnectionError)).ConfigureAwait(false);
             return (false, null);
         }
+    }
+
+    /// <summary>
+    /// Tries to log in at the login server. If the account is stuck as online (for example after a client crash),
+    /// the third failed attempt within a few minutes disconnects the old session, so the player gets in.
+    /// </summary>
+    private async ValueTask<(bool LoggedIn, bool TookOver)> TryLoginOrTakeOverAsync(Player player, IGameServerContext gameServerContext, string username)
+    {
+        var loginServer = gameServerContext.LoginServer;
+        if (await loginServer.TryLoginAsync(username, gameServerContext.Id).ConfigureAwait(false))
+        {
+            FailedAttempts.TryRemove(username, out _);
+            return (true, false);
+        }
+
+        if (!RegisterFailedAttempt(username))
+        {
+            return (false, false);
+        }
+
+        player.Logger.LogWarning("Account [{Username}] is still connected after {Attempts} login attempts. Disconnecting the old session.", username, AttemptsBeforeTakeOver);
+
+        // Waits until the old session is disconnected and saved.
+        await gameServerContext.EventPublisher.DisconnectAccountAsync(username).ConfigureAwait(false);
+
+        // Frees the account even if no player of it exists anymore (stuck entry at the login server).
+        await loginServer.LogOffAsync(username, gameServerContext.Id).ConfigureAwait(false);
+        var success = await loginServer.TryLoginAsync(username, gameServerContext.Id).ConfigureAwait(false);
+        return (success, success);
+    }
+
+    /// <summary>
+    /// Counts a failed attempt. Returns true if this attempt is the one which takes over the account.
+    /// </summary>
+    /// <param name="username">The login name.</param>
+    /// <returns>True, if this is the third failed attempt in a row.</returns>
+    public static bool RegisterFailedAttempt(string username)
+    {
+        var now = DateTime.UtcNow;
+        var entry = FailedAttempts.AddOrUpdate(
+            username,
+            _ => (1, now),
+            (_, old) => now - old.LastAttempt > AttemptWindow ? (1, now) : (old.Count + 1, now));
+        if (entry.Count < AttemptsBeforeTakeOver)
+        {
+            return false;
+        }
+
+        FailedAttempts.TryRemove(username, out _);
+        return true;
     }
 
     private async ValueTask<Account?> HandleOfflineSessionHandoverAsync(Player player, string username)

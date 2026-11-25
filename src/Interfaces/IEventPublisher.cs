@@ -50,4 +50,11 @@ public interface IEventPublisher
     /// <param name="serverId">The identifier of the server on which the client tried to enter.</param>
     /// <param name="loginName">The login name.</param>
     ValueTask PlayerAlreadyLoggedInAsync(byte serverId, string loginName);
+
+    /// <summary>
+    /// Requests all game servers to disconnect (and save) the players of the given account.
+    /// Used to free an account which is stuck as online, e.g. after a client crash.
+    /// </summary>
+    /// <param name="loginName">The login name.</param>
+    ValueTask DisconnectAccountAsync(string loginName);
 }
