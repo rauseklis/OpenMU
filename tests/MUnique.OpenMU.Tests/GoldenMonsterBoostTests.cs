@@ -14,7 +14,7 @@ using MonsterAttribute = MUnique.OpenMU.Persistence.BasicModel.MonsterAttribute;
 using MonsterDefinition = MUnique.OpenMU.Persistence.BasicModel.MonsterDefinition;
 
 /// <summary>
-/// Verifies that the Golden monsters get their own boost only on server 1 and the other monsters keep the normal scaling.
+/// Verifies that the Golden monsters get their own boost on both servers and the other monsters keep the normal scaling.
 /// </summary>
 [TestFixture]
 public class GoldenMonsterBoostTests
@@ -74,22 +74,39 @@ public class GoldenMonsterBoostTests
     }
 
     /// <summary>
-    /// A Golden monster on server 2 is not boosted, it only gets the scaling of that server.
+    /// A Golden monster on server 2 is boosted the same way, from the base values.
     /// </summary>
     [Test]
-    public async Task GoldenMonsterOnTheOtherServerIsNotBoosted()
+    public async Task GoldenMonsterOnTheOtherServerIsBoostedToo()
     {
         var (plugIn, map) = await this.PrepareAsync(1).ConfigureAwait(false);
         var golden = this.CreateMonster(map, GoldenNumber);
 
         await plugIn.ObjectAddedToMapAsync(map, golden).ConfigureAwait(false);
 
-        Assert.That(golden.Attributes[Stats.DefenseBase], Is.EqualTo(300f).Within(0.01f));
-        Assert.That(golden.Attributes[Stats.AttackRatePvm], Is.EqualTo(675f).Within(0.01f));
-        Assert.That(golden.Attributes[Stats.DefenseRatePvm], Is.EqualTo(185f).Within(0.01f));
-        Assert.That(golden.Attributes[Stats.MaximumHealth], Is.EqualTo(38400f).Within(0.01f));
-        Assert.That(golden.Attributes[Stats.MaximumPhysBaseDmg], Is.EqualTo(560f).Within(0.01f));
+        Assert.That(golden.Attributes[Stats.DefenseBase], Is.EqualTo(3000f).Within(0.01f));
+        Assert.That(golden.Attributes[Stats.AttackRatePvm], Is.EqualTo(4500f).Within(0.01f));
+        Assert.That(golden.Attributes[Stats.DefenseRatePvm], Is.EqualTo(1850f).Within(0.01f));
+        Assert.That(golden.Attributes[Stats.MaximumHealth], Is.EqualTo(320000f).Within(0.01f));
+        Assert.That(golden.Attributes[Stats.MaximumPhysBaseDmg], Is.EqualTo(1120f).Within(0.01f));
     }
+
+    /// <summary>
+    /// A normal monster on server 2 only gets the scaling of that server (+50 % attack rate, +20 % health).
+    /// </summary>
+    [Test]
+    public async Task NormalMonsterOnTheOtherServerKeepsItsOwnScaling()
+    {
+        var (plugIn, map) = await this.PrepareAsync(1).ConfigureAwait(false);
+        var normal = this.CreateMonster(map, NormalNumber);
+
+        await plugIn.ObjectAddedToMapAsync(map, normal).ConfigureAwait(false);
+
+        Assert.That(normal.Attributes[Stats.DefenseBase], Is.EqualTo(300f).Within(0.01f));
+        Assert.That(normal.Attributes[Stats.AttackRatePvm], Is.EqualTo(675f).Within(0.01f));
+        Assert.That(normal.Attributes[Stats.MaximumHealth], Is.EqualTo(38400f).Within(0.01f));
+    }
+
 
     private async Task<(MonsterAttributeScaler PlugIn, GameMap Map)> PrepareAsync(byte serverId)
     {
