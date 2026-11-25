@@ -178,12 +178,32 @@ public class LoginAction
             if (player.GameContext.OfflinePlayerManager.TryGetPlayer(username, out var offlinePlayer))
             {
                 var isTemplateOffline = offlinePlayer!.IsTemplatePlayer;
-                if (!isTemplateOffline && !(await this.TryLoginOrTakeOverAsync(player, gameServerContext, username).ConfigureAwait(false)).LoggedIn)
+                if (!isTemplateOffline)
                 {
-                    context.Allowed = false;
-                    await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.AccountAlreadyConnected)).ConfigureAwait(false);
-                    await gameServerContext.EventPublisher.PlayerAlreadyLoggedInAsync(gameServerContext.Id, username).ConfigureAwait(false);
-                    return (false, null);
+                    var (loggedIn, tookOver) = await this.TryLoginOrTakeOverAsync(player, gameServerContext, username).ConfigureAwait(false);
+                    if (!loggedIn)
+                    {
+                        context.Allowed = false;
+                        await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.AccountAlreadyConnected)).ConfigureAwait(false);
+                        await gameServerContext.EventPublisher.PlayerAlreadyLoggedInAsync(gameServerContext.Id, username).ConfigureAwait(false);
+                        return (false, null);
+                    }
+
+                    if (tookOver)
+                    {
+                        // The take-over already disconnected the offline session via DisconnectAccountAsync,
+                        // so we skip HandleOfflineSessionHandoverAsync and just reload the account.
+                        var reloadedAccount = await player.PersistenceContext.GetAccountByLoginNameAsync(username).ConfigureAwait(false);
+                        if (reloadedAccount is null)
+                        {
+                            await gameServerContext.LoginServer.LogOffAsync(username, gameServerContext.Id).ConfigureAwait(false);
+                            await player.InvokeViewPlugInAsync<IShowLoginResultPlugIn>(p => p.ShowLoginResultAsync(LoginResult.ConnectionError)).ConfigureAwait(false);
+                            context.Allowed = false;
+                            return (false, null);
+                        }
+
+                        return (true, reloadedAccount);
+                    }
                 }
 
                 var offlineAccount = await this.HandleOfflineSessionHandoverAsync(player, username).ConfigureAwait(false);
