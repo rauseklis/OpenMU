@@ -4,6 +4,7 @@
 
 namespace MUnique.OpenMU.GameLogic;
 
+using MUnique.OpenMU.AttributeSystem;
 using MUnique.OpenMU.DataModel.Configuration.Quests;
 using MUnique.OpenMU.GameLogic.Attributes;
 using Nito.Disposables.Internals;
@@ -13,25 +14,79 @@ using Nito.Disposables.Internals;
 /// </summary>
 public static class CharacterExtensions
 {
-    private const int MaxLevel = 400;
-    private static readonly ushort[] FruitPointsPerLevel = GetFruitPoints(400).ToArray();
-    private static readonly ushort[] FruitPointsPerLevelMagicGladiator = GetFruitPoints(700).ToArray();
-    private static readonly ushort[] FruitPointsPerLevelDarkLord = GetFruitPoints(500).ToArray();
+    /// <summary>
+    /// The maximum number of fruit points (added, and separately removed) of a character, independent of its level.
+    /// </summary>
+    public const ushort MaximumFruitPoints = 3000;
 
     /// <summary>
     /// Gets the maximum fruit points of the character.
     /// </summary>
     /// <param name="character">The character.</param>
     /// <returns>The maximum fruit points of the character.</returns>
-    public static ushort GetMaximumFruitPoints(this Character character)
+    public static ushort GetMaximumFruitPoints(this Character character) => MaximumFruitPoints;
+
+    /// <summary>
+    /// Gets the stat points which the character got from fruits for the specified base stat.
+    /// </summary>
+    /// <param name="character">The character.</param>
+    /// <param name="stat">The base stat attribute, for example <see cref="Stats.BaseStrength"/>.</param>
+    /// <returns>The fruit points of the stat, or 0 for other attributes.</returns>
+    public static int GetStatFruitPoints(this Character character, AttributeDefinition stat)
     {
-        var index = (int)character.Attributes.First(a => a.Definition == Stats.Level).Value - 1;
-        return character.CharacterClass?.FruitCalculation switch
+        if (stat == Stats.BaseStrength)
         {
-            FruitCalculationStrategy.DarkLord => FruitPointsPerLevelDarkLord[index],
-            FruitCalculationStrategy.MagicGladiator => FruitPointsPerLevelMagicGladiator[index],
-            _ => FruitPointsPerLevel[index],
-        };
+            return character.FruitPointsStrength;
+        }
+
+        if (stat == Stats.BaseAgility)
+        {
+            return character.FruitPointsAgility;
+        }
+
+        if (stat == Stats.BaseVitality)
+        {
+            return character.FruitPointsVitality;
+        }
+
+        if (stat == Stats.BaseEnergy)
+        {
+            return character.FruitPointsEnergy;
+        }
+
+        return stat == Stats.BaseLeadership ? character.FruitPointsLeadership : 0;
+    }
+
+    /// <summary>
+    /// Adds (or with a negative value removes) the stat points which the character got from fruits for the specified base stat.
+    /// The amount never goes below 0.
+    /// </summary>
+    /// <param name="character">The character.</param>
+    /// <param name="stat">The base stat attribute, for example <see cref="Stats.BaseStrength"/>.</param>
+    /// <param name="points">The points to add or, when negative, to remove.</param>
+    public static void AddStatFruitPoints(this Character character, AttributeDefinition stat, int points)
+    {
+        var value = Math.Max(0, character.GetStatFruitPoints(stat) + points);
+        if (stat == Stats.BaseStrength)
+        {
+            character.FruitPointsStrength = value;
+        }
+        else if (stat == Stats.BaseAgility)
+        {
+            character.FruitPointsAgility = value;
+        }
+        else if (stat == Stats.BaseVitality)
+        {
+            character.FruitPointsVitality = value;
+        }
+        else if (stat == Stats.BaseEnergy)
+        {
+            character.FruitPointsEnergy = value;
+        }
+        else if (stat == Stats.BaseLeadership)
+        {
+            character.FruitPointsLeadership = value;
+        }
     }
 
     /// <summary>
@@ -137,19 +192,5 @@ public static class CharacterExtensions
             .Select(i => i.DropItemGroup)
             .WhereNotNull()
             ?? Enumerable.Empty<DropItemGroup>();
-    }
-
-    private static IEnumerable<ushort> GetFruitPoints(int divisor)
-    {
-        var current = 2;
-        for (int i = 0; i < MaxLevel; i++)
-        {
-            if (((i + 1) % 10) == 0)
-            {
-                current += (3 * (i + 11) / divisor) + 2;
-            }
-
-            yield return (ushort)current;
-        }
     }
 }

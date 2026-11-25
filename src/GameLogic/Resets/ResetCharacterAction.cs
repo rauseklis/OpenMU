@@ -375,6 +375,15 @@ public class ResetCharacterAction
             .ToList();
     }
 
+    /// <summary>
+    /// Calculates how many of the points above the start value of a stat stay after a reset: the points which came from fruits,
+    /// but never more than the stat currently has above its start value.
+    /// </summary>
+    /// <param name="investedPoints">The points of the stat above its start value.</param>
+    /// <param name="fruitPoints">The points of the stat which came from fruits.</param>
+    /// <returns>The points which stay on the stat.</returns>
+    public static int CalculateKeptFruitPoints(int investedPoints, int fruitPoints) => Math.Clamp(fruitPoints, 0, Math.Max(0, investedPoints));
+
     private void UpdateStats(ResetConfiguration configuration, ResetProgression resetProgression)
     {
         var investedPoints = 0;
@@ -387,8 +396,11 @@ public class ResetCharacterAction
                     continue;
                 }
 
-                investedPoints += Math.Max(0, (int)this._player.Attributes![attribute] - (int)statDefinition.BaseValue);
-                this._player.Attributes[attribute] = statDefinition.BaseValue;
+                // The points which come from fruits are kept; only the points which were spent from level ups are given back.
+                var invested = Math.Max(0, (int)this._player.Attributes![attribute] - (int)statDefinition.BaseValue);
+                var kept = CalculateKeptFruitPoints(invested, this._player.SelectedCharacter!.GetStatFruitPoints(attribute));
+                investedPoints += invested - kept;
+                this._player.Attributes[attribute] = statDefinition.BaseValue + kept;
             }
         }
 

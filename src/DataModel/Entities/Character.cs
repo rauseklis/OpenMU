@@ -206,6 +206,31 @@ public class Character
     public int UsedNegFruitPoints { get; set; }
 
     /// <summary>
+    /// Gets or sets the strength points which the character got from fruits. They are kept when the character is reset.
+    /// </summary>
+    public int FruitPointsStrength { get; set; }
+
+    /// <summary>
+    /// Gets or sets the agility points which the character got from fruits. They are kept when the character is reset.
+    /// </summary>
+    public int FruitPointsAgility { get; set; }
+
+    /// <summary>
+    /// Gets or sets the vitality points which the character got from fruits. They are kept when the character is reset.
+    /// </summary>
+    public int FruitPointsVitality { get; set; }
+
+    /// <summary>
+    /// Gets or sets the energy points which the character got from fruits. They are kept when the character is reset.
+    /// </summary>
+    public int FruitPointsEnergy { get; set; }
+
+    /// <summary>
+    /// Gets or sets the command points which the character got from fruits. They are kept when the character is reset.
+    /// </summary>
+    public int FruitPointsLeadership { get; set; }
+
+    /// <summary>
     /// Gets or sets the number of inventory extensions.
     /// </summary>
     public int InventoryExtensions { get; set; }
