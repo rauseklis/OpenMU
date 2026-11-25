@@ -52,7 +52,7 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
             // The other server only has its own attack rate and health; the other values are the same as the main ones.
             this._other.Set(value.DamagePercentage, value.OtherServerAttackRatePercentage, value.DefenseRatePercentage, value.DefensePercentage, value.OtherServerHealthPercentage);
 
-            // The boosted monsters get their own percentages, on the main server only.
+            // The boosted monsters get their own percentages, on every scaled server (main and other).
             this._boosted.Set(value.BoostedDamagePercentage, value.BoostedAttackRatePercentage, value.BoostedDefenseRatePercentage, value.BoostedDefensePercentage, value.BoostedHealthPercentage);
             this._boostedNumbers = ParseNumbers(value.BoostedMonsterNumbers);
         }
@@ -128,7 +128,7 @@ public class MonsterAttributeScaler : IFeaturePlugIn, IObjectAddedToMapPlugIn, I
     private Multipliers? GetMultipliers(GameMap map, AttackableNpcBase monster)
     {
         var multipliers = this.GetMultipliers(map.ServerId);
-        if (ReferenceEquals(multipliers, this._main) && this._boostedNumbers.Contains(monster.Definition.Number))
+        if (multipliers is not null && this._boostedNumbers.Contains(monster.Definition.Number))
         {
             return this._boosted;
         }

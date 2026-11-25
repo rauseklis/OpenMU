@@ -108,8 +108,8 @@ public class MonsterAttributeScalerConfiguration
 
     /// <summary>
     /// Gets or sets the monster numbers (comma separated, e.g. "43,53,54") which get their own boosted percentages
-    /// (<see cref="BoostedDamagePercentage"/> and the following ones) instead of the normal ones. This is only used on the
-    /// server <see cref="OnlyServerId"/> (or on every server, if that is empty). Empty (default) means no boosted monsters.
+    /// (<see cref="BoostedDamagePercentage"/> and the following ones) instead of the normal ones. This is used on every server which is scaled
+    /// (<see cref="OnlyServerId"/> and <see cref="OtherServerId"/>). Empty (default) means no boosted monsters.
     /// A change needs a server restart.
     /// </summary>
     public string BoostedMonsterNumbers { get; set; } = string.Empty;
