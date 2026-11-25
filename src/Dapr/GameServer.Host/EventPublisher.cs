@@ -119,4 +119,15 @@ public class EventPublisher : IEventPublisher
             this._logger.LogError(ex, "Unexpected error when publishing an alliance message");
         }
     }
+
+    /// <summary>
+    /// Requests all game servers to disconnect the players of the given account.
+    /// </summary>
+    /// <param name="loginName">The login name.</param>
+    public ValueTask DisconnectAccountAsync(string loginName)
+    {
+        // The Dapr setup has no event for this yet (the game servers only offer the HTTP method to disconnect an account).
+        this._logger.LogWarning("Disconnecting the old session of account {LoginName} is not supported in the Dapr setup.", loginName);
+        return ValueTask.CompletedTask;
+    }
 }
