@@ -2307,6 +2307,11 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<float?>("ZenDropExperienceRate")
                         .HasColumnType("real");
 
+                    b.Property<bool>("FruitNpcSaleDisabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.HasKey("Id");
 
                     b.HasIndex("GameConfigurationId");

@@ -88,6 +88,32 @@ public class ItemRuleFlagsTests
     }
 
     /// <summary>
+    /// Verifies that only Fruits are blocked from NPC sale, and only on a server which disables it.
+    /// </summary>
+    /// <param name="group">The item group.</param>
+    /// <param name="number">The item number.</param>
+    /// <param name="serverDisablesFruitSale">If set to <c>true</c>, the server disables selling Fruits to NPCs.</param>
+    /// <param name="expectedBlocked">If set to <c>true</c>, the sale is expected to be blocked.</param>
+    [TestCase((byte)13, (short)15, true, true)]
+    [TestCase((byte)13, (short)15, false, false)]
+    [TestCase((byte)13, (short)14, true, false)]
+    [TestCase((byte)14, (short)15, true, false)]
+    [TestCase((byte)14, (short)13, true, false)]
+    public void FruitsAreOnlyBlockedFromNpcSaleOnServersWhichDisableIt(byte group, short number, bool serverDisablesFruitSale, bool expectedBlocked)
+    {
+        var item = CreateItem(definition =>
+        {
+            definition.Group = group;
+            definition.Number = number;
+        });
+        var context = new Mock<IGameContext>();
+        context.SetupGet(c => c.FruitNpcSaleDisabled).Returns(serverDisablesFruitSale);
+
+        Assert.That(SellItemToNpcAction.IsSellBlockedOnServer(item, context.Object), Is.EqualTo(expectedBlocked));
+        Assert.That(new GameServerDefinition().FruitNpcSaleDisabled, Is.False, "Every server sells Fruits to NPCs by default.");
+    }
+
+    /// <summary>
     /// Verifies that a wearable item is repaired to its maximum durability when it is repairable, and not at all when it isn't.
     /// </summary>
     /// <param name="isRepairable">If set to <c>true</c>, the item is repairable.</param>

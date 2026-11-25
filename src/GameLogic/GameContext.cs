@@ -119,6 +119,9 @@ public class GameContext : AsyncDisposable, IGameContext
     public virtual float MasterExperienceRate => this.Configuration.MasterExperienceRate;
 
     /// <inheritdoc />
+    public virtual bool FruitNpcSaleDisabled => false;
+
+    /// <inheritdoc />
     public virtual bool PvpEnabled { get; }
 
     /// <inheritdoc/>
