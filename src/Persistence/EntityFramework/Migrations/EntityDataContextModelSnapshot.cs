@@ -1428,6 +1428,21 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<int>("UsedNegFruitPoints")
                         .HasColumnType("integer");
 
+                    b.Property<int>("FruitPointsStrength")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FruitPointsAgility")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FruitPointsVitality")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FruitPointsEnergy")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FruitPointsLeadership")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");

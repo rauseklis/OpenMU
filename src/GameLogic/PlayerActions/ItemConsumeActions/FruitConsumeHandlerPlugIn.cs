@@ -78,12 +78,14 @@ public class FruitConsumeHandlerPlugIn : BaseConsumeHandlerPlugIn
             {
                 player.Attributes![statAttribute] += randomPoints;
                 player.SelectedCharacter.UsedFruitPoints += randomPoints;
+                player.SelectedCharacter.AddStatFruitPoints(statAttribute, randomPoints);
                 await player.InvokeViewPlugInAsync<IFruitConsumptionResponsePlugIn>(p => p.ShowResponseAsync(FruitConsumptionResult.PlusSuccess, randomPoints, statAttribute)).ConfigureAwait(false);
             }
             else
             {
                 player.Attributes![statAttribute] -= randomPoints;
                 player.SelectedCharacter.UsedNegFruitPoints += randomPoints;
+                player.SelectedCharacter.AddStatFruitPoints(statAttribute, -randomPoints);
                 await player.InvokeViewPlugInAsync<IFruitConsumptionResponsePlugIn>(p => p.ShowResponseAsync(FruitConsumptionResult.MinusSuccess, randomPoints, statAttribute)).ConfigureAwait(false);
             }
         }
