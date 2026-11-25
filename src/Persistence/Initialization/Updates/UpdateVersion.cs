@@ -843,4 +843,9 @@ public enum UpdateVersion
     /// The fruit costs of the resets (Jewel Bank) become fixed amounts per reset range: 25, 50, 75, 100 and 150.
     /// </summary>
     ResetFruitTiers = 179,
+
+    /// <summary>
+    /// Boosts the Golden monsters on server 1 (internal id 0): defense, attack rate, defense rate and health x10, damage x2.
+    /// </summary>
+    InfernoGoldenMonsters = 180,
 }
