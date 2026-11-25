@@ -112,6 +112,9 @@ public class GameServerContext : GameContext, IGameServerContext
     public override bool PvpEnabled => this._gameServerDefinition.PvpEnabled;
 
     /// <inheritdoc />
+    public override bool FruitNpcSaleDisabled => this._gameServerDefinition.FruitNpcSaleDisabled;
+
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Game Server {this.Id}";

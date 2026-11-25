@@ -67,6 +67,13 @@ public partial class GameServerDefinition
     public float? ZenDropExperienceRate { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether Fruits cannot be sold to NPC merchants on this server.
+    /// Trading, the auction house and storage are not affected. Disabled by default.
+    /// Reload the server after changing it.
+    /// </summary>
+    public bool FruitNpcSaleDisabled { get; set; }
+
+    /// <summary>
     /// Gets or sets the server configuration.
     /// </summary>
     [Required]

@@ -38,6 +38,11 @@ public interface IGameContext
     float MasterExperienceRate { get; }
 
     /// <summary>
+    /// Gets a value indicating whether Fruits cannot be sold to NPC merchants on this server.
+    /// </summary>
+    bool FruitNpcSaleDisabled { get; }
+
+    /// <summary>
     /// Gets a value indicating whether PVP is enabled.
     /// </summary>
     bool PvpEnabled { get; }

@@ -58,6 +58,13 @@ public class SellItemToNpcAction
             return false;
         }
 
+        if (IsSellBlockedOnServer(item, player.GameContext))
+        {
+            await player.ShowLocalizedBlueMessageAsync(nameof(PlayerMessage.ItemCannotBeSoldToNpc)).ConfigureAwait(false);
+            await player.InvokeViewPlugInAsync<IItemSoldToNpcPlugIn>(p => p.ItemSoldToNpcAsync(false)).ConfigureAwait(false);
+            return false;
+        }
+
         if (IsSellBlockedByBinding(item))
         {
             await player.InvokeViewPlugInAsync<IItemSoldToNpcPlugIn>(p => p.ItemSoldToNpcAsync(false)).ConfigureAwait(false);
@@ -65,6 +72,18 @@ public class SellItemToNpcAction
         }
 
         return await this.SellItemAsync(player, item).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the server's settings prevent selling the item to an NPC:
+    /// Fruits (13, 15) when <see cref="IGameContext.FruitNpcSaleDisabled"/> is set.
+    /// </summary>
+    /// <param name="item">The item.</param>
+    /// <param name="gameContext">The game context of the server.</param>
+    /// <returns><c>True</c>, if the item can't be sold on this server; otherwise, <c>false</c>.</returns>
+    public static bool IsSellBlockedOnServer(Item item, IGameContext gameContext)
+    {
+        return gameContext.FruitNpcSaleDisabled && item.Definition is { Group: 13, Number: 15 };
     }
 
     /// <summary>

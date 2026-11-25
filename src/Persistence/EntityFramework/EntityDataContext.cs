@@ -82,6 +82,7 @@ public class EntityDataContext : ExtendedTypeContext
         {
             entity.Property(e => e.PvpEnabled).HasDefaultValue(true);
             entity.Property(e => e.SmallBonusDropsEnabled).HasDefaultValue(false);
+            entity.Property(e => e.FruitNpcSaleDisabled).HasDefaultValue(false);
         });
         modelBuilder.Entity<ConfigurationUpdate>().Apply();
         modelBuilder.Entity<ConfigurationUpdateState>();
