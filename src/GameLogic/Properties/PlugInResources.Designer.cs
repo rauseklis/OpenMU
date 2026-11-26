@@ -412,6 +412,24 @@ namespace MUnique.OpenMU.GameLogic.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Handles the chat command &apos;/re &lt;on|off|auto&gt;&apos;. Sets how the player reacts to requests of other players: shown (on), refused without showing them (off), or party requests accepted automatically (auto)..
+        /// </summary>
+        public static string RequestModeChatCommandPlugIn_Description {
+            get {
+                return ResourceManager.GetString("RequestModeChatCommandPlugIn_Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Request mode command.
+        /// </summary>
+        public static string RequestModeChatCommandPlugIn_Name {
+            get {
+                return ResourceManager.GetString("RequestModeChatCommandPlugIn_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Handles the chat command &apos;/charinfo &lt;char&gt;&apos;. Returns information about the character back to the requester..
         /// </summary>
         public static string CharInfoChatCommandPlugIn_Description {

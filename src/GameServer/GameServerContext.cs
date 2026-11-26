@@ -115,6 +115,9 @@ public class GameServerContext : GameContext, IGameServerContext
     public override bool FruitNpcSaleDisabled => this._gameServerDefinition.FruitNpcSaleDisabled;
 
     /// <inheritdoc />
+    public override bool RequestFilterDisabled => this._gameServerDefinition.RequestFilterDisabled;
+
+    /// <inheritdoc />
     public override string ToString()
     {
         return $"Game Server {this.Id}";

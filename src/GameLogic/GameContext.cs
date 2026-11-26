@@ -122,6 +122,9 @@ public class GameContext : AsyncDisposable, IGameContext
     public virtual bool FruitNpcSaleDisabled => false;
 
     /// <inheritdoc />
+    public virtual bool RequestFilterDisabled => false;
+
+    /// <inheritdoc />
     public virtual bool PvpEnabled { get; }
 
     /// <inheritdoc/>

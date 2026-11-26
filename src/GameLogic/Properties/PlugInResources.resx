@@ -549,6 +549,12 @@
   <data name="ChangeLanguageChatCommandPlugIn_Description" xml:space="preserve">
     <value>Handles the chat command '/language &lt;isoCode&gt;'. Changes the language of the account.</value>
   </data>
+  <data name="RequestModeChatCommandPlugIn_Name" xml:space="preserve">
+    <value>Request mode command</value>
+  </data>
+  <data name="RequestModeChatCommandPlugIn_Description" xml:space="preserve">
+    <value>Handles the chat command '/re &lt;on|off|auto&gt;'. Sets how the player reacts to requests of other players: shown (on), refused without showing them (off), or party requests accepted automatically (auto).</value>
+  </data>
   <data name="CharInfoChatCommandPlugIn_Name" xml:space="preserve">
     <value>Char Info command</value>
   </data>

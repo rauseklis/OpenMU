@@ -20,6 +20,19 @@ public static class PartyRequestHandler
     /// <returns>True if the criteria matched (auto-accept was attempted, regardless of success); false if no criteria matched.</returns>
     public static async ValueTask<bool> TryAutoAcceptPartyRequestAsync(Player receiver, Player requester)
     {
+        if (RequestFilter.IsAcceptingPartyAutomatically(receiver))
+        {
+            // Accepting resets the state to EnteredWorld, which would break an open trade, vault or NPC dialog of the receiver.
+            if (receiver.PlayerState.CurrentState != PlayerState.EnteredWorld
+                && receiver.PlayerState.CurrentState != PlayerState.PartyRequest)
+            {
+                return false;
+            }
+
+            await AcceptPartyRequestAsync(receiver, requester).ConfigureAwait(false);
+            return true;
+        }
+
         var settings = receiver.MuHelperSettings;
         if (settings is null)
         {

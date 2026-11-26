@@ -43,6 +43,11 @@ public interface IGameContext
     bool FruitNpcSaleDisabled { get; }
 
     /// <summary>
+    /// Gets a value indicating whether the request filter (chat command /re) is switched off on this server.
+    /// </summary>
+    bool RequestFilterDisabled { get; }
+
+    /// <summary>
     /// Gets a value indicating whether PVP is enabled.
     /// </summary>
     bool PvpEnabled { get; }

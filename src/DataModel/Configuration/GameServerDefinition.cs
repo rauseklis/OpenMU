@@ -74,6 +74,13 @@ public partial class GameServerDefinition
     public bool FruitNpcSaleDisabled { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the request filter (chat command /re) is switched off on this server.
+    /// Players can set the filter to on, off or auto. When this is set, every request is shown as usual and /re has no effect.
+    /// The filter is available (false) by default. Reload the server after changing it.
+    /// </summary>
+    public bool RequestFilterDisabled { get; set; }
+
+    /// <summary>
     /// Gets or sets the server configuration.
     /// </summary>
     [Required]

@@ -31,6 +31,11 @@ public class DuelActions
             return;
         }
 
+        if (await RequestFilter.TryRefuseAsync(player, target).ConfigureAwait(false))
+        {
+            return;
+        }
+
         if (target.DuelRoom is not null)
         {
             await player.ShowLocalizedBlueMessageAsync(nameof(PlayerMessage.OtherPlayerAlreadyInDuel)).ConfigureAwait(false);

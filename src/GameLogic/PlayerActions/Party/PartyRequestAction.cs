@@ -26,6 +26,11 @@ public class PartyRequestAction
             return;
         }
 
+        if (await RequestFilter.TryRefuseAsync(player, toRequest).ConfigureAwait(false))
+        {
+            return;
+        }
+
         if (toRequest.Party != null || toRequest.LastPartyRequester != null)
         {
             // A server-side bot is asked as well when it is a plain member of its (bot) party: a living

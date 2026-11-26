@@ -39,6 +39,12 @@ public class GuildRequestAction
             return; // targeted player not in a guild or not the guild master
         }
 
+        if (await RequestFilter.TryRefuseAsync(player, guildMaster).ConfigureAwait(false))
+        {
+            await player.InvokeViewPlugInAsync<IGuildJoinResponsePlugIn>(p => p.ShowGuildJoinResponseAsync(GuildRequestAnswerResult.GuildMasterOrRequesterIsBusy)).ConfigureAwait(false);
+            return;
+        }
+
         if (guildMaster.LastGuildRequester != null || player.PlayerState.CurrentState != PlayerState.EnteredWorld)
         {
             await player.InvokeViewPlugInAsync<IGuildJoinResponsePlugIn>(p => p.ShowGuildJoinResponseAsync(GuildRequestAnswerResult.GuildMasterOrRequesterIsBusy)).ConfigureAwait(false);
