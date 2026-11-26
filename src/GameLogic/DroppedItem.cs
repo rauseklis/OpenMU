@@ -30,6 +30,8 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
     /// </summary>
     private readonly bool _wasItemPersisted;
 
+    private readonly TimeSpan _ownerPriorityDuration;
+
     private Player? _dropper;
 
     private IEnumerable<object>? _owners;
@@ -59,8 +61,10 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
     /// <param name="dropper">The dropper.</param>
     /// <param name="owners">The owners.</param>
     /// <param name="wasItemPersisted">If set to <c>true</c>, the item was persisted before and exists on the database.</param>
-    public DroppedItem(Item item, Point position, GameMap map, Player? dropper, IEnumerable<object>? owners, bool wasItemPersisted = false)
+    /// <param name="ownerPriorityDuration">How long only the owners may pick the item up; <c>null</c> uses the default.</param>
+    public DroppedItem(Item item, Point position, GameMap map, Player? dropper, IEnumerable<object>? owners, bool wasItemPersisted = false, TimeSpan? ownerPriorityDuration = null)
     {
+        this._ownerPriorityDuration = ownerPriorityDuration ?? TimeUntilDropIsFree;
         this.Item = item;
         this.Position = position;
         this.CurrentMap = map;
@@ -89,7 +93,7 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
     /// <summary>
     /// Gets a value indicating whether the owner-pickup priority period is still active.
     /// </summary>
-    public bool IsOwnerPickupPriorityActive => DateTime.UtcNow < this._dropTimestamp.Add(TimeUntilDropIsFree);
+    public bool IsOwnerPickupPriorityActive => DateTime.UtcNow < this._dropTimestamp.Add(this._ownerPriorityDuration);
 
     /// <summary>
     /// Tries to pick the item up by the specified player.
@@ -142,7 +146,7 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
         }
 
         if (!this.IsPlayerAnOwner(player)
-            && DateTime.UtcNow < this._dropTimestamp.Add(TimeUntilDropIsFree))
+            && DateTime.UtcNow < this._dropTimestamp.Add(this._ownerPriorityDuration))
         {
             return (false, stackTarget);
         }
@@ -161,7 +165,7 @@ public sealed class DroppedItem : AsyncDisposable, ILocateable
     {
         if (!this._availableToPick
             || (this.Item.Definition!.IsBoundToCharacter && !this.IsPlayerAnOwner(player))
-            || (!this.IsPlayerAnOwner(player) && DateTime.UtcNow < this._dropTimestamp.Add(TimeUntilDropIsFree)))
+            || (!this.IsPlayerAnOwner(player) && DateTime.UtcNow < this._dropTimestamp.Add(this._ownerPriorityDuration)))
         {
             return false;
         }

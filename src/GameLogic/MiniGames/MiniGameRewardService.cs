@@ -194,9 +194,13 @@ internal sealed class MiniGameRewardService
                 return;
             }
 
-            var droppedItem = new DroppedItem(item, player.RandomPosition, this._map, player, player.GetAsEnumerable());
+            var isBloodCastle = this._definition.Type == MiniGameType.BloodCastle;
 
-            var shouldDrop = drop || !(player.Inventory is not null && await player.Inventory.AddItemAsync(item).ConfigureAwait(false));
+            // In Blood Castle, the reward belongs only to the player who received it for the whole exit time, so nobody else can grab it.
+            var droppedItem = new DroppedItem(item, player.RandomPosition, this._map, player, player.GetAsEnumerable(), false, isBloodCastle ? TimeSpan.FromMinutes(10) : null);
+
+            // Blood Castle rewards always fall on the ground: adding the generated item to the inventory crashed the event (non persistent item).
+            var shouldDrop = drop || isBloodCastle || !(player.Inventory is not null && await player.Inventory.AddItemAsync(item).ConfigureAwait(false));
             if (shouldDrop)
             {
                 this._logger.LogDebug("{context}: Reward {item} for {player} has been dropped by players coordinates {position}.", this._owner, item, player, player.Position);
