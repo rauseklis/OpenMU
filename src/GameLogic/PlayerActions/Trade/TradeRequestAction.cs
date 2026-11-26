@@ -25,6 +25,11 @@ public class TradeRequestAction
             return false;
         }
 
+        if (player is Player requester && partner is Player target && await RequestFilter.TryRefuseAsync(requester, target).ConfigureAwait(false))
+        {
+            return false;
+        }
+
         if (player.ViewPlugIns.GetPlugIn<IShowTradeRequestPlugIn>() is null || partner.ViewPlugIns.GetPlugIn<IShowTradeRequestAnswerPlugIn>() is null)
         {
             return false;

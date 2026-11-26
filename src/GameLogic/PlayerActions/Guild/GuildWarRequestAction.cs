@@ -69,6 +69,12 @@ public class GuildWarRequestAction
             return;
         }
 
+        if (await RequestFilter.TryRefuseAsync(player, targetGuildMaster).ConfigureAwait(false))
+        {
+            await player.InvokeViewPlugInAsync<IShowShowGuildWarRequestResultPlugIn>(p => p.ShowResultAsync(GuildWarRequestResult.Failed)).ConfigureAwait(false);
+            return;
+        }
+
         if (targetGuildMaster.GuildWarContext is not null || player.GuildWarContext is not null)
         {
             await player.InvokeViewPlugInAsync<IShowShowGuildWarRequestResultPlugIn>(p => p.ShowResultAsync(GuildWarRequestResult.AlreadyInWar)).ConfigureAwait(false);

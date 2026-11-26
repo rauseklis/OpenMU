@@ -2104,6 +2104,60 @@ namespace MUnique.OpenMU.GameLogic.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} is not accepting requests..
+        /// </summary>
+        public static string PlayerDoesNotAcceptRequests {
+            get {
+                return ResourceManager.GetString("PlayerDoesNotAcceptRequests", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The request filter (/re) is switched off on this server..
+        /// </summary>
+        public static string RequestFilterDisabledOnServer {
+            get {
+                return ResourceManager.GetString("RequestFilterDisabledOnServer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Requests: AUTO. Party requests are accepted automatically, other requests are shown to you..
+        /// </summary>
+        public static string RequestModeAuto {
+            get {
+                return ResourceManager.GetString("RequestModeAuto", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Requests: OFF. Party, trade, duel and guild requests are refused without showing them to you..
+        /// </summary>
+        public static string RequestModeOff {
+            get {
+                return ResourceManager.GetString("RequestModeOff", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Requests: ON. Party, trade, duel and guild requests are shown to you..
+        /// </summary>
+        public static string RequestModeOn {
+            get {
+                return ResourceManager.GetString("RequestModeOn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Usage: /re on, /re off or /re auto. Current mode: {0}..
+        /// </summary>
+        public static string RequestModeUsage {
+            get {
+                return ResourceManager.GetString("RequestModeUsage", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Requested {0} for Party..
         /// </summary>
         public static string RequestedPlayerForParty {

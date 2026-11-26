@@ -411,6 +411,12 @@ public class Player : AsyncDisposable, IBucketMapObserver, IAttackable, IAttacke
     public Player? LastGuildRequester { get; set; }
 
     /// <summary>
+    /// Gets or sets how this player reacts to incoming requests (chat command /re).
+    /// It is not saved: every login starts with <see cref="GameLogic.RequestMode.On"/>.
+    /// </summary>
+    public RequestMode RequestMode { get; set; } = RequestMode.On;
+
+    /// <summary>
     /// Gets or sets the player who sent a pending alliance request to this player.
     /// </summary>
     public (Player? Player, GuildRelationshipType RelationshipType, GuildRelationshipRequestType RequestType) PendingAllianceRequest { get; set; }

@@ -2322,6 +2322,11 @@ namespace MUnique.OpenMU.Persistence.EntityFramework.Migrations
                     b.Property<float?>("ZenDropExperienceRate")
                         .HasColumnType("real");
 
+                    b.Property<bool>("RequestFilterDisabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("FruitNpcSaleDisabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
