@@ -830,6 +830,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Boosted the Golden monsters of server 1.");
         }
 
+        if (await DarkSkeletonMonstersInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Added the Dark Skeleton and Dark Reaper monsters and their Devias test spawns.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
