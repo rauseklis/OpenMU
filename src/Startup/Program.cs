@@ -840,6 +840,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Gave the Dark Skeleton and Dark Reaper their box drops.");
         }
 
+        if (await DarkSkeletonDropsChangeInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Changed the drops of the Dark Skeleton and Dark Reaper (Box of Heaven, Firecracker or Star, chocolate box).");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;

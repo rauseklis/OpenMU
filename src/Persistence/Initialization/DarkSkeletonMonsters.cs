@@ -12,7 +12,8 @@ using MUnique.OpenMU.Persistence.Initialization.Skills;
 
 /// <summary>
 /// Defines the dark skeletons (monsters 1111-1112), custom monsters of this server: 20% bigger, dark skeletons.
-/// Every kill drops one box: a Box of Heaven (90%) or a chocolate box (10%; Pink for Dark Skeleton, Blue for Dark Reaper).
+/// Every kill drops one box: a Box of Heaven (45%), a second box (45%; Firecracker for Dark Skeleton, Star of the Sacred Birth
+/// for Dark Reaper) or a chocolate box (10%; Pink for Dark Skeleton, Blue for Dark Reaper).
 /// Dark Skeleton carries a Gorgon Staff and its attacks are shown as Evil Spirit; Dark Reaper carries a Rune Blade and its
 /// attacks are shown as Hellfire. The client draws them (size, darkness, sparks, weapon); the server only knows their
 /// values and where they spawn. For now one of each stands in Devias for testing.
@@ -44,12 +45,16 @@ internal static class DarkSkeletonMonsters
     private const short FirstDeviasSpawnNumber = 200;
     private const short DeviasQuantity = 1;
 
-    // Drops (the owner's choice): every kill drops exactly one box, a Box of Heaven (Box of Luck +7) in 90% of the
-    // kills, a chocolate box in the other 10%; nothing else (no zen, no map drops, no bonuses).
+    // Drops (the owner's choice): every kill drops exactly one box, a Box of Heaven (Box of Luck +7) in 45% of the
+    // kills, the second box of the monster (Firecracker = Box of Luck +2, Star of the Sacred Birth = Box of Luck +1)
+    // in 45%, a chocolate box in the other 10%; nothing else (no zen, no map drops, no bonuses).
     private const byte BoxGroup = 14;
     private const short BoxOfLuckNumber = 11;
     private const byte BoxOfHeavenLevel = 7;
-    private const double BoxOfHeavenChance = 0.9;
+    private const byte StarOfTheSacredBirthLevel = 1;
+    private const byte FirecrackerLevel = 2;
+    private const double BoxOfHeavenChance = 0.45;
+    private const double SecondBoxChance = 0.45;
     private const double ChocolateBoxChance = 0.1;
     private const short PinkChocolateBoxNumber = 32;
     private const short BlueChocolateBoxNumber = 34;
@@ -59,8 +64,8 @@ internal static class DarkSkeletonMonsters
     /// </summary>
     internal static IReadOnlyList<DarkSkeleton> All { get; } =
     [
-        new(DarkSkeletonNumber, "Dark Skeleton", SkillNumber.EvilSpirit, 10, 221, 81, PinkChocolateBoxNumber, "Pink Chocolate Box"),
-        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, BlueChocolateBoxNumber, "Blue Chocolate Box"),
+        new(DarkSkeletonNumber, "Dark Skeleton", SkillNumber.EvilSpirit, 10, 221, 81, FirecrackerLevel, "Firecracker", PinkChocolateBoxNumber, "Pink Chocolate Box"),
+        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, StarOfTheSacredBirthLevel, "Star of the Sacred Birth", BlueChocolateBoxNumber, "Blue Chocolate Box"),
     ];
 
     /// <summary>
@@ -87,7 +92,8 @@ internal static class DarkSkeletonMonsters
     }
 
     /// <summary>
-    /// Adds the box drops (Box of Heaven 90%, chocolate box 10%) to the dark skeletons which don't have drops of their own yet.
+    /// Adds the box drops (Box of Heaven 45%, Firecracker or Star 45%, chocolate box 10%) to the dark skeletons which don't
+    /// have drops of their own yet.
     /// </summary>
     /// <param name="context">The persistence context.</param>
     /// <param name="gameConfiguration">The game configuration.</param>
@@ -108,6 +114,37 @@ internal static class DarkSkeletonMonsters
         }
 
         return added;
+    }
+
+    /// <summary>
+    /// Replaces the drops of the dark skeletons by their current box drops (Box of Heaven 45%, Firecracker or Star 45%,
+    /// chocolate box 10%). Their old drop groups are deleted. Running it again gives the same result.
+    /// </summary>
+    /// <param name="context">The persistence context.</param>
+    /// <param name="gameConfiguration">The game configuration.</param>
+    /// <returns>The number of monsters which got their new drops.</returns>
+    internal static async ValueTask<int> ReplaceDropsAsync(IContext context, GameConfiguration gameConfiguration)
+    {
+        var replaced = 0;
+        foreach (var skeleton in All)
+        {
+            if (gameConfiguration.Monsters.FirstOrDefault(m => m.Number == skeleton.Number) is not { } monster)
+            {
+                continue;
+            }
+
+            foreach (var group in monster.DropItemGroups.ToList())
+            {
+                monster.DropItemGroups.Remove(group);
+                gameConfiguration.DropItemGroups.Remove(group);
+                await context.DeleteAsync(group).ConfigureAwait(false);
+            }
+
+            AddDrops(context, gameConfiguration, monster, skeleton);
+            replaced++;
+        }
+
+        return replaced;
     }
 
     /// <summary>
@@ -191,6 +228,7 @@ internal static class DarkSkeletonMonsters
     {
         monster.NumberOfMaximumItemDrops = 1;
         AddDropGroup(context, gameConfiguration, monster, "Box of Heaven", BoxOfHeavenChance, BoxOfHeavenLevel, BoxOfLuckNumber);
+        AddDropGroup(context, gameConfiguration, monster, skeleton.SecondBoxName, SecondBoxChance, skeleton.SecondBoxLevel, BoxOfLuckNumber);
         AddDropGroup(context, gameConfiguration, monster, skeleton.ChocolateBoxName, ChocolateBoxChance, 0, skeleton.ChocolateBoxNumber);
     }
 
@@ -216,7 +254,9 @@ internal static class DarkSkeletonMonsters
     /// <param name="RespawnSeconds">The respawn time in seconds.</param>
     /// <param name="DeviasX">The x coordinate of the Devias test spawn.</param>
     /// <param name="DeviasY">The y coordinate of the Devias test spawn.</param>
+    /// <param name="SecondBoxLevel">The level of the Box of Luck it drops in 45% of the kills (Firecracker +2, Star +1).</param>
+    /// <param name="SecondBoxName">The name of that box.</param>
     /// <param name="ChocolateBoxNumber">The item number (group 14) of the chocolate box it drops in 10% of the kills.</param>
     /// <param name="ChocolateBoxName">The name of that chocolate box.</param>
-    internal readonly record struct DarkSkeleton(short Number, string Name, SkillNumber Skill, int RespawnSeconds, byte DeviasX, byte DeviasY, short ChocolateBoxNumber, string ChocolateBoxName);
+    internal readonly record struct DarkSkeleton(short Number, string Name, SkillNumber Skill, int RespawnSeconds, byte DeviasX, byte DeviasY, byte SecondBoxLevel, string SecondBoxName, short ChocolateBoxNumber, string ChocolateBoxName);
 }
