@@ -127,6 +127,9 @@ public class GameConfigurationInitializer : GameConfigurationInitializerBase
         new MonsterBalance(this.Context, this.GameConfiguration).Initialize();
         new HealthLossPerHit(this.Context, this.GameConfiguration).Initialize();
         new LorenciaBarCustomItems(this.Context, this.GameConfiguration).Initialize();
+
+        // Last: the bonus steps above remove Box of Luck levels from ordinary drop groups, the Box of Heaven of the dark skeletons included.
+        DarkSkeletonMonsters.AddMissingDrops(this.Context, this.GameConfiguration);
     }
 
     /// <summary>

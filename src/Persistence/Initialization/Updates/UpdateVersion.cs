@@ -853,4 +853,9 @@ public enum UpdateVersion
     /// Adds the dark skeletons (Dark Skeleton 1111, Dark Reaper 1112) and one of each in Devias (221/81 and 222/85).
     /// </summary>
     AddDarkSkeletonMonsters = 181,
+
+    /// <summary>
+    /// The dark skeletons drop one box per kill: Box of Heaven 90%, Pink (Dark Skeleton) or Blue (Dark Reaper) Chocolate Box 10%.
+    /// </summary>
+    AddDarkSkeletonDrops = 182,
 }

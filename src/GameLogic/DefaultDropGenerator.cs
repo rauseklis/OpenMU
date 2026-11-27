@@ -21,6 +21,9 @@ public class DefaultDropGenerator : IDropGenerator
     private const int DropLevelMaxGap = 12;
     private const int SkillDropChancePercent = 50;
 
+    // Own drop chances adding up to 100% (a tiny tolerance for the rounding of 0.9 + 0.1).
+    private const double CompleteDropTableChance = 1.0 - 1e-9;
+
     private const byte DefaultMaxItemOptionLevelDrop = 3;
     private const byte MinItemOptionLevelDrop = 1;
     private const byte MaxItemOptionLevelDrop = 4;
@@ -317,6 +320,35 @@ public class DefaultDropGenerator : IDropGenerator
         return true;
     }
 
+    /// <summary>
+    /// Determines whether the monster has a complete drop table of its own: drop groups with a chance below 100% each
+    /// whose chances add up to at least 100%. Such a monster drops only from its own table (one of its groups is always
+    /// chosen by its chance), without the drops of the map, the character, quests, money or the small bonuses.
+    /// Example: the dark skeletons (Box of Heaven 90%, a chocolate box 10%).
+    /// </summary>
+    /// <param name="monster">The monster definition.</param>
+    /// <returns><c>true</c> if the monster drops only from its own groups.</returns>
+    public static bool HasCompleteOwnDropTable(MonsterDefinition monster)
+    {
+        if (monster.DropItemGroups is not { Count: > 0 } groups)
+        {
+            return false;
+        }
+
+        double total = 0;
+        foreach (var group in groups)
+        {
+            if (group.Chance >= 1.0 || group.ItemType == SpecialItemType.SmallBonus)
+            {
+                return false;
+            }
+
+            total += group.Chance;
+        }
+
+        return total >= CompleteDropTableChance;
+    }
+
     private static bool IsValidOptionLevelDrop(byte value)
         => value is >= MinItemOptionLevelDrop and <= MaxItemOptionLevelDrop;
 
@@ -395,7 +427,7 @@ public class DefaultDropGenerator : IDropGenerator
 
     private async ValueTask CollectDropGroupsAsync(Player player, MonsterDefinition monster, GameMapDefinition map, IEnumerable<DropItemGroup> characterGroups)
     {
-        if (monster.ObjectKind == NpcObjectKind.Destructible)
+        if (monster.ObjectKind == NpcObjectKind.Destructible || HasCompleteOwnDropTable(monster))
         {
             this.PartitionDropGroups(monster.DropItemGroups ?? []);
         }
