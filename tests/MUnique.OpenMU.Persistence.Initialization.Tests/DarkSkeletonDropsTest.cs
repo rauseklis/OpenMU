@@ -167,7 +167,7 @@ internal class DarkSkeletonDropsTest
         Assert.That((skeleton.AttackRange, skeleton.AttackDelay), Is.EqualTo(((byte)3, TimeSpan.FromSeconds(2))));
         var reaper = configuration.Monsters.Single(m => m.Number == DarkReaper);
         Assert.That((reaper[Stats.MaximumHealth], reaper[Stats.MinimumPhysBaseDmg], reaper[Stats.DefenseBase], reaper[Stats.AttackRatePvm], reaper[Stats.DefenseRatePvm]), Is.EqualTo((50000f, 300f, 300f, 1000f, 1000f)));
-        Assert.That((reaper.AttackRange, reaper.AttackDelay), Is.EqualTo(((byte)2, TimeSpan.FromSeconds(2))));
+        Assert.That((reaper.AttackRange, reaper.AttackDelay), Is.EqualTo(((byte)2, TimeSpan.FromSeconds(5))));
         Assert.That(reaper.Attributes, Has.Count.EqualTo(7));
         Assert.That(update.IsMandatory, Is.True);
     }

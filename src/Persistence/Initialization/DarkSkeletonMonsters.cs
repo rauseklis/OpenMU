@@ -68,7 +68,7 @@ internal static class DarkSkeletonMonsters
             BoxOfLuck("Firecracker", 0.45, FirecrackerLevel),
             new("Pink Chocolate Box", 0.1, PinkChocolateBoxNumber, 0),
         ]),
-        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, new(50000, 300, 300, 1000, 1000, 2, 2000),
+        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, new(50000, 300, 300, 1000, 1000, 2, 5000),
         [
             BoxOfLuck("Box of Heaven", 0.45, BoxOfHeavenLevel),
             BoxOfLuck("Star of the Sacred Birth", 0.45, StarOfTheSacredBirthLevel),
@@ -168,6 +168,24 @@ internal static class DarkSkeletonMonsters
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// Sets only the time between two hits of the dark skeleton with the specified number to the value of <see cref="All"/>.
+    /// </summary>
+    /// <param name="gameConfiguration">The game configuration.</param>
+    /// <param name="monsterNumber">The number of the dark skeleton.</param>
+    /// <returns>Whether the monster was found.</returns>
+    internal static bool SetAttackDelay(GameConfiguration gameConfiguration, short monsterNumber)
+    {
+        var skeleton = All.Single(s => s.Number == monsterNumber);
+        if (gameConfiguration.Monsters.FirstOrDefault(m => m.Number == monsterNumber) is not { } monster)
+        {
+            return false;
+        }
+
+        monster.AttackDelay = TimeSpan.FromMilliseconds(skeleton.Values.AttackDelayMilliseconds);
+        return true;
     }
 
     /// <summary>

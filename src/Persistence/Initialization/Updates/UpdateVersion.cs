@@ -875,4 +875,9 @@ public enum UpdateVersion
     /// The Dark Skeleton invasion also runs on game server 1 (Ember 5x), with monsters at half strength there.
     /// </summary>
     DarkInvasionBothServers = 185,
+
+    /// <summary>
+    /// The Dark Reaper (1112) hits once every 5 seconds instead of every 2 seconds.
+    /// </summary>
+    ChangeDarkReaperAttackDelay = 186,
 }

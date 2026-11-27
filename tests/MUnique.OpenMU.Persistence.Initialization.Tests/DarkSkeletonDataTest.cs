@@ -84,7 +84,7 @@ internal class DarkSkeletonDataTest
         return (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
     }
 
-    private static void AssertValues(MonsterDefinition monster, int health, int damage, int defense, int attackRate, int defenseRate, byte attackRange)
+    private static void AssertValues(MonsterDefinition monster, int health, int damage, int defense, int attackRate, int defenseRate, byte attackRange, int attackDelaySeconds)
     {
         Assert.That(monster[Stats.Level], Is.EqualTo(100));
         Assert.That(monster[Stats.MaximumHealth], Is.EqualTo(health));
@@ -94,7 +94,7 @@ internal class DarkSkeletonDataTest
         Assert.That(monster[Stats.AttackRatePvm], Is.EqualTo(attackRate));
         Assert.That(monster[Stats.DefenseRatePvm], Is.EqualTo(defenseRate));
         Assert.That(monster.AttackRange, Is.EqualTo(attackRange));
-        Assert.That(monster.AttackDelay, Is.EqualTo(TimeSpan.FromSeconds(2)));
+        Assert.That(monster.AttackDelay, Is.EqualTo(TimeSpan.FromSeconds(attackDelaySeconds)));
         Assert.That(monster.Attributes.GroupBy(a => a.AttributeDefinition).All(g => g.Count() == 1), Is.True, "each value once");
     }
 
@@ -114,8 +114,8 @@ internal class DarkSkeletonDataTest
         Assert.That(reaper.Designation.ToString(), Is.EqualTo("Dark Reaper"));
 
         // The owner's values (in the database; the server scales health and attack rate).
-        AssertValues(skeleton, health: 25000, damage: 100, defense: 100, attackRate: 300, defenseRate: 100, attackRange: 3);
-        AssertValues(reaper, health: 50000, damage: 300, defense: 300, attackRate: 1000, defenseRate: 1000, attackRange: 2);
+        AssertValues(skeleton, health: 25000, damage: 100, defense: 100, attackRate: 300, defenseRate: 100, attackRange: 3, attackDelaySeconds: 2);
+        AssertValues(reaper, health: 50000, damage: 300, defense: 300, attackRate: 1000, defenseRate: 1000, attackRange: 2, attackDelaySeconds: 5);
 
         Assert.That(skeleton.AttackSkill?.Number, Is.EqualTo(EvilSpirit));
         Assert.That(reaper.AttackSkill?.Number, Is.EqualTo(Hellfire));
