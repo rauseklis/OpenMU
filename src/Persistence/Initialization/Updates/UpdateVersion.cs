@@ -865,4 +865,9 @@ public enum UpdateVersion
     /// (Dark Reaper) 45%, Pink or Blue Chocolate Box 10%.
     /// </summary>
     ChangeDarkSkeletonValues = 183,
+
+    /// <summary>
+    /// Adds the Dark Mage (1113, Skull Staff, Flame) with its drops and one in Devias (223/83).
+    /// </summary>
+    AddDarkMage = 184,
 }

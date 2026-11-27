@@ -845,6 +845,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Changed the values and drops of the Dark Skeleton and Dark Reaper.");
         }
 
+        if (await DarkMageInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Added the Dark Mage, its drops and its Devias test spawn.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
