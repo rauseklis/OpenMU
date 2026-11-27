@@ -850,6 +850,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Added the Dark Mage, its drops and its Devias test spawn.");
         }
 
+        if (await DarkReaperAttackDelayInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("The Dark Reaper now hits once every 5 seconds.");
+        }
+
         if (await DarkInvasionBothServersInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
         {
             this._logger.Information("The Dark Skeleton invasion now also runs on server 2 (internal id 1) with monsters at half strength.");
