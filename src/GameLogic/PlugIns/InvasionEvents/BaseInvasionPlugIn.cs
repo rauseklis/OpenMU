@@ -105,6 +105,7 @@ public abstract class BaseInvasionPlugIn<TConfiguration> : PeriodicTaskBasePlugI
                 gameContext.PlugInManager,
                 gameContext.PathFinderPool);
 
+            this.OnMonsterInitializing(monster, gameMap);
             monster.Initialize();
             await gameMap.AddAsync(monster).ConfigureAwait(false);
             monster.OnSpawn();
@@ -119,6 +120,15 @@ public abstract class BaseInvasionPlugIn<TConfiguration> : PeriodicTaskBasePlugI
 
             this.OnMonsterCreated(monster, state);
         }
+    }
+
+    /// <summary>
+    /// Called before a monster of this invasion is initialized (and gets its health), e.g. to change its attributes.
+    /// </summary>
+    /// <param name="monster">The monster.</param>
+    /// <param name="gameMap">The map on which it spawns.</param>
+    protected virtual void OnMonsterInitializing(Monster monster, GameMap gameMap)
+    {
     }
 
     /// <summary>

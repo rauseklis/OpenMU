@@ -8,6 +8,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
+using MUnique.OpenMU.AttributeSystem;
+using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.NPC;
 using MUnique.OpenMU.GameLogic.PlugIns.PeriodicTasks;
 using MUnique.OpenMU.PlugIns;
@@ -62,6 +64,25 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         this.ForceStart();
     }
 
+    /// <summary>
+    /// Ends the event on the specified game context (game server) on the next periodic check (about one second),
+    /// as requested by a game master. The remaining monsters disappear and the light comes back.
+    /// </summary>
+    /// <param name="gameContext">The game context of the game server on which the event should end.</param>
+    /// <returns><c>true</c> if the event was announced or running and is now ending.</returns>
+    public bool StopByGameMaster(IGameContext gameContext)
+    {
+        var state = (DarkSkeletonInvasionState)this.GetStateByGameContext(gameContext);
+        if (state.State == PeriodicTaskState.NotStarted)
+        {
+            return false;
+        }
+
+        state.IsStopRequested = true;
+        state.NextRunUtc = DateTime.UtcNow;
+        return true;
+    }
+
     /// <inheritdoc />
     public override async ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
     {
@@ -91,13 +112,22 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
     protected override async ValueTask OnPrepareEventAsync(InvasionGameServerState state)
     {
         this._isGameMasterStartPending = false;
+        ((DarkSkeletonInvasionState)state).IsStopRequested = false;
         await base.OnPrepareEventAsync(state).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     protected override async ValueTask OnStartedAsync(InvasionGameServerState state)
     {
-        ((DarkSkeletonInvasionState)state).ResetBosses();
+        var darkState = (DarkSkeletonInvasionState)state;
+        darkState.ResetBosses();
+        if (darkState.IsStopRequested)
+        {
+            // A game master stopped it during the announcement: end it on the next check without monsters or darkness.
+            state.NextRunUtc = DateTime.UtcNow;
+            return;
+        }
+
         await base.OnStartedAsync(state).ConfigureAwait(false);
         await state.Context.ForEachPlayerAsync(p => SendDarknessIfOnEventMapAsync(p, state, true)).ConfigureAwait(false);
     }
@@ -107,6 +137,29 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
     {
         await state.Context.ForEachPlayerAsync(p => SendDarknessIfOnEventMapAsync(p, state, false)).ConfigureAwait(false);
         await base.OnFinishedAsync(state).ConfigureAwait(false);
+        ((DarkSkeletonInvasionState)state).IsStopRequested = false;
+    }
+
+    /// <inheritdoc />
+    protected override void OnMonsterInitializing(Monster monster, GameMap gameMap)
+    {
+        if (this.Configuration is not { } config
+            || gameMap.ServerId is not { } serverId
+            || !config.WeakerGameServerIds.Contains(serverId)
+            || config.WeakerStrengthPercentage <= 0
+            || Math.Abs(config.WeakerStrengthPercentage - 100) < 0.01f)
+        {
+            return;
+        }
+
+        // One element per monster; it lives as long as this event monster.
+        var factor = new ConstantElement(config.WeakerStrengthPercentage / 100f, AggregateType.Multiplicate);
+        monster.Attributes.AddElement(factor, Stats.MaximumHealth);
+        monster.Attributes.AddElement(factor, Stats.MinimumPhysBaseDmg);
+        monster.Attributes.AddElement(factor, Stats.MaximumPhysBaseDmg);
+        monster.Attributes.AddElement(factor, Stats.DefenseBase);
+        monster.Attributes.AddElement(factor, Stats.AttackRatePvm);
+        monster.Attributes.AddElement(factor, Stats.DefenseRatePvm);
     }
 
     /// <inheritdoc />
@@ -166,9 +219,20 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
     {
         private int _livingBosses;
 
+        private volatile bool _isStopRequested;
+
         public DarkSkeletonInvasionState(IGameContext context)
             : base(context)
         {
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether a game master requested to end the event.
+        /// </summary>
+        public bool IsStopRequested
+        {
+            get => this._isStopRequested;
+            set => this._isStopRequested = value;
         }
 
         public void ResetBosses() => Interlocked.Exchange(ref this._livingBosses, 0);
