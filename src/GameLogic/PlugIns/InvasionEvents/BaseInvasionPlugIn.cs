@@ -57,6 +57,13 @@ public abstract class BaseInvasionPlugIn<TConfiguration> : PeriodicTaskBasePlugI
     }
 
     /// <summary>
+    /// Gets the random coordinate on which an invasion monster without a fixed coordinate is placed.
+    /// </summary>
+    /// <param name="gameMap">The game map.</param>
+    /// <returns>The coordinate, or <c>null</c> if the map has no suitable tile.</returns>
+    protected virtual Point? GetRandomSpawnCoordinate(GameMap gameMap) => gameMap.Terrain.RandomWalkableCoordinate;
+
+    /// <summary>
     /// Spawns <paramref name="quantity"/> instances of <paramref name="monsterDefinition"/> on
     /// <paramref name="gameMap"/>, each placed at a random walkable coordinate (or a fixed
     /// coordinate when <paramref name="x"/> and <paramref name="y"/> are provided).
@@ -75,7 +82,7 @@ public abstract class BaseInvasionPlugIn<TConfiguration> : PeriodicTaskBasePlugI
         {
             Point? spawnPoint = (x.HasValue && y.HasValue)
                 ? new Point(x.Value, y.Value)
-                : gameMap.Terrain.RandomWalkableCoordinate;
+                : this.GetRandomSpawnCoordinate(gameMap);
 
             if (spawnPoint is null)
             {
