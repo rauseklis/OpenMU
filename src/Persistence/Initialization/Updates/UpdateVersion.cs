@@ -848,4 +848,9 @@ public enum UpdateVersion
     /// Boosts the Golden monsters on server 1 (internal id 0): defense, attack rate, defense rate and health x10, damage x2.
     /// </summary>
     InfernoGoldenMonsters = 180,
+
+    /// <summary>
+    /// Adds the dark skeletons (Dark Skeleton 1111, Dark Reaper 1112) and one of each in Devias (221/81 and 222/85).
+    /// </summary>
+    AddDarkSkeletonMonsters = 181,
 }

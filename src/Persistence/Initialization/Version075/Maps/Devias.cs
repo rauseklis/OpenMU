@@ -70,6 +70,13 @@ internal class Devias : BaseMapInitializer
     }
 
     /// <inheritdoc/>
+    protected override void AdditionalInitialization(GameMapDefinition mapDefinition)
+    {
+        base.AdditionalInitialization(mapDefinition);
+        DarkSkeletonMonsters.AddDeviasSpawns(this.Context, mapDefinition, this.GameConfiguration);
+    }
+
+    /// <inheritdoc/>
     protected override void CreateMonsters()
     {
         {
