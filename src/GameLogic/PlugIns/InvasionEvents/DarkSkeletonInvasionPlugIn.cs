@@ -12,6 +12,7 @@ using MUnique.OpenMU.AttributeSystem;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.NPC;
 using MUnique.OpenMU.GameLogic.PlugIns.PeriodicTasks;
+using MUnique.OpenMU.Pathfinding;
 using MUnique.OpenMU.PlugIns;
 
 /// <summary>
@@ -96,6 +97,13 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
             }
         }
     }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Only tiles which can be reached from the town: Devias has walkable tiles along its bottom
+    /// edge which are cut off from the map, and a Dark Reaper there could never be killed.
+    /// </remarks>
+    protected override Point? GetRandomSpawnCoordinate(GameMap gameMap) => gameMap.Terrain.RandomCoordinateReachableFromSafezone;
 
     /// <inheritdoc />
     protected override bool IsItTimeToStart(IGameContext gameContext)

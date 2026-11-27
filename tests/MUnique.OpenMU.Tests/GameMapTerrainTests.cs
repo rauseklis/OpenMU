@@ -60,6 +60,44 @@ public class GameMapTerrainTests
     }
 
     /// <summary>
+    /// Tests that a walkable tile which is walled off from the town is never picked, like the strip
+    /// along the bottom edge of Devias where an invasion monster could never be found.
+    /// </summary>
+    [Test]
+    public void RandomCoordinateReachableFromSafezoneSkipsWalledOffTiles()
+    {
+        var data = CreateTerrainData(safezoneAt: (10, 10), walkableAt: null);
+        var reachable = new[] { new Pathfinding.Point(11, 10), new Pathfinding.Point(12, 11), new Pathfinding.Point(13, 12) };
+        foreach (var point in reachable)
+        {
+            data[3 + (point.Y * 256) + point.X] = Walkable;
+        }
+
+        // Cut off: no walkable neighbour connects it to the town.
+        data[3 + (254 * 256) + 100] = Walkable;
+        var terrain = new GameMapTerrain(data);
+
+        for (var i = 0; i < 1000; i++)
+        {
+            Assert.That(terrain.RandomCoordinateReachableFromSafezone, Is.AnyOf(reachable.Cast<object>().ToArray()));
+        }
+
+        var picksWalledOffTile = Enumerable.Range(0, 1000).Any(_ => terrain.RandomWalkableCoordinate == new Pathfinding.Point(100, 254));
+        Assert.That(picksWalledOffTile, Is.True, "precondition: the plain random coordinate can pick the walled-off tile");
+    }
+
+    /// <summary>
+    /// Tests that a map without a safezone falls back to any walkable tile.
+    /// </summary>
+    [Test]
+    public void RandomCoordinateReachableFromSafezoneFallsBackWithoutSafezone()
+    {
+        var terrain = new GameMapTerrain(CreateTerrainData(safezoneAt: null, walkableAt: (5, 5)));
+
+        Assert.That(terrain.RandomCoordinateReachableFromSafezone, Is.EqualTo(new Pathfinding.Point(5, 5)));
+    }
+
+    /// <summary>
     /// Creates fully blocked terrain data with at most one safezone and one ordinary walkable tile.
     /// </summary>
     /// <param name="safezoneAt">The coordinate to mark as safezone, if any.</param>

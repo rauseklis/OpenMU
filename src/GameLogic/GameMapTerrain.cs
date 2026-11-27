@@ -42,6 +42,12 @@ public class GameMapTerrain
     /// </summary>
     private Point[] _spawnPoints;
 
+    /// <summary>
+    /// The part of <see cref="_spawnPoints"/> which can be reached on foot from a safezone tile.
+    /// Built when the terrain data is loaded.
+    /// </summary>
+    private Point[] _reachableSpawnPoints;
+
     private Point? _anyWalkableCoordinate;
 
     /// <summary>
@@ -60,6 +66,7 @@ public class GameMapTerrain
     public GameMapTerrain(byte[]? terrainData)
     {
         this._spawnPoints = [];
+        this._reachableSpawnPoints = [];
         this.LoadTerrainData(terrainData);
     }
 
@@ -100,6 +107,27 @@ public class GameMapTerrain
             if (points.Length == 0)
             {
                 return null;
+            }
+
+            return points[Random.Shared.Next(points.Length)];
+        }
+    }
+
+    /// <summary>
+    /// Gets a random walkable, non-safezone point which can be reached on foot from a safezone (a town)
+    /// of the map. Unlike <see cref="RandomWalkableCoordinate"/>, it skips walkable tiles which are cut
+    /// off from the rest of the map, like the strip along the bottom edge of Devias (y 254 to 255),
+    /// where a monster could never be found. A map without a safezone falls back to
+    /// <see cref="RandomWalkableCoordinate"/>.
+    /// </summary>
+    public Point? RandomCoordinateReachableFromSafezone
+    {
+        get
+        {
+            var points = this._reachableSpawnPoints;
+            if (points.Length == 0)
+            {
+                return this.RandomWalkableCoordinate;
             }
 
             return points[Random.Shared.Next(points.Length)];
@@ -354,6 +382,7 @@ public class GameMapTerrain
         Array.Clear(this.AIgrid);
         this.ReadTerrainData(terrainData is { } ? terrainData.AsSpan(3) : DefaultTerrain);
         this._spawnPoints = this.BuildSpawnPoints(out this._anyWalkableCoordinate);
+        this._reachableSpawnPoints = this.BuildReachableSpawnPoints();
     }
 
     /// <summary>
@@ -442,6 +471,56 @@ public class GameMapTerrain
         }
 
         anyWalkableCoordinate = safezone ?? outsideSafezone;
+        return result.ToArray();
+    }
+
+    /// <summary>
+    /// Finds the monster spawn points which can be reached on foot from any safezone tile, walking
+    /// over walkable tiles in all eight directions.
+    /// </summary>
+    /// <returns>The reachable walkable coordinates outside the safezone; empty when the map has no safezone.</returns>
+    private Point[] BuildReachableSpawnPoints()
+    {
+        var reached = new bool[MapSize, MapSize];
+        var queue = new Queue<Point>();
+        for (var x = 0; x < MapSize; x++)
+        {
+            for (var y = 0; y < MapSize; y++)
+            {
+                if (this.SafezoneMap[x, y])
+                {
+                    reached[x, y] = true;
+                    queue.Enqueue(new Point((byte)x, (byte)y));
+                }
+            }
+        }
+
+        var result = new List<Point>();
+        while (queue.Count > 0)
+        {
+            var point = queue.Dequeue();
+            if (!this.SafezoneMap[point.X, point.Y])
+            {
+                result.Add(point);
+            }
+
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                for (var dy = -1; dy <= 1; dy++)
+                {
+                    var x = point.X + dx;
+                    var y = point.Y + dy;
+                    if (x is < 0 or >= MapSize || y is < 0 or >= MapSize || reached[x, y] || !this.WalkMap[x, y])
+                    {
+                        continue;
+                    }
+
+                    reached[x, y] = true;
+                    queue.Enqueue(new Point((byte)x, (byte)y));
+                }
+            }
+        }
+
         return result.ToArray();
     }
 }
