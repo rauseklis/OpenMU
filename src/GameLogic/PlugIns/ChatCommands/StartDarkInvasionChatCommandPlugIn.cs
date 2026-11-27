@@ -14,7 +14,7 @@ using MUnique.OpenMU.PlugIns;
 /// A chat command which lets a game master start the Dark Skeleton invasion right away.
 /// </summary>
 [PlugIn]
-[Display(Name = "Start Dark Skeleton Invasion Chat Command", Description = "Handles the GM command /startdark, which starts the Dark Skeleton invasion immediately.")]
+[Display(Name = "Start Dark Skeleton Invasion Chat Command", Description = "Handles the GM command /startdark, which starts the Dark Skeleton invasion immediately on this game server.")]
 [Guid("B7D1E3A9-6C24-4F8E-91A5-3E0F7C2B8D46")]
 [ChatCommandHelp(Command, CharacterStatus.GameMaster)]
 public class StartDarkInvasionChatCommandPlugIn : IChatCommandPlugIn
@@ -52,7 +52,7 @@ public class StartDarkInvasionChatCommandPlugIn : IChatCommandPlugIn
             return;
         }
 
-        invasion.StartByGameMaster();
+        invasion.StartByGameMaster(player.GameContext);
         await player.ShowBlueMessageAsync("The Dark Skeleton invasion is starting now.").ConfigureAwait(false);
     }
 }

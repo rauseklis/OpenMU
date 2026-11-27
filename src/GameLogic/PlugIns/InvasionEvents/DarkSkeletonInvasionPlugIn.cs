@@ -25,8 +25,6 @@ using MUnique.OpenMU.PlugIns;
 [Guid("4E8B2C71-9A3D-4F15-B6E0-2D7C5A1F9E83")]
 public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeletonInvasionConfiguration>, ISupportDefaultCustomConfiguration
 {
-    private volatile bool _isGameMasterStartPending;
-
     /// <inheritdoc />
     protected override ushort? AnnouncedMonsterId => this.Configuration is { } config
         ? config.EndWhenKilledMonsterIds.Count > 0 ? config.EndWhenKilledMonsterIds[0] : config.Mobs.FirstOrDefault()?.MonsterId
@@ -57,12 +55,15 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         => this.GetStateByGameContext(gameContext).State != PeriodicTaskState.NotStarted;
 
     /// <summary>
-    /// Starts the event on the next periodic check (about one second), as requested by a game master.
+    /// Starts the event on the specified game context (game server) on the next periodic check (about one second),
+    /// as requested by a game master. Other game servers are not affected.
     /// </summary>
-    public void StartByGameMaster()
+    /// <param name="gameContext">The game context of the game server on which the event should start.</param>
+    public void StartByGameMaster(IGameContext gameContext)
     {
-        this._isGameMasterStartPending = true;
-        this.ForceStart();
+        var state = (DarkSkeletonInvasionState)this.GetStateByGameContext(gameContext);
+        state.IsStartRequested = true;
+        state.NextRunUtc = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -107,11 +108,12 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
 
     /// <inheritdoc />
     protected override bool IsItTimeToStart(IGameContext gameContext)
-        => this.IsEnabledOn(gameContext) && base.IsItTimeToStart(gameContext);
+        => this.IsEnabledOn(gameContext)
+           && (((DarkSkeletonInvasionState)this.GetStateByGameContext(gameContext)).IsStartRequested || base.IsItTimeToStart(gameContext));
 
     /// <inheritdoc />
     protected override bool IsPreviousEventStillRunning(InvasionGameServerState state)
-        => !this._isGameMasterStartPending && base.IsPreviousEventStillRunning(state);
+        => !((DarkSkeletonInvasionState)state).IsStartRequested && base.IsPreviousEventStillRunning(state);
 
     /// <inheritdoc />
     protected override InvasionGameServerState CreateState(IGameContext gameContext) => new DarkSkeletonInvasionState(gameContext);
@@ -119,8 +121,9 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
     /// <inheritdoc />
     protected override async ValueTask OnPrepareEventAsync(InvasionGameServerState state)
     {
-        this._isGameMasterStartPending = false;
-        ((DarkSkeletonInvasionState)state).IsStopRequested = false;
+        var darkState = (DarkSkeletonInvasionState)state;
+        darkState.IsStartRequested = false;
+        darkState.IsStopRequested = false;
         await base.OnPrepareEventAsync(state).ConfigureAwait(false);
     }
 
@@ -229,6 +232,8 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
 
         private volatile bool _isStopRequested;
 
+        private volatile bool _isStartRequested;
+
         public DarkSkeletonInvasionState(IGameContext context)
             : base(context)
         {
@@ -241,6 +246,15 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         {
             get => this._isStopRequested;
             set => this._isStopRequested = value;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether a game master requested to start the event on this game server.
+        /// </summary>
+        public bool IsStartRequested
+        {
+            get => this._isStartRequested;
+            set => this._isStartRequested = value;
         }
 
         public void ResetBosses() => Interlocked.Exchange(ref this._livingBosses, 0);
