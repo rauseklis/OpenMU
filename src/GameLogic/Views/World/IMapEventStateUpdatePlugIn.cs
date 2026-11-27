@@ -20,6 +20,11 @@ public enum MapEventType
     /// Golden Dragons start flying.
     /// </summary>
     GoldenDragonInvasion,
+
+    /// <summary>
+    /// The Dark Skeleton invasion: the client darkens the map.
+    /// </summary>
+    DarkSkeletonInvasion,
 }
 
 /// <summary>

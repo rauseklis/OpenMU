@@ -17,6 +17,13 @@ using MUnique.OpenMU.PlugIns;
 [Guid("8A34C69D-59CC-4251-9E8E-D80154A7AC8C")]
 public class MapEventStateUpdatePlugIn : IMapEventStateUpdatePlugIn
 {
+    /// <summary>
+    /// The event number of the Dark Skeleton invasion in the map event state packet.
+    /// It is a custom value of this project which the packet definition does not list;
+    /// the client darkens the map while it is enabled.
+    /// </summary>
+    public const byte DarkSkeletonEventNumber = 10;
+
     private readonly RemotePlayer _player;
 
     /// <summary>
@@ -37,6 +44,7 @@ public class MapEventStateUpdatePlugIn : IMapEventStateUpdatePlugIn
         {
             MapEventType.RedDragonInvasion => MapEventState.Events.RedDragon,
             MapEventType.GoldenDragonInvasion => MapEventState.Events.GoldenDragon,
+            MapEventType.DarkSkeletonInvasion => (MapEventState.Events)DarkSkeletonEventNumber,
             _ => throw new ArgumentException($"Unknown map's event type {eventType}"),
         };
     }
