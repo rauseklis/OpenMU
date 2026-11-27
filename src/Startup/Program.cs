@@ -835,6 +835,11 @@ internal sealed class Program : IDisposable
             this._logger.Information("Added the Dark Skeleton and Dark Reaper monsters and their Devias test spawns.");
         }
 
+        if (await DarkSkeletonDropsInstaller.ApplyIfNeededAsync(contextProvider).ConfigureAwait(false))
+        {
+            this._logger.Information("Gave the Dark Skeleton and Dark Reaper their box drops.");
+        }
+
         await this.ReadSystemConfigurationAsync(contextProvider).ConfigureAwait(false);
 
         return contextProvider;
