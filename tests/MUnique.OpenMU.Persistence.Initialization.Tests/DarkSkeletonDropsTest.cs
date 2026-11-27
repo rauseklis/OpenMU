@@ -56,7 +56,7 @@ internal class DarkSkeletonDropsTest
             .Select(m => m.Number)
             .OrderBy(n => n)
             .ToList();
-        Assert.That(numbers, Is.EqualTo(new[] { DarkSkeleton, DarkReaper }));
+        Assert.That(numbers, Is.EqualTo(new short[] { DarkSkeleton, DarkReaper, 1113 }));
     }
 
     /// <summary>

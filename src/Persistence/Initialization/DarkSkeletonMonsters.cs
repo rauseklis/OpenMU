@@ -11,12 +11,12 @@ using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.Persistence.Initialization.Skills;
 
 /// <summary>
-/// Defines the dark skeletons (monsters 1111-1112), custom monsters of this server: 20% bigger, dark skeletons.
-/// Every kill drops one box: a Box of Heaven (45%), a second box (45%; Firecracker for Dark Skeleton, Star of the Sacred Birth
-/// for Dark Reaper) or a chocolate box (10%; Pink for Dark Skeleton, Blue for Dark Reaper).
+/// Defines the dark skeletons (monsters 1111-1113), custom monsters of this server: bigger, dark skeletons.
+/// Every kill drops exactly one box of the monster's own drop table (see <see cref="All"/>), nothing else.
 /// Dark Skeleton carries a Gorgon Staff and its attacks are shown as Evil Spirit; Dark Reaper carries a Rune Blade and its
-/// attacks are shown as Hellfire. The client draws them (size, darkness, sparks, weapon); the server only knows their
-/// values and where they spawn. For now one of each stands in Devias for testing.
+/// attacks are shown as Hellfire; Dark Mage carries a Skull Staff and its attacks are shown as Flame. The client draws
+/// them (size, darkness, sparks, weapon); the server only knows their values, drops and where they spawn. For now one of
+/// each stands in Devias for testing.
 /// </summary>
 internal static class DarkSkeletonMonsters
 {
@@ -25,6 +25,9 @@ internal static class DarkSkeletonMonsters
 
     /// <summary>The number of the Dark Reaper monster (Rune Blade, Hellfire).</summary>
     internal const short DarkReaperNumber = 1112;
+
+    /// <summary>The number of the Dark Mage monster (Skull Staff, Flame).</summary>
+    internal const short DarkMageNumber = 1113;
 
     // The same for both; the other values (health, damage, defense, rates, attack range and speed) are per monster
     // in All. They are the values in the database; the server scales health and attack rate of all monsters.
@@ -43,22 +46,42 @@ internal static class DarkSkeletonMonsters
     // in 45%, a chocolate box in the other 10%; nothing else (no zen, no map drops, no bonuses).
     private const byte BoxGroup = 14;
     private const short BoxOfLuckNumber = 11;
-    private const byte BoxOfHeavenLevel = 7;
-    private const byte StarOfTheSacredBirthLevel = 1;
-    private const byte FirecrackerLevel = 2;
-    private const double BoxOfHeavenChance = 0.45;
-    private const double SecondBoxChance = 0.45;
-    private const double ChocolateBoxChance = 0.1;
     private const short PinkChocolateBoxNumber = 32;
     private const short BlueChocolateBoxNumber = 34;
+
+    // The levels of the Box of Luck (14, 11) which are boxes of their own.
+    private const byte StarOfTheSacredBirthLevel = 1;
+    private const byte FirecrackerLevel = 2;
+    private const byte HeartOfLoveLevel = 3;
+    private const byte SilverMedalLevel = 5;
+    private const byte GoldMedalLevel = 6;
+    private const byte BoxOfHeavenLevel = 7;
 
     /// <summary>
     /// Gets the dark skeletons with the values and the Devias test spot the owner chose.
     /// </summary>
     internal static IReadOnlyList<DarkSkeleton> All { get; } =
     [
-        new(DarkSkeletonNumber, "Dark Skeleton", SkillNumber.EvilSpirit, 10, 221, 81, new(25000, 100, 100, 300, 100, 3, 2000), FirecrackerLevel, "Firecracker", PinkChocolateBoxNumber, "Pink Chocolate Box"),
-        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, new(50000, 300, 300, 1000, 1000, 2, 2000), StarOfTheSacredBirthLevel, "Star of the Sacred Birth", BlueChocolateBoxNumber, "Blue Chocolate Box"),
+        new(DarkSkeletonNumber, "Dark Skeleton", SkillNumber.EvilSpirit, 10, 221, 81, new(25000, 100, 100, 300, 100, 3, 2000),
+        [
+            BoxOfLuck("Box of Heaven", 0.45, BoxOfHeavenLevel),
+            BoxOfLuck("Firecracker", 0.45, FirecrackerLevel),
+            new("Pink Chocolate Box", 0.1, PinkChocolateBoxNumber, 0),
+        ]),
+        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, new(50000, 300, 300, 1000, 1000, 2, 2000),
+        [
+            BoxOfLuck("Box of Heaven", 0.45, BoxOfHeavenLevel),
+            BoxOfLuck("Star of the Sacred Birth", 0.45, StarOfTheSacredBirthLevel),
+            new("Blue Chocolate Box", 0.1, BlueChocolateBoxNumber, 0),
+        ]),
+        new(DarkMageNumber, "Dark Mage", SkillNumber.Flame, 10, 223, 83, new(10000, 100, 100, 100, 100, 4, 2000),
+        [
+            BoxOfLuck("Silver Medal", 0.2, SilverMedalLevel),
+            BoxOfLuck("Gold Medal", 0.2, GoldMedalLevel),
+            BoxOfLuck("Box of Heaven", 0.2, BoxOfHeavenLevel),
+            BoxOfLuck("Firecracker", 0.2, FirecrackerLevel),
+            BoxOfLuck("Heart of Love", 0.2, HeartOfLoveLevel),
+        ]),
     ];
 
     /// <summary>
@@ -256,12 +279,15 @@ internal static class DarkSkeletonMonsters
         { Stats.DefenseRatePvm, skeleton.Values.DefenseRate },
     };
 
+    private static DarkSkeletonDrop BoxOfLuck(string name, double chance, byte level) => new(name, chance, BoxOfLuckNumber, level);
+
     private static void AddDrops(IContext context, GameConfiguration gameConfiguration, MonsterDefinition monster, DarkSkeleton skeleton)
     {
         monster.NumberOfMaximumItemDrops = 1;
-        AddDropGroup(context, gameConfiguration, monster, "Box of Heaven", BoxOfHeavenChance, BoxOfHeavenLevel, BoxOfLuckNumber);
-        AddDropGroup(context, gameConfiguration, monster, skeleton.SecondBoxName, SecondBoxChance, skeleton.SecondBoxLevel, BoxOfLuckNumber);
-        AddDropGroup(context, gameConfiguration, monster, skeleton.ChocolateBoxName, ChocolateBoxChance, 0, skeleton.ChocolateBoxNumber);
+        foreach (var drop in skeleton.Drops)
+        {
+            AddDropGroup(context, gameConfiguration, monster, drop.Name, drop.Chance, drop.ItemLevel, drop.ItemNumber);
+        }
     }
 
     private static void AddDropGroup(IContext context, GameConfiguration gameConfiguration, MonsterDefinition monster, string name, double chance, byte itemLevel, short itemNumber)
@@ -287,11 +313,17 @@ internal static class DarkSkeletonMonsters
     /// <param name="DeviasX">The x coordinate of the Devias test spawn.</param>
     /// <param name="DeviasY">The y coordinate of the Devias test spawn.</param>
     /// <param name="Values">Its health, damage, defense, rates, attack range and speed.</param>
-    /// <param name="SecondBoxLevel">The level of the Box of Luck it drops in 45% of the kills (Firecracker +2, Star +1).</param>
-    /// <param name="SecondBoxName">The name of that box.</param>
-    /// <param name="ChocolateBoxNumber">The item number (group 14) of the chocolate box it drops in 10% of the kills.</param>
-    /// <param name="ChocolateBoxName">The name of that chocolate box.</param>
-    internal readonly record struct DarkSkeleton(short Number, string Name, SkillNumber Skill, int RespawnSeconds, byte DeviasX, byte DeviasY, DarkSkeletonValues Values, byte SecondBoxLevel, string SecondBoxName, short ChocolateBoxNumber, string ChocolateBoxName);
+    /// <param name="Drops">Its drop table; the chances add up to 100%, so every kill drops exactly one of them.</param>
+    internal readonly record struct DarkSkeleton(short Number, string Name, SkillNumber Skill, int RespawnSeconds, byte DeviasX, byte DeviasY, DarkSkeletonValues Values, IReadOnlyList<DarkSkeletonDrop> Drops);
+
+    /// <summary>
+    /// One box of the drop table of a dark skeleton.
+    /// </summary>
+    /// <param name="Name">The name of the box.</param>
+    /// <param name="Chance">The chance of a kill to drop it.</param>
+    /// <param name="ItemNumber">The item number in group 14.</param>
+    /// <param name="ItemLevel">The item level.</param>
+    internal readonly record struct DarkSkeletonDrop(string Name, double Chance, short ItemNumber, byte ItemLevel);
 
     /// <summary>
     /// The fighting values of one dark skeleton, as stored in the database.
