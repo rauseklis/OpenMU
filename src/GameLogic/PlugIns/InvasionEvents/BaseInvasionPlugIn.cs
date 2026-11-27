@@ -116,7 +116,18 @@ public abstract class BaseInvasionPlugIn<TConfiguration> : PeriodicTaskBasePlugI
             {
                 this.AttachDeathBroadcast(monster, state);
             }
+
+            this.OnMonsterCreated(monster, state);
         }
+    }
+
+    /// <summary>
+    /// Called after a monster of this invasion was spawned and is tracked by the state.
+    /// </summary>
+    /// <param name="monster">The spawned monster.</param>
+    /// <param name="state">The invasion state.</param>
+    protected virtual void OnMonsterCreated(Monster monster, InvasionGameServerState state)
+    {
     }
 
     /// <summary>

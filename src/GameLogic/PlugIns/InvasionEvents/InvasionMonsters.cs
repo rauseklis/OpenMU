@@ -73,4 +73,19 @@ internal static class InvasionMonsters
     /// The Destructive Ogre Archer monster.
     /// </summary>
     public const ushort DestructiveOgreArcher = 137;
+
+    /// <summary>
+    /// The Dark Skeleton monster (custom monster of this project).
+    /// </summary>
+    public const ushort DarkSkeleton = 1111;
+
+    /// <summary>
+    /// The Dark Reaper monster (custom monster of this project).
+    /// </summary>
+    public const ushort DarkReaper = 1112;
+
+    /// <summary>
+    /// The Dark Mage monster (custom monster of this project).
+    /// </summary>
+    public const ushort DarkMage = 1113;
 }
