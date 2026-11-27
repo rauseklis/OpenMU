@@ -1,4 +1,4 @@
-// <copyright file="DarkSkeletonDropsChangeInstaller.cs" company="MUnique">
+// <copyright file="DarkSkeletonValuesChangeInstaller.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
@@ -7,12 +7,12 @@ namespace MUnique.OpenMU.Persistence.Initialization.Updates;
 using MUnique.OpenMU.DataModel.Configuration;
 
 /// <summary>
-/// Installs the new box drops of the dark skeletons (1111-1112) before the configuration is loaded.
+/// Installs the new values and box drops of the dark skeletons (1111-1112) before the configuration is loaded.
 /// </summary>
-public static class DarkSkeletonDropsChangeInstaller
+public static class DarkSkeletonValuesChangeInstaller
 {
     /// <summary>
-    /// Installs the data update once. It only replaces the drops of the dark skeletons and doesn't touch other configuration.
+    /// Installs the data update once. It only changes the values and drops of the dark skeletons and doesn't touch other configuration.
     /// </summary>
     /// <param name="provider">The persistence provider.</param>
     /// <returns>Whether the update was installed.</returns>
@@ -27,14 +27,14 @@ public static class DarkSkeletonDropsChangeInstaller
         }
 
         var updates = await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false);
-        if (updates.Any(update => update.Version == (int)UpdateVersion.ChangeDarkSkeletonDrops && update.InstalledAt is not null))
+        if (updates.Any(update => update.Version == (int)UpdateVersion.ChangeDarkSkeletonValues && update.InstalledAt is not null))
         {
             return false;
         }
 
         var configuration = (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single();
-        await new ChangeDarkSkeletonDropsUpdatePlugIn().ApplyUpdateAsync(context, configuration).ConfigureAwait(false);
-        state.CurrentInstalledVersion = Math.Max(state.CurrentInstalledVersion, (int)UpdateVersion.ChangeDarkSkeletonDrops);
+        await new ChangeDarkSkeletonValuesUpdatePlugIn().ApplyUpdateAsync(context, configuration).ConfigureAwait(false);
+        state.CurrentInstalledVersion = Math.Max(state.CurrentInstalledVersion, (int)UpdateVersion.ChangeDarkSkeletonValues);
         await context.SaveChangesAsync().ConfigureAwait(false);
         return true;
     }

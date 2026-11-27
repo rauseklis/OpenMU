@@ -26,19 +26,12 @@ internal static class DarkSkeletonMonsters
     /// <summary>The number of the Dark Reaper monster (Rune Blade, Hellfire).</summary>
     internal const short DarkReaperNumber = 1112;
 
-    // The owner's values for both: 10 000 health, everything else 100.
+    // The same for both; the other values (health, damage, defense, rates, attack range and speed) are per monster
+    // in All. They are the values in the database; the server scales health and attack rate of all monsters.
     private const int Level = 100;
-    private const int MaximumHealth = 10000;
-    private const int Damage = 100;
-    private const int Defense = 100;
-    private const int AttackRate = 100;
-    private const int DefenseRate = 100;
-
     private const byte MoveRange = 3;
-    private const byte AttackRange = 1;
     private const short ViewRange = 5;
     private const int MoveDelayMilliseconds = 400;
-    private const int AttackDelayMilliseconds = 1600;
     private const byte FireAttribute = 2;
 
     // Devias spawn areas 1-9 are NPCs and 100-108 the original monsters; ours start well above them.
@@ -64,8 +57,8 @@ internal static class DarkSkeletonMonsters
     /// </summary>
     internal static IReadOnlyList<DarkSkeleton> All { get; } =
     [
-        new(DarkSkeletonNumber, "Dark Skeleton", SkillNumber.EvilSpirit, 10, 221, 81, FirecrackerLevel, "Firecracker", PinkChocolateBoxNumber, "Pink Chocolate Box"),
-        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, StarOfTheSacredBirthLevel, "Star of the Sacred Birth", BlueChocolateBoxNumber, "Blue Chocolate Box"),
+        new(DarkSkeletonNumber, "Dark Skeleton", SkillNumber.EvilSpirit, 10, 221, 81, new(25000, 100, 100, 300, 100, 3, 2000), FirecrackerLevel, "Firecracker", PinkChocolateBoxNumber, "Pink Chocolate Box"),
+        new(DarkReaperNumber, "Dark Reaper", SkillNumber.Hellfire, 20, 222, 85, new(50000, 300, 300, 1000, 1000, 2, 2000), StarOfTheSacredBirthLevel, "Star of the Sacred Birth", BlueChocolateBoxNumber, "Blue Chocolate Box"),
     ];
 
     /// <summary>
@@ -114,6 +107,44 @@ internal static class DarkSkeletonMonsters
         }
 
         return added;
+    }
+
+    /// <summary>
+    /// Sets the current values (health, damage, defense, rates, attack range and speed) on the existing dark skeletons.
+    /// Running it again gives the same result.
+    /// </summary>
+    /// <param name="context">The persistence context.</param>
+    /// <param name="gameConfiguration">The game configuration.</param>
+    /// <returns>The number of changed monsters.</returns>
+    internal static int SetValues(IContext context, GameConfiguration gameConfiguration)
+    {
+        var changed = 0;
+        foreach (var skeleton in All)
+        {
+            if (gameConfiguration.Monsters.FirstOrDefault(m => m.Number == skeleton.Number) is not { } monster)
+            {
+                continue;
+            }
+
+            monster.AttackRange = skeleton.Values.AttackRange;
+            monster.AttackDelay = TimeSpan.FromMilliseconds(skeleton.Values.AttackDelayMilliseconds);
+            foreach (var (attribute, value) in GetAttributes(skeleton))
+            {
+                var existing = monster.Attributes.FirstOrDefault(a => a.AttributeDefinition?.Id == attribute.Id);
+                if (existing is not null)
+                {
+                    existing.Value = value;
+                }
+                else
+                {
+                    monster.AddAttributes(new Dictionary<AttributeDefinition, float> { { attribute, value } }, context, gameConfiguration);
+                }
+            }
+
+            changed++;
+        }
+
+        return changed;
     }
 
     /// <summary>
@@ -201,28 +232,29 @@ internal static class DarkSkeletonMonsters
         monster.Number = skeleton.Number;
         monster.Designation = skeleton.Name;
         monster.MoveRange = MoveRange;
-        monster.AttackRange = AttackRange;
+        monster.AttackRange = skeleton.Values.AttackRange;
         monster.ViewRange = ViewRange;
         monster.MoveDelay = TimeSpan.FromMilliseconds(MoveDelayMilliseconds);
-        monster.AttackDelay = TimeSpan.FromMilliseconds(AttackDelayMilliseconds);
+        monster.AttackDelay = TimeSpan.FromMilliseconds(skeleton.Values.AttackDelayMilliseconds);
         monster.RespawnDelay = TimeSpan.FromSeconds(skeleton.RespawnSeconds);
         monster.Attribute = FireAttribute;
 
         // The hit itself is the normal monster attack on its target; the skill only decides what is shown.
         monster.AttackSkill = gameConfiguration.Skills.FirstOrDefault(s => s.Number == (short)skeleton.Skill);
 
-        var attributes = new Dictionary<AttributeDefinition, float>
-        {
-            { Stats.Level, Level },
-            { Stats.MaximumHealth, MaximumHealth },
-            { Stats.MinimumPhysBaseDmg, Damage },
-            { Stats.MaximumPhysBaseDmg, Damage },
-            { Stats.DefenseBase, Defense },
-            { Stats.AttackRatePvm, AttackRate },
-            { Stats.DefenseRatePvm, DefenseRate },
-        };
-        monster.AddAttributes(attributes, context, gameConfiguration);
+        monster.AddAttributes(GetAttributes(skeleton), context, gameConfiguration);
     }
+
+    private static Dictionary<AttributeDefinition, float> GetAttributes(DarkSkeleton skeleton) => new()
+    {
+        { Stats.Level, Level },
+        { Stats.MaximumHealth, skeleton.Values.Health },
+        { Stats.MinimumPhysBaseDmg, skeleton.Values.Damage },
+        { Stats.MaximumPhysBaseDmg, skeleton.Values.Damage },
+        { Stats.DefenseBase, skeleton.Values.Defense },
+        { Stats.AttackRatePvm, skeleton.Values.AttackRate },
+        { Stats.DefenseRatePvm, skeleton.Values.DefenseRate },
+    };
 
     private static void AddDrops(IContext context, GameConfiguration gameConfiguration, MonsterDefinition monster, DarkSkeleton skeleton)
     {
@@ -254,9 +286,22 @@ internal static class DarkSkeletonMonsters
     /// <param name="RespawnSeconds">The respawn time in seconds.</param>
     /// <param name="DeviasX">The x coordinate of the Devias test spawn.</param>
     /// <param name="DeviasY">The y coordinate of the Devias test spawn.</param>
+    /// <param name="Values">Its health, damage, defense, rates, attack range and speed.</param>
     /// <param name="SecondBoxLevel">The level of the Box of Luck it drops in 45% of the kills (Firecracker +2, Star +1).</param>
     /// <param name="SecondBoxName">The name of that box.</param>
     /// <param name="ChocolateBoxNumber">The item number (group 14) of the chocolate box it drops in 10% of the kills.</param>
     /// <param name="ChocolateBoxName">The name of that chocolate box.</param>
-    internal readonly record struct DarkSkeleton(short Number, string Name, SkillNumber Skill, int RespawnSeconds, byte DeviasX, byte DeviasY, byte SecondBoxLevel, string SecondBoxName, short ChocolateBoxNumber, string ChocolateBoxName);
+    internal readonly record struct DarkSkeleton(short Number, string Name, SkillNumber Skill, int RespawnSeconds, byte DeviasX, byte DeviasY, DarkSkeletonValues Values, byte SecondBoxLevel, string SecondBoxName, short ChocolateBoxNumber, string ChocolateBoxName);
+
+    /// <summary>
+    /// The fighting values of one dark skeleton, as stored in the database.
+    /// </summary>
+    /// <param name="Health">The maximum health.</param>
+    /// <param name="Damage">The minimum and maximum physical damage.</param>
+    /// <param name="Defense">The defense.</param>
+    /// <param name="AttackRate">The attack rate.</param>
+    /// <param name="DefenseRate">The defense rate.</param>
+    /// <param name="AttackRange">The attack range in fields.</param>
+    /// <param name="AttackDelayMilliseconds">The time between two hits.</param>
+    internal readonly record struct DarkSkeletonValues(int Health, int Damage, int Defense, int AttackRate, int DefenseRate, byte AttackRange, int AttackDelayMilliseconds);
 }

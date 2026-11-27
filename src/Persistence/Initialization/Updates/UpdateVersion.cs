@@ -860,8 +860,9 @@ public enum UpdateVersion
     AddDarkSkeletonDrops = 182,
 
     /// <summary>
-    /// The dark skeletons get new drops: Box of Heaven 45%, Firecracker (Dark Skeleton) or Star of the Sacred Birth
+    /// The dark skeletons get new values (Dark Skeleton 25 000 health; Dark Reaper 50 000 health, 300 damage/defense,
+    /// 1000 rates) and new drops: Box of Heaven 45%, Firecracker (Dark Skeleton) or Star of the Sacred Birth
     /// (Dark Reaper) 45%, Pink or Blue Chocolate Box 10%.
     /// </summary>
-    ChangeDarkSkeletonDrops = 183,
+    ChangeDarkSkeletonValues = 183,
 }

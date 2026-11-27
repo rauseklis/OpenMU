@@ -84,6 +84,20 @@ internal class DarkSkeletonDataTest
         return (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
     }
 
+    private static void AssertValues(MonsterDefinition monster, int health, int damage, int defense, int attackRate, int defenseRate, byte attackRange)
+    {
+        Assert.That(monster[Stats.Level], Is.EqualTo(100));
+        Assert.That(monster[Stats.MaximumHealth], Is.EqualTo(health));
+        Assert.That(monster[Stats.MinimumPhysBaseDmg], Is.EqualTo(damage));
+        Assert.That(monster[Stats.MaximumPhysBaseDmg], Is.EqualTo(damage));
+        Assert.That(monster[Stats.DefenseBase], Is.EqualTo(defense));
+        Assert.That(monster[Stats.AttackRatePvm], Is.EqualTo(attackRate));
+        Assert.That(monster[Stats.DefenseRatePvm], Is.EqualTo(defenseRate));
+        Assert.That(monster.AttackRange, Is.EqualTo(attackRange));
+        Assert.That(monster.AttackDelay, Is.EqualTo(TimeSpan.FromSeconds(2)));
+        Assert.That(monster.Attributes.GroupBy(a => a.AttributeDefinition).All(g => g.Count() == 1), Is.True, "each value once");
+    }
+
     private static GameMapDefinition GetDevias(GameConfiguration gameConfiguration)
     {
         return gameConfiguration.Maps.Single(map => map.Number == DeviasNumber);
@@ -99,17 +113,9 @@ internal class DarkSkeletonDataTest
         Assert.That(skeleton.Designation.ToString(), Is.EqualTo("Dark Skeleton"));
         Assert.That(reaper.Designation.ToString(), Is.EqualTo("Dark Reaper"));
 
-        // The owner's values: 10 000 health, everything else 100.
-        foreach (var monster in monsters)
-        {
-            Assert.That(monster[Stats.Level], Is.EqualTo(100));
-            Assert.That(monster[Stats.MaximumHealth], Is.EqualTo(10000));
-            Assert.That(monster[Stats.MinimumPhysBaseDmg], Is.EqualTo(100));
-            Assert.That(monster[Stats.MaximumPhysBaseDmg], Is.EqualTo(100));
-            Assert.That(monster[Stats.DefenseBase], Is.EqualTo(100));
-            Assert.That(monster[Stats.AttackRatePvm], Is.EqualTo(100));
-            Assert.That(monster[Stats.DefenseRatePvm], Is.EqualTo(100));
-        }
+        // The owner's values (in the database; the server scales health and attack rate).
+        AssertValues(skeleton, health: 25000, damage: 100, defense: 100, attackRate: 300, defenseRate: 100, attackRange: 3);
+        AssertValues(reaper, health: 50000, damage: 300, defense: 300, attackRate: 1000, defenseRate: 1000, attackRange: 2);
 
         Assert.That(skeleton.AttackSkill?.Number, Is.EqualTo(EvilSpirit));
         Assert.That(reaper.AttackSkill?.Number, Is.EqualTo(Hellfire));

@@ -7,6 +7,7 @@ namespace MUnique.OpenMU.Persistence.Initialization.Tests;
 using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.GameLogic;
+using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.Persistence.Initialization.Updates;
 using MUnique.OpenMU.Persistence.InMemory;
 
@@ -142,17 +143,32 @@ internal class DarkSkeletonDropsTest
                 configuration.DropItemGroups.Remove(group);
             }
 
-            // The drops of update 182 (as on the live server).
+            // The values of update 181 and the drops of update 182 (as on the live server).
+            monster.AttackRange = 1;
+            monster.AttackDelay = TimeSpan.FromMilliseconds(1600);
+            foreach (var attribute in monster.Attributes.Where(a => a.AttributeDefinition?.Id != Stats.Level.Id))
+            {
+                attribute.Value = attribute.AttributeDefinition?.Id == Stats.MaximumHealth.Id ? 10000 : 100;
+            }
+
             oldGroups.Add(AddOldGroup(provider, configuration, monster, 0.9, BoxOfHeavenLevel, BoxOfLuck));
             oldGroups.Add(AddOldGroup(provider, configuration, monster, 0.1, 0, monster.Number == DarkSkeleton ? PinkChocolateBox : BlueChocolateBox));
         }
 
-        var update = new ChangeDarkSkeletonDropsUpdatePlugIn();
+        var update = new ChangeDarkSkeletonValuesUpdatePlugIn();
         await update.ApplyUpdateAsync(provider.CreateNewContext(), configuration).ConfigureAwait(false);
         await update.ApplyUpdateAsync(provider.CreateNewContext(), configuration).ConfigureAwait(false);
 
         AssertDrops(configuration);
         Assert.That(configuration.DropItemGroups.Intersect(oldGroups), Is.Empty);
+
+        var skeleton = configuration.Monsters.Single(m => m.Number == DarkSkeleton);
+        Assert.That((skeleton[Stats.MaximumHealth], skeleton[Stats.MaximumPhysBaseDmg], skeleton[Stats.DefenseBase], skeleton[Stats.AttackRatePvm], skeleton[Stats.DefenseRatePvm]), Is.EqualTo((25000f, 100f, 100f, 300f, 100f)));
+        Assert.That((skeleton.AttackRange, skeleton.AttackDelay), Is.EqualTo(((byte)3, TimeSpan.FromSeconds(2))));
+        var reaper = configuration.Monsters.Single(m => m.Number == DarkReaper);
+        Assert.That((reaper[Stats.MaximumHealth], reaper[Stats.MinimumPhysBaseDmg], reaper[Stats.DefenseBase], reaper[Stats.AttackRatePvm], reaper[Stats.DefenseRatePvm]), Is.EqualTo((50000f, 300f, 300f, 1000f, 1000f)));
+        Assert.That((reaper.AttackRange, reaper.AttackDelay), Is.EqualTo(((byte)2, TimeSpan.FromSeconds(2))));
+        Assert.That(reaper.Attributes, Has.Count.EqualTo(7));
         Assert.That(update.IsMandatory, Is.True);
     }
 
@@ -164,11 +180,11 @@ internal class DarkSkeletonDropsTest
     {
         var provider = new InMemoryPersistenceContextProvider();
         await new VersionSeasonSix.DataInitialization(provider, new NullLoggerFactory()).CreateInitialDataAsync(1, true).ConfigureAwait(false);
-        Assert.That(await DarkSkeletonDropsChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False, "new database");
+        Assert.That(await DarkSkeletonValuesChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False, "new database");
 
         using (var context = provider.CreateNewContext())
         {
-            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(u => u.Version == (int)UpdateVersion.ChangeDarkSkeletonDrops).ToList())
+            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(u => u.Version == (int)UpdateVersion.ChangeDarkSkeletonValues).ToList())
             {
                 await context.DeleteAsync(update).ConfigureAwait(false);
             }
@@ -176,8 +192,8 @@ internal class DarkSkeletonDropsTest
             await context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        Assert.That(await DarkSkeletonDropsChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True, "first start");
-        Assert.That(await DarkSkeletonDropsChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False, "second start");
+        Assert.That(await DarkSkeletonValuesChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True, "first start");
+        Assert.That(await DarkSkeletonValuesChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False, "second start");
 
         using var reloaded = provider.CreateNewContext();
         AssertDrops((await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single());
