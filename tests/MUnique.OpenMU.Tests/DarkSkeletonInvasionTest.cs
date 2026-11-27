@@ -87,7 +87,7 @@ public class DarkSkeletonInvasionTest
         {
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
 
-            plugIn.StartByGameMaster();
+            plugIn.StartByGameMaster(gameContext);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
             Assert.That(plugIn.IsRunning(gameContext), Is.True);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // start + spawn
@@ -112,7 +112,7 @@ public class DarkSkeletonInvasionTest
             Assert.That(remaining, Is.Zero, "The remaining skeletons are removed when the event ends.");
 
             // A game master may start it again right away.
-            plugIn.StartByGameMaster();
+            plugIn.StartByGameMaster(gameContext);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             Assert.That(plugIn.IsRunning(gameContext), Is.True);
         }
@@ -131,7 +131,7 @@ public class DarkSkeletonInvasionTest
         var (gameContext, plugIn) = CreateContextAndPlugIn();
         try
         {
-            plugIn.StartByGameMaster();
+            plugIn.StartByGameMaster(gameContext);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
@@ -160,7 +160,7 @@ public class DarkSkeletonInvasionTest
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
             map.ServerId = serverId;
 
-            plugIn.StartByGameMaster();
+            plugIn.StartByGameMaster(gameContext);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
 
@@ -194,7 +194,7 @@ public class DarkSkeletonInvasionTest
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
             Assert.That(plugIn.StopByGameMaster(gameContext), Is.False, "Nothing runs yet.");
 
-            plugIn.StartByGameMaster();
+            plugIn.StartByGameMaster(gameContext);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // start + spawn
             Assert.That(CountLivingEventMonsters(map), Is.EqualTo(22));
@@ -222,7 +222,7 @@ public class DarkSkeletonInvasionTest
         {
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
 
-            plugIn.StartByGameMaster();
+            plugIn.StartByGameMaster(gameContext);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
             Assert.That(plugIn.StopByGameMaster(gameContext), Is.True);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
@@ -232,7 +232,7 @@ public class DarkSkeletonInvasionTest
             Assert.That(CountLivingEventMonsters(map), Is.Zero);
 
             // It can be started again normally afterwards.
-            plugIn.StartByGameMaster();
+            plugIn.StartByGameMaster(gameContext);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             Assert.That(CountLivingEventMonsters(map), Is.EqualTo(22));
@@ -240,6 +240,37 @@ public class DarkSkeletonInvasionTest
         finally
         {
             await gameContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// A game master start begins the event only on the game server where it was requested;
+    /// another game server which shares the plug-in keeps running without it.
+    /// </summary>
+    [Test]
+    public async ValueTask GameMasterStartOnlyAffectsItsServerAsync()
+    {
+        var (gameContext, plugIn) = CreateContextAndPlugIn();
+        var (otherContext, _) = CreateContextAndPlugIn();
+        try
+        {
+            var otherMap = (await otherContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
+
+            plugIn.StartByGameMaster(gameContext);
+            await plugIn.ExecuteTaskAsync(otherContext).ConfigureAwait(false);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
+            await plugIn.ExecuteTaskAsync(otherContext).ConfigureAwait(false);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // start + spawn
+            await plugIn.ExecuteTaskAsync(otherContext).ConfigureAwait(false);
+
+            Assert.That(plugIn.IsRunning(gameContext), Is.True);
+            Assert.That(plugIn.IsRunning(otherContext), Is.False, "The other server doesn't start the event.");
+            Assert.That(CountLivingEventMonsters(otherMap), Is.Zero);
+        }
+        finally
+        {
+            await gameContext.DisposeAsync().ConfigureAwait(false);
+            await otherContext.DisposeAsync().ConfigureAwait(false);
         }
     }
 
