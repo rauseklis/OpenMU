@@ -858,4 +858,11 @@ public enum UpdateVersion
     /// The dark skeletons drop one box per kill: Box of Heaven 90%, Pink (Dark Skeleton) or Blue (Dark Reaper) Chocolate Box 10%.
     /// </summary>
     AddDarkSkeletonDrops = 182,
+
+    /// <summary>
+    /// The dark skeletons get new values (Dark Skeleton 25 000 health; Dark Reaper 50 000 health, 300 damage/defense,
+    /// 1000 rates) and new drops: Box of Heaven 45%, Firecracker (Dark Skeleton) or Star of the Sacred Birth
+    /// (Dark Reaper) 45%, Pink or Blue Chocolate Box 10%.
+    /// </summary>
+    ChangeDarkSkeletonValues = 183,
 }

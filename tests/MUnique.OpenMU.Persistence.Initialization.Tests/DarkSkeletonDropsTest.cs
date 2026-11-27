@@ -7,11 +7,13 @@ namespace MUnique.OpenMU.Persistence.Initialization.Tests;
 using Microsoft.Extensions.Logging.Abstractions;
 using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.GameLogic;
+using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.Persistence.Initialization.Updates;
 using MUnique.OpenMU.Persistence.InMemory;
 
 /// <summary>
-/// Tests the box drops of the dark skeletons: one box per kill, Box of Heaven (Box of Luck +7) 90%,
+/// Tests the box drops of the dark skeletons: one box per kill, Box of Heaven (Box of Luck +7) 45%, Firecracker
+/// (Box of Luck +2, Dark Skeleton) or Star of the Sacred Birth (Box of Luck +1, Dark Reaper) 45%,
 /// Pink (Dark Skeleton) or Blue (Dark Reaper) Chocolate Box 10%, nothing else.
 /// </summary>
 [TestFixture]
@@ -23,6 +25,9 @@ internal class DarkSkeletonDropsTest
     private const short BoxOfLuck = 11;
     private const short PinkChocolateBox = 32;
     private const short BlueChocolateBox = 34;
+    private const byte BoxOfHeavenLevel = 7;
+    private const byte FirecrackerLevel = 2;
+    private const byte StarLevel = 1;
 
     /// <summary>
     /// Tests that a new database gives the dark skeletons their boxes.
@@ -121,6 +126,80 @@ internal class DarkSkeletonDropsTest
     }
 
     /// <summary>
+    /// Tests that the change update replaces the old drops (Box of Heaven 90%, chocolate box 10%) of a live database by
+    /// the new ones, and that applying it twice gives the same result.
+    /// </summary>
+    [Test]
+    public async Task ChangeUpdateReplacesTheOldDropsAsync()
+    {
+        var provider = new InMemoryPersistenceContextProvider();
+        var configuration = await CreateConfigurationAsync(provider).ConfigureAwait(false);
+        var oldGroups = new List<DropItemGroup>();
+        foreach (var monster in configuration.Monsters.Where(IsDarkSkeleton))
+        {
+            foreach (var group in monster.DropItemGroups.ToList())
+            {
+                monster.DropItemGroups.Remove(group);
+                configuration.DropItemGroups.Remove(group);
+            }
+
+            // The values of update 181 and the drops of update 182 (as on the live server).
+            monster.AttackRange = 1;
+            monster.AttackDelay = TimeSpan.FromMilliseconds(1600);
+            foreach (var attribute in monster.Attributes.Where(a => a.AttributeDefinition?.Id != Stats.Level.Id))
+            {
+                attribute.Value = attribute.AttributeDefinition?.Id == Stats.MaximumHealth.Id ? 10000 : 100;
+            }
+
+            oldGroups.Add(AddOldGroup(provider, configuration, monster, 0.9, BoxOfHeavenLevel, BoxOfLuck));
+            oldGroups.Add(AddOldGroup(provider, configuration, monster, 0.1, 0, monster.Number == DarkSkeleton ? PinkChocolateBox : BlueChocolateBox));
+        }
+
+        var update = new ChangeDarkSkeletonValuesUpdatePlugIn();
+        await update.ApplyUpdateAsync(provider.CreateNewContext(), configuration).ConfigureAwait(false);
+        await update.ApplyUpdateAsync(provider.CreateNewContext(), configuration).ConfigureAwait(false);
+
+        AssertDrops(configuration);
+        Assert.That(configuration.DropItemGroups.Intersect(oldGroups), Is.Empty);
+
+        var skeleton = configuration.Monsters.Single(m => m.Number == DarkSkeleton);
+        Assert.That((skeleton[Stats.MaximumHealth], skeleton[Stats.MaximumPhysBaseDmg], skeleton[Stats.DefenseBase], skeleton[Stats.AttackRatePvm], skeleton[Stats.DefenseRatePvm]), Is.EqualTo((25000f, 100f, 100f, 300f, 100f)));
+        Assert.That((skeleton.AttackRange, skeleton.AttackDelay), Is.EqualTo(((byte)3, TimeSpan.FromSeconds(2))));
+        var reaper = configuration.Monsters.Single(m => m.Number == DarkReaper);
+        Assert.That((reaper[Stats.MaximumHealth], reaper[Stats.MinimumPhysBaseDmg], reaper[Stats.DefenseBase], reaper[Stats.AttackRatePvm], reaper[Stats.DefenseRatePvm]), Is.EqualTo((50000f, 300f, 300f, 1000f, 1000f)));
+        Assert.That((reaper.AttackRange, reaper.AttackDelay), Is.EqualTo(((byte)2, TimeSpan.FromSeconds(2))));
+        Assert.That(reaper.Attributes, Has.Count.EqualTo(7));
+        Assert.That(update.IsMandatory, Is.True);
+    }
+
+    /// <summary>
+    /// Tests that the change installer installs once and that nothing is installed on a new database.
+    /// </summary>
+    [Test]
+    public async Task ChangeInstallerRunsOnceAsync()
+    {
+        var provider = new InMemoryPersistenceContextProvider();
+        await new VersionSeasonSix.DataInitialization(provider, new NullLoggerFactory()).CreateInitialDataAsync(1, true).ConfigureAwait(false);
+        Assert.That(await DarkSkeletonValuesChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False, "new database");
+
+        using (var context = provider.CreateNewContext())
+        {
+            foreach (var update in (await context.GetAsync<ConfigurationUpdate>().ConfigureAwait(false)).Where(u => u.Version == (int)UpdateVersion.ChangeDarkSkeletonValues).ToList())
+            {
+                await context.DeleteAsync(update).ConfigureAwait(false);
+            }
+
+            await context.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        Assert.That(await DarkSkeletonValuesChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.True, "first start");
+        Assert.That(await DarkSkeletonValuesChangeInstaller.ApplyIfNeededAsync(provider).ConfigureAwait(false), Is.False, "second start");
+
+        using var reloaded = provider.CreateNewContext();
+        AssertDrops((await reloaded.GetAsync<GameConfiguration>().ConfigureAwait(false)).Single());
+    }
+
+    /// <summary>
     /// Tests that nothing is installed when the update is installed already, e.g. in a new database.
     /// </summary>
     [Test]
@@ -141,22 +220,38 @@ internal class DarkSkeletonDropsTest
         return (await context.GetAsync<GameConfiguration>().ConfigureAwait(false)).First();
     }
 
-    private static void AssertDrops(GameConfiguration configuration)
+    private static DropItemGroup AddOldGroup(InMemoryPersistenceContextProvider provider, GameConfiguration configuration, MonsterDefinition monster, double chance, byte level, short number)
     {
-        AssertDropsOf(configuration.Monsters.Single(m => m.Number == DarkSkeleton), PinkChocolateBox, configuration);
-        AssertDropsOf(configuration.Monsters.Single(m => m.Number == DarkReaper), BlueChocolateBox, configuration);
+        using var context = provider.CreateNewContext();
+        var group = context.CreateNew<DropItemGroup>();
+        group.Chance = chance;
+        group.ItemLevel = level;
+        group.Monster = monster;
+        group.PossibleItems.Add(configuration.Items.First(i => i.Group == BoxGroup && i.Number == number));
+        monster.DropItemGroups.Add(group);
+        configuration.DropItemGroups.Add(group);
+        return group;
     }
 
-    private static void AssertDropsOf(MonsterDefinition monster, short chocolateBox, GameConfiguration configuration)
+    private static void AssertDrops(GameConfiguration configuration)
+    {
+        AssertDropsOf(configuration.Monsters.Single(m => m.Number == DarkSkeleton), FirecrackerLevel, PinkChocolateBox, configuration);
+        AssertDropsOf(configuration.Monsters.Single(m => m.Number == DarkReaper), StarLevel, BlueChocolateBox, configuration);
+    }
+
+    private static void AssertDropsOf(MonsterDefinition monster, byte secondBoxLevel, short chocolateBox, GameConfiguration configuration)
     {
         Assert.That(monster.NumberOfMaximumItemDrops, Is.EqualTo(1));
-        Assert.That(monster.DropItemGroups, Has.Count.EqualTo(2));
+        Assert.That(monster.DropItemGroups, Has.Count.EqualTo(3));
         Assert.That(DefaultDropGenerator.HasCompleteOwnDropTable(monster), Is.True);
 
-        var heaven = monster.DropItemGroups.Single(g => g.PossibleItems.Single().Number == BoxOfLuck);
-        Assert.That(heaven.Chance, Is.EqualTo(0.9));
-        Assert.That(heaven.ItemLevel, Is.EqualTo(7));
+        var heaven = monster.DropItemGroups.Single(g => g.PossibleItems.Single().Number == BoxOfLuck && g.ItemLevel == BoxOfHeavenLevel);
+        Assert.That(heaven.Chance, Is.EqualTo(0.45));
         Assert.That(heaven.PossibleItems.Single().Group, Is.EqualTo(BoxGroup));
+
+        var second = monster.DropItemGroups.Single(g => g.PossibleItems.Single().Number == BoxOfLuck && g.ItemLevel == secondBoxLevel);
+        Assert.That(second.Chance, Is.EqualTo(0.45));
+        Assert.That(second.PossibleItems.Single().Group, Is.EqualTo(BoxGroup));
 
         var chocolate = monster.DropItemGroups.Single(g => g.PossibleItems.Single().Number == chocolateBox);
         Assert.That(chocolate.Chance, Is.EqualTo(0.1));

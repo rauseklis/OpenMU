@@ -9,8 +9,7 @@ using MUnique.OpenMU.DataModel.Configuration;
 using MUnique.OpenMU.PlugIns;
 
 /// <summary>
-/// Gives the dark skeletons their box drops: every kill drops a Box of Heaven (90%) or a chocolate box (10%; Pink for
-/// Dark Skeleton, Blue for Dark Reaper), and nothing else. Monsters which already have drops of their own are left alone,
+/// Gives the dark skeletons their box drops (see <see cref="DarkSkeletonMonsters"/>): one box per kill, and nothing else. Monsters which already have drops of their own are left alone,
 /// so running it again changes nothing.
 /// </summary>
 [PlugIn]
@@ -26,7 +25,7 @@ public class AddDarkSkeletonDropsUpdatePlugIn : UpdatePlugInBase
     /// <summary>
     /// Gets the plugin description.
     /// </summary>
-    internal const string PlugInDescription = "Dark Skeleton and Dark Reaper drop one box per kill: Box of Heaven 90%, Pink or Blue Chocolate Box 10%.";
+    internal const string PlugInDescription = "Dark Skeleton and Dark Reaper drop one box per kill: Box of Heaven, Firecracker or Star, Pink or Blue Chocolate Box.";
 
     /// <inheritdoc />
     public override UpdateVersion Version => UpdateVersion.AddDarkSkeletonDrops;
