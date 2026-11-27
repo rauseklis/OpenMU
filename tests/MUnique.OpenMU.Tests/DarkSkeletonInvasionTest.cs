@@ -24,7 +24,8 @@ public class DarkSkeletonInvasionTest
 
     /// <summary>
     /// The default configuration matches the owner's request: 20:00, 15 minutes, Devias,
-    /// 10 Dark Mages, 10 Dark Skeletons and 2 Dark Reapers, ends when the reapers die, only on server 0.
+    /// 10 Dark Mages, 10 Dark Skeletons and 2 Dark Reapers, ends when the reapers die, on servers 0 and 1
+    /// (on server 1 with half strength).
     /// </summary>
     [Test]
     public void DefaultConfiguration()
@@ -33,7 +34,9 @@ public class DarkSkeletonInvasionTest
 
         Assert.That(config.TaskDuration, Is.EqualTo(TimeSpan.FromMinutes(15)));
         Assert.That(config.Timetable, Is.EqualTo(new[] { new TimeOnly(20, 0) }));
-        Assert.That(config.GameServerIds, Is.EqualTo(new byte[] { 0 }));
+        Assert.That(config.GameServerIds, Is.EqualTo(new byte[] { 0, 1 }));
+        Assert.That(config.WeakerGameServerIds, Is.EqualTo(new byte[] { 1 }));
+        Assert.That(config.WeakerStrengthPercentage, Is.EqualTo(50f));
         Assert.That(config.EndWhenKilledMonsterIds, Is.EqualTo(new ushort[] { InvasionMonsters.DarkReaper }));
 
         var mages = config.Mobs.Single(m => m.MonsterId == 1113);
@@ -54,7 +57,7 @@ public class DarkSkeletonInvasionTest
     }
 
     /// <summary>
-    /// The event runs only on the configured game servers (by default only server 0, Inferno).
+    /// The event runs only on the configured game servers (by default servers 0 and 1).
     /// </summary>
     [Test]
     public void RunsOnlyOnConfiguredServers()
@@ -62,6 +65,10 @@ public class DarkSkeletonInvasionTest
         var plugIn = new DarkSkeletonInvasionPlugIn { Configuration = DarkSkeletonInvasionConfiguration.Default };
 
         Assert.That(plugIn.IsEnabledOn(CreateServerContext(0)), Is.True);
+        Assert.That(plugIn.IsEnabledOn(CreateServerContext(1)), Is.True);
+        Assert.That(plugIn.IsEnabledOn(CreateServerContext(2)), Is.False);
+
+        plugIn.Configuration.GameServerIds.Remove(1);
         Assert.That(plugIn.IsEnabledOn(CreateServerContext(1)), Is.False);
 
         plugIn.Configuration.GameServerIds.Clear();
@@ -137,6 +144,109 @@ public class DarkSkeletonInvasionTest
         }
     }
 
+    /// <summary>
+    /// On a server of <see cref="DarkSkeletonInvasionConfiguration.WeakerGameServerIds"/> the monsters
+    /// have half of their values (health, damage, defense and rates); on other servers they are unchanged.
+    /// </summary>
+    /// <param name="serverId">The server id of the map.</param>
+    /// <param name="expectedFactor">The expected factor of the values.</param>
+    [TestCase((byte)0, 1f)]
+    [TestCase((byte)1, 0.5f)]
+    public async ValueTask MonsterStrengthDependsOnServerAsync(byte serverId, float expectedFactor)
+    {
+        var (gameContext, plugIn) = CreateContextAndPlugIn();
+        try
+        {
+            var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
+            map.ServerId = serverId;
+
+            plugIn.StartByGameMaster();
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+
+            var monsters = map.GetAttackablesInRange(new Pathfinding.Point(128, 128), 255).OfType<Monster>().ToList();
+            Assert.That(monsters, Has.Count.EqualTo(22));
+            foreach (var monster in monsters)
+            {
+                Assert.That(monster.Attributes[GameLogic.Attributes.Stats.MaximumHealth], Is.EqualTo(1000 * expectedFactor).Within(0.01f));
+                Assert.That(monster.Health, Is.EqualTo((int)(1000 * expectedFactor)), "The monster starts with its full (changed) health.");
+                Assert.That(monster.Attributes[GameLogic.Attributes.Stats.MaximumPhysBaseDmg], Is.EqualTo(200 * expectedFactor).Within(0.01f));
+                Assert.That(monster.Attributes[GameLogic.Attributes.Stats.DefenseBase], Is.EqualTo(100 * expectedFactor).Within(0.01f));
+                Assert.That(monster.Attributes[GameLogic.Attributes.Stats.AttackRatePvm], Is.EqualTo(400 * expectedFactor).Within(0.01f));
+            }
+        }
+        finally
+        {
+            await gameContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// A game master stop ends a running event on the next check and removes its monsters;
+    /// a stop when nothing runs does nothing.
+    /// </summary>
+    [Test]
+    public async ValueTask GameMasterStopEndsRunningEventAsync()
+    {
+        var (gameContext, plugIn) = CreateContextAndPlugIn();
+        try
+        {
+            var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
+            Assert.That(plugIn.StopByGameMaster(gameContext), Is.False, "Nothing runs yet.");
+
+            plugIn.StartByGameMaster();
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // start + spawn
+            Assert.That(CountLivingEventMonsters(map), Is.EqualTo(22));
+
+            Assert.That(plugIn.StopByGameMaster(gameContext), Is.True);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+
+            Assert.That(plugIn.IsRunning(gameContext), Is.False);
+            Assert.That(CountLivingEventMonsters(map), Is.Zero);
+        }
+        finally
+        {
+            await gameContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// A game master stop during the announcement ends the event without spawning monsters.
+    /// </summary>
+    [Test]
+    public async ValueTask GameMasterStopDuringAnnouncementSpawnsNothingAsync()
+    {
+        var (gameContext, plugIn) = CreateContextAndPlugIn();
+        try
+        {
+            var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
+
+            plugIn.StartByGameMaster();
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
+            Assert.That(plugIn.StopByGameMaster(gameContext), Is.True);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+
+            Assert.That(plugIn.IsRunning(gameContext), Is.False);
+            Assert.That(CountLivingEventMonsters(map), Is.Zero);
+
+            // It can be started again normally afterwards.
+            plugIn.StartByGameMaster();
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            Assert.That(CountLivingEventMonsters(map), Is.EqualTo(22));
+        }
+        finally
+        {
+            await gameContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    private static int CountLivingEventMonsters(GameMap map)
+        => map.GetAttackablesInRange(new Pathfinding.Point(128, 128), 255).OfType<Monster>()
+            .Count(m => m.Definition.Number is 1111 or 1112 or 1113 && m.IsAlive);
+
     private static async ValueTask KillAsync(Monster monster, Player killer)
     {
         var hit = new HitInfo(100_000, 0, DamageAttributes.Undefined);
@@ -183,15 +293,27 @@ public class DarkSkeletonInvasionTest
     {
         var definition = new MUnique.OpenMU.Persistence.BasicModel.MonsterDefinition
         {
+            // An own id, because the monster attributes are cached per definition id (shared with other tests).
+            Id = Guid.NewGuid(),
             Number = number,
             Designation = name,
             ObjectKind = NpcObjectKind.Monster,
         };
+        AddAttribute(definition, GameLogic.Attributes.Stats.MaximumHealth, 1000);
+        AddAttribute(definition, GameLogic.Attributes.Stats.MinimumPhysBaseDmg, 100);
+        AddAttribute(definition, GameLogic.Attributes.Stats.MaximumPhysBaseDmg, 200);
+        AddAttribute(definition, GameLogic.Attributes.Stats.DefenseBase, 100);
+        AddAttribute(definition, GameLogic.Attributes.Stats.AttackRatePvm, 400);
+        AddAttribute(definition, GameLogic.Attributes.Stats.DefenseRatePvm, 300);
+        return definition;
+    }
+
+    private static void AddAttribute(MonsterDefinition definition, AttributeSystem.AttributeDefinition attribute, float value)
+    {
         definition.Attributes.Add(new MUnique.OpenMU.Persistence.BasicModel.MonsterAttribute
         {
-            AttributeDefinition = GameLogic.Attributes.Stats.MaximumHealth,
-            Value = 1000,
+            AttributeDefinition = attribute,
+            Value = value,
         });
-        return definition;
     }
 }

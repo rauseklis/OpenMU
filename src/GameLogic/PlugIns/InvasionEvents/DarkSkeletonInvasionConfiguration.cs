@@ -13,7 +13,8 @@ public class DarkSkeletonInvasionConfiguration : PeriodicInvasionConfiguration
 {
     /// <summary>
     /// Gets the default configuration: every day at 20:00 (server time zone) for 15 minutes,
-    /// 10 Dark Mages, 10 Dark Skeletons and 2 Dark Reapers spread over Devias, only on game server 0.
+    /// 10 Dark Mages, 10 Dark Skeletons and 2 Dark Reapers spread over Devias, on game servers 0 and 1.
+    /// On game server 1 the monsters have half of their strength.
     /// The event ends early when both Dark Reapers are killed.
     /// </summary>
     public static DarkSkeletonInvasionConfiguration Default => new()
@@ -23,7 +24,9 @@ public class DarkSkeletonInvasionConfiguration : PeriodicInvasionConfiguration
         StartMessage = "[{mapName}] Dark Skeleton invasion! The light fades...",
         EndMessage = "[{mapName}] Dark Skeleton invasion has ended.",
         Timetable = [new TimeOnly(20, 0)],
-        GameServerIds = [0],
+        GameServerIds = [0, 1],
+        WeakerGameServerIds = [1],
+        WeakerStrengthPercentage = 50,
         EndWhenKilledMonsterIds = [InvasionMonsters.DarkReaper],
         Mobs =
         [
@@ -46,4 +49,17 @@ public class DarkSkeletonInvasionConfiguration : PeriodicInvasionConfiguration
     /// </summary>
     [Display(Name = "End When Killed (Monster Ids)", Description = "The event ends early when all spawned monsters of these ids are killed.", Order = 9)]
     public IList<ushort> EndWhenKilledMonsterIds { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the ids of the game servers on which the event monsters are weaker.
+    /// </summary>
+    [Display(Name = "Weaker On Game Server Ids", Description = "On these game servers the event monsters have only the 'Weaker Strength' percentage of their values.", Order = 10)]
+    public IList<byte> WeakerGameServerIds { get; set; } = [1];
+
+    /// <summary>
+    /// Gets or sets the percentage of health, damage, defense, attack rate and defense rate which the
+    /// event monsters have on the <see cref="WeakerGameServerIds"/> (50 = half).
+    /// </summary>
+    [Display(Name = "Weaker Strength (%)", Description = "Health, damage, defense, attack rate and defense rate in percent of the normal values (50 = half).", Order = 11)]
+    public float WeakerStrengthPercentage { get; set; } = 50;
 }

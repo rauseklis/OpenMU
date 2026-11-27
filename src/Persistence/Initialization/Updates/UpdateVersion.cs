@@ -870,4 +870,9 @@ public enum UpdateVersion
     /// Adds the Dark Mage (1113, Skull Staff, Flame) with its drops and one in Devias (223/83).
     /// </summary>
     AddDarkMage = 184,
+
+    /// <summary>
+    /// The Dark Skeleton invasion also runs on game server 1 (Ember 5x), with monsters at half strength there.
+    /// </summary>
+    DarkInvasionBothServers = 185,
 }
