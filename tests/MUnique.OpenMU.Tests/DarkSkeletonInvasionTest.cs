@@ -293,6 +293,8 @@ public class DarkSkeletonInvasionTest
     {
         var definition = new MUnique.OpenMU.Persistence.BasicModel.MonsterDefinition
         {
+            // An own id, because the monster attributes are cached per definition id (shared with other tests).
+            Id = Guid.NewGuid(),
             Number = number,
             Designation = name,
             ObjectKind = NpcObjectKind.Monster,
