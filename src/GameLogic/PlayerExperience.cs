@@ -233,6 +233,35 @@ internal sealed class PlayerExperience
         }
     }
 
+    /// <summary>
+    /// The level from which the extra level-up point of the 'Gain Hero Status' quest (Marlon) applies.
+    /// </summary>
+    internal const int HeroStatusQuestPointsMinimumLevel = 220;
+
+    /// <summary>
+    /// Gets the level-up points for reaching a level. The extra points which the character got from a quest
+    /// (value above the base value of the character class) only count from level <see cref="HeroStatusQuestPointsMinimumLevel"/> on.
+    /// </summary>
+    /// <param name="character">The character.</param>
+    /// <param name="pointsPerLevel">The current points per level, including quest bonuses.</param>
+    /// <param name="newLevel">The level which was reached.</param>
+    /// <returns>The points to add.</returns>
+    internal static int GetPointsForLevelUp(Character character, int pointsPerLevel, int newLevel)
+    {
+        if (newLevel >= HeroStatusQuestPointsMinimumLevel)
+        {
+            return pointsPerLevel;
+        }
+
+        var classBase = character.CharacterClass?.StatAttributes.FirstOrDefault(a => a.Attribute == Stats.PointsPerLevelUp);
+        if (classBase is null)
+        {
+            return pointsPerLevel;
+        }
+
+        return Math.Min(pointsPerLevel, (int)classBase.BaseValue);
+    }
+
     private async ValueTask AddExperienceCoreAsync(int experience, IAttackable? killedObject)
     {
         var player = this._player;
@@ -301,7 +330,7 @@ internal sealed class PlayerExperience
     {
         var player = this._player;
         player.Attributes![Stats.Level]++;
-        player.SelectedCharacter!.LevelUpPoints += (int)player.Attributes[Stats.PointsPerLevelUp];
+        player.SelectedCharacter!.LevelUpPoints += GetPointsForLevelUp(player.SelectedCharacter, (int)player.Attributes[Stats.PointsPerLevelUp], (int)player.Attributes[Stats.Level]);
         player.SetReclaimableAttributesToMaximum();
         player.Logger.LogDebug("Character {0} leveled up to {1}", player.SelectedCharacter.Name, player.Attributes[Stats.Level]);
 
