@@ -91,6 +91,39 @@ public class PlusThirteenBonusTests
     }
 
     /// <summary>
+    /// The +100 vitality is real, not cosmetic: it goes through the same relationships as a character's own stats.
+    /// For an elf (2 maximum health per total vitality, as in the class definition) a full +13 set with a base
+    /// vitality of 2020 raises the total vitality from 2020 to 2120 and the maximum health by exactly 200.
+    /// Taking one piece off (or having it below +13) removes the whole bonus again. Every change of an attribute
+    /// is sent to the client by the player (OnAttributeValueChanged), so the client gets the new maximum health.
+    /// </summary>
+    [Test]
+    public void SetVitalityRaisesMaximumHealthAndGoesAwayWithAPiece()
+    {
+        var holder = new AttributeSystem(
+            new IAttribute[] { new StatAttribute(Stats.BaseVitality, 2020) },
+            Enumerable.Empty<IAttribute>(),
+            new[]
+            {
+                new AttributeRelationship(Stats.TotalVitality, 1, Stats.BaseVitality),
+                new AttributeRelationship(Stats.MaximumHealth, 2, Stats.TotalVitality),
+            });
+        var healthWithoutSet = holder[Stats.MaximumHealth];
+        Assert.That(holder[Stats.TotalVitality], Is.EqualTo(2020));
+
+        var withSet = PlusThirteenBonus.GetPowerUps(CreateSet(13, 13, 13, 13, 13), holder).ToList();
+        Assert.That(holder[Stats.TotalVitality], Is.EqualTo(2120));
+        Assert.That(holder[Stats.MaximumHealth], Is.EqualTo(healthWithoutSet + 200));
+
+        // Equipment changed: the old power-ups are disposed and new ones are created for what is worn now.
+        withSet.ForEach(p => p.Dispose());
+        var brokenSet = PlusThirteenBonus.GetPowerUps(CreateSet(13, 13, 12, 13, 13), holder).ToList();
+        Assert.That(brokenSet, Is.Empty);
+        Assert.That(holder[Stats.TotalVitality], Is.EqualTo(2020));
+        Assert.That(holder[Stats.MaximumHealth], Is.EqualTo(healthWithoutSet));
+    }
+
+    /// <summary>
     /// A +13 weapon gives a 6% strike chance; a +12 weapon or a shield gives nothing.
     /// </summary>
     [Test]
