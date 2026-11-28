@@ -33,4 +33,39 @@ internal static class InvasionMaps
     /// The Tarkan map.
     /// </summary>
     public const ushort Tarkan = 8;
+
+    /// <summary>
+    /// The Kalima 2 map.
+    /// </summary>
+    public const ushort Kalima2 = 25;
+
+    /// <summary>
+    /// The Kalima 3 map.
+    /// </summary>
+    public const ushort Kalima3 = 26;
+
+    /// <summary>
+    /// The Kalima 4 map.
+    /// </summary>
+    public const ushort Kalima4 = 27;
+
+    /// <summary>
+    /// The Kalima 5 map.
+    /// </summary>
+    public const ushort Kalima5 = 28;
+
+    /// <summary>
+    /// The Kalima 6 map.
+    /// </summary>
+    public const ushort Kalima6 = 29;
+
+    /// <summary>
+    /// The Kalima 7 map.
+    /// </summary>
+    public const ushort Kalima7 = 36;
+
+    /// <summary>
+    /// The Elbeland (Elvenland) map.
+    /// </summary>
+    public const ushort Elbeland = 51;
 }

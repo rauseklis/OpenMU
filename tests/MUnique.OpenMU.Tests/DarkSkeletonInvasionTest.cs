@@ -22,6 +22,30 @@ public class DarkSkeletonInvasionTest
 {
     private const ushort TestMap = 0;
 
+    private const ushort TownMap = 3;
+
+    private const ushort ExtraMap = 25;
+
+    private const ushort OtherExtraMap = 26;
+
+    private const int TownX1 = 100;
+
+    private const int TownY1 = 100;
+
+    private const int TownX2 = 110;
+
+    private const int TownY2 = 110;
+
+    private const byte GateX1 = 10;
+
+    private const byte GateY1 = 16;
+
+    private const byte GateX2 = 17;
+
+    private const byte GateY2 = 22;
+
+    private const int WallY = 200;
+
     /// <summary>
     /// The default configuration matches the owner's request: 20:00, 15 minutes, Devias,
     /// 10 Dark Mages, 10 Dark Skeletons and 2 Dark Reapers, ends when the reapers die, on servers 0 and 1
@@ -54,6 +78,24 @@ public class DarkSkeletonInvasionTest
         Assert.That(reapers.MapIds, Is.EqualTo(new ushort[] { InvasionMaps.Devias }));
         Assert.That(reapers.IsSpawnOnAllMaps, Is.True);
         Assert.That(reapers.AnnounceDeath, Is.True);
+
+        Assert.That(config.ExtraMobs, Has.Count.EqualTo(3));
+        AssertExtraMob(config, 1113, 5, InvasionMaps.Kalima2, InvasionMaps.Kalima3);
+        AssertExtraMob(config, 1111, 4, InvasionMaps.Kalima4, InvasionMaps.Kalima5);
+        AssertExtraMob(config, 1112, 3, InvasionMaps.Kalima6, InvasionMaps.Kalima7);
+        Assert.That(config.TownDistanceMapIds, Is.EqualTo(new ushort[] { InvasionMaps.Lorencia, InvasionMaps.Noria, InvasionMaps.Elbeland }));
+        Assert.That(config.MinimumTownDistance, Is.EqualTo(20));
+        Assert.That(config.MinimumEntranceDistance, Is.EqualTo(10));
+        Assert.That((string)config.AllBossesKilledMessage, Does.Contain("All Dark Reapers have been defeated! The light returns."));
+
+        static void AssertExtraMob(DarkSkeletonInvasionConfiguration config, ushort monsterId, int count, params ushort[] mapIds)
+        {
+            var mob = config.ExtraMobs.Single(m => m.MonsterId == monsterId);
+            Assert.That(mob.Count, Is.EqualTo(count));
+            Assert.That(mob.MapIds, Is.EqualTo(mapIds));
+            Assert.That(mob.IsSpawnOnAllMaps, Is.True, "The count is per map.");
+            Assert.That(mob.AnnounceDeath, Is.False);
+        }
     }
 
     /// <summary>
@@ -87,7 +129,7 @@ public class DarkSkeletonInvasionTest
         {
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
 
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
             Assert.That(plugIn.IsRunning(gameContext), Is.True);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // start + spawn
@@ -112,7 +154,7 @@ public class DarkSkeletonInvasionTest
             Assert.That(remaining, Is.Zero, "The remaining skeletons are removed when the event ends.");
 
             // A game master may start it again right away.
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             Assert.That(plugIn.IsRunning(gameContext), Is.True);
         }
@@ -131,7 +173,7 @@ public class DarkSkeletonInvasionTest
         var (gameContext, plugIn) = CreateContextAndPlugIn();
         try
         {
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
@@ -160,7 +202,7 @@ public class DarkSkeletonInvasionTest
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
             map.ServerId = serverId;
 
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
 
@@ -194,7 +236,7 @@ public class DarkSkeletonInvasionTest
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
             Assert.That(plugIn.StopByGameMaster(gameContext), Is.False, "Nothing runs yet.");
 
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // start + spawn
             Assert.That(CountLivingEventMonsters(map), Is.EqualTo(22));
@@ -222,7 +264,7 @@ public class DarkSkeletonInvasionTest
         {
             var map = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
 
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
             Assert.That(plugIn.StopByGameMaster(gameContext), Is.True);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
@@ -232,7 +274,7 @@ public class DarkSkeletonInvasionTest
             Assert.That(CountLivingEventMonsters(map), Is.Zero);
 
             // It can be started again normally afterwards.
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
             Assert.That(CountLivingEventMonsters(map), Is.EqualTo(22));
@@ -256,7 +298,7 @@ public class DarkSkeletonInvasionTest
         {
             var otherMap = (await otherContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
 
-            plugIn.StartByGameMaster(gameContext);
+            plugIn.StartByGameMaster(gameContext, TestMap);
             await plugIn.ExecuteTaskAsync(otherContext).ConfigureAwait(false);
             await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
             await plugIn.ExecuteTaskAsync(otherContext).ConfigureAwait(false);
@@ -274,9 +316,195 @@ public class DarkSkeletonInvasionTest
         }
     }
 
+    /// <summary>
+    /// The extra monsters spawn on each of their maps with their count per map. Killing the reapers on an
+    /// extra map doesn't end the event; killing the ones of the main map does, and then the extra monsters disappear too.
+    /// </summary>
+    [Test]
+    public async ValueTask ExtraMonstersSpawnPerMapAndOnlyMainReapersEndTheEventAsync()
+    {
+        var (gameContext, plugIn) = CreateContextAndPlugIn();
+        try
+        {
+            AddMap(gameContext, ExtraMap, withEntrance: true);
+            AddMap(gameContext, OtherExtraMap, withEntrance: true);
+            plugIn.Configuration!.ExtraMobs =
+            [
+                new(1113, 5, [ExtraMap, OtherExtraMap], SpawnMapStrategy.AllMaps),
+                new(1112, 3, [ExtraMap], SpawnMapStrategy.AllMaps),
+            ];
+
+            var mainMap = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
+            var extraMap = (await gameContext.GetMapAsync(ExtraMap).ConfigureAwait(false))!;
+            var otherExtraMap = (await gameContext.GetMapAsync(OtherExtraMap).ConfigureAwait(false))!;
+
+            plugIn.StartByGameMaster(gameContext, TestMap);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // prepare
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false); // start + spawn
+
+            Assert.That(CountLiving(extraMap, 1113), Is.EqualTo(5));
+            Assert.That(CountLiving(otherExtraMap, 1113), Is.EqualTo(5), "The count is per map.");
+            Assert.That(CountLiving(extraMap, 1112), Is.EqualTo(3));
+            Assert.That(CountLivingEventMonsters(mainMap), Is.EqualTo(22));
+
+            var killer = await PlayerTestHelper.CreatePlayerAsync(gameContext).ConfigureAwait(false);
+            foreach (var reaper in GetLiving(extraMap, 1112))
+            {
+                await KillAsync(reaper, killer).ConfigureAwait(false);
+            }
+
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            Assert.That(plugIn.IsRunning(gameContext), Is.True, "The reapers of an extra map don't end the event.");
+
+            foreach (var reaper in GetLiving(mainMap, 1112))
+            {
+                await KillAsync(reaper, killer).ConfigureAwait(false);
+            }
+
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            Assert.That(plugIn.IsRunning(gameContext), Is.False, "The reapers of the main map end the event.");
+            Assert.That(CountLivingEventMonsters(extraMap), Is.Zero, "The extra monsters disappear at the end.");
+            Assert.That(CountLivingEventMonsters(otherExtraMap), Is.Zero);
+        }
+        finally
+        {
+            await gameContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// A game master start puts the main monsters on the requested map, and on a map of
+    /// <see cref="DarkSkeletonInvasionConfiguration.TownDistanceMapIds"/> they keep the minimum distance to the town.
+    /// </summary>
+    [Test]
+    public async ValueTask MainMonstersKeepDistanceToTownAsync()
+    {
+        var (gameContext, plugIn) = CreateContextAndPlugIn();
+        try
+        {
+            AddMap(gameContext, TownMap, withTown: true);
+            plugIn.Configuration!.TownDistanceMapIds = [TownMap];
+
+            plugIn.StartByGameMaster(gameContext, TownMap);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+
+            var townMap = (await gameContext.GetMapAsync(TownMap).ConfigureAwait(false))!;
+            var testMap = (await gameContext.GetMapAsync(TestMap).ConfigureAwait(false))!;
+            Assert.That(plugIn.GetMainMapId(gameContext), Is.EqualTo(TownMap));
+            Assert.That(CountLivingEventMonsters(testMap), Is.Zero, "The daily map isn't used.");
+
+            var monsters = GetLiving(townMap, 1111, 1112, 1113).ToList();
+            Assert.That(monsters, Has.Count.EqualTo(22));
+            foreach (var monster in monsters)
+            {
+                Assert.That(DistanceToArea(monster.Position, TownX1, TownY1, TownX2, TownY2), Is.GreaterThanOrEqualTo(20), $"{monster.Position} is too close to the town.");
+            }
+        }
+        finally
+        {
+            await gameContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// On an extra map (like Kalima) the monsters spawn where players can walk to from the entrance, at least the
+    /// minimum distance away from it - not on the cut-off map edge where the map's only safezone tiles are.
+    /// </summary>
+    [Test]
+    public async ValueTask ExtraMonstersSpawnReachableFromEntranceAsync()
+    {
+        var (gameContext, plugIn) = CreateContextAndPlugIn();
+        try
+        {
+            AddMap(gameContext, ExtraMap, withEntrance: true);
+            plugIn.Configuration!.ExtraMobs = [new(1113, 100, [ExtraMap], SpawnMapStrategy.AllMaps)];
+
+            plugIn.StartByGameMaster(gameContext, TestMap);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+            await plugIn.ExecuteTaskAsync(gameContext).ConfigureAwait(false);
+
+            var extraMap = (await gameContext.GetMapAsync(ExtraMap).ConfigureAwait(false))!;
+            var monsters = GetLiving(extraMap, 1113).ToList();
+            Assert.That(monsters, Has.Count.EqualTo(100));
+            foreach (var monster in monsters)
+            {
+                Assert.That(monster.Position.Y, Is.LessThan(WallY), $"{monster.Position} is behind the wall, which can't be reached from the entrance.");
+                Assert.That(DistanceToArea(monster.Position, GateX1, GateY1, GateX2, GateY2), Is.GreaterThanOrEqualTo(10), $"{monster.Position} is too close to the entrance.");
+            }
+        }
+        finally
+        {
+            await gameContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
     private static int CountLivingEventMonsters(GameMap map)
         => map.GetAttackablesInRange(new Pathfinding.Point(128, 128), 255).OfType<Monster>()
             .Count(m => m.Definition.Number is 1111 or 1112 or 1113 && m.IsAlive);
+
+    private static int CountLiving(GameMap map, short number) => GetLiving(map, number).Count();
+
+    private static IEnumerable<Monster> GetLiving(GameMap map, params short[] numbers)
+        => map.GetAttackablesInRange(new Pathfinding.Point(128, 128), 255).OfType<Monster>()
+            .Where(m => numbers.Contains(m.Definition.Number) && m.IsAlive)
+            .ToList();
+
+    private static int DistanceToArea(Pathfinding.Point point, int x1, int y1, int x2, int y2)
+    {
+        var dx = Math.Max(Math.Max(x1 - point.X, point.X - x2), 0);
+        var dy = Math.Max(Math.Max(y1 - point.Y, point.Y - y2), 0);
+        return Math.Max(dx, dy);
+    }
+
+    /// <summary>
+    /// Adds a map whose terrain is walkable everywhere, optionally with a town (safezone square) in the middle,
+    /// or with an entrance gate like Kalima, a wall which cuts off the bottom of the map and safezone tiles only
+    /// on that cut-off bottom edge.
+    /// </summary>
+    private static void AddMap(GameContext gameContext, ushort number, bool withTown = false, bool withEntrance = false)
+    {
+        var terrain = new byte[ushort.MaxValue + 3];
+        void Set(int x, int y, byte value) => terrain[3 + x + (y * 256)] = value;
+
+        if (withTown)
+        {
+            for (var x = TownX1; x <= TownX2; x++)
+            {
+                for (var y = TownY1; y <= TownY2; y++)
+                {
+                    Set(x, y, 1);
+                }
+            }
+        }
+
+        var definition = new MUnique.OpenMU.Persistence.BasicModel.GameMapDefinition
+        {
+            Number = (short)number,
+            Name = $"Test map {number}",
+            TerrainData = terrain,
+        };
+
+        if (withEntrance)
+        {
+            for (var x = 0; x < 256; x++)
+            {
+                Set(x, WallY, 4);
+                Set(x, 254, 1);
+            }
+
+            definition.ExitGates.Add(new MUnique.OpenMU.Persistence.BasicModel.ExitGate
+            {
+                Map = definition,
+                X1 = GateX1,
+                Y1 = GateY1,
+                X2 = GateX2,
+                Y2 = GateY2,
+            });
+        }
+
+        gameContext.Configuration.Maps.Add(definition);
+    }
 
     private static async ValueTask KillAsync(Monster monster, Player killer)
     {
@@ -315,6 +543,9 @@ public class DarkSkeletonInvasionTest
         {
             mob.MapIds = [TestMap];
         }
+
+        config.ExtraMobs = [];
+        config.TownDistanceMapIds = [];
 
         var plugIn = new DarkSkeletonInvasionPlugIn { Configuration = config };
         return (gameContext, plugIn);

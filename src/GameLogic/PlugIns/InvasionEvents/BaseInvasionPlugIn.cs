@@ -229,6 +229,14 @@ public abstract class BaseInvasionPlugIn<TConfiguration> : PeriodicTaskBasePlugI
     }
 
     /// <summary>
+    /// Gets the message which is shown to all players when the invasion ends.
+    /// </summary>
+    /// <param name="state">The state of the ending invasion.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <returns>The end message.</returns>
+    protected virtual LocalizedString GetEndMessage(InvasionGameServerState state, TConfiguration configuration) => configuration.EndMessage;
+
+    /// <summary>
     /// Sends the invasion end message to a single player.
     /// </summary>
     /// <param name="player">The player.</param>
@@ -236,14 +244,20 @@ public abstract class BaseInvasionPlugIn<TConfiguration> : PeriodicTaskBasePlugI
     protected async Task TrySendEndMessageAsync(Player player, InvasionGameServerState state)
     {
         var configuration = this.Configuration;
-        if (configuration is null || state.MapIds.Count == 0 || string.IsNullOrWhiteSpace(configuration.EndMessage))
+        if (configuration is null || state.MapIds.Count == 0)
+        {
+            return;
+        }
+
+        var endMessage = this.GetEndMessage(state, configuration);
+        if (string.IsNullOrWhiteSpace(endMessage))
         {
             return;
         }
 
         var mapName = BuildAnnouncedMapNames(state, player);
 
-        var message = (configuration.EndMessage.GetTranslation(player.Culture) ?? string.Empty)
+        var message = (endMessage.GetTranslation(player.Culture) ?? string.Empty)
             .Replace("{mapName}", mapName, StringComparison.InvariantCulture);
 
         if (string.IsNullOrWhiteSpace(message))

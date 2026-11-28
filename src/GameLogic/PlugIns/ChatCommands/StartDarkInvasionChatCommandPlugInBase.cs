@@ -1,31 +1,28 @@
-// <copyright file="StartDarkInvasionChatCommandPlugIn.cs" company="MUnique">
+// <copyright file="StartDarkInvasionChatCommandPlugInBase.cs" company="MUnique">
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
 
 namespace MUnique.OpenMU.GameLogic.PlugIns.ChatCommands;
 
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
-using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
 using MUnique.OpenMU.PlugIns;
 
 /// <summary>
-/// A chat command which lets a game master start the Dark Skeleton invasion right away.
+/// The base of the game master commands which start the Dark Skeleton invasion right away
+/// with a certain main map, on the game server where the command is typed.
 /// </summary>
-[PlugIn]
-[Display(Name = "Start Dark Skeleton Invasion Chat Command", Description = "Handles the GM command /startdark, which starts the Dark Skeleton invasion immediately on this game server.")]
-[Guid("B7D1E3A9-6C24-4F8E-91A5-3E0F7C2B8D46")]
-[ChatCommandHelp(Command, CharacterStatus.GameMaster)]
-public class StartDarkInvasionChatCommandPlugIn : IChatCommandPlugIn
+public abstract class StartDarkInvasionChatCommandPlugInBase : IChatCommandPlugIn
 {
-    private const string Command = "/startdark";
-
     /// <inheritdoc />
-    public string Key => Command;
+    public abstract string Key { get; }
 
     /// <inheritdoc />
     public CharacterStatus MinCharacterStatusRequirement => CharacterStatus.GameMaster;
+
+    /// <summary>
+    /// Gets the main map of the invasion which this command starts.
+    /// </summary>
+    protected abstract ushort MainMapId { get; }
 
     /// <inheritdoc />
     public async ValueTask HandleCommandAsync(Player player, string command)
@@ -52,7 +49,13 @@ public class StartDarkInvasionChatCommandPlugIn : IChatCommandPlugIn
             return;
         }
 
-        invasion.StartByGameMaster(player.GameContext);
+        if (await player.GameContext.GetMapAsync(this.MainMapId).ConfigureAwait(false) is null)
+        {
+            await player.ShowBlueMessageAsync("This map is not available on this server.").ConfigureAwait(false);
+            return;
+        }
+
+        invasion.StartByGameMaster(player.GameContext, this.MainMapId);
         await player.ShowBlueMessageAsync("The Dark Skeleton invasion is starting now.").ConfigureAwait(false);
     }
 }
