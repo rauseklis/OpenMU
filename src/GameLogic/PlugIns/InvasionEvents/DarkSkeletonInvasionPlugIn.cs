@@ -5,6 +5,7 @@
 namespace MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
 
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -12,23 +13,21 @@ using MUnique.OpenMU.AttributeSystem;
 using MUnique.OpenMU.GameLogic.Attributes;
 using MUnique.OpenMU.GameLogic.NPC;
 using MUnique.OpenMU.GameLogic.PlugIns.PeriodicTasks;
+using MUnique.OpenMU.Interfaces;
 using MUnique.OpenMU.Pathfinding;
 using MUnique.OpenMU.PlugIns;
 
 /// <summary>
-/// The Dark Skeleton invasion: Dark Skeletons and Dark Reapers spawn all over the configured
-/// map(s), which become dark for the players on them. The event ends after its duration or
-/// as soon as all Dark Reapers are killed.
+/// The Dark Skeleton invasion: Dark Mages, Dark Skeletons and Dark Reapers spawn all over one main map
+/// and, additionally, on the configured extra maps (Kalima). These maps become dark for the players on them.
+/// The event ends after its duration or as soon as all Dark Reapers of the main map are killed.
 /// </summary>
 [PlugIn]
-[Display(Name = "Dark Skeleton Invasion", Description = "Dark Skeletons and Dark Reapers invade a darkened map. GM command: /startdark.")]
+[Display(Name = "Dark Skeleton Invasion", Description = "Dark Skeletons and Dark Reapers invade a darkened map. GM commands: /startdarkdevias, /startdarklorencia, /startdarknoria, /startdarkelbeland, /stopdark.")]
 [Guid("4E8B2C71-9A3D-4F15-B6E0-2D7C5A1F9E83")]
 public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeletonInvasionConfiguration>, ISupportDefaultCustomConfiguration
 {
-    /// <inheritdoc />
-    protected override ushort? AnnouncedMonsterId => this.Configuration is { } config
-        ? config.EndWhenKilledMonsterIds.Count > 0 ? config.EndWhenKilledMonsterIds[0] : config.Mobs.FirstOrDefault()?.MonsterId
-        : null;
+    private readonly ConditionalWeakTable<GameMap, SpawnPointCache> _spawnPoints = new();
 
     /// <inheritdoc />
     public object CreateDefaultConfig() => DarkSkeletonInvasionConfiguration.Default;
@@ -55,13 +54,15 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         => this.GetStateByGameContext(gameContext).State != PeriodicTaskState.NotStarted;
 
     /// <summary>
-    /// Starts the event on the specified game context (game server) on the next periodic check (about one second),
-    /// as requested by a game master. Other game servers are not affected.
+    /// Starts the event with the specified main map on the specified game context (game server) on the next
+    /// periodic check (about one second), as requested by a game master. Other game servers are not affected.
     /// </summary>
     /// <param name="gameContext">The game context of the game server on which the event should start.</param>
-    public void StartByGameMaster(IGameContext gameContext)
+    /// <param name="mainMapId">The main map of the event.</param>
+    public void StartByGameMaster(IGameContext gameContext, ushort mainMapId)
     {
         var state = (DarkSkeletonInvasionState)this.GetStateByGameContext(gameContext);
+        state.RequestedMainMapId = mainMapId;
         state.IsStartRequested = true;
         state.NextRunUtc = DateTime.UtcNow;
     }
@@ -85,6 +86,14 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         return true;
     }
 
+    /// <summary>
+    /// Gets the main map of the announced or running event on the specified game context.
+    /// </summary>
+    /// <param name="gameContext">The game context.</param>
+    /// <returns>The main map id, or <c>null</c> if the event isn't active.</returns>
+    public ushort? GetMainMapId(IGameContext gameContext)
+        => ((DarkSkeletonInvasionState)this.GetStateByGameContext(gameContext)).MainMapId;
+
     /// <inheritdoc />
     public override async ValueTask ObjectAddedToMapAsync(GameMap map, ILocateable addedObject)
     {
@@ -101,10 +110,37 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
 
     /// <inheritdoc />
     /// <remarks>
-    /// Only tiles which can be reached from the town: Devias has walkable tiles along its bottom
-    /// edge which are cut off from the map, and a Dark Reaper there could never be killed.
+    /// Only tiles which can be reached on foot: from the town on the main maps, where the
+    /// <see cref="DarkSkeletonInvasionConfiguration.TownDistanceMapIds"/> also keep a distance to the town;
+    /// and from the entrance on the extra maps (Kalima), whose few safezone tiles lie on the cut-off map edge.
     /// </remarks>
-    protected override Point? GetRandomSpawnCoordinate(GameMap gameMap) => gameMap.Terrain.RandomCoordinateReachableFromSafezone;
+    protected override Point? GetRandomSpawnCoordinate(GameMap gameMap)
+    {
+        var config = this.Configuration;
+        var mapId = gameMap.MapId;
+        Point[] points;
+        if (config is not null && config.TownDistanceMapIds.Contains(mapId))
+        {
+            points = this.GetSpawnPoints(gameMap, false, config.MinimumTownDistance);
+        }
+        else if (config is not null && config.ExtraMobs.Any(mob => mob.MapIds.Contains(mapId)))
+        {
+            points = this.GetSpawnPoints(gameMap, true, config.MinimumEntranceDistance);
+            if (points.Length == 0)
+            {
+                // Rather no monster than one which can't be found.
+                return null;
+            }
+        }
+        else
+        {
+            return gameMap.Terrain.RandomCoordinateReachableFromSafezone;
+        }
+
+        return points.Length > 0
+            ? points[Random.Shared.Next(points.Length)]
+            : gameMap.Terrain.RandomCoordinateReachableFromSafezone;
+    }
 
     /// <inheritdoc />
     protected override bool IsItTimeToStart(IGameContext gameContext)
@@ -119,12 +155,79 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
     protected override InvasionGameServerState CreateState(IGameContext gameContext) => new DarkSkeletonInvasionState(gameContext);
 
     /// <inheritdoc />
-    protected override async ValueTask OnPrepareEventAsync(InvasionGameServerState state)
+    protected override ValueTask OnPrepareEventAsync(InvasionGameServerState state)
     {
         var darkState = (DarkSkeletonInvasionState)state;
+        var requestedMainMapId = darkState.RequestedMainMapId;
+        darkState.RequestedMainMapId = null;
         darkState.IsStartRequested = false;
         darkState.IsStopRequested = false;
-        await base.OnPrepareEventAsync(state).ConfigureAwait(false);
+        darkState.AreAllBossesKilled = false;
+
+        var config = this.Configuration;
+        if (config is null)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        var mainMapId = requestedMainMapId ?? SelectDailyMainMap(config);
+        darkState.MainMapId = mainMapId;
+        if (mainMapId is { } mapId)
+        {
+            foreach (var mob in config.Mobs)
+            {
+                state.RegisterMap(mapId, mob.MonsterId);
+            }
+
+            state.SetAnnouncedMaps([mapId]);
+        }
+
+        foreach (var extraMob in config.ExtraMobs)
+        {
+            foreach (var extraMapId in extraMob.MapIds)
+            {
+                state.RegisterMap(extraMapId);
+            }
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    protected override async ValueTask SpawnMobsOnMapsAsync(InvasionGameServerState state)
+    {
+        var config = this.Configuration;
+        if (config is null)
+        {
+            return;
+        }
+
+        var darkState = (DarkSkeletonInvasionState)state;
+        if (darkState.MainMapId is { } mainMapId)
+        {
+            await this.SpawnMobsAsync(state.Context, mainMapId, config.Mobs).ConfigureAwait(false);
+        }
+
+        foreach (var extraMob in config.ExtraMobs)
+        {
+            if (extraMob.MapIds.Count == 0)
+            {
+                continue;
+            }
+
+            if (extraMob.IsSpawnOnAllMaps)
+            {
+                foreach (var extraMapId in extraMob.MapIds)
+                {
+                    await this.SpawnMobsAsync(state.Context, extraMapId, [extraMob]).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                var extraMapId = extraMob.MapIds[Random.Shared.Next(extraMob.MapIds.Count)];
+                await this.SpawnMobsAsync(state.Context, extraMapId, [extraMob]).ConfigureAwait(false);
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -148,8 +251,17 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
     {
         await state.Context.ForEachPlayerAsync(p => SendDarknessIfOnEventMapAsync(p, state, false)).ConfigureAwait(false);
         await base.OnFinishedAsync(state).ConfigureAwait(false);
-        ((DarkSkeletonInvasionState)state).IsStopRequested = false;
+        var darkState = (DarkSkeletonInvasionState)state;
+        darkState.IsStopRequested = false;
+        darkState.AreAllBossesKilled = false;
+        darkState.MainMapId = null;
     }
+
+    /// <inheritdoc />
+    protected override LocalizedString GetEndMessage(InvasionGameServerState state, DarkSkeletonInvasionConfiguration configuration)
+        => ((DarkSkeletonInvasionState)state).AreAllBossesKilled
+            ? configuration.AllBossesKilledMessage
+            : base.GetEndMessage(state, configuration);
 
     /// <inheritdoc />
     protected override void OnMonsterInitializing(Monster monster, GameMap gameMap)
@@ -176,12 +288,14 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
     /// <inheritdoc />
     protected override void OnMonsterCreated(Monster monster, InvasionGameServerState state)
     {
-        if (this.Configuration?.EndWhenKilledMonsterIds.Contains((ushort)monster.Definition.Number) is not true)
+        var darkState = (DarkSkeletonInvasionState)state;
+        if (this.Configuration?.EndWhenKilledMonsterIds.Contains((ushort)monster.Definition.Number) is not true
+            || monster.CurrentMap.MapId != darkState.MainMapId)
         {
+            // Only the bosses of the main map end the event; the ones on the extra maps (Kalima) don't count.
             return;
         }
 
-        var darkState = (DarkSkeletonInvasionState)state;
         darkState.AddBoss();
 
         void OnBossDied(object? sender, DeathInformation e)
@@ -190,6 +304,7 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
             if (darkState.RemoveBoss() == 0 && darkState.State == PeriodicTaskState.Started)
             {
                 // The periodic task finishes the event on its next check (within about a second).
+                darkState.AreAllBossesKilled = true;
                 darkState.NextRunUtc = DateTime.UtcNow;
                 darkState.Context.LoggerFactory.CreateLogger<DarkSkeletonInvasionPlugIn>()
                     .LogInformation("Dark Skeleton invasion: all bosses killed, the last one by {Killer}; ending the event.", e.KillerName);
@@ -197,6 +312,12 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         }
 
         monster.Died += OnBossDied;
+    }
+
+    private static ushort? SelectDailyMainMap(DarkSkeletonInvasionConfiguration config)
+    {
+        var mapIds = config.Mobs.FirstOrDefault(mob => mob.MapIds.Count > 0)?.MapIds;
+        return mapIds is null ? null : mapIds[Random.Shared.Next(mapIds.Count)];
     }
 
     private static async Task SendDarknessAsync(Player player, bool enabled)
@@ -223,8 +344,33 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         return Task.CompletedTask;
     }
 
+    private Point[] GetSpawnPoints(GameMap gameMap, bool fromEntrance, byte minimumDistance)
+    {
+        if (this._spawnPoints.TryGetValue(gameMap, out var cache)
+            && cache.FromEntrance == fromEntrance
+            && cache.MinimumDistance == minimumDistance)
+        {
+            return cache.Points;
+        }
+
+        var startTiles = fromEntrance
+            ? DarkInvasionSpawnPoints.GetEntranceTiles(gameMap.Definition)
+            : DarkInvasionSpawnPoints.GetSafezoneTiles(gameMap.Terrain);
+        var points = DarkInvasionSpawnPoints.Find(gameMap.Terrain, startTiles, minimumDistance);
+        this._spawnPoints.AddOrUpdate(gameMap, new SpawnPointCache(fromEntrance, minimumDistance, points));
+        return points;
+    }
+
     /// <summary>
-    /// The state of the Dark Skeleton invasion, which counts the living bosses.
+    /// The spawn points of a map, as found for the given settings.
+    /// </summary>
+    /// <param name="FromEntrance">Whether the points were found from the entrance instead of the town.</param>
+    /// <param name="MinimumDistance">The minimum distance to the start area.</param>
+    /// <param name="Points">The points.</param>
+    private sealed record SpawnPointCache(bool FromEntrance, byte MinimumDistance, Point[] Points);
+
+    /// <summary>
+    /// The state of the Dark Skeleton invasion, which counts the living bosses of the main map.
     /// </summary>
     private sealed class DarkSkeletonInvasionState : InvasionGameServerState
     {
@@ -233,6 +379,8 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
         private volatile bool _isStopRequested;
 
         private volatile bool _isStartRequested;
+
+        private volatile bool _areAllBossesKilled;
 
         public DarkSkeletonInvasionState(IGameContext context)
             : base(context)
@@ -256,6 +404,25 @@ public sealed class DarkSkeletonInvasionPlugIn : BaseInvasionPlugIn<DarkSkeleton
             get => this._isStartRequested;
             set => this._isStartRequested = value;
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the event ends because all bosses of the main map were killed.
+        /// </summary>
+        public bool AreAllBossesKilled
+        {
+            get => this._areAllBossesKilled;
+            set => this._areAllBossesKilled = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the main map which a game master requested for the next start.
+        /// </summary>
+        public ushort? RequestedMainMapId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the main map of the current run.
+        /// </summary>
+        public ushort? MainMapId { get; set; }
 
         public void ResetBosses() => Interlocked.Exchange(ref this._livingBosses, 0);
 
